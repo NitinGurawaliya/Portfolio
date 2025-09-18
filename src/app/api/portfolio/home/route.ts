@@ -19,13 +19,18 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    // Handle empty email to avoid unique constraint issues
+    const userEmail = userData?.email && userData.email.trim() 
+      ? userData.email.trim() 
+      : `github-${userId}@placeholder.com`
+
     const result = await prisma.$transaction(async (tx) => {
       // Ensure user exists
       const user = await tx.user.upsert({
         where: { githubId: userId.toString() },
         update: {
           name: userData?.name || "",
-          email: userData?.email || "",
+          email: userEmail,
           githubUsername: userData?.githubUsername || "",
           avatarUrl: userData?.avatarUrl || "",
           bio: userData?.bio || "",
@@ -40,7 +45,7 @@ export async function POST(req: NextRequest) {
         create: {
           githubId: userId.toString(),
           name: userData?.name || "",
-          email: userData?.email || "",
+          email: userEmail,
           githubUsername: userData?.githubUsername || "",
           avatarUrl: userData?.avatarUrl || "",
           bio: userData?.bio || "",

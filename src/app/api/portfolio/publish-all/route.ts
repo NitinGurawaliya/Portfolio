@@ -5,7 +5,11 @@ const prisma = new PrismaClient()
 
 export async function POST(req: NextRequest) {
   try {
+    console.log("🚀 Starting publish-all request...")
+    
     const body = await req.json()
+    console.log("📦 Request body received:", JSON.stringify(body, null, 2))
+    
     const { 
       portfolioData, 
       selectedRepos, 
@@ -17,8 +21,12 @@ export async function POST(req: NextRequest) {
       userData 
     } = body
 
+    console.log("👤 User ID:", userId)
+    console.log("📊 Portfolio data:", portfolioData)
+
     // Validate required fields
     if (!userId) {
+      console.error("❌ No user ID provided")
       return NextResponse.json(
         { error: "User ID is required" },
         { status: 400 }
@@ -26,11 +34,20 @@ export async function POST(req: NextRequest) {
     }
 
     // First, ensure user exists (outside transaction for speed)
+    console.log("👤 Creating/updating user with GitHub ID:", userId.toString())
+    
+    // Handle empty email to avoid unique constraint issues
+    const userEmail = userData?.email && userData.email.trim() 
+      ? userData.email.trim() 
+      : `github-${userId}@placeholder.com`
+    
+    console.log("📧 Using email:", userEmail)
+    
     const user = await prisma.user.upsert({
       where: { githubId: userId.toString() },
       update: {
         name: userData?.name || "",
-        email: userData?.email || "",
+        email: userEmail,
         githubUsername: userData?.githubUsername || "",
         avatarUrl: userData?.avatarUrl || "",
         bio: userData?.bio || "",
@@ -45,7 +62,7 @@ export async function POST(req: NextRequest) {
       create: {
         githubId: userId.toString(),
         name: userData?.name || "",
-        email: userData?.email || "",
+        email: userEmail,
         githubUsername: userData?.githubUsername || "",
         avatarUrl: userData?.avatarUrl || "",
         bio: userData?.bio || "",
@@ -132,9 +149,11 @@ export async function POST(req: NextRequest) {
     }
 
     // Now do the fast portfolio operations in a transaction with extended timeout
+    console.log("🔄 Starting database transaction...")
     const result = await prisma.$transaction(async (tx) => {
 
       // Upsert portfolio (create or update) - ALL data at once
+      console.log("💾 Creating/updating portfolio...")
       const portfolio = await tx.portfolio.upsert({
         where: { userId: user.id },
         update: {
@@ -230,9 +249,19 @@ export async function POST(req: NextRequest) {
     })
 
   } catch (error) {
-    console.error("Error publishing portfolio:", error)
+    console.error("❌ Error publishing portfolio:", error)
+    console.error("Error details:", {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      name: error instanceof Error ? error.name : undefined
+    })
+    
     return NextResponse.json(
-      { error: "Failed to publish portfolio" },
+      { 
+        error: "Failed to publish portfolio",
+        details: error instanceof Error ? error.message : String(error),
+        timestamp: new Date().toISOString()
+      },
       { status: 500 }
     )
   } finally {
