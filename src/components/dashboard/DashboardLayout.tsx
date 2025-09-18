@@ -240,12 +240,15 @@ export function DashboardLayout({
               className="relative z-10"
             >
               <div
-                onClick={() => window.open(`http://localhost:3000/${portfolioData?.customUsername || user?.githubUsername || 'username'}`, '_blank')}
+                onClick={() => {
+                  const currentDomain = window.location.origin
+                  window.open(`${currentDomain}/${portfolioData?.customUsername || user?.githubUsername || 'username'}`, '_blank')
+                }}
                 className="flex items-center bg-gray-50 border border-gray-300 rounded-lg px-2 py-1.5 cursor-pointer hover:bg-gray-100 hover:border-gray-400 hover:shadow-md transition-all duration-200 min-w-[180px]"
               >
                 <div className="flex items-center">
                   <span className="text-gray-600 text-xs font-medium">
-                    localhost:3000/
+                    {typeof window !== 'undefined' ? window.location.host : 'localhost:3000'}/
                   </span>
                   <span className="text-blue-600 text-xs font-semibold">
                     {portfolioData?.customUsername || user?.githubUsername || 'username'}

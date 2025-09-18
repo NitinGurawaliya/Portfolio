@@ -6,9 +6,12 @@ export async function GET(req: NextRequest) {
   
   if (!code) {
     // Redirect to GitHub OAuth
+    const requestUrl = new URL(req.url)
+    const baseUrl = `${requestUrl.protocol}//${requestUrl.host}`
+    
     const githubAuthUrl = new URL("https://github.com/login/oauth/authorize")
     githubAuthUrl.searchParams.set("client_id", process.env.GITHUB_CLIENT_ID!)
-    githubAuthUrl.searchParams.set("redirect_uri", `${process.env.NEXTAUTH_URL}/api/auth/github`)
+    githubAuthUrl.searchParams.set("redirect_uri", `${baseUrl}/api/auth/github`)
     githubAuthUrl.searchParams.set("scope", "read:user user:email repo")
     githubAuthUrl.searchParams.set("state", "random-state")
     
@@ -33,7 +36,9 @@ export async function GET(req: NextRequest) {
     const tokenData = await tokenResponse.json()
     
     if (tokenData.error) {
-      return NextResponse.redirect(`${process.env.NEXTAUTH_URL}/auth?error=access_denied`)
+      const requestUrl = new URL(req.url)
+      const baseUrl = `${requestUrl.protocol}//${requestUrl.host}`
+      return NextResponse.redirect(`${baseUrl}/auth?error=access_denied`)
     }
     
     // Get user data from GitHub
@@ -61,7 +66,12 @@ export async function GET(req: NextRequest) {
     
     // Create a simple session cookie
     console.log("Setting session cookie for user:", userData.login)
-    const response = NextResponse.redirect(`${process.env.NEXTAUTH_URL}/dashboard`)
+    
+    // Get the current request URL to determine the correct base URL
+    const requestUrl = new URL(req.url)
+    const baseUrl = `${requestUrl.protocol}//${requestUrl.host}`
+    
+    const response = NextResponse.redirect(`${baseUrl}/dashboard`)
     response.cookies.set("github-session", JSON.stringify(sessionData), {
       httpOnly: false, // Allow client-side access
       secure: process.env.NODE_ENV === "production",
@@ -69,11 +79,13 @@ export async function GET(req: NextRequest) {
       maxAge: 24 * 60 * 60, // 24 hours
     })
     
-    console.log("Redirecting to dashboard")
+    console.log("Redirecting to dashboard at:", `${baseUrl}/dashboard`)
     return response
     
   } catch (error) {
     console.error("GitHub OAuth error:", error)
-    return NextResponse.redirect(`${process.env.NEXTAUTH_URL}/auth?error=server_error`)
+    const requestUrl = new URL(req.url)
+    const baseUrl = `${requestUrl.protocol}//${requestUrl.host}`
+    return NextResponse.redirect(`${baseUrl}/auth?error=server_error`)
   }
 }
