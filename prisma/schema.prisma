@@ -1,0 +1,123 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+model User {
+  id            Int      @id @default(autoincrement())
+  name          String
+  email         String   @unique
+  githubId      String?  @unique
+  githubUsername String?
+  avatarUrl     String?
+  bio           String?
+  location      String?
+  websiteUrl    String?
+  twitterUsername String?
+  company       String?
+  publicRepos   Int?
+  followers     Int?
+  following     Int?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  repositories  Repository[]
+  portfolio     Portfolio?
+}
+
+model Repository {
+  id          Int      @id @default(autoincrement())
+  githubId    BigInt   @unique
+  name        String
+  fullName    String
+  description String?
+  htmlUrl     String
+  cloneUrl    String
+  language    String?
+  stargazersCount Int
+  forksCount  Int
+  size        Int
+  isPrivate   Boolean
+  isFork      Boolean
+  isImported  Boolean  @default(false)
+  favicon     String?
+  siteName    String?
+  keywords    String?
+  author      String?
+  createdAt   DateTime
+  updatedAt   DateTime
+  pushedAt    DateTime?
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  portfolioRepositories PortfolioRepository[]
+}
+
+model Portfolio {
+  id          Int      @id @default(autoincrement())
+  userId      Int      @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Home section
+  displayName String?
+  jobTitle    String?
+  bio         String?
+  profilePic  String?
+  customUsername String?
+  
+  // Skills
+  skills      Skill[]
+  
+  // Social accounts
+  socials     Social[]
+  
+  // Selected repositories
+  repositories PortfolioRepository[]
+  
+  isPublished Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Skill {
+  id          Int      @id @default(autoincrement())
+  name        String
+  category    String?  // e.g., "Frontend", "Backend", "Database", "Tools"
+  portfolioId Int
+  portfolio   Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+}
+
+model Social {
+  id          Int      @id @default(autoincrement())
+  portfolioId Int
+  portfolio   Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+  platform    String   // "github", "twitter", "linkedin", "instagram", "facebook", "youtube", "stackoverflow", "reddit"
+  username    String   // Username for the platform (e.g., "john_doe")
+  url         String?  // Full URL (optional, can be generated from username)
+  isPinned    Boolean  @default(false) // Show in top section and get in touch
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([portfolioId, platform]) // One account per platform per portfolio
+}
+
+model PortfolioRepository {
+  id          Int      @id @default(autoincrement())
+  portfolioId Int
+  portfolio   Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+  repositoryId Int
+  repository  Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  deployedUrl String?
+  isVisible   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+}
