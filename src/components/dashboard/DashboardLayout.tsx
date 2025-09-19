@@ -293,30 +293,88 @@ export function DashboardLayout({
 
             {/* Right - Publish Button */}
             <motion.div
-              whileHover={{ scale: hasUnsavedChanges && !isPublishing ? 1.05 : 1 }}
-              whileTap={{ scale: hasUnsavedChanges && !isPublishing ? 0.95 : 1 }}
+              whileHover={{ scale: hasUnsavedChanges && !isPublishing ? 1.02 : 1 }}
+              whileTap={{ scale: hasUnsavedChanges && !isPublishing ? 0.98 : 1 }}
               className="relative z-10"
             >
               <Button
                 onClick={onPublish}
                 disabled={!hasUnsavedChanges || isPublishing}
-                className={`transition-all duration-300 font-medium relative z-20 cursor-pointer text-sm px-3 py-1.5 h-8 ${
+                className={`group relative overflow-hidden transition-all duration-500 font-semibold text-sm px-6 py-2.5 h-10 rounded-xl border backdrop-blur-sm ${
                   hasUnsavedChanges && !isPublishing
-                    ? "bg-green-600 text-white hover:bg-green-700 shadow-lg shadow-green-500/25"
-                    : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    ? "bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 text-white border-emerald-400/50 hover:from-emerald-400 hover:via-teal-400 hover:to-cyan-400 hover:border-emerald-300/70 shadow-lg shadow-emerald-500/30 hover:shadow-emerald-400/40 hover:shadow-xl cursor-pointer"
+                    : "bg-gray-800/50 text-gray-500 border-gray-600/30 cursor-not-allowed backdrop-blur-sm"
                 }`}
               >
+                {/* Animated background gradient */}
+                {hasUnsavedChanges && !isPublishing && (
+                  <motion.div
+                    className="absolute inset-0 bg-gradient-to-r from-emerald-400/20 via-teal-400/20 to-cyan-400/20 opacity-0 group-hover:opacity-100"
+                    transition={{ duration: 0.3 }}
+                  />
+                )}
+                
+                {/* Button content */}
                 <motion.div
-                  className="flex items-center"
-                  whileHover={{ x: hasUnsavedChanges && !isPublishing ? 2 : 0 }}
+                  className="relative flex items-center justify-center gap-2"
+                  whileHover={{ x: hasUnsavedChanges && !isPublishing ? 1 : 0 }}
                   transition={{ duration: 0.2 }}
                 >
                   {isPublishing ? (
-                    <Loader2 className="h-3 w-3 mr-1.5 animate-spin" />
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin text-white" />
+                      <span className="text-white font-medium">Deploying...</span>
+                    </>
+                  ) : hasUnsavedChanges ? (
+                    <>
+                      <motion.div
+                        className="flex items-center"
+                        animate={{ rotate: [0, 5, -5, 0] }}
+                        transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+                      >
+                        <Sparkles className="h-4 w-4 text-white" />
+                      </motion.div>
+                      <span className="text-white font-medium">Deploy Portfolio</span>
+                      <motion.div
+                        animate={{ x: [0, 2, 0] }}
+                        transition={{ duration: 1.5, repeat: Infinity }}
+                      >
+                        <Zap className="h-4 w-4 text-yellow-300" />
+                      </motion.div>
+                    </>
                   ) : (
-                    isPublishing ? "Publishing..." : "Publish 🚀"
-                  )}                
+                    <>
+                      <Save className="h-4 w-4 text-gray-500" />
+                      <span className="text-gray-500">No Changes</span>
+                    </>
+                  )}
                 </motion.div>
+
+                {/* Pulse effect for active state */}
+                {hasUnsavedChanges && !isPublishing && (
+                  <motion.div
+                    className="absolute inset-0 rounded-xl border border-emerald-400/50"
+                    animate={{ 
+                      scale: [1, 1.05, 1],
+                      opacity: [0.3, 0.6, 0.3]
+                    }}
+                    transition={{ 
+                      duration: 2, 
+                      repeat: Infinity,
+                      ease: "easeInOut"
+                    }}
+                  />
+                )}
+
+                {/* Shimmer effect on hover */}
+                {hasUnsavedChanges && !isPublishing && (
+                  <motion.div
+                    className="absolute inset-0 -top-2 -bottom-2 bg-gradient-to-r from-transparent via-white/10 to-transparent"
+                    initial={{ x: "-100%" }}
+                    whileHover={{ x: "100%" }}
+                    transition={{ duration: 0.6, ease: "easeInOut" }}
+                  />
+                )}
               </Button>
             </motion.div>
           </motion.div>
