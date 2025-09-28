@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
-import { PrismaClient } from "@prisma/client"
-
-const prisma = new PrismaClient()
+import { prisma } from "@/lib/prisma"
+import type { Prisma } from "@prisma/client"
 
 // Platform URL generators
 const generatePlatformUrl = (platform: string, username: string): string => {
@@ -30,7 +29,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // Ensure user exists
       const user = await tx.user.upsert({
         where: { githubId: userId.toString() },
@@ -109,7 +108,7 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     )
   } finally {
-    await prisma.$disconnect()
+    // Do not disconnect global prisma; connection is managed centrally
   }
 }
 
@@ -146,6 +145,6 @@ export async function GET(req: NextRequest) {
       { status: 500 }
     )
   } finally {
-    await prisma.$disconnect()
+    // Do not disconnect global prisma; connection is managed centrally
   }
 }

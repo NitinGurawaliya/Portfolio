@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
-import { PrismaClient } from "@prisma/client"
-
-const prisma = new PrismaClient()
+import { prisma } from "@/lib/prisma"
+import type { Prisma } from "@prisma/client"
 
 export async function POST(req: NextRequest) {
   try {
@@ -24,7 +23,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Start a transaction to ensure data consistency
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // First, ensure user exists in database
       const user = await tx.user.upsert({
         where: { githubId: userId.toString() },
@@ -104,16 +103,39 @@ export async function POST(req: NextRequest) {
 
       // Add selected repositories
       if (selectedRepos && selectedRepos.length > 0) {
-        const portfolioRepos = selectedRepos.map((repoId: number) => ({
-          portfolioId: portfolio.id,
-          repositoryId: repoId,
-          deployedUrl: deployedUrls[repoId] || null,
-          isVisible: true,
-        }))
-
-        await tx.portfolioRepository.createMany({
-          data: portfolioRepos
+        // Need to map GitHub IDs to internal DB IDs
+        const repoRecords = await tx.repository.findMany({
+          where: {
+            githubId: {
+              in: selectedRepos.map((id: number) => BigInt(id))
+            }
+          },
+          select: { id: true, githubId: true }
         })
+
+        const githubIdToDbId = new Map<string, number>(
+          repoRecords.map((r: { id: number; githubId: bigint }) => [r.githubId.toString(), r.id])
+        )
+
+        const portfolioRepos = selectedRepos
+          .map((githubId: number) => ({
+            portfolioId: portfolio.id,
+            repositoryId: githubIdToDbId.get(String(githubId)),
+            deployedUrl: deployedUrls[githubId] || null,
+            isVisible: true,
+          }))
+          .filter((pr: { repositoryId: number | undefined }) => Boolean(pr.repositoryId)) as Array<{
+            portfolioId: number
+            repositoryId: number
+            deployedUrl: string | null
+            isVisible: boolean
+          }>
+
+        if (portfolioRepos.length > 0) {
+          await tx.portfolioRepository.createMany({
+            data: portfolioRepos
+          })
+        }
       }
 
       return portfolio
@@ -132,7 +154,7 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     )
   } finally {
-    await prisma.$disconnect()
+    // Do not disconnect global prisma; connection is managed centrally
   }
 }
 

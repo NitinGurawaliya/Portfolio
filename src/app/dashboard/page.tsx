@@ -154,24 +154,75 @@ export default function DashboardPage() {
   }, [portfolioData, selectedRepos, skills, socials, deployedUrls, importedProjects, originalData])
 
   useEffect(() => {
-    // Check for session cookie
-    const sessionCookie = document.cookie
-      .split('; ')
-      .find(row => row.startsWith('github-session='))
-    
-    if (!sessionCookie) {
-      router.push("/auth")
-      return
-    }
-    
-    try {
-      const sessionData = JSON.parse(decodeURIComponent(sessionCookie.split('=')[1]))
-      setSession(sessionData)
-      fetchUserData(sessionData.user.accessToken)
-    } catch (error) {
-      console.error("Error parsing session:", error)
-      router.push("/auth")
-    }
+    // Fetch session from server (httpOnly cookie)
+    fetch("/api/session", { cache: "no-store" })
+      .then(async (res) => {
+        if (!res.ok) throw new Error("No session")
+        const data = await res.json()
+        setSession(data.session)
+        return data.session
+      })
+      .then(async () => {
+        // Fetch GitHub data via server proxy endpoints
+        const [userRes, reposRes] = await Promise.all([
+          fetch("/api/github/user", { cache: "no-store" }),
+          fetch("/api/github/repos", { cache: "no-store" }),
+        ])
+        if (!userRes.ok || !reposRes.ok) throw new Error("GitHub fetch failed")
+        const userData = await userRes.json()
+        const reposData = await reposRes.json()
+
+        const repositories = reposData.map((repo: any) => ({
+          id: repo.id,
+          name: repo.name,
+          fullName: repo.full_name,
+          description: repo.description || "",
+          htmlUrl: repo.html_url,
+          homepage: repo.homepage || "",
+          language: repo.language || "",
+          stargazersCount: repo.stargazers_count,
+          forksCount: repo.forks_count,
+          isPrivate: repo.private,
+          isFork: repo.fork,
+          size: repo.size || 0,
+          createdAt: repo.created_at,
+          updatedAt: repo.updated_at,
+          pushedAt: repo.pushed_at,
+        }))
+
+        const builtUser: User = {
+          id: userData.id,
+          name: userData.name || userData.login,
+          email: userData.email || "",
+          githubUsername: userData.login,
+          avatarUrl: userData.avatar_url,
+          bio: userData.bio || "",
+          location: userData.location || "",
+          websiteUrl: userData.blog || "",
+          twitterUsername: userData.twitter_username || "",
+          company: userData.company || "",
+          publicRepos: userData.public_repos,
+          followers: userData.followers,
+          following: userData.following,
+          repositories,
+        }
+
+        setUser(builtUser)
+
+        setPortfolioData({
+          displayName: userData.name || userData.login,
+          jobTitle: "",
+          bio: userData.bio || "",
+          profilePic: userData.avatar_url,
+          customUsername: userData.login,
+        })
+
+        await loadExistingPortfolioData(userData.login)
+      })
+      .catch(() => {
+        router.push("/auth")
+      })
+      .finally(() => setLoading(false))
   }, [router])
 
   const loadExistingPortfolioData = async (username: string) => {
@@ -563,12 +614,6 @@ export default function DashboardPage() {
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">
           <p className="text-white mb-4">No user data found</p>
-          <button
-            onClick={() => fetchUserData(session?.user?.accessToken)}
-            className="px-4 py-2 bg-white text-black rounded hover:bg-gray-200"
-          >
-            Refresh Data
-          </button>
         </div>
       </div>
     )

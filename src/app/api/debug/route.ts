@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { PrismaClient } from "@prisma/client"
-
-const prisma = new PrismaClient()
+import { prisma } from "@/lib/prisma"
 
 export async function GET(req: NextRequest) {
   try {
@@ -56,13 +54,13 @@ export async function GET(req: NextRequest) {
       prismaVersion: "5.x",
       userCount,
       portfolioCount: portfolios.length,
-      users: users.map(u => ({
+      users: users.map((u: any) => ({
         id: u.id,
         name: u.name,
         githubUsername: u.githubUsername,
         hasPortfolio: !!u.portfolio
       })),
-      portfolios: portfolios.map(p => ({
+      portfolios: portfolios.map((p: any) => ({
         id: p.id,
         displayName: p.displayName,
         isPublished: p.isPublished,
@@ -84,6 +82,6 @@ export async function GET(req: NextRequest) {
       { status: 500 }
     )
   } finally {
-    await prisma.$disconnect()
+    // Do not disconnect global prisma; connection is managed centrally
   }
 }
