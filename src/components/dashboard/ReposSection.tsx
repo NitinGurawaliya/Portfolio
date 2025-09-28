@@ -238,12 +238,6 @@ export function ReposSection({
       const newDeployedUrls = { ...deployedUrls, [projectData.id]: projectUrl.trim() }
       setDeployedUrls(newDeployedUrls)
       
-      // Add the imported project to the parent state
-      if (onAddImportedProject) {
-        onAddImportedProject(projectData)
-      }
-      onToggleRepo(projectData.id)
-      
       // Clear the input
       setProjectUrl("")
       

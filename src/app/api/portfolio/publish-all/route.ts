@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
-import { PrismaClient } from "@prisma/client"
-
-const prisma = new PrismaClient()
+import { prisma } from "@/lib/prisma"
+import type { Prisma } from "@prisma/client"
 
 export async function POST(req: NextRequest) {
   try {
@@ -150,7 +149,7 @@ export async function POST(req: NextRequest) {
 
     // Now do the fast portfolio operations in a transaction with extended timeout
     console.log("🔄 Starting database transaction...")
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
 
       // Upsert portfolio (create or update) - ALL data at once
       console.log("💾 Creating/updating portfolio...")
@@ -224,7 +223,7 @@ export async function POST(req: NextRequest) {
           }
         })
 
-        const portfolioRepos = repoRecords.map((repo) => ({
+        const portfolioRepos = repoRecords.map((repo: { id: number; githubId: bigint }) => ({
           portfolioId: portfolio.id,
           repositoryId: repo.id,
           deployedUrl: deployedUrls[repo.githubId.toString()] || null,
@@ -265,6 +264,6 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     )
   } finally {
-    await prisma.$disconnect()
+    // Do not disconnect global prisma; connection is managed centrally
   }
 }
