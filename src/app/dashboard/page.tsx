@@ -96,9 +96,17 @@ export default function DashboardPage() {
     if (!user) return null
 
     const allRepos: Repository[] = [...(user?.repositories || []), ...importedProjects]
-    const selected: Repository[] = selectedRepos
-      .map(id => allRepos.find(r => r.id === id))
-      .filter((r): r is Repository => Boolean(r))
+    const selected: Repository[] = [
+      // Include selected GitHub repos
+      ...selectedRepos
+        .map(id => allRepos.find(r => r.id === id))
+        .filter((r): r is Repository => Boolean(r)),
+      // Include all imported projects (they are automatically selected)
+      ...importedProjects
+    ].filter((repo, index, self) => 
+      // Remove duplicates based on repo.id
+      index === self.findIndex(r => r.id === repo.id)
+    )
 
     const repositories = selected.map(repo => ({
       id: repo.id,
@@ -524,6 +532,8 @@ export default function DashboardPage() {
 
   const handleAddImportedProject = (project: Repository) => {
     setImportedProjects(prev => [...prev, project])
+    // Also add to selectedRepos so it appears in the UI
+    setSelectedRepos(prev => [...prev, project.id])
   }
 
   const handleAddSocial = (social: Omit<Social, 'id'>) => {
