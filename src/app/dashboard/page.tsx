@@ -1,6 +1,7 @@
 "use client"
 
 import { useRouter } from "next/navigation"
+import { devLog } from "@/lib/logger"
 import { useEffect, useMemo, useState } from "react"
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout"
 import { HomeSection } from "@/components/dashboard/HomeSection"
@@ -263,17 +264,17 @@ export default function DashboardPage() {
           
           // Set deployed URLs first
           if (portfolio.repositories && portfolio.repositories.length > 0) {
-            console.log("Portfolio repositories from DB:", portfolio.repositories)
+            devLog("Portfolio repositories from DB:", portfolio.repositories)
             
             const urls: Record<number, string> = {}
             portfolio.repositories.forEach((repo: any) => {
               const githubId = parseInt(repo.repository.githubId)
-              console.log("Processing repo for deployed URL:", repo.repository.name, "GitHub ID:", githubId, "Deployed URL:", repo.deployedUrl)
+              devLog("Processing repo for deployed URL:", repo.repository.name, "GitHub ID:", githubId, "Deployed URL:", repo.deployedUrl)
               if (repo.deployedUrl) {
                 urls[githubId] = repo.deployedUrl
               }
             })
-            console.log("Final deployed URLs object:", urls)
+            devLog("Final deployed URLs object:", urls)
             setDeployedUrls(urls)
             
             // Set imported projects (URL-imported repositories)
@@ -297,31 +298,31 @@ export default function DashboardPage() {
                 pushedAt: repo.repository.pushedAt || repo.repository.updatedAt,
                 isImported: true
               }))
-            console.log("Setting imported projects:", importedProjects)
+            devLog("Setting imported projects:", importedProjects)
             setImportedProjects(importedProjects)
             
             // Set selected repos - keep the original logic but ensure imported projects are included
             const githubIds = portfolio.repositories.map((repo: any) => {
               const githubId = parseInt(repo.repository.githubId)
-              console.log("Mapping repo:", repo.repository.name, "GitHub ID:", githubId, "Type:", typeof githubId)
+              devLog("Mapping repo:", repo.repository.name, "GitHub ID:", githubId, "Type:", typeof githubId)
               return githubId
             })
-            console.log("Setting selected repos to:", githubIds)
+            devLog("Setting selected repos to:", githubIds)
             setSelectedRepos(githubIds)
           }
           
           // Set skills
           if (portfolio.skills && portfolio.skills.length > 0) {
-            console.log("Loading skills from portfolio:", portfolio.skills)
+            devLog("Loading skills from portfolio:", portfolio.skills)
             const formattedSkills = portfolio.skills.map((skill: any) => ({
               id: skill.id.toString(),
               name: skill.name,
               category: skill.category
             }))
-            console.log("Formatted skills:", formattedSkills)
+            devLog("Formatted skills:", formattedSkills)
             setSkills(formattedSkills)
           } else {
-            console.log("No skills found in portfolio data")
+            devLog("No skills found in portfolio data")
           }
 
           // Set original data for change tracking after loading
@@ -405,7 +406,7 @@ export default function DashboardPage() {
           pushedAt: repo.pushed_at,
         }))
         
-        console.log("GitHub repositories fetched:", repositories.map((r:any) => ({ id: r.id, name: r.name, type: typeof r.id })))
+          devLog("GitHub repositories fetched:", repositories.map((r:any) => ({ id: r.id, name: r.name, type: typeof r.id })))
         
         const user: User = {
           id: userData.id,
@@ -436,14 +437,14 @@ export default function DashboardPage() {
         })
 
         // Load existing portfolio data from database
-        console.log("About to load existing portfolio data for:", userData.login)
+        devLog("About to load existing portfolio data for:", userData.login)
         await loadExistingPortfolioData(userData.login)
         
         // Add a small delay to ensure state updates
         setTimeout(() => {
-          console.log("After loading portfolio data - Skills:", skills.length, "Selected repos:", selectedRepos.length)
-          console.log("Current skills state:", skills)
-          console.log("Current selectedRepos state:", selectedRepos)
+          devLog("After loading portfolio data - Skills:", skills.length, "Selected repos:", selectedRepos.length)
+          devLog("Current skills state:", skills)
+          devLog("Current selectedRepos state:", selectedRepos)
         }, 100)
       }
     } catch (error) {

@@ -1,18 +1,19 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
+import { devLog } from "@/lib/logger"
 
 export async function GET(req: NextRequest) {
   try {
-    console.log("🔍 Debug endpoint called...")
+    devLog("🔍 Debug endpoint called...")
     
     // Test database connection
-    console.log("🔌 Testing database connection...")
+    devLog("🔌 Testing database connection...")
     await prisma.$connect()
-    console.log("✅ Database connected successfully")
+    devLog("✅ Database connected successfully")
     
     // Test simple query
     const userCount = await prisma.user.count()
-    console.log("👥 User count:", userCount)
+    devLog("👥 User count:", userCount)
     
     // Get all users (limited for performance)
     const users = await prisma.user.findMany({

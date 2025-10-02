@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { devLog } from "@/lib/logger"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -96,14 +97,14 @@ export function ReposSection({
   const selectedRepositories = repositories.filter(repo => selectedRepos.includes(repo.id))
 
   useEffect(() => {
-    console.log("ReposSection - Selected repos:", selectedRepos)
-    console.log("ReposSection - Deployed URLs:", deployedUrls)
-    console.log("ReposSection - Selected repositories:", selectedRepositories.map(r => ({ id: r.id, name: r.name })))
+    devLog("ReposSection - Selected repos:", selectedRepos)
+    devLog("ReposSection - Deployed URLs:", deployedUrls)
+    devLog("ReposSection - Selected repositories:", selectedRepositories.map(r => ({ id: r.id, name: r.name })))
   }, [selectedRepos, deployedUrls, selectedRepositories])
 
   useEffect(() => {
     if (initialDeployedUrls) {
-      console.log("Syncing deployed URLs from props:", initialDeployedUrls)
+      devLog("Syncing deployed URLs from props:", initialDeployedUrls)
       setDeployedUrls(initialDeployedUrls)
     }
   }, [initialDeployedUrls])
