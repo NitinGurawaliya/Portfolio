@@ -1,30 +1,25 @@
-"use client"
+import { Header } from "@/components/landing/header"
+import { HeroSection } from "@/components/landing/hero-section"
+// import { FeaturesSection } from "@/components/landing/features-section"
+// import { DemoSection } from "@/components/landing/demo-section"
+// import { CalloutSection } from "@/components/landing/callout-section"
+// import { SocialProofSection } from "@/components/landing/social-proof-section"
+// import { CTASection } from "@/components/landing/cta-section"
+// import { Footer } from "@/components/landing/footer"
 
-import { useRouter } from "next/navigation"
-import { useEffect } from "react"
-
-export default function Home() {
-  const router = useRouter()
-
-  useEffect(() => {
-    // Check for session cookie
-    const sessionCookie = document.cookie
-      .split('; ')
-      .find(row => row.startsWith('github-session='))
-    
-    if (sessionCookie) {
-      router.push("/dashboard")
-    } else {
-      router.push("/auth")
-    }
-  }, [router])
-
+export default function HomePage() {
   return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto"></div>
-        <p className="mt-4 text-white">Loading...</p>
-      </div>
+    <div className="min-h-screen bg-background">
+      <Header />
+      <main>
+        <HeroSection />
+        {/* <FeaturesSection />
+        <DemoSection />
+        <CalloutSection />
+        <SocialProofSection />
+        <CTASection /> */}
+      </main>
+      {/* <Footer /> */}
     </div>
   )
 }

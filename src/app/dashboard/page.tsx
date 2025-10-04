@@ -79,18 +79,23 @@ export default function DashboardPage() {
   const [socials, setSocials] = useState<Social[]>([])
   const [deployedUrls, setDeployedUrls] = useState<Record<number, string>>({})
   const [importedProjects, setImportedProjects] = useState<Repository[]>([])
+  const [customNames, setCustomNames] = useState<Record<number, string>>({})
+  const [customDescriptions, setCustomDescriptions] = useState<Record<number, string>>({})
 
   // Change tracking state
-  const [originalData, setOriginalData] = useState({
-    portfolioData: {},
-    selectedRepos: [] as number[],
-    skills: [] as Skill[],
-    socials: [] as Social[],
-    deployedUrls: {} as Record<number, string>,
-    importedProjects: [] as Repository[]
-  })
+  const [originalData, setOriginalData] = useState<{
+    portfolioData: any
+    selectedRepos: number[]
+    skills: Skill[]
+    socials: Social[]
+    deployedUrls: Record<number, string>
+    customNames: Record<number, string>
+    customDescriptions: Record<number, string>
+    importedProjects: Repository[]
+  } | null>(null)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const [isPublishing, setIsPublishing] = useState(false)
+  const [isInitialLoad, setIsInitialLoad] = useState(true)
 
   // Build live portfolio data for preview (unsaved changes reflected)
   const livePortfolio = useMemo(() => {
@@ -149,18 +154,44 @@ export default function DashboardPage() {
 
   // Track changes to enable/disable publish button
   useEffect(() => {
-    const currentData = {
+    console.log("🔍 Change tracking effect triggered:", {
+      isInitialLoad,
+      hasOriginalData: !!originalData,
       portfolioData,
-      selectedRepos,
-      skills,
-      socials,
-      deployedUrls,
-      importedProjects
+      selectedRepos: selectedRepos.length,
+      skills: skills.length,
+      socials: socials.length,
+      deployedUrls: Object.keys(deployedUrls).length,
+      importedProjects: importedProjects.length
+    })
+    
+    // Don't track changes during initial load
+    if (isInitialLoad || !originalData) {
+      console.log("⏸️ Skipping change tracking - initial load or no original data")
+      return
     }
     
+        const currentData = {
+          portfolioData,
+          selectedRepos,
+          skills,
+          socials,
+          deployedUrls,
+          customNames,
+          customDescriptions,
+          importedProjects
+        }
+    
     const hasChanges = JSON.stringify(currentData) !== JSON.stringify(originalData)
+    console.log("📊 Change detection:", { 
+      hasChanges, 
+      currentDataString: JSON.stringify(currentData), 
+      originalDataString: JSON.stringify(originalData),
+      currentData,
+      originalData
+    })
     setHasUnsavedChanges(hasChanges)
-  }, [portfolioData, selectedRepos, skills, socials, deployedUrls, importedProjects, originalData])
+  }, [portfolioData, selectedRepos, skills, socials, deployedUrls, customNames, customDescriptions, importedProjects, originalData, isInitialLoad])
 
   useEffect(() => {
     // Fetch session from server (httpOnly cookie)
@@ -327,7 +358,7 @@ export default function DashboardPage() {
 
           // Set original data for change tracking after loading
           setTimeout(() => {
-            setOriginalData({
+            const originalDataToSet = {
               portfolioData: {
                 displayName: portfolio.displayName || "",
                 jobTitle: portfolio.jobTitle || "",
@@ -358,13 +389,105 @@ export default function DashboardPage() {
                 })
                 return urls
               })() : {},
-              importedProjects: importedProjects
-            })
-          }, 100)
+              customNames: portfolio.repositories ? (() => {
+                const names: Record<number, string> = {}
+                portfolio.repositories.forEach((repo: any) => {
+                  const githubId = parseInt(repo.repository.githubId)
+                  if (repo.customName) {
+                    names[githubId] = repo.customName
+                  }
+                })
+                return names
+              })() : {},
+              customDescriptions: portfolio.repositories ? (() => {
+                const descriptions: Record<number, string> = {}
+                portfolio.repositories.forEach((repo: any) => {
+                  const githubId = parseInt(repo.repository.githubId)
+                  if (repo.customDescription) {
+                    descriptions[githubId] = repo.customDescription
+                  }
+                })
+                return descriptions
+              })() : {},
+              importedProjects: portfolio.repositories ? portfolio.repositories
+                .filter((repo: any) => repo.repository.isImported)
+                .map((repo: any) => ({
+                  id: parseInt(repo.repository.githubId),
+                  name: repo.repository.name,
+                  fullName: repo.repository.fullName || repo.repository.name,
+                  description: repo.repository.description || "",
+                  htmlUrl: repo.repository.htmlUrl,
+                  homepage: repo.deployedUrl || "",
+                  language: repo.repository.language || "Web Project",
+                  stargazersCount: repo.repository.stargazersCount || 0,
+                  forksCount: repo.repository.forksCount || 0,
+                  isPrivate: repo.repository.isPrivate || false,
+                  isFork: repo.repository.isFork || false,
+                  size: repo.repository.size || 0,
+                  createdAt: repo.repository.createdAt,
+                  updatedAt: repo.repository.updatedAt,
+                  pushedAt: repo.repository.pushedAt || repo.repository.updatedAt,
+                  isImported: true
+                })) : []
+            }
+            
+            console.log("💾 Setting original data from existing portfolio:", originalDataToSet)
+            setOriginalData(originalDataToSet)
+            setIsInitialLoad(false)
+            console.log("✅ Initial load completed, change tracking enabled")
+          }, 200) // Increased timeout to ensure all state updates are complete
+        } else {
+          // No existing portfolio data, set initial data and mark as loaded
+          console.log("📝 No existing portfolio data found, setting initial data")
+          setTimeout(() => {
+            const initialData = {
+              portfolioData: {
+                displayName: user?.name || "",
+                jobTitle: "",
+                bio: user?.bio || "",
+                profilePic: user?.avatarUrl || "",
+                customUsername: user?.githubUsername || "",
+              },
+              selectedRepos: [],
+              skills: [],
+              socials: [],
+              deployedUrls: {},
+              customNames: {},
+              customDescriptions: {},
+              importedProjects: []
+            }
+            console.log("💾 Setting initial data (no existing portfolio):", initialData)
+            setOriginalData(initialData)
+            setIsInitialLoad(false)
+            console.log("✅ Initial load completed (no existing data), change tracking enabled")
+          }, 200)
         }
       }
     } catch (error) {
-      console.error("Error loading existing portfolio data:", error)
+      console.error("❌ Error loading existing portfolio data:", error)
+      // Even if there's an error, mark as loaded to prevent infinite loading
+      setTimeout(() => {
+        const fallbackData = {
+          portfolioData: {
+            displayName: user?.name || "",
+            jobTitle: "",
+            bio: user?.bio || "",
+            profilePic: user?.avatarUrl || "",
+            customUsername: user?.githubUsername || "",
+          },
+          selectedRepos: [],
+          skills: [],
+          socials: [],
+          deployedUrls: {},
+          customNames: {},
+          customDescriptions: {},
+          importedProjects: []
+        }
+        console.log("💾 Setting fallback data due to error:", fallbackData)
+        setOriginalData(fallbackData)
+        setIsInitialLoad(false)
+        console.log("✅ Initial load completed (error fallback), change tracking enabled")
+      }, 200)
     }
   }
 
@@ -486,9 +609,12 @@ export default function DashboardPage() {
           skills,
           socials,
           deployedUrls,
+          customNames,
+          customDescriptions,
           importedProjects
         })
         setHasUnsavedChanges(false)
+        setIsInitialLoad(false)
         
         // Show success message
         alert("🎉 Portfolio published successfully! All changes have been saved and are now live.")
@@ -517,6 +643,20 @@ export default function DashboardPage() {
 
   const handleUpdateDeployedUrl = (repoId: number, url: string) => {
     setDeployedUrls(prev => ({ ...prev, [repoId]: url }))
+  }
+
+  const handleUpdateCustomName = (repoId: number, name: string) => {
+    setCustomNames(prev => ({
+      ...prev,
+      [repoId]: name
+    }))
+  }
+
+  const handleUpdateCustomDescription = (repoId: number, description: string) => {
+    setCustomDescriptions(prev => ({
+      ...prev,
+      [repoId]: description
+    }))
   }
 
   const handleAddSkill = (skill: Omit<Skill, 'id'>) => {
@@ -581,8 +721,12 @@ export default function DashboardPage() {
             repositories={[...(user?.repositories || []), ...importedProjects]}
             selectedRepos={selectedRepos}
             deployedUrls={deployedUrls}
+            customNames={customNames}
+            customDescriptions={customDescriptions}
             onToggleRepo={handleToggleRepo}
             onUpdateDeployedUrl={handleUpdateDeployedUrl}
+            onUpdateCustomName={handleUpdateCustomName}
+            onUpdateCustomDescription={handleUpdateCustomDescription}
             onAddImportedProject={handleAddImportedProject}
           />
         )

@@ -568,9 +568,9 @@ export default function PublicPortfolioPage() {
                 ❤️
               </motion.span>
               {" "}using{" "}
-              <span className="text-white font-bold">
-                Name
-              </span>
+              <a href="http://localhost:3000" className="text-white font-bold">
+                Portfolio
+              </a>
             </motion.p>
           </div>
         </div>

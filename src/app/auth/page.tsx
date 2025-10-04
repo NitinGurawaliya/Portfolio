@@ -1,31 +1,41 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Github } from "lucide-react"
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Github } from "lucide-react";
 
 export default function AuthPage() {
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
+
+  // 🔹 Check for existing session on page load
+  useEffect(() => {
+    const sessionCookie = document.cookie
+      .split("; ")
+      .find(row => row.startsWith("github-session="));
+
+    if (sessionCookie) {
+      router.push("/dashboard");
+    }
+  }, [router]);
 
   const handleGitHubSignIn = async () => {
-    setLoading(true)
+    setLoading(true);
     try {
       // Redirect to our custom GitHub OAuth endpoint
-      window.location.href = "/api/auth/github"
+      window.location.href = "/api/auth/github";
     } catch (error) {
-      console.error("Sign in error:", error)
-    } finally {
-      setLoading(false)
+      console.error("Sign in error:", error);
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-white flex items-center justify-center px-4">
       <div className="max-w-md w-full">
         {/* Brand Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-black mb-2">
-            Portfolio
-          </h1>
+          <h1 className="text-3xl font-bold text-black mb-2">Portfolio</h1>
           <p className="text-gray-600 text-base">
             Build your professional presence
           </p>
@@ -37,15 +47,15 @@ export default function AuthPage() {
             <div className="mx-auto w-12 h-12 bg-gray-800 rounded-lg flex items-center justify-center mb-6">
               <Github className="h-6 w-6 text-white" />
             </div>
-            
+
             <h2 className="text-xl font-semibold text-white mb-2">
               Connect with GitHub
             </h2>
-            
+
             <p className="text-sm text-gray-400 mb-8">
               We'll fetch your profile and repositories to build your portfolio
             </p>
-            
+
             <button
               onClick={handleGitHubSignIn}
               disabled={loading}
@@ -65,7 +75,7 @@ export default function AuthPage() {
             </button>
           </div>
         </div>
-        
+
         {/* Footer */}
         <div className="text-center mt-6">
           <p className="text-xs text-gray-500">
@@ -74,5 +84,5 @@ export default function AuthPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

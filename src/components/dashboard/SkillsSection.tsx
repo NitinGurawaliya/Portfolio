@@ -224,7 +224,8 @@ export function SkillsSection({ skills, onAddSkill, onRemoveSkill }: SkillsSecti
     if (!addedSkillNames.has(skillData.name.toLowerCase())) {
       onAddSkill(skillData)
       setSearchTerm("")
-      setIsDropdownOpen(false)
+      // Keep dropdown open for multiple selections
+      // setIsDropdownOpen(false)
     }
   }
 
@@ -392,7 +393,7 @@ export function SkillsSection({ skills, onAddSkill, onRemoveSkill }: SkillsSecti
               </CardHeader>
               <CardContent className="pt-2">
               <div 
-                className="grid grid-cols-8 sm:grid-cols-10 md:grid-cols-12 lg:grid-cols-14 gap-3"
+                className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-3"
                 onMouseMove={handleMouseMove}
               >
                 {skills.map((skill, index) => {
@@ -408,21 +409,21 @@ export function SkillsSection({ skills, onAddSkill, onRemoveSkill }: SkillsSecti
                       className="relative group"
                     >
                       <div 
-                        className="relative h-10 w-10 bg-gray-50  rounded-lg flex items-center justify-center  hover:bg-white hover:shadow-md transition-all duration-200"
+                        className="relative h-14 w-14 bg-gray-50 rounded-lg flex items-center justify-center hover:bg-white hover:shadow-md transition-all duration-200"
                         onMouseEnter={() => setHoveredSkill(skill.name)}
                         onMouseLeave={() => setHoveredSkill(null)}
                       >
                         <IconComponent 
-                          className="w-5 h-5" 
+                          className="w-7 h-7" 
                           style={{ color: skillData?.color || '#000000' }}
                         />
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => onRemoveSkill(skill.id)}
-                          className="absolute -top-1 -right-1 h-4 w-4 p-0 bg-red-500 hover:bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                          className="absolute -top-2 -right-2 h-6 w-6 p-0 bg-red-500 hover:bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10"
                       >
-                        <X className="h-2.5 w-2.5" />
+                        <X className="h-4 w-4" />
                       </Button>
                 </div>
                     </motion.div>
@@ -468,10 +469,10 @@ export function SkillsSection({ skills, onAddSkill, onRemoveSkill }: SkillsSecti
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
             transition={{ duration: 0.15 }}
-            className="fixed bg-black text-white px-3 py-2 rounded-lg text-sm font-medium pointer-events-none z-[9999] "
+            className="fixed bg-black text-white px-3 py-2 rounded-lg text-sm font-medium pointer-events-none z-[9998] "
             style={{
-              left: mousePosition.x + 15,
-              top: mousePosition.y - 35,
+              left: mousePosition.x + 20,
+              top: mousePosition.y - 50,
               transform: 'translateZ(0)', // Force hardware acceleration
             }}
           >

@@ -64,8 +64,12 @@ interface ReposSectionProps {
   repositories: Repository[]
   selectedRepos: number[]
   deployedUrls: Record<number, string>
+  customNames: Record<number, string>
+  customDescriptions: Record<number, string>
   onToggleRepo: (repoId: number) => void
   onUpdateDeployedUrl: (repoId: number, url: string) => void
+  onUpdateCustomName: (repoId: number, name: string) => void
+  onUpdateCustomDescription: (repoId: number, description: string) => void
   onAddImportedProject?: (project: Repository) => void
 }
 
@@ -73,16 +77,20 @@ export function ReposSection({
   repositories, 
   selectedRepos,
   deployedUrls: initialDeployedUrls,
+  customNames: initialCustomNames,
+  customDescriptions: initialCustomDescriptions,
   onToggleRepo,
   onUpdateDeployedUrl,
+  onUpdateCustomName,
+  onUpdateCustomDescription,
   onAddImportedProject
 }: ReposSectionProps) {
   const [searchTerm, setSearchTerm] = useState("")
   const [deployedUrls, setDeployedUrls] = useState<Record<number, string>>(initialDeployedUrls || {})
   const [editingRepo, setEditingRepo] = useState<number | null>(null)
   const [editingField, setEditingField] = useState<string | null>(null)
-  const [customNames, setCustomNames] = useState<Record<number, string>>({})
-  const [customDescriptions, setCustomDescriptions] = useState<Record<number, string>>({})
+  const [customNames, setCustomNames] = useState<Record<number, string>>(initialCustomNames || {})
+  const [customDescriptions, setCustomDescriptions] = useState<Record<number, string>>(initialCustomDescriptions || {})
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [projectUrl, setProjectUrl] = useState("")
   const [isImportingUrl, setIsImportingUrl] = useState(false)
@@ -108,6 +116,20 @@ export function ReposSection({
       setDeployedUrls(initialDeployedUrls)
     }
   }, [initialDeployedUrls])
+
+  useEffect(() => {
+    if (initialCustomNames) {
+      devLog("Syncing custom names from props:", initialCustomNames)
+      setCustomNames(initialCustomNames)
+    }
+  }, [initialCustomNames])
+
+  useEffect(() => {
+    if (initialCustomDescriptions) {
+      devLog("Syncing custom descriptions from props:", initialCustomDescriptions)
+      setCustomDescriptions(initialCustomDescriptions)
+    }
+  }, [initialCustomDescriptions])
 
   const handleDeployedUrlChange = (repoId: number, url: string) => {
     setDeployedUrls(prev => ({
@@ -199,8 +221,10 @@ export function ReposSection({
     // Update local state immediately
     if (field === 'name') {
       setCustomNames(prev => ({ ...prev, [repoId]: value }))
+      onUpdateCustomName(repoId, value)
     } else if (field === 'description') {
       setCustomDescriptions(prev => ({ ...prev, [repoId]: value }))
+      onUpdateCustomDescription(repoId, value)
     } else if (field === 'deployedUrl') {
       setDeployedUrls(prev => ({
         ...prev,

@@ -319,7 +319,7 @@ export function DashboardLayout({
                 : previewMode === "tablet"
                 ? "w-[420px]"
                 : "w-full max-w-[1200px]"
-            } h-full bg-gray-50 overflow-hidden rounded-xl shadow-lg border border-gray-200`}>
+            } h-full overflow-hidden rounded-xl shadow-lg border border-gray-200`}>
               <PortfolioPreview 
                 username={user?.githubUsername} 
                 previewMode={previewMode}

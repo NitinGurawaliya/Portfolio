@@ -74,6 +74,10 @@ model Portfolio {
   profilePic  String?
   customUsername String?
   
+  // Theme Configuration
+  selectedTheme String   @default("modern-dark") // Theme identifier
+  themeConfig   Json?    // Custom theme overrides (colors, fonts, etc.)
+  
   // Skills
   skills      Skill[]
   
