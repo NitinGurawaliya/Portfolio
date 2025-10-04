@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
+import { devLog } from "@/lib/logger"
 import type { Prisma } from "@prisma/client"
 
 export async function POST(req: NextRequest) {
@@ -25,11 +26,14 @@ export async function POST(req: NextRequest) {
     // Start a transaction to ensure data consistency
     const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // First, ensure user exists in database
+      const userEmail = userData?.email && userData.email.trim()
+        ? userData.email.trim()
+        : `github-${userId}@placeholder.com`
       const user = await tx.user.upsert({
         where: { githubId: userId.toString() },
         update: {
           name: userData?.name || "",
-          email: userData?.email || "",
+          email: userEmail,
           githubUsername: userData?.githubUsername || "",
           avatarUrl: userData?.avatarUrl || "",
           bio: userData?.bio || "",
@@ -44,7 +48,7 @@ export async function POST(req: NextRequest) {
         create: {
           githubId: userId.toString(),
           name: userData?.name || "",
-          email: userData?.email || "",
+          email: userEmail,
           githubUsername: userData?.githubUsername || "",
           avatarUrl: userData?.avatarUrl || "",
           bio: userData?.bio || "",
@@ -216,8 +220,8 @@ export async function GET(req: NextRequest) {
       }
     })
 
-    console.log("Searching for portfolio with:", whereClause)
-    console.log("Found portfolio:", JSON.stringify(portfolio, (key, value) =>
+    devLog("Searching for portfolio with:", whereClause)
+    devLog("Found portfolio:", JSON.stringify(portfolio, (key, value) =>
       typeof value === 'bigint' ? value.toString() : value
     , 2))
 
@@ -245,6 +249,6 @@ export async function GET(req: NextRequest) {
       { status: 500 }
     )
   } finally {
-    await prisma.$disconnect()
+    // Connection is managed by a shared Prisma client; do not disconnect here
   }
 }

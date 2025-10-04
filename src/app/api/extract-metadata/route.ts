@@ -22,12 +22,16 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Fetch the webpage
+    // Fetch the webpage with a timeout to avoid hanging requests
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 10000)
     const response = await fetch(url, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-      }
+      },
+      signal: controller.signal
     })
+    clearTimeout(timeout)
 
     if (!response.ok) {
       return NextResponse.json(

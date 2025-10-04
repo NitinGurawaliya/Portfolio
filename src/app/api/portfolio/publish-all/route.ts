@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
+import { devLog } from "@/lib/logger"
 import type { Prisma } from "@prisma/client"
 
 export async function POST(req: NextRequest) {
   try {
-    console.log("🚀 Starting publish-all request...")
+    devLog("🚀 Starting publish-all request...")
     
     const body = await req.json()
-    console.log("📦 Request body received:", JSON.stringify(body, null, 2))
+    devLog("📦 Request body received:", JSON.stringify(body, null, 2))
     
     const { 
       portfolioData, 
@@ -20,8 +21,8 @@ export async function POST(req: NextRequest) {
       userData 
     } = body
 
-    console.log("👤 User ID:", userId)
-    console.log("📊 Portfolio data:", portfolioData)
+    devLog("👤 User ID:", userId)
+    devLog("📊 Portfolio data:", portfolioData)
 
     // Validate required fields
     if (!userId) {
@@ -33,14 +34,14 @@ export async function POST(req: NextRequest) {
     }
 
     // First, ensure user exists (outside transaction for speed)
-    console.log("👤 Creating/updating user with GitHub ID:", userId.toString())
+    devLog("👤 Creating/updating user with GitHub ID:", userId.toString())
     
     // Handle empty email to avoid unique constraint issues
     const userEmail = userData?.email && userData.email.trim() 
       ? userData.email.trim() 
       : `github-${userId}@placeholder.com`
     
-    console.log("📧 Using email:", userEmail)
+    devLog("📧 Using email:", userEmail)
     
     const user = await prisma.user.upsert({
       where: { githubId: userId.toString() },
@@ -81,7 +82,7 @@ export async function POST(req: NextRequest) {
       const selectedRepositories = repositories.filter((repo: any) => selectedRepos.includes(repo.id))
       
       if (selectedRepositories.length > 0) {
-        console.log(`Processing ${selectedRepositories.length} selected repositories...`)
+        devLog(`Processing ${selectedRepositories.length} selected repositories...`)
         
         // Process repositories in smaller batches to avoid timeout
         const batchSize = 10
@@ -143,16 +144,16 @@ export async function POST(req: NextRequest) {
             }
           }))
         }
-        console.log('Selected repositories processing completed')
+        devLog('Selected repositories processing completed')
       }
     }
 
     // Now do the fast portfolio operations in a transaction with extended timeout
-    console.log("🔄 Starting database transaction...")
+    devLog("🔄 Starting database transaction...")
     const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
 
       // Upsert portfolio (create or update) - ALL data at once
-      console.log("💾 Creating/updating portfolio...")
+      devLog("💾 Creating/updating portfolio...")
       const portfolio = await tx.portfolio.upsert({
         where: { userId: user.id },
         update: {

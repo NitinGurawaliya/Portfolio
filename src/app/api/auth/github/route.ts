@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { randomBytes } from "crypto"
+import { devLog } from "@/lib/logger"
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
@@ -85,7 +86,7 @@ export async function GET(req: NextRequest) {
     }
     
     // Create a simple session cookie
-    console.log("Setting session cookie for user:", userData.login)
+    devLog("Setting session cookie for user:", userData.login)
     
     // Get the current request URL to determine the correct base URL
     const requestUrl = new URL(req.url)
@@ -101,7 +102,7 @@ export async function GET(req: NextRequest) {
       maxAge: 24 * 60 * 60, // 24 hours
     })
     
-    console.log("Redirecting to dashboard at:", `${baseUrl}/dashboard`)
+    devLog("Redirecting to dashboard at:", `${baseUrl}/dashboard`)
     return response
     
   } catch (error) {
