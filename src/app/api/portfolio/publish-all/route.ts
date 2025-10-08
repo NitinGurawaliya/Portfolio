@@ -16,6 +16,9 @@ export async function POST(req: NextRequest) {
       skills, 
       socials,
       deployedUrls,
+      customNames,
+      customDescriptions,
+      githubUrls,
       repositories,
       userId,
       userData 
@@ -91,14 +94,20 @@ export async function POST(req: NextRequest) {
           
           await Promise.all(batch.map(async (repo: any) => {
             try {
+              // Get custom name, description, and GitHub URL for this repo
+              const customName = customNames?.[repo.id] || repo.name
+              const customDescription = customDescriptions?.[repo.id] || repo.description || ""
+              const githubUrl = githubUrls?.[repo.id] || repo.htmlUrl
+              
               await prisma.repository.upsert({
                 where: { githubId: BigInt(repo.id) },
                 update: {
-                  name: repo.name,
+                  name: customName,
                   fullName: repo.fullName,
-                  description: repo.description || "",
+                  description: customDescription,
                   htmlUrl: repo.htmlUrl,
                   cloneUrl: repo.cloneUrl || repo.htmlUrl,
+                  githubUrl: githubUrl,
                   language: repo.language || "",
                   stargazersCount: repo.stargazersCount || 0,
                   forksCount: repo.forksCount || 0,
@@ -111,16 +120,17 @@ export async function POST(req: NextRequest) {
                   keywords: repo.keywords || null,
                   author: repo.author || null,
                   createdAt: new Date(repo.createdAt),
-                  updatedAt: new Date(repo.updatedAt),
+                  updatedAt: new Date(),
                   pushedAt: repo.pushedAt ? new Date(repo.pushedAt) : null,
                 },
                 create: {
                   githubId: BigInt(repo.id),
-                  name: repo.name,
+                  name: customName,
                   fullName: repo.fullName,
-                  description: repo.description || "",
+                  description: customDescription,
                   htmlUrl: repo.htmlUrl,
                   cloneUrl: repo.cloneUrl || repo.htmlUrl,
+                  githubUrl: githubUrl,
                   language: repo.language || "",
                   stargazersCount: repo.stargazersCount || 0,
                   forksCount: repo.forksCount || 0,
@@ -133,7 +143,7 @@ export async function POST(req: NextRequest) {
                   keywords: repo.keywords || null,
                   author: repo.author || null,
                   createdAt: new Date(repo.createdAt),
-                  updatedAt: new Date(repo.updatedAt),
+                  updatedAt: new Date(),
                   pushedAt: repo.pushedAt ? new Date(repo.pushedAt) : null,
                   userId: user.id,
                 },

@@ -66,10 +66,12 @@ interface ReposSectionProps {
   deployedUrls: Record<number, string>
   customNames: Record<number, string>
   customDescriptions: Record<number, string>
+  githubUrls: Record<number, string>
   onToggleRepo: (repoId: number) => void
   onUpdateDeployedUrl: (repoId: number, url: string) => void
   onUpdateCustomName: (repoId: number, name: string) => void
   onUpdateCustomDescription: (repoId: number, description: string) => void
+  onUpdateGithubUrl: (repoId: number, url: string) => void
   onAddImportedProject?: (project: Repository) => void
 }
 
@@ -79,10 +81,12 @@ export function ReposSection({
   deployedUrls: initialDeployedUrls,
   customNames: initialCustomNames,
   customDescriptions: initialCustomDescriptions,
+  githubUrls: initialGithubUrls,
   onToggleRepo,
   onUpdateDeployedUrl,
   onUpdateCustomName,
   onUpdateCustomDescription,
+  onUpdateGithubUrl,
   onAddImportedProject
 }: ReposSectionProps) {
   const [searchTerm, setSearchTerm] = useState("")
@@ -91,6 +95,7 @@ export function ReposSection({
   const [editingField, setEditingField] = useState<string | null>(null)
   const [customNames, setCustomNames] = useState<Record<number, string>>(initialCustomNames || {})
   const [customDescriptions, setCustomDescriptions] = useState<Record<number, string>>(initialCustomDescriptions || {})
+  const [githubUrls, setGithubUrls] = useState<Record<number, string>>(initialGithubUrls || {})
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [projectUrl, setProjectUrl] = useState("")
   const [isImportingUrl, setIsImportingUrl] = useState(false)
@@ -104,32 +109,23 @@ export function ReposSection({
 
   const selectedRepositories = repositories.filter(repo => selectedRepos.includes(repo.id))
 
-  useEffect(() => {
-    devLog("ReposSection - Selected repos:", selectedRepos)
-    devLog("ReposSection - Deployed URLs:", deployedUrls)
-    devLog("ReposSection - Selected repositories:", selectedRepositories.map(r => ({ id: r.id, name: r.name })))
-  }, [selectedRepos, deployedUrls, selectedRepositories])
+  // Only sync once on mount to avoid overwriting local edits
+  const [hasInitialized, setHasInitialized] = useState(false)
 
   useEffect(() => {
-    if (initialDeployedUrls) {
-      devLog("Syncing deployed URLs from props:", initialDeployedUrls)
-      setDeployedUrls(initialDeployedUrls)
+    if (!hasInitialized) {
+      devLog("Initial sync - Deployed URLs:", initialDeployedUrls)
+      devLog("Initial sync - Custom Names:", initialCustomNames)
+      devLog("Initial sync - Custom Descriptions:", initialCustomDescriptions)
+      devLog("Initial sync - GitHub URLs:", initialGithubUrls)
+      
+      setDeployedUrls(initialDeployedUrls || {})
+      setCustomNames(initialCustomNames || {})
+      setCustomDescriptions(initialCustomDescriptions || {})
+      setGithubUrls(initialGithubUrls || {})
+      setHasInitialized(true)
     }
-  }, [initialDeployedUrls])
-
-  useEffect(() => {
-    if (initialCustomNames) {
-      devLog("Syncing custom names from props:", initialCustomNames)
-      setCustomNames(initialCustomNames)
-    }
-  }, [initialCustomNames])
-
-  useEffect(() => {
-    if (initialCustomDescriptions) {
-      devLog("Syncing custom descriptions from props:", initialCustomDescriptions)
-      setCustomDescriptions(initialCustomDescriptions)
-    }
-  }, [initialCustomDescriptions])
+  }, [hasInitialized, initialDeployedUrls, initialCustomNames, initialCustomDescriptions, initialGithubUrls])
 
   const handleDeployedUrlChange = (repoId: number, url: string) => {
     setDeployedUrls(prev => ({
@@ -185,17 +181,8 @@ export function ReposSection({
 
   const handleEditRepo = (repoId: number) => {
     setEditingRepo(repoId)
-    const repo = repositories.find(r => r.id === repoId)
-    if (repo) {
-      setCustomNames(prev => ({
-        ...prev,
-        [repoId]: prev[repoId] || repo.name
-      }))
-      setCustomDescriptions(prev => ({
-        ...prev,
-        [repoId]: prev[repoId] || repo.description
-      }))
-    }
+    // Don't automatically set default values - only use what's already there
+    // This prevents unnecessary state changes
   }
 
   const handleSaveEdit = (repoId: number) => {
@@ -204,21 +191,12 @@ export function ReposSection({
 
   const handleCancelEdit = (repoId: number) => {
     setEditingRepo(null)
-    const repo = repositories.find(r => r.id === repoId)
-    if (repo) {
-      setCustomNames(prev => ({
-        ...prev,
-        [repoId]: repo.name
-      }))
-      setCustomDescriptions(prev => ({
-        ...prev,
-        [repoId]: repo.description
-      }))
-    }
+    // Don't reset to default values - keep the existing custom values
+    // This prevents unnecessary state changes
   }
 
-  const handleInlineEdit = (repoId: number, field: 'name' | 'description' | 'deployedUrl', value: string) => {
-    // Update local state immediately
+  const handleInlineEdit = (repoId: number, field: 'name' | 'description' | 'deployedUrl' | 'githubUrl', value: string) => {
+    // Update local state immediately for UI responsiveness
     if (field === 'name') {
       setCustomNames(prev => ({ ...prev, [repoId]: value }))
       onUpdateCustomName(repoId, value)
@@ -231,6 +209,12 @@ export function ReposSection({
         [repoId]: value
       }))
       onUpdateDeployedUrl(repoId, value)
+    } else if (field === 'githubUrl') {
+      setGithubUrls(prev => ({
+        ...prev,
+        [repoId]: value
+      }))
+      onUpdateGithubUrl(repoId, value)
     }
   }
 
@@ -262,19 +246,13 @@ export function ReposSection({
       // Set deployed URL to the original URL since this is the live project
       const newDeployedUrls = { ...deployedUrls, [projectData.id]: projectUrl.trim() }
       setDeployedUrls(newDeployedUrls)
+      onUpdateDeployedUrl(projectData.id, projectUrl.trim())
       
       // Clear the input
       setProjectUrl("")
       
-      // Add to custom names and descriptions
-      setCustomNames(prev => ({
-        ...prev,
-        [projectData.id]: projectData.name
-      }))
-      setCustomDescriptions(prev => ({
-        ...prev,
-        [projectData.id]: projectData.description
-      }))
+      // Don't automatically add to custom names/descriptions
+      // Let the backend handle the default values
 
     } catch (error) {
       console.error("Error importing project from URL:", error)
@@ -341,7 +319,7 @@ export function ReposSection({
     >
       {/* Header */}
       <motion.div variants={itemVariants}>
-        <Card className="bg-white   transition-all duration-300">
+        <Card className="bg-white transition-all duration-300">
           <CardHeader className="pb-2">
             <motion.div
               initial={{ opacity: 0, x: -20 }}
@@ -378,7 +356,7 @@ export function ReposSection({
 
       {/* Project Input and GitHub Dropdown */}
       <motion.div variants={itemVariants}>
-        <Card className="bg-white   transition-all duration-300">
+        <Card className="bg-white transition-all duration-300">
           <CardContent className="pt-0">
             <div className="flex items-center gap-3 sm:gap-4 flex-wrap sm:flex-nowrap">
               {/* Project URL Input with inline button */}
@@ -485,7 +463,7 @@ export function ReposSection({
                         >
                           <DropdownMenuItem
                             onClick={() => handleImportRepo(repo)}
-                            className="p-3 hover:bg-gray-50 cursor-pointer   transition-all duration-300"
+                            className="p-3 hover:bg-gray-50 cursor-pointer transition-all duration-300"
                           >
                             <div className="flex items-center gap-3 w-full">
                               <motion.div>
@@ -583,8 +561,8 @@ export function ReposSection({
               <AnimatePresence>
                 {selectedRepositories.map((repo, index) => {
                   const isEditing = editingRepo === repo.id
-                  const customName = customNames[repo.id] || repo.name
-                  const customDescription = customDescriptions[repo.id] || repo.description
+                  const displayName = customNames[repo.id] || repo.name
+                  const displayDescription = customDescriptions[repo.id] || repo.description
                   
                   return (
                     <motion.div
@@ -612,9 +590,9 @@ export function ReposSection({
                                 transition={{ duration: 0.2 }}
                               >
                                 <Input
-                                  value={customName}
+                                  value={displayName}
                                   onChange={(e) => handleInlineEdit(repo.id, 'name', e.target.value)}
-                                  className="text-lg font-bold border-0 bg-transparent p-0 focus:bg-gray-50 focus:border-2 /80 focus:p-2 transition-all duration-300"
+                                  className="text-lg font-bold border-0 bg-transparent p-0 hover:bg-gray-50 focus:bg-white focus:border-2 focus:border-gray-300 focus:p-2 focus:shadow-sm transition-all duration-300"
                                   placeholder="Project name"
                                 />
                               </motion.div>
@@ -626,9 +604,9 @@ export function ReposSection({
                                 transition={{ duration: 0.2 }}
                               >
                                 <Input
-                                  value={customDescription}
+                                  value={displayDescription}
                                   onChange={(e) => handleInlineEdit(repo.id, 'description', e.target.value)}
-                                  className="text-gray-600 font-medium border-0 bg-transparent p-0 focus:bg-gray-50 focus:border-2 /80 focus:p-2 transition-all duration-300"
+                                  className="text-gray-600 font-medium border-0 bg-transparent p-0 hover:bg-gray-50 focus:bg-white focus:border-2 focus:border-gray-300 focus:p-2 focus:shadow-sm transition-all duration-300"
                                   placeholder="Project description"
                                 />
                               </motion.div>
@@ -663,34 +641,70 @@ export function ReposSection({
                               </div>
 
                               {/* Deployed URL Input - Inline Editable */}
-                              <div className="mt-3">
-                                <Label htmlFor={`deployed-${repo.id}`} className="text-black font-bold mb-2 block text-sm">
-                                  Deployed URL (optional)
-                                </Label>
-                                <motion.div
-                                  whileHover={{ scale: 1.01 }}
-                                  transition={{ duration: 0.2 }}
-                                >
-                                  <Input
-                                    id={`deployed-${repo.id}`}
-                                    value={deployedUrls[repo.id] || ""}
-                                    onChange={(e) => handleInlineEdit(repo.id, 'deployedUrl', e.target.value)}
-                                    placeholder="Auto-filled from GitHub or add custom URL"
-                                    className="border-0 bg-transparent p-0 focus:bg-gray-50 focus:border-2 /80 focus:p-2 transition-all duration-300 font-medium text-sm"
-                                  />
-                                </motion.div>
-                              </div>
+                              {!repo.isImported && (
+                                <div className="mt-3">
+                                  <Label htmlFor={`deployed-${repo.id}`} className="text-black font-bold mb-2 block text-sm">
+                                    Deployed URL (optional)
+                                  </Label>
+                                  <motion.div
+                                    whileHover={{ scale: 1.01 }}
+                                    transition={{ duration: 0.2 }}
+                                  >
+                                    <Input
+                                      id={`deployed-${repo.id}`}
+                                      value={deployedUrls[repo.id] || ""}
+                                      onChange={(e) => handleInlineEdit(repo.id, 'deployedUrl', e.target.value)}
+                                      placeholder="Auto-filled from GitHub or add custom URL"
+                                      className="border-0 bg-transparent p-0 hover:bg-gray-50 focus:bg-white focus:border-2 focus:border-gray-300 focus:p-2 focus:shadow-sm transition-all duration-300 font-medium text-sm"
+                                    />
+                                  </motion.div>
+                                </div>
+                              )}
+
+                              {/* Show deployed URL for imported projects (read-only) */}
+                              {repo.isImported && deployedUrls[repo.id] && (
+                                <div className="mt-3">
+                                  <Label className="text-black font-bold mb-2 block text-sm">
+                                    Deployed URL
+                                  </Label>
+                                  <div className="text-gray-600 font-medium text-sm bg-gray-50 p-2 rounded">
+                                    {deployedUrls[repo.id]}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* GitHub URL Input - Only for URL-imported projects */}
+                              {repo.isImported && (
+                                <div className="mt-3">
+                                  <Label htmlFor={`github-${repo.id}`} className="text-black font-bold mb-2 block text-sm">
+                                    GitHub URL (optional)
+                                  </Label>
+                                  <motion.div
+                                    whileHover={{ scale: 1.01 }}
+                                    transition={{ duration: 0.2 }}
+                                  >
+                                    <Input
+                                      id={`github-${repo.id}`}
+                                      value={githubUrls[repo.id] || ""}
+                                      onChange={(e) => handleInlineEdit(repo.id, 'githubUrl', e.target.value)}
+                                      placeholder="https://github.com/username/repository"
+                                      className="border-0 bg-transparent p-0 hover:bg-gray-50 focus:bg-white focus:border-2 focus:border-gray-300 focus:p-2 focus:shadow-sm transition-all duration-300 font-medium text-sm"
+                                    />
+                                  </motion.div>
+                                </div>
+                              )}
                             </div>
                             
                             {/* Action Buttons */}
                             <div className="flex flex-col space-y-2 ml-6">
                               <div className="flex space-x-2">
+                                {/* GitHub Button - Show original GitHub URL for non-imported repos, custom GitHub URL for imported repos */}
                                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                                   <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => window.open(repo.htmlUrl, '_blank')}
-                                    className="  hover:bg-black hover:text-white font-bold h-8 px-3"
+                                    onClick={() => window.open(repo.isImported ? (githubUrls[repo.id] || repo.htmlUrl) : repo.htmlUrl, '_blank')}
+                                    className="hover:bg-black hover:text-white font-bold h-8 px-3"
                                   >
                                     <Github className="h-3 w-3 mr-1" />
                                     GitHub
@@ -702,7 +716,7 @@ export function ReposSection({
                                       variant="outline"
                                       size="sm"
                                       onClick={() => window.open(deployedUrls[repo.id], '_blank')}
-                                      className="  hover:bg-black hover:text-white font-bold h-8 px-3"
+                                      className="hover:bg-black hover:text-white font-bold h-8 px-3"
                                     >
                                       <ExternalLink className="h-3 w-3 mr-1" />
                                       Live
@@ -745,7 +759,7 @@ export function ReposSection({
           transition={{ duration: 0.4 }}
           variants={itemVariants}
         >
-          <Card className="bg-white   transition-all duration-300">
+          <Card className="bg-white transition-all duration-300">
             <CardContent className="pt-8">
               <div className="text-center py-8">
                 <motion.div
@@ -771,7 +785,7 @@ export function ReposSection({
                 >
                   <Button 
                     onClick={() => setIsDropdownOpen(true)}
-                    className="bg-black text-white hover:bg-gray-800 font-bold px-8 py-3  transition-all duration-300"
+                    className="bg-black text-white hover:bg-gray-800 font-bold px-8 py-3 transition-all duration-300"
                   >
                     <motion.div
                       className="flex items-center"

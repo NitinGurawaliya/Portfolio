@@ -149,9 +149,11 @@ interface PortfolioRepository {
     name: string
     description: string
     htmlUrl: string
+    githubUrl?: string
     language: string
     stargazersCount: number
     forksCount: number
+    isImported?: boolean
   }
 }
 
@@ -429,15 +431,17 @@ export default function PublicPortfolioPage() {
                     if (repo.deployedUrl) {
                       window.open(repo.deployedUrl, '_blank')
                     } else {
-                      window.open(repo.repository.htmlUrl, '_blank')
+                      // For web imported projects, use githubUrl if available, otherwise use htmlUrl
+                      const githubUrl = repo.repository.githubUrl || repo.repository.htmlUrl
+                      window.open(githubUrl, '_blank')
                     }
                   }}
                 >
                   <div className="relative bg-transparent border border-orange-500/30 rounded-lg p-4 hover:bg-black/20 hover:border-orange-500/50 transition-all duration-200">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1 mr-4">
-                        <h3 className="text-lg font-bold text-white group-hover:text-gray-200 transition-colors duration-200 mb-2">
-                          {repo.repository.name.length > 14 ? `${repo.repository.name.substring(0, 14)}...` : repo.repository.name}
+                        <h3 className="text-lg font-bold text-white group-hover:text-gray-200 transition-colors duration-200 mb-2 break-words">
+                          {repo.repository.name}
                       </h3>
                         <p className="text-gray-400 text-xs leading-relaxed line-clamp-2 mb-3">
                           {repo.repository.description || "No description available for this project."}
@@ -447,7 +451,9 @@ export default function PublicPortfolioPage() {
                         <motion.button
                           onClick={(e) => {
                             e.stopPropagation()
-                            window.open(repo.repository.htmlUrl, '_blank')
+                            // For web imported projects, use githubUrl if available, otherwise use htmlUrl
+                            const githubUrl = repo.repository.githubUrl || repo.repository.htmlUrl
+                            window.open(githubUrl, '_blank')
                           }}
                           className="p-2 rounded-lg bg-transparent border border-orange-500/40 text-orange-300 hover:bg-black/30 hover:text-white transition-all duration-200"
                           whileHover={{ scale: 1.05 }}

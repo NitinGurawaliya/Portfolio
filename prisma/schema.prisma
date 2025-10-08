@@ -43,6 +43,7 @@ model Repository {
   description String?
   htmlUrl     String
   cloneUrl    String
+  githubUrl   String?  // GitHub URL for URL-imported projects
   language    String?
   stargazersCount Int
   forksCount  Int

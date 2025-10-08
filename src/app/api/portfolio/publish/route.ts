@@ -194,7 +194,10 @@ export async function GET(req: NextRequest) {
         skills: true,
         socials: true,
         repositories: {
-          include: {
+          select: {
+            id: true,
+            deployedUrl: true,
+            isVisible: true,
             repository: {
               select: {
                 id: true,
@@ -203,6 +206,7 @@ export async function GET(req: NextRequest) {
                 fullName: true,
                 description: true,
                 htmlUrl: true,
+                githubUrl: true,
                 language: true,
                 stargazersCount: true,
                 forksCount: true,

@@ -81,6 +81,7 @@ export default function DashboardPage() {
   const [importedProjects, setImportedProjects] = useState<Repository[]>([])
   const [customNames, setCustomNames] = useState<Record<number, string>>({})
   const [customDescriptions, setCustomDescriptions] = useState<Record<number, string>>({})
+  const [githubUrls, setGithubUrls] = useState<Record<number, string>>({})
 
   // Change tracking state
   const [originalData, setOriginalData] = useState<{
@@ -91,6 +92,7 @@ export default function DashboardPage() {
     deployedUrls: Record<number, string>
     customNames: Record<number, string>
     customDescriptions: Record<number, string>
+    githubUrls: Record<number, string>
     importedProjects: Repository[]
   } | null>(null)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
@@ -173,25 +175,51 @@ export default function DashboardPage() {
     
         const currentData = {
           portfolioData,
-          selectedRepos,
-          skills,
-          socials,
+          selectedRepos: [...selectedRepos].sort(), // Sort for consistent comparison
+          skills: [...skills].sort((a, b) => a.id.localeCompare(b.id)),
+          socials: [...socials].sort((a, b) => a.id - b.id),
           deployedUrls,
           customNames,
           customDescriptions,
-          importedProjects
+          githubUrls,
+          importedProjects: [...importedProjects].sort((a, b) => a.id - b.id)
         }
     
-    const hasChanges = JSON.stringify(currentData) !== JSON.stringify(originalData)
+        // Helper function to clean and normalize data
+        const normalizeData = (data: any) => {
+          return JSON.parse(JSON.stringify(data, (key, value) => {
+            // Remove null/undefined
+            if (value === null || value === undefined) return undefined
+            // Remove empty strings
+            if (value === "") return undefined
+            // Remove empty objects/arrays
+            if (typeof value === 'object' && value !== null) {
+              if (Array.isArray(value) && value.length === 0) return undefined
+              if (!Array.isArray(value) && Object.keys(value).length === 0) return undefined
+            }
+            return value
+          }))
+        }
+    
+        const cleanCurrentData = normalizeData(currentData)
+        const cleanOriginalData = normalizeData({
+          ...originalData,
+          selectedRepos: [...(originalData.selectedRepos || [])].sort(),
+          skills: [...(originalData.skills || [])].sort((a, b) => a.id.localeCompare(b.id)),
+          socials: [...(originalData.socials || [])].sort((a, b) => a.id - b.id),
+          importedProjects: [...(originalData.importedProjects || [])].sort((a, b) => a.id - b.id)
+        })
+    
+    const hasChanges = JSON.stringify(cleanCurrentData) !== JSON.stringify(cleanOriginalData)
     console.log("📊 Change detection:", { 
       hasChanges, 
-      currentDataString: JSON.stringify(currentData), 
-      originalDataString: JSON.stringify(originalData),
-      currentData,
-      originalData
+      cleanCurrentDataString: JSON.stringify(cleanCurrentData), 
+      cleanOriginalDataString: JSON.stringify(cleanOriginalData),
+      cleanCurrentData,
+      cleanOriginalData
     })
     setHasUnsavedChanges(hasChanges)
-  }, [portfolioData, selectedRepos, skills, socials, deployedUrls, customNames, customDescriptions, importedProjects, originalData, isInitialLoad])
+  }, [portfolioData, selectedRepos, skills, socials, deployedUrls, customNames, customDescriptions, githubUrls, importedProjects, originalData, isInitialLoad])
 
   useEffect(() => {
     // Fetch session from server (httpOnly cookie)
@@ -293,20 +321,44 @@ export default function DashboardPage() {
             })))
           }
           
-          // Set deployed URLs first
+          // Set deployed URLs, custom names, and descriptions
           if (portfolio.repositories && portfolio.repositories.length > 0) {
             devLog("Portfolio repositories from DB:", portfolio.repositories)
             
             const urls: Record<number, string> = {}
+            const names: Record<number, string> = {}
+            const descriptions: Record<number, string> = {}
+            const githubUrls: Record<number, string> = {}
+            
             portfolio.repositories.forEach((repo: any) => {
               const githubId = parseInt(repo.repository.githubId)
-              devLog("Processing repo for deployed URL:", repo.repository.name, "GitHub ID:", githubId, "Deployed URL:", repo.deployedUrl)
+              devLog("Processing repo:", repo.repository.name, "GitHub ID:", githubId, "Deployed URL:", repo.deployedUrl, "GitHub URL:", repo.repository.githubUrl)
+              
               if (repo.deployedUrl) {
                 urls[githubId] = repo.deployedUrl
               }
+              // Only set custom names/descriptions if they exist (not default values)
+              if (repo.customName) {
+                names[githubId] = repo.customName
+              }
+              if (repo.customDescription) {
+                descriptions[githubId] = repo.customDescription
+              }
+              // Load GitHub URL for imported projects
+              if (repo.repository.githubUrl) {
+                githubUrls[githubId] = repo.repository.githubUrl
+              }
             })
+            
             devLog("Final deployed URLs object:", urls)
+            devLog("Final custom names object:", names)
+            devLog("Final custom descriptions object:", descriptions)
+            devLog("Final GitHub URLs object:", githubUrls)
+            
             setDeployedUrls(urls)
+            setCustomNames(names)
+            setCustomDescriptions(descriptions)
+            setGithubUrls(githubUrls)
             
             // Set imported projects (URL-imported repositories)
             const importedProjects = portfolio.repositories
@@ -409,6 +461,16 @@ export default function DashboardPage() {
                 })
                 return descriptions
               })() : {},
+              githubUrls: portfolio.repositories ? (() => {
+                const urls: Record<number, string> = {}
+                portfolio.repositories.forEach((repo: any) => {
+                  const githubId = parseInt(repo.repository.githubId)
+                  if (repo.repository.githubUrl) {
+                    urls[githubId] = repo.repository.githubUrl
+                  }
+                })
+                return urls
+              })() : {},
               importedProjects: portfolio.repositories ? portfolio.repositories
                 .filter((repo: any) => repo.repository.isImported)
                 .map((repo: any) => ({
@@ -440,22 +502,23 @@ export default function DashboardPage() {
           // No existing portfolio data, set initial data and mark as loaded
           console.log("📝 No existing portfolio data found, setting initial data")
           setTimeout(() => {
-            const initialData = {
-              portfolioData: {
-                displayName: user?.name || "",
-                jobTitle: "",
-                bio: user?.bio || "",
-                profilePic: user?.avatarUrl || "",
-                customUsername: user?.githubUsername || "",
-              },
-              selectedRepos: [],
-              skills: [],
-              socials: [],
-              deployedUrls: {},
-              customNames: {},
-              customDescriptions: {},
-              importedProjects: []
-            }
+          const initialData = {
+            portfolioData: {
+              displayName: user?.name || "",
+              jobTitle: "",
+              bio: user?.bio || "",
+              profilePic: user?.avatarUrl || "",
+              customUsername: user?.githubUsername || "",
+            },
+            selectedRepos: [],
+            skills: [],
+            socials: [],
+            deployedUrls: {},
+            customNames: {},
+            customDescriptions: {},
+            githubUrls: {},
+            importedProjects: []
+          }
             console.log("💾 Setting initial data (no existing portfolio):", initialData)
             setOriginalData(initialData)
             setIsInitialLoad(false)
@@ -481,6 +544,7 @@ export default function DashboardPage() {
           deployedUrls: {},
           customNames: {},
           customDescriptions: {},
+          githubUrls: {},
           importedProjects: []
         }
         console.log("💾 Setting fallback data due to error:", fallbackData)
@@ -593,6 +657,9 @@ export default function DashboardPage() {
           skills,
           socials,
           deployedUrls,
+          customNames,
+          customDescriptions,
+          githubUrls,
           repositories: allRepositories,
           userId: user?.id,
           userData: user
@@ -611,6 +678,7 @@ export default function DashboardPage() {
           deployedUrls,
           customNames,
           customDescriptions,
+          githubUrls,
           importedProjects
         })
         setHasUnsavedChanges(false)
@@ -656,6 +724,13 @@ export default function DashboardPage() {
     setCustomDescriptions(prev => ({
       ...prev,
       [repoId]: description
+    }))
+  }
+
+  const handleUpdateGithubUrl = (repoId: number, url: string) => {
+    setGithubUrls(prev => ({
+      ...prev,
+      [repoId]: url
     }))
   }
 
@@ -723,10 +798,12 @@ export default function DashboardPage() {
             deployedUrls={deployedUrls}
             customNames={customNames}
             customDescriptions={customDescriptions}
+            githubUrls={githubUrls}
             onToggleRepo={handleToggleRepo}
             onUpdateDeployedUrl={handleUpdateDeployedUrl}
             onUpdateCustomName={handleUpdateCustomName}
             onUpdateCustomDescription={handleUpdateCustomDescription}
+            onUpdateGithubUrl={handleUpdateGithubUrl}
             onAddImportedProject={handleAddImportedProject}
           />
         )
