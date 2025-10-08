@@ -1,0 +1,15 @@
+# Allow all crawlers
+User-agent: *
+Allow: /
+
+# Disallow private pages
+Disallow: /api/
+Disallow: /dashboard
+Disallow: /auth
+
+# Allow public portfolios
+Allow: /*
+
+# Sitemap (automatically generated)
+# For production: Replace with your domain
+Sitemap: https://yourdomain.com/sitemap.xml

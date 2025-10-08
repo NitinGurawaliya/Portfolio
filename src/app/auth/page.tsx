@@ -35,9 +35,9 @@ export default function AuthPage() {
       <div className="max-w-md w-full">
         {/* Brand Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-black mb-2">Portfolio</h1>
+          <h1 className="text-3xl font-bold text-black mb-2">DevFolio</h1>
           <p className="text-gray-600 text-base">
-            Build your professional presence
+            Build your developer portfolio in minutes
           </p>
         </div>
 

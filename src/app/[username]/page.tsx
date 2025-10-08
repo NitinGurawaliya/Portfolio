@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { motion, useScroll, useTransform, useInView } from "framer-motion"
+import { StructuredData } from "@/components/StructuredData"
 import { 
   Github, 
   Twitter, 
@@ -292,6 +293,26 @@ export default function PublicPortfolioPage() {
 
   return (
     <div className="min-h-screen bg-black">
+      {/* Structured Data for SEO */}
+      {portfolio && (
+        <StructuredData
+          type="Person"
+          data={{
+            name: portfolio.displayName,
+            jobTitle: portfolio.jobTitle,
+            bio: portfolio.bio,
+            image: portfolio.profilePic,
+            url: typeof window !== 'undefined' ? window.location.href : undefined,
+            sameAs: portfolio.socials?.map(s => s.url).filter(Boolean),
+            worksFor: portfolio.user.company ? {
+              name: portfolio.user.company,
+            } : undefined,
+            location: portfolio.user.location,
+            skills: portfolio.skills?.map(s => s.name),
+          }}
+        />
+      )}
+      
       {/* Dark Background */}
       <div className="fixed inset-0 z-0 bg-gradient-to-br from-gray-900 to-black"></div>
 
@@ -677,8 +698,8 @@ export default function PublicPortfolioPage() {
                 ❤️
               </motion.span>
               {" "}using{" "}
-              <a href="http://localhost:3000" className="text-white font-bold">
-                Portfolio
+              <a href="/" className="text-white font-bold hover:text-orange-300 transition-colors">
+                DevFolio
               </a>
             </motion.p>
           </div>

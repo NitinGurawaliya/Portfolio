@@ -1,6 +1,7 @@
 {
-  "name": "portfolio-project",
-  "version": "0.1.0",
+  "name": "devfolio",
+  "version": "1.0.0",
+  "description": "DevFolio - Create Your Developer Portfolio in Minutes",
   "private": true,
   "scripts": {
     "dev": "next dev",

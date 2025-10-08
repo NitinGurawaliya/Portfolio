@@ -1,15 +1,20 @@
-# Portfolio Builder
+# DevFolio - Developer Portfolio Builder
 
-A Next.js application that allows developers to automatically generate their portfolio by connecting their GitHub account. The app fetches GitHub profile data, repositories, and other public information to create a comprehensive portfolio.
+**DevFolio** is a powerful Next.js application that helps developers create stunning portfolios in minutes by connecting their GitHub account. The app automatically fetches GitHub profile data, repositories, and other public information to create a comprehensive, professional portfolio.
 
-## Features
+## ✨ Features
 
-- 🔐 GitHub OAuth Authentication
-- 📊 Automatic GitHub profile data fetching
-- 🗂️ Repository listing with details (language, stars, forks, etc.)
-- 🎨 Modern, responsive UI with dark theme
-- 💾 Data persistence with Prisma and PostgreSQL
-- 🔄 Real-time data refresh
+- 🔐 **GitHub OAuth Authentication** - Secure login with your GitHub account
+- 📊 **Automatic Data Import** - Fetch GitHub profile, repositories, and stats
+- 🎨 **Beautiful Templates** - Modern, responsive UI with dark theme
+- 🗂️ **Project Showcase** - Display repositories with language, stars, forks, and more
+- 💼 **Skills Management** - Add and organize your technical skills
+- 🔗 **Social Integration** - Link all your social profiles
+- 🌐 **Custom URLs** - Share your portfolio with a personalized URL
+- 📱 **Mobile Responsive** - Perfect on all devices
+- 💾 **Data Persistence** - PostgreSQL database with Prisma ORM
+- 🚀 **SEO Optimized** - Built-in SEO best practices for better discoverability
+- ⚡ **Fast Performance** - Optimized for speed and user experience
 
 ## Tech Stack
 
@@ -31,7 +36,7 @@ A Next.js application that allows developers to automatically generate their por
 
 ```bash
 git clone <your-repo-url>
-cd portfolio-project
+cd devfolio
 ```
 
 ### 2. Install dependencies
@@ -55,6 +60,9 @@ NEXTAUTH_SECRET=your_nextauth_secret_key_here
 
 # Database
 DATABASE_URL=your_postgresql_database_url
+
+# SEO & Public URL (for production)
+NEXT_PUBLIC_BASE_URL=https://yourdomain.com
 ```
 
 ### 4. Set up GitHub OAuth App
@@ -62,9 +70,9 @@ DATABASE_URL=your_postgresql_database_url
 1. Go to [GitHub Developer Settings](https://github.com/settings/developers)
 2. Click "New OAuth App"
 3. Fill in the details:
-   - **Application name**: Portfolio Builder
+   - **Application name**: DevFolio
    - **Homepage URL**: `http://localhost:3000`
-   - **Authorization callback URL**: `http://localhost:3000/api/auth/callback/github`
+   - **Authorization callback URL**: `http://localhost:3000/api/auth/github`
 4. Copy the Client ID and Client Secret to your `.env.local` file
 
 ### 5. Set up the database
@@ -146,8 +154,41 @@ src/
 3. Make your changes
 4. Submit a pull request
 
-## License
+## 🚀 SEO Features
+
+DevFolio comes with built-in SEO optimization:
+
+- **Meta Tags**: Comprehensive meta tags for search engines
+- **Open Graph**: Social media sharing optimization for Facebook, LinkedIn
+- **Twitter Cards**: Enhanced Twitter sharing experience
+- **Structured Data**: JSON-LD schema markup for rich search results
+- **Dynamic Sitemap**: Auto-generated XML sitemap with all published portfolios
+- **Robots.txt**: Proper crawler directives for search engines
+- **Dynamic Metadata**: Per-user custom SEO for each portfolio page
+- **PWA Support**: Progressive Web App manifest for app-like experience
+- **Custom Titles**: SEO-friendly page titles (e.g., "John Doe - Full Stack Developer | DevFolio")
+- **Rich Snippets**: Enhanced search results with profile information
+
+## 🎨 Customization
+
+DevFolio supports multiple themes and customization options:
+- Customize colors, fonts, and layouts
+- Add your own branding
+- Choose from pre-built themes
+- Create your unique developer identity
+
+## 📝 License
 
 This project is licensed under the MIT License.
 
-We are ading  muultiple thmese 
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## 💬 Support
+
+If you have any questions or need help, please open an issue on GitHub.
+
+---
+
+Made with ❤️ by developers, for developers.

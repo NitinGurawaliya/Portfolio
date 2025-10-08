@@ -8,8 +8,8 @@ export function Header() {
       <div className="container flex h-14 max-w-screen-2xl items-center">
         <div className="m-4 flex">
           <a className="mr-6 flex items-center space-x-2" href="/">
-            <span className="font-bold bg-gradient-to-r from-orange-600 to-orange-700 bg-clip-text text-transparent">
-              Portfolio
+            <span className="font-bold text-xl bg-gradient-to-r from-orange-600 to-orange-700 bg-clip-text text-transparent">
+              DevFolio
             </span>
           </a>
         </div>
