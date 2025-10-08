@@ -4,9 +4,9 @@ import { Metadata } from "next"
 export async function generateMetadata({ 
   params 
 }: { 
-  params: { username: string } 
+  params: Promise<{ username: string }> 
 }): Promise<Metadata> {
-  const { username } = params
+  const { username } = await params
   
   // Reserved routes should not have custom metadata
   const reservedRoutes = ['dashboard', 'auth', 'api', '_next', 'favicon.ico']
