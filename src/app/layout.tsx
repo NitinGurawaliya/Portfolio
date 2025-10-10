@@ -7,6 +7,7 @@ const geistSans = Geist({
   subsets: ["latin"],
 });
 
+
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
@@ -73,6 +74,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+      <script src="https://www.watchdog.mom/track.js" data-site="851a4075-b123-470a-a7ab-e57f268adaae"></script>
         <link rel="icon" href="/devfolio-high-resolution-logo.png" type="image/png" />
         <link rel="shortcut icon" href="/devfolio-high-resolution-logo.png" type="image/png" />
         <link rel="apple-touch-icon" href="/devfolio-high-resolution-logo.png" />
