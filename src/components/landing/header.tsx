@@ -27,7 +27,7 @@ export function Header() {
                 <span className="sr-only">Twitter</span>
               </a>
             </Button>
-            {/* <ThemeToggle /> */}
+            <ThemeToggle />
             <Button variant="outline" size="sm" asChild>
               <a href="/auth">
                 <LogIn className="h-4 w-4 mr-2" />

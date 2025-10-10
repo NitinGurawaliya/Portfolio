@@ -4,7 +4,7 @@ import { ArrowRight } from "lucide-react"
 
 export function DemoSection() {
   return (
-    <section id="demo" className="py-24 lg:py-32 bg-muted/30">
+    <section id="themes" className="py-24 lg:py-32 bg-muted/30">
       <div className="container">
         <div className="mx-auto max-w-4xl text-center mb-16">
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl text-balance mb-4">
