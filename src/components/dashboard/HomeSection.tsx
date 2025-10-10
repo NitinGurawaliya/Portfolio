@@ -29,6 +29,13 @@ export function HomeSection({ user, portfolioData, onUpdate }: HomeSectionProps)
     profilePic: "",
     customUsername: "",
   })
+  
+  // Username validation state
+  const [usernameValidation, setUsernameValidation] = useState({
+    isChecking: false,
+    isValid: true,
+    message: ""
+  })
   // Update form data when portfolioData changes (from saved data) or user changes
   useEffect(() => {
     if (portfolioData) {
@@ -50,10 +57,64 @@ export function HomeSection({ user, portfolioData, onUpdate }: HomeSectionProps)
     }
   }, [user, portfolioData])
 
+  const checkUsernameAvailability = async (username: string) => {
+    if (!username || username.trim().length < 3) {
+      setUsernameValidation({
+        isChecking: false,
+        isValid: true,
+        message: ""
+      })
+      return
+    }
+
+    setUsernameValidation({
+      isChecking: true,
+      isValid: true,
+      message: "Checking availability..."
+    })
+
+    try {
+      const response = await fetch('/api/portfolio/check-username', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: username,
+          currentUserId: user?.id
+        })
+      })
+
+      const result = await response.json()
+
+      setUsernameValidation({
+        isChecking: false,
+        isValid: result.available,
+        message: result.message
+      })
+    } catch (error) {
+      console.error('Error checking username:', error)
+      setUsernameValidation({
+        isChecking: false,
+        isValid: false,
+        message: "Error checking username availability"
+      })
+    }
+  }
+
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => {
       const next = { ...prev, [field]: value }
-      onUpdate(next)
+      
+      // Check username availability when username changes
+      if (field === 'customUsername') {
+        checkUsernameAvailability(value)
+      }
+      
+      // Use setTimeout to avoid setState during render
+      setTimeout(() => {
+        onUpdate(next)
+      }, 0)
       return next
     })
   }
@@ -138,14 +199,33 @@ export function HomeSection({ user, portfolioData, onUpdate }: HomeSectionProps)
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="customUsername" className="text-black font-medium text-sm">Portfolio Username</Label>
-              <Input
-                id="customUsername"
-                value={formData.customUsername}
-                onChange={(e) => handleInputChange("customUsername", e.target.value)}
-                className="bg-gray-50  text-black font-medium text-sm focus:bg-white"
-                placeholder="Your portfolio username"
-              />
-              <p className="text-[11px] text-gray-500">This will be used in your portfolio URL: /portfolio/{formData.customUsername || 'username'}</p>
+              <div className="relative">
+                <Input
+                  id="customUsername"
+                  value={formData.customUsername}
+                  onChange={(e) => handleInputChange("customUsername", e.target.value)}
+                  className={`bg-gray-50 text-black font-medium text-sm focus:bg-white ${
+                    !usernameValidation.isValid ? 'border-red-500 focus:border-red-500' : 
+                    usernameValidation.isValid && usernameValidation.message ? 'border-green-500 focus:border-green-500' : ''
+                  }`}
+                  placeholder="Your portfolio username"
+                />
+                {usernameValidation.isChecking && (
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+                  </div>
+                )}
+              </div>
+              <div className="space-y-1">
+                <p className="text-[11px] text-gray-500">This will be used in your portfolio URL: /portfolio/{formData.customUsername || 'username'}</p>
+                {usernameValidation.message && (
+                  <p className={`text-[11px] font-medium ${
+                    usernameValidation.isValid ? 'text-green-600' : 'text-red-600'
+                  }`}>
+                    {usernameValidation.message}
+                  </p>
+                )}
+              </div>
             </div>
           </div>
 

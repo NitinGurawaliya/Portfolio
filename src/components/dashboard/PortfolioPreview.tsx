@@ -34,6 +34,7 @@ import {
 } from "react-icons/si"
 import { FaJava, FaAws, FaMicrosoft } from "react-icons/fa"
 import { TbBrandVscode } from "react-icons/tb"
+import { SiFastify, SiRailway } from "react-icons/si"
 
 // Skills database with icons and colors (same as portfolio page)
 const skillsDatabase = [
@@ -69,9 +70,9 @@ const skillsDatabase = [
   
   // Backend Frameworks
   { name: "Node.js", category: "Backend", icon: SiNodedotjs, color: "#339933" },
-  { name: "Express.js", category: "Backend", icon: SiExpress, color: "#ffffff" },
+  { name: "Express.js", category: "Backend", icon: SiExpress, color: "#68A063" },
   { name: "Django", category: "Backend", icon: SiDjango, color: "#ffffff" },
-  { name: "Flask", category: "Backend", icon: SiFlask, color: "#000000" },
+  { name: "Flask", category: "Backend", icon: SiFlask, color: "#FFD43B" },
   { name: "FastAPI", category: "Backend", icon: SiFastapi, color: "#009688" },
   { name: "Spring Boot", category: "Backend", icon: SiSpring, color: "#6DB33F" },
   { name: "Laravel", category: "Backend", icon: SiLaravel, color: "#FF2D20" },
@@ -106,6 +107,10 @@ const skillsDatabase = [
   { name: "Vite", category: "Build Tools", icon: SiVite, color: "#646CFF" },
   { name: "npm", category: "Tools", icon: SiNpm, color: "#CB3837" },
   { name: "Yarn", category: "Tools", icon: SiYarn, color: "#2C8EBB" },
+  
+  // Additional Backend Frameworks
+  { name: "Fastify", category: "Backend", icon: SiFastify, color: "#FFFFFF" },
+  { name: "Railway", category: "Cloud", icon: SiRailway, color: "#FFFFFF" },
 ]
 
 interface Portfolio {
@@ -278,43 +283,6 @@ export function PortfolioPreview({ username, previewMode, portfolio }: Portfolio
             </div>
           </div>
 
-          {/* Skills Section */}
-          {portfolio.skills && portfolio.skills.length > 0 && (
-            <div className={`relative z-10 ${previewMode === 'mobile' ? 'py-1' : previewMode === 'tablet' ? 'py-2' : 'py-2'}`}>
-              <div className={`${previewMode === 'mobile' ? 'px-2' : previewMode === 'tablet' ? 'px-3' : 'px-4'} ${previewMode === 'mobile' ? 'max-w-[280px]' : previewMode === 'tablet' ? 'max-w-[420px]' : 'max-w-full'} mx-auto`}>
-                <h2 className={`${previewMode === 'mobile' ? 'text-xs' : previewMode === 'tablet' ? 'text-sm' : 'text-md'} font-semibold ${previewMode === 'mobile' ? 'mb-2' : 'mb-3'} text-white`}>
-                  Skills
-                </h2>
-                <div className={`grid ${previewMode === 'mobile' ? 'grid-cols-3 gap-1' : previewMode === 'tablet' ? 'grid-cols-4 gap-2' : 'grid-cols-4 gap-2'}`}>
-                  {portfolio.skills.map((skill) => {
-                    const skillData = getSkillData(skill.name)
-                    const IconComponent = skillData?.icon || Wrench
-                    
-                    return (
-                      <div 
-                        key={skill.id}
-                        className={`group relative flex flex-col items-center ${previewMode === 'mobile' ? 'p-1' : 'p-1.5'} backdrop-blur-xl bg-transparent border border-orange-500/30 rounded-lg hover:bg-black/20 hover:border-orange-500/50 transition-all duration-200`}
-                      >
-                        <div className={`flex-shrink-0 ${previewMode === 'mobile' ? 'w-6 h-6 mb-1' : previewMode === 'tablet' ? 'w-8 h-8 mb-1' : 'w-10 h-10 mb-1'} flex items-center justify-center`}>
-                          <IconComponent 
-                            className={`${previewMode === 'mobile' ? 'w-3 h-3' : previewMode === 'tablet' ? 'w-4 h-4' : 'w-5 h-5'} drop-shadow-lg`}
-                            style={{ 
-                              color: skillData?.color || '#00ffff',
-                              filter: 'drop-shadow(0 0 8px rgba(0, 255, 255, 0.3))'
-                            }}
-                          />
-                        </div>
-                        <span className={`${previewMode === 'mobile' ? 'text-[8px]' : previewMode === 'tablet' ? 'text-[9px]' : 'text-xs'} font-medium text-white text-center`}>
-                          {skill.name}
-                        </span>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* Projects Section */}
           {portfolio.repositories && portfolio.repositories.length > 0 && (
             <div className={`relative z-10 ${previewMode === 'mobile' ? 'py-1' : previewMode === 'tablet' ? 'py-2' : 'py-2'}`}>
@@ -362,6 +330,42 @@ export function PortfolioPreview({ username, previewMode, portfolio }: Portfolio
                       </div>
                     </div>
                   ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Skills Section */}
+          {portfolio.skills && portfolio.skills.length > 0 && (
+            <div className={`relative z-10 ${previewMode === 'mobile' ? 'py-1' : previewMode === 'tablet' ? 'py-2' : 'py-2'}`}>
+              <div className={`${previewMode === 'mobile' ? 'px-2' : previewMode === 'tablet' ? 'px-3' : 'px-4'} ${previewMode === 'mobile' ? 'max-w-[280px]' : previewMode === 'tablet' ? 'max-w-[420px]' : 'max-w-full'} mx-auto`}>
+                <h2 className={`${previewMode === 'mobile' ? 'text-xs' : previewMode === 'tablet' ? 'text-sm' : 'text-md'} font-semibold ${previewMode === 'mobile' ? 'mb-2' : 'mb-3'} text-white`}>
+                  Skills
+                </h2>
+                <div className={`grid ${previewMode === 'mobile' ? 'grid-cols-3 gap-1' : previewMode === 'tablet' ? 'grid-cols-4 gap-2' : 'grid-cols-4 gap-2'}`}>
+                  {portfolio.skills.map((skill) => {
+                    const skillData = getSkillData(skill.name)
+                    const IconComponent = skillData?.icon || Wrench
+                    
+                    return (
+                      <div 
+                        key={skill.id}
+                        className={`group relative flex flex-col items-center ${previewMode === 'mobile' ? 'p-1' : 'p-1.5'} backdrop-blur-xl bg-transparent border border-orange-500/30 rounded-lg hover:bg-black/20 hover:border-orange-500/50 transition-all duration-200`}
+                      >
+                        <div className={`flex-shrink-0 ${previewMode === 'mobile' ? 'w-6 h-6 mb-1' : previewMode === 'tablet' ? 'w-8 h-8 mb-1' : 'w-10 h-10 mb-1'} flex items-center justify-center rounded-lg bg-gray-900/70 border border-gray-700/50 hover:border-gray-600/70 transition-all duration-200 shadow-lg`}>
+                          <IconComponent 
+                            className={`${previewMode === 'mobile' ? 'w-3 h-3' : previewMode === 'tablet' ? 'w-4 h-4' : 'w-5 h-5'}`}
+                            style={{ 
+                              color: skillData?.color || '#ffffff',
+                            }}
+                          />
+                        </div>
+                        <span className={`${previewMode === 'mobile' ? 'text-[8px]' : previewMode === 'tablet' ? 'text-[9px]' : 'text-xs'} font-medium text-white text-center`}>
+                          {skill.name}
+                        </span>
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
             </div>

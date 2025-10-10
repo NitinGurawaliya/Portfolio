@@ -159,6 +159,7 @@ export default function DashboardPage() {
     console.log("🔍 Change tracking effect triggered:", {
       isInitialLoad,
       hasOriginalData: !!originalData,
+      originalDataKeys: originalData ? Object.keys(originalData) : null,
       portfolioData,
       selectedRepos: selectedRepos.length,
       skills: skills.length,
@@ -169,7 +170,8 @@ export default function DashboardPage() {
     
     // Don't track changes during initial load
     if (isInitialLoad || !originalData) {
-      console.log("⏸️ Skipping change tracking - initial load or no original data")
+      console.log("⏸️ Skipping change tracking - initial load:", isInitialLoad, "no original data:", !originalData)
+      console.log("🔍 OriginalData details:", originalData)
       return
     }
     
@@ -277,15 +279,19 @@ export default function DashboardPage() {
 
         setUser(builtUser)
 
-        setPortfolioData({
+        const initialPortfolioData = {
           displayName: userData.name || userData.login,
           jobTitle: "",
           bio: userData.bio || "",
           profilePic: userData.avatar_url,
           customUsername: userData.login,
-        })
+        }
+        
+        setPortfolioData(initialPortfolioData)
+        console.log("🔍 Set portfolio data, about to call loadExistingPortfolioData")
 
-        await loadExistingPortfolioData(userData.login)
+        await loadExistingPortfolioData(userData.login, initialPortfolioData)
+        console.log("🔍 loadExistingPortfolioData completed")
       })
       .catch(() => {
         router.push("/auth")
@@ -293,12 +299,16 @@ export default function DashboardPage() {
       .finally(() => setLoading(false))
   }, [router])
 
-  const loadExistingPortfolioData = async (username: string) => {
+  const loadExistingPortfolioData = async (username: string, initialPortfolioData?: any) => {
+    console.log("🚀 loadExistingPortfolioData called with:", { username, initialPortfolioData })
     try {
       const response = await fetch(`/api/portfolio/publish?username=${username}`)
+      console.log("📡 Portfolio fetch response:", response.status, response.ok)
+      
       if (response.ok) {
         const result = await response.json()
         const portfolio = result.portfolio
+        console.log("🔍 Found existing portfolio:", !!portfolio)
         
         if (portfolio) {
           // Update portfolio data with saved data
@@ -499,53 +509,70 @@ export default function DashboardPage() {
             console.log("✅ Initial load completed, change tracking enabled")
           }, 200) // Increased timeout to ensure all state updates are complete
         } else {
-          // No existing portfolio data, set initial data and mark as loaded
-          console.log("📝 No existing portfolio data found, setting initial data")
+          console.log("🔍 No existing portfolio found in response")
+        }
+      } else {
+        // No existing portfolio data, set initial data and mark as loaded
+        console.log("📝 No existing portfolio data found (404), setting initial data")
+          console.log("🔍 Current state before setting initial data:", {
+            portfolioData,
+            selectedRepos,
+            skills,
+            socials,
+            deployedUrls,
+            customNames,
+            customDescriptions,
+            githubUrls,
+            importedProjects
+          })
           setTimeout(() => {
+          const currentPortfolioData = initialPortfolioData || portfolioData
+          console.log("🔍 Using portfolio data:", currentPortfolioData)
           const initialData = {
             portfolioData: {
-              displayName: user?.name || "",
-              jobTitle: "",
-              bio: user?.bio || "",
-              profilePic: user?.avatarUrl || "",
-              customUsername: user?.githubUsername || "",
+              displayName: currentPortfolioData.displayName || "",
+              jobTitle: currentPortfolioData.jobTitle || "",
+              bio: currentPortfolioData.bio || "",
+              profilePic: currentPortfolioData.profilePic || "",
+              customUsername: currentPortfolioData.customUsername || "",
             },
-            selectedRepos: [],
-            skills: [],
-            socials: [],
-            deployedUrls: {},
-            customNames: {},
-            customDescriptions: {},
-            githubUrls: {},
-            importedProjects: []
+            selectedRepos: [...selectedRepos],
+            skills: [...skills],
+            socials: [...socials],
+            deployedUrls: { ...deployedUrls },
+            customNames: { ...customNames },
+            customDescriptions: { ...customDescriptions },
+            githubUrls: { ...githubUrls },
+            importedProjects: [...importedProjects]
           }
             console.log("💾 Setting initial data (no existing portfolio):", initialData)
             setOriginalData(initialData)
             setIsInitialLoad(false)
             console.log("✅ Initial load completed (no existing data), change tracking enabled")
+            console.log("🔍 After setOriginalData - originalData should be set, isInitialLoad:", false)
           }, 200)
-        }
       }
     } catch (error) {
       console.error("❌ Error loading existing portfolio data:", error)
       // Even if there's an error, mark as loaded to prevent infinite loading
       setTimeout(() => {
+        const currentPortfolioData = initialPortfolioData || portfolioData
         const fallbackData = {
           portfolioData: {
-            displayName: user?.name || "",
-            jobTitle: "",
-            bio: user?.bio || "",
-            profilePic: user?.avatarUrl || "",
-            customUsername: user?.githubUsername || "",
+            displayName: currentPortfolioData.displayName || "",
+            jobTitle: currentPortfolioData.jobTitle || "",
+            bio: currentPortfolioData.bio || "",
+            profilePic: currentPortfolioData.profilePic || "",
+            customUsername: currentPortfolioData.customUsername || "",
           },
-          selectedRepos: [],
-          skills: [],
-          socials: [],
-          deployedUrls: {},
-          customNames: {},
-          customDescriptions: {},
-          githubUrls: {},
-          importedProjects: []
+          selectedRepos: [...selectedRepos],
+          skills: [...skills],
+          socials: [...socials],
+          deployedUrls: { ...deployedUrls },
+          customNames: { ...customNames },
+          customDescriptions: { ...customDescriptions },
+          githubUrls: { ...githubUrls },
+          importedProjects: [...importedProjects]
         }
         console.log("💾 Setting fallback data due to error:", fallbackData)
         setOriginalData(fallbackData)

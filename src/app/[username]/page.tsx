@@ -35,6 +35,7 @@ import {
   SiFigma, SiPostman, SiWebpack, SiVite, SiNpm, SiYarn, SiStackoverflow, SiReddit
 } from "react-icons/si"
 import { FaJava, FaAws, FaMicrosoft } from "react-icons/fa"
+import { SiFastify, SiRailway } from "react-icons/si"
 import { TbBrandVscode } from "react-icons/tb"
 
 // Skills database with icons and colors (same as SkillsSection)
@@ -71,9 +72,9 @@ const skillsDatabase = [
   
   // Backend Frameworks
   { name: "Node.js", category: "Backend", icon: SiNodedotjs, color: "#339933" },
-  { name: "Express.js", category: "Backend", icon: SiExpress, color: "#000000" },
+  { name: "Express.js", category: "Backend", icon: SiExpress, color: "#68A063" },
   { name: "Django", category: "Backend", icon: SiDjango, color: "#092E20" },
-  { name: "Flask", category: "Backend", icon: SiFlask, color: "#000000" },
+  { name: "Flask", category: "Backend", icon: SiFlask, color: "#FFD43B" },
   { name: "FastAPI", category: "Backend", icon: SiFastapi, color: "#009688" },
   { name: "Spring Boot", category: "Backend", icon: SiSpring, color: "#6DB33F" },
   { name: "Laravel", category: "Backend", icon: SiLaravel, color: "#FF2D20" },
@@ -95,7 +96,7 @@ const skillsDatabase = [
   { name: "Azure", category: "Cloud", icon: FaMicrosoft, color: "#0078D4" },
   { name: "Docker", category: "DevOps", icon: SiDocker, color: "#2496ED" },
   { name: "Kubernetes", category: "DevOps", icon: SiKubernetes, color: "#326CE5" },
-  { name: "Vercel", category: "Cloud", icon: SiVercel, color: "#000000" },
+  { name: "Vercel", category: "Cloud", icon: SiVercel, color: "#FFFFFF" },
   { name: "Netlify", category: "Cloud", icon: SiNetlify, color: "#00C7B7" },
   
   // Tools
@@ -108,6 +109,10 @@ const skillsDatabase = [
   { name: "Vite", category: "Build Tools", icon: SiVite, color: "#646CFF" },
   { name: "npm", category: "Tools", icon: SiNpm, color: "#CB3837" },
   { name: "Yarn", category: "Tools", icon: SiYarn, color: "#2C8EBB" },
+  
+  // Additional Backend Frameworks
+  { name: "Fastify", category: "Backend", icon: SiFastify, color: "#FFFFFF" },
+  { name: "Railway", category: "Cloud", icon: SiRailway, color: "#FFFFFF" },
 ]
 
 interface Portfolio {
@@ -536,12 +541,11 @@ export default function PublicPortfolioPage() {
                      viewport={{ once: true }}
                      whileHover={{ scale: 1.05 }}
                    >
-                     <div className="flex-shrink-0 w-10 h-10 md:w-12 md:h-12 mb-2 flex items-center justify-center">
+                     <div className="flex-shrink-0 w-10 h-10 md:w-12 md:h-12 mb-2 flex items-center justify-center rounded-lg bg-gray-900/70 border border-gray-700/50 hover:border-gray-600/70 transition-all duration-200 shadow-lg">
                        <IconComponent 
-                         className="w-6 h-6 md:w-8 md:h-8 drop-shadow-lg" 
+                         className="w-6 h-6 md:w-8 md:h-8" 
                          style={{ 
-                           color: skillData?.color || '#00ffff',
-                           filter: 'drop-shadow(0 0 12px rgba(0, 255, 255, 0.4))'
+                           color: skillData?.color || '#ffffff',
                          }}
                        />
                      </div>
@@ -584,66 +588,66 @@ export default function PublicPortfolioPage() {
                 // Platform-specific colors and styles
                 const platformStyles = {
                   github: { 
-                    bg: 'bg-gray-800/60', 
-                    border: 'border-gray-500/30', 
-                    text: 'text-gray-300', 
-                    hover: 'hover:bg-gray-700/60 hover:text-white hover:border-gray-400/50',
-                    shadow: 'hover:shadow-lg hover:shadow-gray-500/20'
+                    bg: 'bg-gray-900/80', 
+                    border: 'border-gray-700/50', 
+                    text: 'text-white', 
+                    hover: 'hover:bg-gray-800/90 hover:text-white hover:border-gray-600/70',
+                    shadow: 'hover:shadow-lg hover:shadow-gray-900/30'
                   },
                   email: { 
-                    bg: 'bg-slate-700/60', 
-                    border: 'border-slate-500/30', 
-                    text: 'text-slate-300', 
-                    hover: 'hover:bg-slate-600/60 hover:text-white hover:border-slate-400/50',
+                    bg: 'bg-blue-600/80', 
+                    border: 'border-blue-500/50', 
+                    text: 'text-white', 
+                    hover: 'hover:bg-blue-700/90 hover:text-white hover:border-blue-400/70',
                     shadow: 'hover:shadow-lg hover:shadow-slate-500/20'
                   },
                   twitter: { 
-                    bg: 'bg-blue-800/60', 
-                    border: 'border-blue-500/30', 
-                    text: 'text-blue-300', 
-                    hover: 'hover:bg-blue-700/60 hover:text-blue-200 hover:border-blue-400/50',
-                    shadow: 'hover:shadow-lg hover:shadow-blue-500/20'
+                    bg: 'bg-sky-600/80', 
+                    border: 'border-sky-500/50', 
+                    text: 'text-white', 
+                    hover: 'hover:bg-sky-700/90 hover:text-white hover:border-sky-400/70',
+                    shadow: 'hover:shadow-lg hover:shadow-sky-500/30'
                   },
                   instagram: { 
-                    bg: 'bg-pink-800/60', 
-                    border: 'border-pink-500/30', 
-                    text: 'text-pink-300', 
-                    hover: 'hover:bg-pink-700/60 hover:text-pink-200 hover:border-pink-400/50',
-                    shadow: 'hover:shadow-lg hover:shadow-pink-500/20'
+                    bg: 'bg-gradient-to-r from-purple-600 to-pink-600/80', 
+                    border: 'border-purple-500/50', 
+                    text: 'text-white', 
+                    hover: 'hover:from-purple-700 hover:to-pink-700/90 hover:text-white hover:border-purple-400/70',
+                    shadow: 'hover:shadow-lg hover:shadow-purple-500/30'
                   },
                   linkedin: { 
-                    bg: 'bg-blue-900/60', 
-                    border: 'border-blue-600/30', 
-                    text: 'text-blue-300', 
-                    hover: 'hover:bg-blue-800/60 hover:text-blue-200 hover:border-blue-500/50',
-                    shadow: 'hover:shadow-lg hover:shadow-blue-600/20'
+                    bg: 'bg-blue-700/80', 
+                    border: 'border-blue-600/50', 
+                    text: 'text-white', 
+                    hover: 'hover:bg-blue-800/90 hover:text-white hover:border-blue-500/70',
+                    shadow: 'hover:shadow-lg hover:shadow-blue-600/30'
                   },
                   facebook: { 
-                    bg: 'bg-blue-700/60', 
-                    border: 'border-blue-500/30', 
-                    text: 'text-blue-300', 
-                    hover: 'hover:bg-blue-600/60 hover:text-blue-200 hover:border-blue-400/50',
+                    bg: 'bg-blue-600/80', 
+                    border: 'border-blue-500/50', 
+                    text: 'text-white', 
+                    hover: 'hover:bg-blue-700/90 hover:text-white hover:border-blue-400/70',
                     shadow: 'hover:shadow-lg hover:shadow-blue-500/20'
                   },
                   youtube: { 
-                    bg: 'bg-red-800/60', 
-                    border: 'border-red-500/30', 
-                    text: 'text-red-300', 
-                    hover: 'hover:bg-red-700/60 hover:text-red-200 hover:border-red-400/50',
-                    shadow: 'hover:shadow-lg hover:shadow-red-500/20'
+                    bg: 'bg-red-600/80', 
+                    border: 'border-red-500/50', 
+                    text: 'text-white', 
+                    hover: 'hover:bg-red-700/90 hover:text-white hover:border-red-400/70',
+                    shadow: 'hover:shadow-lg hover:shadow-red-500/30'
                   },
                   stackoverflow: { 
-                    bg: 'bg-orange-800/60', 
-                    border: 'border-orange-500/30', 
-                    text: 'text-orange-300', 
-                    hover: 'hover:bg-orange-700/60 hover:text-orange-200 hover:border-orange-400/50',
-                    shadow: 'hover:shadow-lg hover:shadow-orange-500/20'
+                    bg: 'bg-orange-600/80', 
+                    border: 'border-orange-500/50', 
+                    text: 'text-white', 
+                    hover: 'hover:bg-orange-700/90 hover:text-white hover:border-orange-400/70',
+                    shadow: 'hover:shadow-lg hover:shadow-orange-500/30'
                   },
                   reddit: { 
-                    bg: 'bg-orange-700/60', 
-                    border: 'border-orange-500/30', 
-                    text: 'text-orange-300', 
-                    hover: 'hover:bg-orange-600/60 hover:text-orange-200 hover:border-orange-400/50',
+                    bg: 'bg-orange-500/80', 
+                    border: 'border-orange-400/50', 
+                    text: 'text-white', 
+                    hover: 'hover:bg-orange-600/90 hover:text-white hover:border-orange-400/70',
                     shadow: 'hover:shadow-lg hover:shadow-orange-500/20'
                   }
                 }

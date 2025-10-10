@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { randomBytes } from "crypto"
 import { devLog } from "@/lib/logger"
+import { prisma } from "@/lib/prisma"
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
@@ -15,7 +16,7 @@ export async function GET(req: NextRequest) {
     const githubAuthUrl = new URL("https://github.com/login/oauth/authorize")
     githubAuthUrl.searchParams.set("client_id", process.env.GITHUB_CLIENT_ID!)
     githubAuthUrl.searchParams.set("redirect_uri", `${baseUrl}/api/auth/github`)
-    githubAuthUrl.searchParams.set("scope", "read:user user:email repo")
+    githubAuthUrl.searchParams.set("scope", "read:user user:email public_repo")
     // Generate CSRF state and store in httpOnly cookie
     const state = randomBytes(16).toString("hex")
     githubAuthUrl.searchParams.set("state", state)
@@ -70,6 +71,54 @@ export async function GET(req: NextRequest) {
     })
     
     const userData = await userResponse.json()
+    
+    // Save/update user in database
+    try {
+      devLog("Saving user to database:", userData.login)
+      
+      // Handle empty email to avoid unique constraint issues
+      const userEmail = userData.email && userData.email.trim() 
+        ? userData.email.trim() 
+        : `github-${userData.id}@placeholder.com`
+      
+      await prisma.user.upsert({
+        where: { githubId: userData.id.toString() },
+        update: {
+          name: userData.name || userData.login,
+          email: userEmail,
+          githubUsername: userData.login,
+          avatarUrl: userData.avatar_url,
+          bio: userData.bio || null,
+          location: userData.location || null,
+          websiteUrl: userData.blog || null,
+          twitterUsername: userData.twitter_username || null,
+          company: userData.company || null,
+          publicRepos: userData.public_repos || 0,
+          followers: userData.followers || 0,
+          following: userData.following || 0,
+        },
+        create: {
+          githubId: userData.id.toString(),
+          name: userData.name || userData.login,
+          email: userEmail,
+          githubUsername: userData.login,
+          avatarUrl: userData.avatar_url,
+          bio: userData.bio || null,
+          location: userData.location || null,
+          websiteUrl: userData.blog || null,
+          twitterUsername: userData.twitter_username || null,
+          company: userData.company || null,
+          publicRepos: userData.public_repos || 0,
+          followers: userData.followers || 0,
+          following: userData.following || 0,
+        },
+      })
+      
+      devLog("User saved to database successfully:", userData.login)
+    } catch (dbError) {
+      console.error("Error saving user to database:", dbError)
+      // Continue with authentication even if database save fails
+    }
     
     // Store user data in a simple session (you can improve this later)
     const sessionData = {
