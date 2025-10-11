@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { devLog } from "@/lib/logger"
 import type { Prisma } from "@prisma/client"
+import { sendEmail } from "@/lib/sendEmail"
+import { generatePortfolioPublishedEmail } from "@/lib/templates/welcomeEmail"
 
 export async function POST(req: NextRequest) {
   try {
@@ -23,27 +25,45 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    // First, get existing user from database (to preserve email from auth)
+    const existingUser = await prisma.user.findUnique({
+      where: { githubId: userId.toString() }
+    })
+    
+    // Determine email: prefer existing DB email (from auth), fallback to userData, then placeholder
+    let userEmail: string
+    if (existingUser?.email && !existingUser.email.includes('@placeholder.com')) {
+      // Use existing real email from database (saved during auth)
+      userEmail = existingUser.email
+      devLog("✅ Using existing real email from database:", userEmail)
+    } else if (userData?.email && userData.email.trim()) {
+      // Use email from frontend if available
+      userEmail = userData.email.trim()
+      devLog("📧 Using email from frontend:", userEmail)
+    } else {
+      // Fallback to placeholder
+      userEmail = `github-${userId}@placeholder.com`
+      devLog("⚠️ No real email found, using placeholder:", userEmail)
+    }
+    
     // Start a transaction to ensure data consistency
     const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-      // First, ensure user exists in database
-      const userEmail = userData?.email && userData.email.trim()
-        ? userData.email.trim()
-        : `github-${userId}@placeholder.com`
       const user = await tx.user.upsert({
         where: { githubId: userId.toString() },
         update: {
-          name: userData?.name || "",
+          name: userData?.name || existingUser?.name || "",
+          // DON'T overwrite email if we have a real one from auth
           email: userEmail,
-          githubUsername: userData?.githubUsername || "",
-          avatarUrl: userData?.avatarUrl || "",
-          bio: userData?.bio || "",
-          location: userData?.location || "",
-          websiteUrl: userData?.websiteUrl || "",
-          twitterUsername: userData?.twitterUsername || "",
-          company: userData?.company || "",
-          publicRepos: userData?.publicRepos || 0,
-          followers: userData?.followers || 0,
-          following: userData?.following || 0,
+          githubUsername: userData?.githubUsername || existingUser?.githubUsername || "",
+          avatarUrl: userData?.avatarUrl || existingUser?.avatarUrl || "",
+          bio: userData?.bio || existingUser?.bio || "",
+          location: userData?.location || existingUser?.location || "",
+          websiteUrl: userData?.websiteUrl || existingUser?.websiteUrl || "",
+          twitterUsername: userData?.twitterUsername || existingUser?.twitterUsername || "",
+          company: userData?.company || existingUser?.company || "",
+          publicRepos: userData?.publicRepos || existingUser?.publicRepos || 0,
+          followers: userData?.followers || existingUser?.followers || 0,
+          following: userData?.following || existingUser?.following || 0,
         },
         create: {
           githubId: userId.toString(),
@@ -142,13 +162,48 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      return portfolio
+      return { portfolio, user }
     })
+
+    // Send email on every publish (non-blocking)
+    devLog("📧 Portfolio published! Email:", result.user.email, "| isPlaceholder:", result.user.email.includes('@placeholder.com'))
+    
+    if (!result.user.email.includes('@placeholder.com')) {
+      devLog("🎉 Sending portfolio published email to:", result.user.email)
+      
+      const requestUrl = new URL(req.url)
+      const baseUrl = `${requestUrl.protocol}//${requestUrl.host}`
+      
+      const publishedEmailHtml = generatePortfolioPublishedEmail({
+        name: result.user.name,
+        username: result.user.githubUsername || '',
+        portfolioUrl: baseUrl,
+        customUsername: result.portfolio.customUsername || undefined,
+      })
+      
+      sendEmail({
+        to: result.user.email,
+        subject: "🎉 Your Portfolio is Live!",
+        html: publishedEmailHtml,
+      })
+        .then((emailResult) => {
+          if (emailResult.success) {
+            devLog("✅ Portfolio published email sent to:", result.user.email)
+          } else {
+            console.error("❌ Failed to send portfolio published email:", emailResult.error)
+          }
+        })
+        .catch((error) => {
+          console.error("❌ Portfolio published email error:", error)
+        })
+    } else {
+      devLog("⚠️ Skipping email - placeholder email detected:", result.user.email)
+    }
 
     return NextResponse.json({
       success: true,
       message: "Portfolio published successfully",
-      portfolio: result
+      portfolio: result.portfolio
     })
 
   } catch (error) {
