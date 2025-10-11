@@ -141,16 +141,45 @@ export const generatePortfolioPublishedEmail = (data: PortfolioPublishedEmailDat
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Your Portfolio is Live!</title>
+    <style>
+        @media only screen and (max-width: 600px) {
+            .container {
+                width: 100% !important;
+            }
+            .content {
+                padding: 24px 20px !important;
+            }
+            .header {
+                padding: 32px 20px 24px !important;
+            }
+            .cta-button {
+                display: block !important;
+                width: 100% !important;
+                box-sizing: border-box !important;
+                padding: 14px 24px !important;
+            }
+            .feature-box {
+                padding: 20px !important;
+            }
+            .url-box {
+                padding: 16px !important;
+            }
+            .url-text {
+                font-size: 14px !important;
+                word-break: break-all !important;
+            }
+        }
+    </style>
 </head>
 <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #fafafa; color: #0a0a0a;">
     <table role="presentation" style="width: 100%; border-collapse: collapse;">
         <tr>
             <td align="center" style="padding: 40px 20px;">
-                <table role="presentation" style="width: 600px; max-width: 100%; border-collapse: collapse; background-color: #ffffff; border-radius: 12px; border: 1px solid #e5e5e5; overflow: hidden;">
+                <table role="presentation" class="container" style="width: 600px; max-width: 100%; border-collapse: collapse; background-color: #ffffff; border-radius: 12px; border: 1px solid #e5e5e5; overflow: hidden;">
                     
                     <!-- Header -->
                     <tr>
-                        <td style="background-color: #ffffff; padding: 40px 32px 32px; text-align: center; border-bottom: 1px solid #e5e5e5;">
+                        <td class="header" style="background-color: #ffffff; padding: 40px 32px 32px; text-align: center; border-bottom: 1px solid #e5e5e5;">
                             <div style="font-size: 48px; margin-bottom: 16px;">🎉</div>
                             <h1 style="margin: 0; font-size: 28px; font-weight: 700; color: #0a0a0a; letter-spacing: -0.5px;">
                                 Your Portfolio is Live
@@ -163,7 +192,7 @@ export const generatePortfolioPublishedEmail = (data: PortfolioPublishedEmailDat
                     
                     <!-- Content -->
                     <tr>
-                        <td style="padding: 40px 32px;">
+                        <td class="content" style="padding: 40px 32px;">
                             <p style="margin: 0 0 24px; font-size: 16px; line-height: 1.7; color: #0a0a0a;">
                                 Hey ${displayName},
                             </p>
@@ -173,8 +202,8 @@ export const generatePortfolioPublishedEmail = (data: PortfolioPublishedEmailDat
                             </p>
                             
                             <!-- URL Box -->
-                            <div style="margin: 0 0 32px; padding: 20px; background-color: #fafafa; border-radius: 8px; border: 1px solid #e5e5e5; text-align: center;">
-                                <a href="${shareUrl}" style="font-size: 16px; font-weight: 600; color: #ea580c; text-decoration: none; word-break: break-all;">
+                            <div class="url-box" style="margin: 0 0 32px; padding: 20px; background-color: #fafafa; border-radius: 8px; border: 1px solid #e5e5e5; text-align: center;">
+                                <a href="${shareUrl}" class="url-text" style="font-size: 16px; font-weight: 600; color: #ea580c; text-decoration: none; word-break: break-all;">
                                     ${shareUrl}
                                 </a>
                             </div>
@@ -184,7 +213,7 @@ export const generatePortfolioPublishedEmail = (data: PortfolioPublishedEmailDat
                             </p>
                             
                             <!-- Next Steps -->
-                            <div style="margin: 0 0 32px; padding: 24px; background-color: #fafafa; border-radius: 8px; border: 1px solid #e5e5e5;">
+                            <div class="feature-box" style="margin: 0 0 32px; padding: 24px; background-color: #fafafa; border-radius: 8px; border: 1px solid #e5e5e5;">
                                 <div style="margin-bottom: 20px;">
                                     <p style="margin: 0 0 8px; font-size: 15px; font-weight: 600; color: #0a0a0a;">
                                         Share it on LinkedIn
@@ -211,17 +240,14 @@ export const generatePortfolioPublishedEmail = (data: PortfolioPublishedEmailDat
                                 </div>
                             </div>
                             
-                            <!-- CTA Buttons -->
+                            <!-- CTA Button -->
                             <table role="presentation" style="width: 100%; margin: 0 0 28px;">
                                 <tr>
                                     <td align="center">
                                         <a href="${shareUrl}" 
-                                           style="display: inline-block; padding: 14px 28px; background-color: #ea580c; color: #ffffff; text-decoration: none; border-radius: 8px; font-size: 15px; font-weight: 600; margin-right: 12px;">
+                                           class="cta-button"
+                                           style="display: inline-block; padding: 14px 32px; background-color: #ea580c; color: #ffffff; text-decoration: none; border-radius: 8px; font-size: 15px; font-weight: 600;">
                                             View Portfolio →
-                                        </a>
-                                        <a href="${portfolioUrl}/dashboard" 
-                                           style="display: inline-block; padding: 14px 28px; background-color: #ffffff; color: #0a0a0a; text-decoration: none; border-radius: 8px; font-size: 15px; font-weight: 600; border: 1px solid #e5e5e5;">
-                                            Edit Portfolio
                                         </a>
                                     </td>
                                 </tr>
