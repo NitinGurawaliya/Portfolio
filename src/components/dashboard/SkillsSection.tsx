@@ -292,7 +292,7 @@ export function SkillsSection({ skills, onAddSkill, onRemoveSkill }: SkillsSecti
                   variant="ghost"
                   size="sm"
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                  className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0 hover:bg-gray-100"
+                  className="absolute bg-black right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0 hover:bg-gray-100"
                 >
                   <motion.div
                     animate={{ rotate: isDropdownOpen ? 180 : 0 }}
@@ -311,11 +311,11 @@ export function SkillsSection({ skills, onAddSkill, onRemoveSkill }: SkillsSecti
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: -10, scale: 0.95 }}
                     transition={{ duration: 0.2 }}
-                    className="absolute top-full left-0 right-0 mt-2 bg-white  rounded-lg  z-50 max-h-80 overflow-y-auto"
+                    className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-xl z-50 max-h-80 overflow-hidden"
                   >
                     <div className="p-4">
                       <div 
-                        className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12 gap-3"
+                        className="grid grid-cols-8 md:grid-cols-10 lg:grid-cols-12 gap-3 max-h-64 overflow-y-auto scrollbar-hide"
                         onMouseMove={handleMouseMove}
                       >
                         {filteredSkills.slice(0, 60).map((skill, index) => {
@@ -339,7 +339,7 @@ export function SkillsSection({ skills, onAddSkill, onRemoveSkill }: SkillsSecti
                                 className={`h-12 w-12 p-0 rounded-lg border-2 transition-all duration-200 ${
                                   isAdded
                                     ? "bg-gray-100 border-gray-200 cursor-not-allowed opacity-50"
-                                    : "bg-gray-50 border-gray-200  hover:bg-white hover:shadow-md hover:scale-105"
+                                    : "bg-gray-50 border-gray-200 hover:bg-white hover:shadow-md hover:scale-105"
                                 }`}
                               >
                                 <IconComponent 
@@ -365,7 +365,7 @@ export function SkillsSection({ skills, onAddSkill, onRemoveSkill }: SkillsSecti
                           </p>
                         </div>
                       )}
-            </div>
+                    </div>
                   </motion.div>
                 )}
               </AnimatePresence>

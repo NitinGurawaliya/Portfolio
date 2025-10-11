@@ -9,6 +9,7 @@ import { ReposSection } from "@/components/dashboard/ReposSection"
 import { SkillsSection } from "@/components/dashboard/SkillsSection"
 import { SocialsSection } from "@/components/dashboard/SocialsSection"
 import { DevFolioLoader } from "@/components/ui/DevFolioLoader"
+import toast, { Toaster } from "react-hot-toast"
 
 interface User {
   id: number
@@ -673,6 +674,35 @@ export default function DashboardPage() {
     }
   }
 
+  // Sound notification function - Success chime
+  const playNotificationSound = () => {
+    try {
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+      
+      // Create a pleasant success chime (C-E-G chord)
+      const frequencies = [523.25, 659.25, 783.99] // C5, E5, G5
+      
+      frequencies.forEach((freq, index) => {
+        const oscillator = audioContext.createOscillator()
+        const gainNode = audioContext.createGain()
+        
+        oscillator.connect(gainNode)
+        gainNode.connect(audioContext.destination)
+        
+        oscillator.frequency.setValueAtTime(freq, audioContext.currentTime + index * 0.05)
+        
+        gainNode.gain.setValueAtTime(0, audioContext.currentTime + index * 0.05)
+        gainNode.gain.linearRampToValueAtTime(0.2, audioContext.currentTime + index * 0.05 + 0.1)
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + index * 0.05 + 0.8)
+        
+        oscillator.start(audioContext.currentTime + index * 0.05)
+        oscillator.stop(audioContext.currentTime + index * 0.05 + 0.8)
+      })
+    } catch (error) {
+      console.log("Could not play notification sound:", error)
+    }
+  }
+
   const handlePublishAll = async () => {
     setIsPublishing(true)
     try {
@@ -716,14 +746,43 @@ export default function DashboardPage() {
         setHasUnsavedChanges(false)
         setIsInitialLoad(false)
         
-        // Show success message
-        alert("🎉 Portfolio published successfully! All changes have been saved and are now live.")
+        // Show success toast and play sound
+        toast.success("🎉 Portfolio published successfully!", {
+          duration: 3000,
+          position: "top-left",
+          style: {
+            background: "#f97316",
+            color: "#fff",
+            fontWeight: "500",
+            border: "1px solid #ea580c",
+            borderRadius: "8px",
+          },
+          iconTheme: {
+            primary: "#fff",
+            secondary: "#f97316",
+          },
+        })
+        
+        // Play notification sound
+        playNotificationSound()
       } else {
         throw new Error(result.error || "Failed to publish portfolio")
       }
     } catch (error) {
       console.error("Error publishing portfolio:", error)
-      alert("Failed to publish portfolio. Please try again.")
+      
+      // Show error toast
+      toast.error("Failed to publish portfolio. Please try again.", {
+        duration: 3000,
+        position: "top-left",
+        style: {
+          background: "#dc2626",
+          color: "#fff",
+          fontWeight: "500",
+          border: "1px solid #b91c1c",
+          borderRadius: "8px",
+        },
+      })
     } finally {
       setIsPublishing(false)
     }
@@ -881,17 +940,32 @@ export default function DashboardPage() {
   }
 
           return (
-            <DashboardLayout 
-              user={user} 
-              activeSection={activeSection}
-              onSectionChange={setActiveSection}
-              livePortfolio={livePortfolio}
-              portfolioData={portfolioData}
-              hasUnsavedChanges={hasUnsavedChanges}
-              onPublish={handlePublishAll}
-              isPublishing={isPublishing}
-            >
-              {renderActiveSection()}
-            </DashboardLayout>
+            <>
+              <Toaster 
+                position="top-left"
+                toastOptions={{
+                  duration: 3000,
+                  style: {
+                    background: '#f97316',
+                    color: '#fff',
+                    border: '1px solid #ea580c',
+                    borderRadius: '8px',
+                    fontWeight: '500',
+                  },
+                }}
+              />
+              <DashboardLayout 
+                user={user} 
+                activeSection={activeSection}
+                onSectionChange={setActiveSection}
+                livePortfolio={livePortfolio}
+                portfolioData={portfolioData}
+                hasUnsavedChanges={hasUnsavedChanges}
+                onPublish={handlePublishAll}
+                isPublishing={isPublishing}
+              >
+                {renderActiveSection()}
+              </DashboardLayout>
+            </>
           )
 }
