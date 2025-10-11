@@ -23,7 +23,7 @@ export default function HomePage() {
       <main>
         <HeroSection />
         <FeaturesSection />
-        <DemoSection />
+        {/* <DemoSection /> */}
         <CTASection />
       </main>
       <Footer />
