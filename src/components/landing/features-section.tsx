@@ -26,27 +26,27 @@ const features = [
 
 export function FeaturesSection() {
   return (
-    <section id="features" className="py-24 lg:py-32">
-      <div className="container">
-        <div className="mx-auto max-w-2xl text-center mb-16">
-          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl text-balance">
+    <section id="features" className="py-16 sm:py-20 lg:py-24 xl:py-32">
+      <div className="container px-4 sm:px-6">
+        <div className="mx-auto max-w-2xl text-center mb-12 sm:mb-16">
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-balance leading-tight">
             Everything you need (and nothing you don't)
           </h2>
-          <p className="mt-4 text-lg text-muted-foreground text-pretty">
+          <p className="mt-4 text-base sm:text-lg text-muted-foreground text-pretty">
             We built this because we were tired of ugly developer portfolios.
           </p>
         </div>
 
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
           {features.map((feature, index) => (
             <Card key={index} className="border-border/40 bg-card/50 backdrop-blur">
-              <CardHeader>
-                <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+              <CardHeader className="pb-3 sm:pb-4">
+                <div className="mb-3 sm:mb-2 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
                   <feature.icon className="h-5 w-5 text-primary" />
                 </div>
-                <CardTitle className="text-lg">{feature.title}</CardTitle>
+                <CardTitle className="text-base sm:text-lg leading-tight">{feature.title}</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pt-0">
                 <CardDescription className="text-sm leading-relaxed">{feature.description}</CardDescription>
               </CardContent>
             </Card>

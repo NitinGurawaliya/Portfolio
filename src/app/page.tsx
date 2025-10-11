@@ -1,12 +1,10 @@
 import { Metadata } from "next"
 import { Header } from "@/components/landing/header"
 import { HeroSection } from "@/components/landing/hero-section"
-// import { FeaturesSection } from "@/components/landing/features-section"
-// import { DemoSection } from "@/components/landing/demo-section"
-// import { CalloutSection } from "@/components/landing/callout-section"
-// import { SocialProofSection } from "@/components/landing/social-proof-section"
-// import { CTASection } from "@/components/landing/cta-section"
-// import { Footer } from "@/components/landing/footer"
+import { FeaturesSection } from "@/components/landing/features-section"
+import { DemoSection } from "@/components/landing/demo-section"
+import { CTASection } from "@/components/landing/cta-section"
+import { Footer } from "@/components/landing/footer"
 
 export const metadata: Metadata = {
   title: "DevFolio - Build Your Developer Portfolio in Minutes",
@@ -24,13 +22,11 @@ export default function HomePage() {
       <Header />
       <main>
         <HeroSection />
-        {/* <FeaturesSection />
+        <FeaturesSection />
         <DemoSection />
-        <CalloutSection />
-        <SocialProofSection />
-        <CTASection /> */}
+        <CTASection />
       </main>
-      {/* <Footer /> */}
+      <Footer />
     </div>
   )
 }

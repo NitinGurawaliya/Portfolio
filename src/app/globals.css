@@ -126,6 +126,16 @@
 }
 
 @layer utilities {
+  /* Grid background utility for hero/CTA sections */
+  .grid-bg {
+    position: absolute;
+    inset: 0;
+    background-image: linear-gradient(to right, color-mix(in oklab, var(--foreground) 12%, transparent) 1px, transparent 1px),
+      linear-gradient(to bottom, color-mix(in oklab, var(--foreground) 12%, transparent) 1px, transparent 1px);
+    background-size: 32px 32px;
+    mask-image: radial-gradient(ellipse at center, black 60%, transparent 100%);
+    pointer-events: none;
+  }
   .scrollbar-hide {
     /* Firefox */
     scrollbar-width: none;

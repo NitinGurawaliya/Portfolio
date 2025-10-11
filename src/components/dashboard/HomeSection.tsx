@@ -14,6 +14,7 @@ import {
   User,
   Sparkles
 } from "lucide-react"
+import { DevFolioInlineLoader } from "@/components/ui/DevFolioLoader"
 
 interface HomeSectionProps {
   user: any
@@ -141,7 +142,7 @@ export function HomeSection({ user, portfolioData, onUpdate }: HomeSectionProps)
               >
                 👋
               </motion.div>
-              <span className="ml-2">Welcome to Your Portfolio</span>
+              <span className="ml-2">Welcome to Your <span className="text-orange-600">Portfolio</span></span>
             </CardTitle>
             <motion.p 
               className="text-gray-600 mt-1 font-medium text-sm"
@@ -175,7 +176,7 @@ export function HomeSection({ user, portfolioData, onUpdate }: HomeSectionProps)
               </AvatarFallback>
             </Avatar>
             <div>
-              <Button variant="outline" size="sm" className="mb-2   hover:bg-black hover:text-white font-medium text-xs">
+              <Button variant="outline" size="sm" className="mb-2 hover:bg-orange-600 hover:text-white hover:border-orange-600 font-medium text-xs">
                 <Upload className="h-3 w-3 mr-1.5" />
                 Change Photo
               </Button>
@@ -193,7 +194,7 @@ export function HomeSection({ user, portfolioData, onUpdate }: HomeSectionProps)
                 id="displayName"
                 value={formData.displayName}
                 onChange={(e) => handleInputChange("displayName", e.target.value)}
-                className="bg-gray-50  text-black font-medium text-sm focus:bg-white"
+                className="bg-gray-50 text-black font-medium text-sm focus:bg-white"
                 placeholder="Your display name"
               />
             </div>
@@ -212,7 +213,7 @@ export function HomeSection({ user, portfolioData, onUpdate }: HomeSectionProps)
                 />
                 {usernameValidation.isChecking && (
                   <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+                    <div className="w-4 h-4 bg-gradient-to-r from-orange-500 to-orange-600 rounded-full animate-spin"></div>
                   </div>
                 )}
               </div>

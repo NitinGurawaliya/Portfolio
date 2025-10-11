@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { Providers } from "./providers";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -60,9 +61,9 @@ export const metadata: Metadata = {
   },
   manifest: "/site.webmanifest",
   icons: {
-    icon: "/devfolio-high-resolution-logo.png",
-    shortcut: "/devfolio-high-resolution-logo.png",
-    apple: "/devfolio-high-resolution-logo.png",
+    icon: "/favicon-d.svg",
+    shortcut: "/favicon-d.svg",
+    apple: "/icon-192.png",
   },
 };
 
@@ -72,17 +73,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
       <script src="https://www.watchdog.mom/track.js" data-site="851a4075-b123-470a-a7ab-e57f268adaae"></script>
-        <link rel="icon" href="/devfolio-high-resolution-logo.png" type="image/png" />
-        <link rel="shortcut icon" href="/devfolio-high-resolution-logo.png" type="image/png" />
-        <link rel="apple-touch-icon" href="/devfolio-high-resolution-logo.png" />
+        <link rel="icon" href="/favicon-d.svg" type="image/svg+xml" />
+        <link rel="shortcut icon" href="/favicon-d.svg" type="image/svg+xml" />
+        <link rel="apple-touch-icon" href="/icon-192.png" />
       </head>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        {children}
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`} suppressHydrationWarning>
+        <Providers>
+          {children}
+        </Providers>
       </body>
     </html>
   );

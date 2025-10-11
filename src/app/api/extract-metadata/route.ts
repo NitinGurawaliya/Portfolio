@@ -57,12 +57,6 @@ export async function POST(req: NextRequest) {
         $('meta[name="description"]').attr('content') ||
         'No description available',
       
-      image: 
-        $('meta[property="og:image"]').attr('content') ||
-        $('meta[name="twitter:image"]').attr('content') ||
-        $('link[rel="icon"]').attr('href') ||
-        $('link[rel="shortcut icon"]').attr('href') ||
-        null,
       
       siteName: 
         $('meta[property="og:site_name"]').attr('content') ||
@@ -90,10 +84,6 @@ export async function POST(req: NextRequest) {
         '',
     }
 
-    // Clean up relative URLs
-    if (metadata.image && metadata.image.startsWith('/')) {
-      metadata.image = new URL(metadata.image, url).href
-    }
     
     if (metadata.favicon && metadata.favicon.startsWith('/')) {
       metadata.favicon = new URL(metadata.favicon, url).href

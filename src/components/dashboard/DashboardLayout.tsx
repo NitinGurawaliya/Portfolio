@@ -17,6 +17,7 @@ import {
   Loader2,
   LogOut
 } from "lucide-react"
+import { DevFolioInlineLoader } from "@/components/ui/DevFolioLoader"
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -85,6 +86,18 @@ export function DashboardLayout({
           initial="hidden"
           animate="visible"
         >
+          {/* DevFolio Logo */}
+          <motion.div
+            className="mb-6"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.4, delay: 0.2 }}
+          >
+            <div className="w-8 h-8 bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-sm">D</span>
+            </div>
+          </motion.div>
+
           {/* Navigation Items */}
           <div className="flex flex-col space-y-4 flex-1">
             {sidebarItems.map((item, index) => {
@@ -117,13 +130,13 @@ export function DashboardLayout({
                     className={`h-8 w-8 p-0 relative z-50 cursor-pointer ${
                       isActive 
                         ? "bg-black text-white " 
-                        : "text-gray-600 hover:text-black hover:bg-white hover:shadow-md"
+                        : "text-gray-600 hover:text-orange-600 hover:bg-orange-50 hover:shadow-md"
                     }`}
                   >
                     <Icon className="h-3 w-3" />
                     {isActive && (
                       <motion.div
-                        className="absolute -right-1 -top-1 w-2 h-2 bg-black rounded-full"
+                        className="absolute -right-1 -top-1 w-2 h-2 bg-orange-500 rounded-full"
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
                         transition={{ duration: 0.3 }}
@@ -273,7 +286,7 @@ export function DashboardLayout({
                     className={`h-7 w-7 p-0 relative z-20 cursor-pointer ${
                       previewMode === mode 
                         ? "bg-black text-white " 
-                        : "text-gray-600 hover:text-black hover:bg-white"
+                        : "text-gray-600 hover:text-orange-600 hover:bg-orange-50"
                     }`}
                   >
                     <motion.div
@@ -294,15 +307,12 @@ export function DashboardLayout({
               disabled={!hasUnsavedChanges || isPublishing}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 hasUnsavedChanges && !isPublishing
-                  ? "bg-blue-600 text-white hover:bg-blue-700"
+                  ? "bg-orange-600 text-white hover:bg-orange-700"
                   : "bg-gray-300 text-gray-500 cursor-not-allowed"
               }`}
             >
               {isPublishing ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  Publishing...
-                </>
+                <DevFolioInlineLoader />
               ) : hasUnsavedChanges ? (
                 "Publish 🔥"
               ) : (

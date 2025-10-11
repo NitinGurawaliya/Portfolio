@@ -28,6 +28,7 @@ import {
   Zap,
   ArrowRight
 } from "lucide-react"
+import { DevFolioInlineLoader } from "@/components/ui/DevFolioLoader"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -52,6 +53,10 @@ interface Repository {
   updatedAt: string
   pushedAt: string
   isImported?: boolean
+  favicon?: string
+  siteName?: string
+  keywords?: string
+  author?: string
 }
 
 interface SelectedRepository extends Repository {
@@ -370,7 +375,7 @@ export function ReposSection({
                   placeholder="Put your project URL here"
                   value={projectUrl}
                   onChange={(e) => setProjectUrl(e.target.value)}
-                  className="pl-10 pr-12 bg-gray-50  text-black font-medium h-9 text-sm focus:bg-white transition-all duration-300"
+                  className="pl-10 pr-12 bg-gray-50 text-black font-medium h-9 text-sm focus:bg-white transition-all duration-300"
                   onKeyDown={(e) => e.key === 'Enter' && projectUrl.trim() && handleUrlImport()}
                 />
                 {/* Inline Add Button - only show when there's text */}
@@ -388,7 +393,9 @@ export function ReposSection({
                       className="h-7 w-7 p-0 bg-black text-white hover:bg-gray-800 transition-all duration-300 rounded"
                     >
                       {isImportingUrl ? (
-                        <Loader2 className="h-3 w-3 animate-spin" />
+                        <div className="w-3 h-3">
+                          <div className="w-full h-full bg-gradient-to-r from-orange-500 to-orange-600 rounded animate-spin"></div>
+                        </div>
                       ) : (
                         <Plus className="h-3 w-3" />
                       )}
@@ -437,7 +444,7 @@ export function ReposSection({
                         placeholder="Search repositories..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10 bg-gray-50  text-black font-medium h-9 text-sm focus:bg-white"
+                        className="pl-10 bg-gray-50 text-black font-medium h-9 text-sm focus:bg-white"
                       />
                     </div>
                   </motion.div>
@@ -592,7 +599,7 @@ export function ReposSection({
                                 <Input
                                   value={displayName}
                                   onChange={(e) => handleInlineEdit(repo.id, 'name', e.target.value)}
-                                  className="text-lg font-bold border-0 bg-transparent p-0 hover:bg-gray-50 focus:bg-white focus:border-2 focus:border-gray-300 focus:p-2 focus:shadow-sm transition-all duration-300"
+                                  className="text-lg font-bold text-black border-0 bg-transparent p-0 hover:bg-gray-50 focus:bg-white focus:border-2 focus:border-gray-300 focus:p-2 focus:shadow-sm transition-all duration-300"
                                   placeholder="Project name"
                                 />
                               </motion.div>
@@ -655,7 +662,7 @@ export function ReposSection({
                                       value={deployedUrls[repo.id] || ""}
                                       onChange={(e) => handleInlineEdit(repo.id, 'deployedUrl', e.target.value)}
                                       placeholder="Auto-filled from GitHub or add custom URL"
-                                      className="border-0 bg-transparent p-0 hover:bg-gray-50 focus:bg-white focus:border-2 focus:border-gray-300 focus:p-2 focus:shadow-sm transition-all duration-300 font-medium text-sm"
+                                      className="border-0 bg-transparent p-0 hover:bg-gray-50 focus:bg-white focus:border-2 focus:border-gray-300 focus:p-2 focus:shadow-sm transition-all duration-300 font-medium text-sm text-black"
                                     />
                                   </motion.div>
                                 </div>
@@ -688,7 +695,7 @@ export function ReposSection({
                                       value={githubUrls[repo.id] || ""}
                                       onChange={(e) => handleInlineEdit(repo.id, 'githubUrl', e.target.value)}
                                       placeholder="https://github.com/username/repository"
-                                      className="border-0 bg-transparent p-0 hover:bg-gray-50 focus:bg-white focus:border-2 focus:border-gray-300 focus:p-2 focus:shadow-sm transition-all duration-300 font-medium text-sm"
+                                      className="border-0 bg-transparent p-0 hover:bg-gray-50 focus:bg-white focus:border-2 focus:border-gray-300 focus:p-2 focus:shadow-sm transition-all duration-300 font-medium text-sm text-black"
                                     />
                                   </motion.div>
                                 </div>
@@ -704,7 +711,7 @@ export function ReposSection({
                                     variant="outline"
                                     size="sm"
                                     onClick={() => window.open(repo.isImported ? (githubUrls[repo.id] || repo.htmlUrl) : repo.htmlUrl, '_blank')}
-                                    className="hover:bg-black hover:text-white font-bold h-8 px-3"
+                                    className="hover:bg-orange-600 hover:text-white hover:border-orange-600 font-bold h-8 px-3"
                                   >
                                     <Github className="h-3 w-3 mr-1" />
                                     GitHub
@@ -716,7 +723,7 @@ export function ReposSection({
                                       variant="outline"
                                       size="sm"
                                       onClick={() => window.open(deployedUrls[repo.id], '_blank')}
-                                      className="hover:bg-black hover:text-white font-bold h-8 px-3"
+                                      className="hover:bg-orange-600 hover:text-white hover:border-orange-600 font-bold h-8 px-3"
                                     >
                                       <ExternalLink className="h-3 w-3 mr-1" />
                                       Live
@@ -785,7 +792,7 @@ export function ReposSection({
                 >
                   <Button 
                     onClick={() => setIsDropdownOpen(true)}
-                    className="bg-black text-white hover:bg-gray-800 font-bold px-8 py-3 transition-all duration-300"
+                    className="bg-orange-600 text-white hover:bg-orange-700 font-bold px-8 py-3 transition-all duration-300"
                   >
                     <motion.div
                       className="flex items-center"

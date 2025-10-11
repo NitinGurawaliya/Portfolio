@@ -8,6 +8,7 @@ import { HomeSection } from "@/components/dashboard/HomeSection"
 import { ReposSection } from "@/components/dashboard/ReposSection"
 import { SkillsSection } from "@/components/dashboard/SkillsSection"
 import { SocialsSection } from "@/components/dashboard/SocialsSection"
+import { DevFolioLoader } from "@/components/ui/DevFolioLoader"
 
 interface User {
   id: number
@@ -43,6 +44,10 @@ interface Repository {
   updatedAt: string
   pushedAt: string
   isImported?: boolean
+  favicon?: string
+  siteName?: string
+  keywords?: string
+  author?: string
 }
 
 interface Skill {
@@ -860,10 +865,7 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto"></div>
-          <p className="mt-4 text-white">Loading...</p>
-        </div>
+        <DevFolioLoader size="lg" />
       </div>
     )
   }
@@ -878,18 +880,18 @@ export default function DashboardPage() {
     )
   }
 
-  return (
-    <DashboardLayout 
-      user={user} 
-      activeSection={activeSection}
-      onSectionChange={setActiveSection}
-      livePortfolio={livePortfolio}
-      portfolioData={portfolioData}
-      hasUnsavedChanges={hasUnsavedChanges}
-      onPublish={handlePublishAll}
-      isPublishing={isPublishing}
-    >
-      {renderActiveSection()}
-    </DashboardLayout>
-  )
+          return (
+            <DashboardLayout 
+              user={user} 
+              activeSection={activeSection}
+              onSectionChange={setActiveSection}
+              livePortfolio={livePortfolio}
+              portfolioData={portfolioData}
+              hasUnsavedChanges={hasUnsavedChanges}
+              onPublish={handlePublishAll}
+              isPublishing={isPublishing}
+            >
+              {renderActiveSection()}
+            </DashboardLayout>
+          )
 }
