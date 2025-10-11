@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { motion, useScroll, useTransform, useInView } from "framer-motion"
 import { StructuredData } from "@/components/StructuredData"
+import { DevFolioLoader } from "@/components/ui/DevFolioLoader"
 import { 
   Github, 
   Twitter, 
@@ -160,6 +161,7 @@ interface PortfolioRepository {
     stargazersCount: number
     forksCount: number
     isImported?: boolean
+    favicon?: string
   }
 }
 
@@ -260,10 +262,7 @@ export default function PublicPortfolioPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto"></div>
-          <p className="mt-4 text-white">Loading portfolio...</p>
-        </div>
+        <DevFolioLoader size="lg" />
       </div>
     )
   }

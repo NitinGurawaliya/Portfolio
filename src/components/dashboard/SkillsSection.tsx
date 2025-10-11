@@ -286,7 +286,7 @@ export function SkillsSection({ skills, onAddSkill, onRemoveSkill }: SkillsSecti
                   }}
                   onFocus={() => setIsDropdownOpen(true)}
                   placeholder="Search for skill..."
-                  className="pl-10 pr-10 bg-gray-50  text-black font-medium text-sm focus:bg-white"
+                  className="pl-10 pr-10 bg-gray-50 text-black font-medium text-sm focus:bg-white"
                 />
                 <Button
                   variant="ghost"
@@ -386,7 +386,7 @@ export function SkillsSection({ skills, onAddSkill, onRemoveSkill }: SkillsSecti
               <CardHeader className="pb-2">
               <CardTitle className="text-lg text-black font-bold flex items-center justify-between">
                 <span>Selected Skills</span>
-                <span className="text-xs bg-black text-white px-2 py-0.5 rounded-full">
+                <span className="text-xs bg-orange-600 text-white px-2 py-0.5 rounded-full">
                   {skills.length}
                 </span>
                 </CardTitle>
