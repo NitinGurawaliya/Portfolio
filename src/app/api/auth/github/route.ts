@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { randomBytes } from "crypto"
 import { devLog } from "@/lib/logger"
 import { prisma } from "@/lib/prisma"
+import { sendWelcomeEmail } from "@/lib/services/email"
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
@@ -73,6 +74,7 @@ export async function GET(req: NextRequest) {
     const userData = await userResponse.json()
     
     // Save/update user in database
+    let isNewUser = false
     try {
       devLog("Saving user to database:", userData.login)
       
@@ -81,7 +83,14 @@ export async function GET(req: NextRequest) {
         ? userData.email.trim() 
         : `github-${userData.id}@placeholder.com`
       
-      await prisma.user.upsert({
+      // Check if user already exists
+      const existingUser = await prisma.user.findUnique({
+        where: { githubId: userData.id.toString() }
+      })
+      
+      isNewUser = !existingUser
+      
+      const savedUser = await prisma.user.upsert({
         where: { githubId: userData.id.toString() },
         update: {
           name: userData.name || userData.login,
@@ -115,6 +124,19 @@ export async function GET(req: NextRequest) {
       })
       
       devLog("User saved to database successfully:", userData.login)
+      
+      // Send welcome email for new users (non-blocking)
+      if (isNewUser && !userEmail.includes('@placeholder.com')) {
+        sendWelcomeEmail({
+          email: userEmail,
+          name: userData.name || userData.login,
+          id: savedUser.id.toString(),
+        }).catch((error) => {
+          console.error("Failed to send welcome email:", error)
+          // Don't fail authentication if email fails
+        })
+        devLog("Welcome email triggered for new user:", userData.login)
+      }
     } catch (dbError) {
       console.error("Error saving user to database:", dbError)
       // Continue with authentication even if database save fails
