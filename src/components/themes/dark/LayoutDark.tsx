@@ -3,6 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Building } from "lucide-react"
 import { SiGithub, SiX, SiLinkedin, SiInstagram, SiFacebook, SiYoutube, SiGmail, SiStackoverflow, SiReddit } from "react-icons/si"
 import { Globe } from "lucide-react"
+import { SkillIcon } from "@/lib/skill-icons"
 
 interface ThemeConfig {
   name: string
@@ -316,11 +317,11 @@ export default function LayoutDark({ theme, portfolio }: LayoutDarkProps) {
             >
               Skills I've Learned
             </motion.h2>
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-3 sm:gap-4 md:gap-6 lg:gap-8 max-w-4xl mx-auto px-4">
+            <div className="skills-grid grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12 xl:grid-cols-14 gap-3 sm:gap-4 md:gap-5 lg:gap-6 max-w-6xl mx-auto px-4">
               {portfolio.skills.map((skill, index) => (
                 <motion.div
                   key={skill.id}
-                  className="group relative flex flex-col items-center cursor-pointer"
+                  className="skill-item group relative flex flex-col items-center cursor-pointer"
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, delay: index * 0.05 }}
@@ -329,12 +330,10 @@ export default function LayoutDark({ theme, portfolio }: LayoutDarkProps) {
                   whileTap={{ scale: 0.95 }}
                   aria-label={`${skill.name} skill`}
                 >
-                  <div className="flex-shrink-0 w-14 h-14 md:w-16 md:h-16 lg:w-18 lg:h-18 mb-3 flex items-center justify-center rounded-2xl bg-gray-900/60 border border-gray-700/50 hover:border-orange-500/30 hover:bg-gray-800/80 transition-all duration-300 shadow-lg hover:shadow-xl backdrop-blur-sm">
-                    <div className="w-7 h-7 md:w-8 md:h-8 lg:w-9 lg:h-9 bg-orange-500/20 rounded-lg flex items-center justify-center">
-                      <span className="text-orange-400 text-xs font-bold">{skill.name.charAt(0)}</span>
-                    </div>
+                  <div className="skill-icon-container flex-shrink-0 w-12 h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 mb-2 p-2 flex items-center justify-center rounded-lg bg-gray-900/40 hover:bg-gray-800/60 transition-all duration-300">
+                    <SkillIcon skillName={skill.name} className="skill-icon w-6 h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 text-orange-400" />
                   </div>
-                  <span className="text-xs md:text-sm font-medium text-gray-300 text-center leading-tight group-hover:text-white transition-colors duration-300">
+                  <span className="skill-text text-xs font-medium text-gray-300 text-center leading-tight group-hover:text-white transition-colors duration-300">
                     {skill.name}
                   </span>
                 </motion.div>

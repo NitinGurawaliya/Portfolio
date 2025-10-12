@@ -3,6 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Building } from "lucide-react"
 import { SiGithub, SiX, SiLinkedin, SiInstagram, SiFacebook, SiYoutube, SiGmail, SiStackoverflow, SiReddit } from "react-icons/si"
 import { Globe } from "lucide-react"
+import { SkillIcon } from "@/lib/skill-icons"
 
 interface ThemeConfig {
   name: string
@@ -256,11 +257,11 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
             >
               Skills I've Learned
             </motion.h2>
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-3 sm:gap-4 md:gap-6 lg:gap-8 max-w-4xl mx-auto px-4">
+            <div className="skills-grid grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12 xl:grid-cols-14 gap-3 sm:gap-4 md:gap-5 lg:gap-6 max-w-6xl mx-auto px-4">
               {portfolio.skills.map((skill, index) => (
                 <motion.div
                   key={skill.id}
-                  className="group relative flex flex-col items-center cursor-pointer"
+                  className="skill-item group relative flex flex-col items-center cursor-pointer"
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, delay: index * 0.05 }}
@@ -269,10 +270,10 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
                   whileTap={{ scale: 0.95 }}
                   aria-label={`${skill.name} skill`}
                 >
-                  <div className="flex-shrink-0 w-16 h-16 mb-3 flex items-center justify-center rounded-xl bg-gray-100 border border-gray-200 hover:bg-gray-200 hover:border-gray-300 transition-all duration-300">
-                    <span className="text-gray-700 text-lg font-bold">{skill.name.charAt(0)}</span>
+                  <div className="skill-icon-container flex-shrink-0 w-12 h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 mb-2 p-2 flex items-center justify-center rounded-lg bg-gray-100 hover:bg-gray-200 transition-all duration-300">
+                    <SkillIcon skillName={skill.name} className="skill-icon w-6 h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 text-gray-700" />
                   </div>
-                  <span className="text-sm font-medium text-gray-700 text-center leading-tight group-hover:text-gray-900 transition-colors duration-300">
+                  <span className="skill-text text-xs font-medium text-gray-700 text-center leading-tight group-hover:text-gray-900 transition-colors duration-300">
                     {skill.name}
                   </span>
                 </motion.div>

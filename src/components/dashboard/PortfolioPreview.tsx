@@ -55,25 +55,48 @@ export function PortfolioPreview({ username, previewMode, portfolio }: Portfolio
         <div 
           className="w-full h-full overflow-y-auto overflow-x-hidden"
           style={{ 
-            scrollbarWidth: 'none',
-            msOverflowStyle: 'none'
+        scrollbarWidth: 'none', 
+        msOverflowStyle: 'none' 
           }}
         >
           <style jsx>{`
             div::-webkit-scrollbar {
               display: none;
             }
+            .preview-override .skills-grid {
+              grid-template-columns: repeat(4, 1fr) !important;
+              gap: 8px !important;
+            }
+            .preview-override .skill-item {
+              min-width: 60px !important;
+              margin-bottom: 8px !important;
+            }
+            .preview-override .skill-icon-container {
+              width: 48px !important;
+              height: 48px !important;
+              padding: 6px !important;
+            }
+            .preview-override .skill-icon {
+              width: 24px !important;
+              height: 24px !important;
+            }
+            .preview-override .skill-text {
+              font-size: 10px !important;
+              line-height: 1.2 !important;
+            }
           `}</style>
           <div 
-            style={{
+            style={{ 
               transform: previewMode === 'mobile' ? 'scale(0.6)' : previewMode === 'tablet' ? 'scale(0.8)' : 'scale(1)',
               transformOrigin: 'top left',
               width: previewMode === 'mobile' ? '167%' : previewMode === 'tablet' ? '125%' : '100%'
             }}
           >
-            <LayoutComponent theme={theme} portfolio={portfolio} />
+            <div className="preview-override">
+              <LayoutComponent theme={theme} portfolio={portfolio} />
+            </div>
           </div>
-        </div>
+            </div>
       </Suspense>
     </div>
   )
