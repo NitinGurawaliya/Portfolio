@@ -76,7 +76,7 @@ model Portfolio {
   customUsername String?
   
   // Theme Configuration
-  selectedTheme String   @default("modern-dark") // Theme identifier
+  selectedTheme String   @default("dark") // Theme identifier (dark, light)
   themeConfig   Json?    // Custom theme overrides (colors, fonts, etc.)
   
   // Skills

@@ -15,7 +15,8 @@ import {
   Tablet,
   ExternalLink,
   Loader2,
-  LogOut
+  LogOut,
+  Palette
 } from "lucide-react"
 import { DevFolioInlineLoader } from "@/components/ui/DevFolioLoader"
 
@@ -44,13 +45,14 @@ export function DashboardLayout({
   onPublish,
   isPublishing = false
 }: DashboardLayoutProps) {
-  const [previewMode, setPreviewMode] = useState<"desktop" | "tablet" | "mobile">("desktop")
+  const [previewMode, setPreviewMode] = useState<"desktop" | "tablet" | "mobile">("mobile")
 
   const sidebarItems = [
     { id: "home", label: "Home", icon: Home },
     { id: "repos", label: "Repos", icon: Code },
     { id: "skills", label: "Skills", icon: Wrench },
     { id: "socials", label: "Socials", icon: Users },
+    { id: "theme", label: "Theme", icon: Palette },
   ]
 
   const handleLogout = () => {

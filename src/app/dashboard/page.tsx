@@ -8,6 +8,7 @@ import { HomeSection } from "@/components/dashboard/HomeSection"
 import { ReposSection } from "@/components/dashboard/ReposSection"
 import { SkillsSection } from "@/components/dashboard/SkillsSection"
 import { SocialsSection } from "@/components/dashboard/SocialsSection"
+import ThemeSelector from "@/components/dashboard/ThemeSelector"
 import { DevFolioLoader } from "@/components/ui/DevFolioLoader"
 import toast, { Toaster } from "react-hot-toast"
 
@@ -88,6 +89,7 @@ export default function DashboardPage() {
   const [customNames, setCustomNames] = useState<Record<number, string>>({})
   const [customDescriptions, setCustomDescriptions] = useState<Record<number, string>>({})
   const [githubUrls, setGithubUrls] = useState<Record<number, string>>({})
+  const [selectedTheme, setSelectedTheme] = useState<string>('dark')
 
   // Change tracking state
   const [originalData, setOriginalData] = useState<{
@@ -100,6 +102,7 @@ export default function DashboardPage() {
     customDescriptions: Record<number, string>
     githubUrls: Record<number, string>
     importedProjects: Repository[]
+    selectedTheme: string
   } | null>(null)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const [isPublishing, setIsPublishing] = useState(false)
@@ -148,6 +151,7 @@ export default function DashboardPage() {
       displayName: portfolioData.displayName,
       bio: portfolioData.bio,
       profilePic: portfolioData.profilePic,
+      selectedTheme: selectedTheme,
       skills: skillsForPreview,
       socials: socials,
       repositories,
@@ -158,7 +162,7 @@ export default function DashboardPage() {
         websiteUrl: user.websiteUrl,
       }
     }
-  }, [user, portfolioData, skills, socials, selectedRepos, deployedUrls, importedProjects])
+  }, [user, portfolioData, skills, socials, selectedRepos, deployedUrls, importedProjects, selectedTheme])
 
   // Track changes to enable/disable publish button
   useEffect(() => {
@@ -174,10 +178,11 @@ export default function DashboardPage() {
       importedProjects: importedProjects.length
     })
     
-    // Don't track changes during initial load
+    // Don't track changes during initial load or if we don't have original data
     if (isInitialLoad || !originalData) {
       console.log("⏸️ Skipping change tracking - initial load:", isInitialLoad, "no original data:", !originalData)
       console.log("🔍 OriginalData details:", originalData)
+      setHasUnsavedChanges(false) // Ensure publish button is disabled during initial load
       return
     }
     
@@ -190,7 +195,8 @@ export default function DashboardPage() {
           customNames,
           customDescriptions,
           githubUrls,
-          importedProjects: [...importedProjects].sort((a, b) => a.id - b.id)
+          importedProjects: [...importedProjects].sort((a, b) => a.id - b.id),
+          selectedTheme
         }
     
         // Helper function to clean and normalize data
@@ -198,8 +204,8 @@ export default function DashboardPage() {
           return JSON.parse(JSON.stringify(data, (key, value) => {
             // Remove null/undefined
             if (value === null || value === undefined) return undefined
-            // Remove empty strings
-            if (value === "") return undefined
+            // Don't remove empty strings for portfolioData properties to maintain structure
+            if (value === "" && key !== "displayName" && key !== "jobTitle" && key !== "bio" && key !== "profilePic" && key !== "customUsername") return undefined
             // Remove empty objects/arrays
             if (typeof value === 'object' && value !== null) {
               if (Array.isArray(value) && value.length === 0) return undefined
@@ -209,13 +215,21 @@ export default function DashboardPage() {
           }))
         }
     
-        const cleanCurrentData = normalizeData(currentData)
+        const cleanCurrentData = normalizeData({
+          ...currentData,
+          selectedRepos: [...(currentData.selectedRepos || [])].sort(),
+          skills: [...(currentData.skills || [])].sort((a, b) => a.id.localeCompare(b.id)),
+          socials: [...(currentData.socials || [])].sort((a, b) => a.id - b.id),
+          importedProjects: [...(currentData.importedProjects || [])].sort((a, b) => a.id - b.id),
+          selectedTheme: currentData.selectedTheme || 'dark'
+        })
         const cleanOriginalData = normalizeData({
           ...originalData,
           selectedRepos: [...(originalData.selectedRepos || [])].sort(),
           skills: [...(originalData.skills || [])].sort((a, b) => a.id.localeCompare(b.id)),
           socials: [...(originalData.socials || [])].sort((a, b) => a.id - b.id),
-          importedProjects: [...(originalData.importedProjects || [])].sort((a, b) => a.id - b.id)
+          importedProjects: [...(originalData.importedProjects || [])].sort((a, b) => a.id - b.id),
+          selectedTheme: originalData.selectedTheme || 'dark'
         })
     
     const hasChanges = JSON.stringify(cleanCurrentData) !== JSON.stringify(cleanOriginalData)
@@ -227,7 +241,7 @@ export default function DashboardPage() {
       cleanOriginalData
     })
     setHasUnsavedChanges(hasChanges)
-  }, [portfolioData, selectedRepos, skills, socials, deployedUrls, customNames, customDescriptions, githubUrls, importedProjects, originalData, isInitialLoad])
+  }, [portfolioData, selectedRepos, skills, socials, deployedUrls, customNames, customDescriptions, githubUrls, importedProjects, selectedTheme, originalData, isInitialLoad])
 
   useEffect(() => {
     // Fetch session from server (httpOnly cookie)
@@ -325,6 +339,8 @@ export default function DashboardPage() {
             profilePic: portfolio.profilePic || "",
             customUsername: portfolio.customUsername || "",
           })
+
+          // Theme will be set later in the setTimeout to avoid change tracking issues
 
           // Load social accounts
           if (portfolio.socials && portfolio.socials.length > 0) {
@@ -426,6 +442,9 @@ export default function DashboardPage() {
 
           // Set original data for change tracking after loading
           setTimeout(() => {
+            const currentSelectedTheme = portfolio.selectedTheme || 'dark'
+            setSelectedTheme(currentSelectedTheme) // Make sure theme state matches DB
+            
             const originalDataToSet = {
               portfolioData: {
                 displayName: portfolio.displayName || "",
@@ -506,7 +525,8 @@ export default function DashboardPage() {
                   updatedAt: repo.repository.updatedAt,
                   pushedAt: repo.repository.pushedAt || repo.repository.updatedAt,
                   isImported: true
-                })) : []
+                })) : [],
+              selectedTheme: currentSelectedTheme
             }
             
             console.log("💾 Setting original data from existing portfolio:", originalDataToSet)
@@ -534,6 +554,11 @@ export default function DashboardPage() {
           setTimeout(() => {
           const currentPortfolioData = initialPortfolioData || portfolioData
           console.log("🔍 Using portfolio data:", currentPortfolioData)
+          
+          // Ensure theme state is properly initialized
+          const currentTheme = selectedTheme || 'dark'
+          setSelectedTheme(currentTheme)
+          
           const initialData = {
             portfolioData: {
               displayName: currentPortfolioData.displayName || "",
@@ -549,6 +574,7 @@ export default function DashboardPage() {
             customNames: { ...customNames },
             customDescriptions: { ...customDescriptions },
             githubUrls: { ...githubUrls },
+            selectedTheme: currentTheme,
             importedProjects: [...importedProjects]
           }
             console.log("💾 Setting initial data (no existing portfolio):", initialData)
@@ -563,6 +589,10 @@ export default function DashboardPage() {
       // Even if there's an error, mark as loaded to prevent infinite loading
       setTimeout(() => {
         const currentPortfolioData = initialPortfolioData || portfolioData
+        // Ensure theme state is properly initialized
+        const currentTheme = selectedTheme || 'dark'
+        setSelectedTheme(currentTheme)
+        
         const fallbackData = {
           portfolioData: {
             displayName: currentPortfolioData.displayName || "",
@@ -578,6 +608,7 @@ export default function DashboardPage() {
           customNames: { ...customNames },
           customDescriptions: { ...customDescriptions },
           githubUrls: { ...githubUrls },
+          selectedTheme: currentTheme,
           importedProjects: [...importedProjects]
         }
         console.log("💾 Setting fallback data due to error:", fallbackData)
@@ -722,6 +753,7 @@ export default function DashboardPage() {
           customNames,
           customDescriptions,
           githubUrls,
+          selectedTheme,
           repositories: allRepositories,
           userId: user?.id,
           userData: user
@@ -741,6 +773,7 @@ export default function DashboardPage() {
           customNames,
           customDescriptions,
           githubUrls,
+          selectedTheme,
           importedProjects
         })
         setHasUnsavedChanges(false)
@@ -871,6 +904,10 @@ export default function DashboardPage() {
     ))
   }
 
+  const handleThemeChange = (theme: string) => {
+    setSelectedTheme(theme)
+  }
+
   const renderActiveSection = () => {
     switch (activeSection) {
       case "home":
@@ -914,6 +951,14 @@ export default function DashboardPage() {
             onRemoveSocial={handleRemoveSocial}
             onTogglePin={handleTogglePin}
             onUpdateSocial={handleUpdateSocial}
+          />
+        )
+      case "theme":
+        return (
+          <ThemeSelector
+            currentTheme={selectedTheme as any}
+            userId={user?.id || 0}
+            onThemeChange={handleThemeChange}
           />
         )
       default:
@@ -960,7 +1005,7 @@ export default function DashboardPage() {
                 onSectionChange={setActiveSection}
                 livePortfolio={livePortfolio}
                 portfolioData={portfolioData}
-                hasUnsavedChanges={hasUnsavedChanges}
+                hasUnsavedChanges={hasUnsavedChanges && !isInitialLoad}
                 onPublish={handlePublishAll}
                 isPublishing={isPublishing}
               >
