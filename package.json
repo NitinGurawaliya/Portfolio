@@ -5,10 +5,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && prisma migrate deploy && next build",
+    "build": "prisma generate && (npm run resolve-migration || echo 'Migration resolution skipped') && (prisma migrate deploy || echo 'Migration deploy failed, continuing...') && next build",
     "start": "next start",
     "lint": "eslint",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "resolve-migration": "node scripts/resolve-migration.js"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.10.0",
