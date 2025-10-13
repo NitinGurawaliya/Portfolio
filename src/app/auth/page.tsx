@@ -1,6 +1,46 @@
+"use client"
+
 import { Github } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { DevFolioLoader } from "@/components/ui/DevFolioLoader";
 
 export default function AuthPage() {
+  const router = useRouter()
+  const [isChecking, setIsChecking] = useState(true)
+
+  useEffect(() => {
+    // Fast session detection
+    const checkSession = async () => {
+      try {
+        const response = await fetch("/api/session", { cache: "no-store" })
+        if (response.ok) {
+          const data = await response.json()
+          if (data.session) {
+            // User is already logged in, redirect to dashboard
+            router.push("/dashboard")
+            return
+          }
+        }
+      } catch (error) {
+        console.log("No active session")
+      } finally {
+        setIsChecking(false)
+      }
+    }
+
+    checkSession()
+  }, [router])
+
+  // Show loader while checking session
+  if (isChecking) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <DevFolioLoader size="lg" />
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-black flex items-center justify-center px-4">
       <div className="max-w-md w-full">

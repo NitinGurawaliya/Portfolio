@@ -764,17 +764,18 @@ export default function DashboardPage() {
 
       if (response.ok) {
         // Update original data to match current data (no more unsaved changes)
+        // Make sure to sort arrays the same way as in change detection
         setOriginalData({
-          portfolioData,
-          selectedRepos,
-          skills,
-          socials,
-          deployedUrls,
-          customNames,
-          customDescriptions,
-          githubUrls,
+          portfolioData: { ...portfolioData },
+          selectedRepos: [...selectedRepos].sort(),
+          skills: [...skills].sort((a, b) => a.id.localeCompare(b.id)),
+          socials: [...socials].sort((a, b) => a.id - b.id),
+          deployedUrls: { ...deployedUrls },
+          customNames: { ...customNames },
+          customDescriptions: { ...customDescriptions },
+          githubUrls: { ...githubUrls },
           selectedTheme,
-          importedProjects
+          importedProjects: [...importedProjects].sort((a, b) => a.id - b.id)
         })
         setHasUnsavedChanges(false)
         setIsInitialLoad(false)

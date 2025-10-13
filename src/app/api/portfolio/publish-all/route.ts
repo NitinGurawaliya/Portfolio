@@ -113,17 +113,15 @@ export async function POST(req: NextRequest) {
           
           await Promise.all(batch.map(async (repo: any) => {
             try {
-              // Get custom name, description, and GitHub URL for this repo
-              const customName = customNames?.[repo.id] || repo.name
-              const customDescription = customDescriptions?.[repo.id] || repo.description || ""
+              // Get GitHub URL for this repo (for imported projects)
               const githubUrl = githubUrls?.[repo.id] || repo.htmlUrl
               
               await prisma.repository.upsert({
                 where: { githubId: BigInt(repo.id) },
                 update: {
-                  name: customName,
+                  name: repo.name,  // Keep original GitHub name
                   fullName: repo.fullName,
-                  description: customDescription,
+                  description: repo.description || "",  // Keep original GitHub description
                   htmlUrl: repo.htmlUrl,
                   cloneUrl: repo.cloneUrl || repo.htmlUrl,
                   githubUrl: githubUrl,
@@ -144,9 +142,9 @@ export async function POST(req: NextRequest) {
                 },
                 create: {
                   githubId: BigInt(repo.id),
-                  name: customName,
+                  name: repo.name,  // Keep original GitHub name
                   fullName: repo.fullName,
-                  description: customDescription,
+                  description: repo.description || "",  // Keep original GitHub description
                   htmlUrl: repo.htmlUrl,
                   cloneUrl: repo.cloneUrl || repo.htmlUrl,
                   githubUrl: githubUrl,
@@ -255,12 +253,17 @@ export async function POST(req: NextRequest) {
           }
         })
 
-        const portfolioRepos = repoRecords.map((repo: { id: number; githubId: bigint }) => ({
-          portfolioId: portfolio.id,
-          repositoryId: repo.id,
-          deployedUrl: deployedUrls[repo.githubId.toString()] || null,
-          isVisible: true,
-        }))
+        const portfolioRepos = repoRecords.map((repo: { id: number; githubId: bigint }) => {
+          const githubIdStr = repo.githubId.toString()
+          return {
+            portfolioId: portfolio.id,
+            repositoryId: repo.id,
+            deployedUrl: deployedUrls[githubIdStr] || null,
+            customName: customNames?.[githubIdStr] || null,
+            customDescription: customDescriptions?.[githubIdStr] || null,
+            isVisible: true,
+          }
+        })
 
         await tx.portfolioRepository.createMany({
           data: portfolioRepos

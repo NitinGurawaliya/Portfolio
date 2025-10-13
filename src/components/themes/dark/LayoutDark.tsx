@@ -260,10 +260,10 @@ export default function LayoutDark({ theme, portfolio }: LayoutDarkProps) {
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1 mr-4 min-w-0">
                         <h3 className="text-lg sm:text-xl font-bold text-white group-hover:text-orange-300 transition-colors duration-300 mb-2 break-words">
-                          {repo.repository.name}
+                          {repo.customName || repo.repository.name}
                         </h3>
                         <p className="text-gray-400 text-sm sm:text-base leading-relaxed mb-3 break-words">
-                          {repo.repository.description || "No description available for this project."}
+                          {repo.customDescription || repo.repository.description || "No description available for this project."}
                         </p>
                       </div>
                       <motion.button

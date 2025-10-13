@@ -146,6 +146,8 @@ interface Skill {
 interface PortfolioRepository {
   id: number
   deployedUrl: string
+  customName?: string
+  customDescription?: string
   isVisible: boolean
   repository: {
     id: number

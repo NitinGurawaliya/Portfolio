@@ -209,10 +209,10 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
                     <div className="flex items-start justify-between">
                       <div className="flex-1 min-w-0">
                         <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-2 break-words">
-                          {repo.repository.name}
+                          {repo.customName || repo.repository.name}
                         </h3>
                         <p className="text-sm sm:text-base text-gray-600 leading-relaxed break-words">
-                          {repo.repository.description || "No description available for this project."}
+                          {repo.customDescription || repo.repository.description || "No description available for this project."}
                         </p>
                       </div>
                       <motion.button
@@ -257,11 +257,11 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
             >
               Skills I've Learned
             </motion.h2>
-            <div className="skills-grid grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12 xl:grid-cols-14 gap-3 sm:gap-4 md:gap-5 lg:gap-6 max-w-6xl mx-auto px-4">
+            <div className="flex flex-wrap justify-center gap-2 md:gap-3 max-w-4xl mx-auto px-4">
               {portfolio.skills.map((skill, index) => (
                 <motion.div
                   key={skill.id}
-                  className="skill-item group relative flex flex-col items-center cursor-pointer"
+                  className="group relative"
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, delay: index * 0.05 }}
@@ -270,12 +270,9 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
                   whileTap={{ scale: 0.95 }}
                   aria-label={`${skill.name} skill`}
                 >
-                  <div className="skill-icon-container flex-shrink-0 w-12 h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 mb-2 p-2 flex items-center justify-center rounded-lg bg-gray-100 hover:bg-gray-200 transition-all duration-300">
-                    <SkillIcon skillName={skill.name} className="skill-icon w-6 h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 text-gray-700" />
-                  </div>
-                  <span className="skill-text text-xs font-medium text-gray-700 text-center leading-tight group-hover:text-gray-900 transition-colors duration-300">
+                  <div className="bg-black text-white px-3 py-2 rounded-md font-medium text-sm hover:bg-gray-800 transition-all duration-300 cursor-pointer border border-gray-800 hover:border-gray-700">
                     {skill.name}
-                  </span>
+                  </div>
                 </motion.div>
               ))}
             </div>

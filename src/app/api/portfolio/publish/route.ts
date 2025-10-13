@@ -252,6 +252,8 @@ export async function GET(req: NextRequest) {
           select: {
             id: true,
             deployedUrl: true,
+            customName: true,
+            customDescription: true,
             isVisible: true,
             repository: {
               select: {

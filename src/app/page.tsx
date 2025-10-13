@@ -5,6 +5,7 @@ import { FeaturesSection } from "@/components/landing/features-section"
 import { DemoSection } from "@/components/landing/demo-section"
 import { CTASection } from "@/components/landing/cta-section"
 import { Footer } from "@/components/landing/footer"
+import { SessionRedirect } from "@/components/SessionRedirect"
 
 export const metadata: Metadata = {
   title: "DevFolio - Build Your Developer Portfolio in Minutes",
@@ -19,6 +20,7 @@ export const metadata: Metadata = {
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-background">
+      <SessionRedirect />
       <Header />
       <main>
         <HeroSection />

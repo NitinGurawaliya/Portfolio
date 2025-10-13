@@ -123,6 +123,8 @@ model PortfolioRepository {
   repositoryId Int
   repository  Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
   deployedUrl String?
+  customName  String?  // Custom name override for this repository
+  customDescription String?  // Custom description override for this repository
   isVisible   Boolean  @default(true)
   createdAt   DateTime @default(now())
 }

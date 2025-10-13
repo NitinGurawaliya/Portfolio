@@ -84,6 +84,31 @@ export function PortfolioPreview({ username, previewMode, portfolio }: Portfolio
               font-size: 10px !important;
               line-height: 1.2 !important;
             }
+            /* Light theme skills override */
+            .preview-override .skills-grid {
+              display: flex !important;
+              flex-wrap: wrap !important;
+              justify-content: center !important;
+              gap: 8px !important;
+            }
+            .preview-override .skill-item {
+              display: block !important;
+              flex-direction: unset !important;
+              align-items: unset !important;
+            }
+            .preview-override .skill-icon-container {
+              display: none !important;
+            }
+            .preview-override .skill-text {
+              background: black !important;
+              color: white !important;
+              padding: 6px 12px !important;
+              border-radius: 6px !important;
+              font-size: 10px !important;
+              font-weight: 500 !important;
+              margin-bottom: 0 !important;
+              border: 1px solid #374151 !important;
+            }
           `}</style>
           <div 
             style={{ 
