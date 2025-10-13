@@ -78,52 +78,55 @@ export default function ThemeSelector({
   const getThemePreview = (themeConfig: ThemeConfig) => {
     return (
       <div 
-        className="w-full h-24 rounded-lg border-2 border-gray-200 relative overflow-hidden"
-        style={{ background: themeConfig.colors.background }}
+        className="w-full h-28 rounded-lg border relative overflow-hidden shadow-sm"
+        style={{ 
+          background: themeConfig.colors.background,
+          borderColor: themeConfig.colors.border || themeConfig.colors.accent + '30'
+        }}
       >
         {/* Preview content */}
-        <div className="absolute inset-0 p-2">
-          {/* Profile circle */}
-          <div 
-            className="w-6 h-6 rounded-full border-2 absolute top-2 left-2"
-            style={{ 
-              borderColor: themeConfig.colors.accent,
-              backgroundColor: themeConfig.colors.cardBg || themeConfig.colors.background
-            }}
-          />
-          
-          {/* Name bar */}
-          <div 
-            className="absolute top-2 left-10 h-2 rounded"
-            style={{ 
-              backgroundColor: themeConfig.colors.text,
-              width: '60%'
-            }}
-          />
-          
-          {/* Job title bar */}
-          <div 
-            className="absolute top-5 left-10 h-1.5 rounded"
-            style={{ 
-              backgroundColor: themeConfig.colors.accent,
-              width: '40%'
-            }}
-          />
+        <div className="absolute inset-0 p-3">
+          {/* Profile section */}
+          <div className="flex items-center gap-3 mb-3">
+            <div 
+              className="w-8 h-8 rounded-full border-2"
+              style={{ 
+                borderColor: themeConfig.colors.accent,
+                backgroundColor: themeConfig.colors.cardBg || themeConfig.colors.background
+              }}
+            />
+            <div className="flex-1">
+              <div 
+                className="h-2 rounded mb-1"
+                style={{ 
+                  backgroundColor: themeConfig.colors.text,
+                  width: '70%'
+                }}
+              />
+              <div 
+                className="h-1.5 rounded"
+                style={{ 
+                  backgroundColor: themeConfig.colors.accent,
+                  width: '50%'
+                }}
+              />
+            </div>
+          </div>
           
           {/* Project cards */}
-          <div className="absolute bottom-2 left-2 right-2 space-y-1">
+          <div className="space-y-2">
             <div 
-              className="h-3 rounded border"
+              className="h-4 rounded border"
               style={{ 
                 backgroundColor: themeConfig.colors.cardBg || themeConfig.colors.background,
-                borderColor: themeConfig.colors.border || themeConfig.colors.accent
+                borderColor: themeConfig.colors.border || themeConfig.colors.accent + '40'
               }}
             />
             <div 
-              className="h-3 rounded border"
+              className="h-4 rounded border"
               style={{ 
                 backgroundColor: themeConfig.colors.cardBg || themeConfig.colors.background,
-                borderColor: themeConfig.colors.border || themeConfig.colors.accent
+                borderColor: themeConfig.colors.border || themeConfig.colors.accent + '40'
               }}
             />
           </div>
@@ -134,12 +137,14 @@ export default function ThemeSelector({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2 mb-6">
-        <Palette className="h-5 w-5 text-gray-600" />
-        <h3 className="text-lg font-semibold text-gray-900">Choose Your Theme</h3>
+      {/* Header */}
+      <div className="text-center">
+        <h3 className="text-xl font-semibold text-gray-900 mb-2">Choose Your Theme</h3>
+        <p className="text-gray-600">Select a theme that matches your style</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Theme Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {(Object.keys(THEMES) as ThemeKey[]).map((themeKey) => {
           const theme = getTheme(themeKey)
           const isSelected = selectedTheme === themeKey
@@ -148,25 +153,27 @@ export default function ThemeSelector({
           return (
             <motion.div
               key={themeKey}
-              className="relative"
+              className="relative group"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
               <Card 
-                className={`cursor-pointer transition-all duration-200 ${
+                className={`cursor-pointer transition-all duration-300 border-2 ${
                   isSelected 
-                    ? 'ring-2 ring-blue-500 shadow-lg' 
-                    : 'hover:shadow-md'
+                    ? 'border-orange-500 shadow-xl' 
+                    : 'border-gray-200 hover:border-gray-300 hover:shadow-lg'
                 }`}
                 onClick={() => handleThemeSelect(themeKey)}
               >
-                <CardContent className="p-4">
+                <CardContent className="p-6">
                   {/* Theme Preview */}
-                  {getThemePreview(theme)}
+                  <div className="mb-4">
+                    {getThemePreview(theme)}
+                  </div>
                   
                   {/* Theme Info */}
-                  <div className="mt-4 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
+                  <div className="text-center">
+                    <div className="flex items-center justify-center gap-2 mb-2">
                       <div 
                         className="p-2 rounded-lg"
                         style={{ 
@@ -176,26 +183,26 @@ export default function ThemeSelector({
                       >
                         {getThemeIcon(themeKey as ThemeKey)}
                       </div>
-                      <div>
-                        <h4 className="font-medium text-gray-900">{theme.name}</h4>
-                        <p className="text-sm text-gray-500">{theme.description}</p>
-                      </div>
+                      <h4 className="font-semibold text-gray-900">{theme.name}</h4>
                     </div>
+                    
+                    <p className="text-sm text-gray-600 mb-3">{theme.description}</p>
 
-                    {/* Selection indicator */}
-                    <div className="flex items-center gap-2">
+                    {/* Selection Status */}
+                    <div className="flex items-center justify-center gap-2">
                       {isCurrent && (
-                        <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
-                          Current
+                        <span className="text-xs bg-green-100 text-green-700 px-3 py-1 rounded-full font-medium">
+                          Active
                         </span>
                       )}
-                      {isSelected && (
+                      {isSelected && !isCurrent && (
                         <motion.div
                           initial={{ scale: 0 }}
                           animate={{ scale: 1 }}
-                          className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center"
+                          className="flex items-center gap-1 text-xs bg-orange-100 text-orange-700 px-3 py-1 rounded-full font-medium"
                         >
-                          <Check className="h-4 w-4 text-white" />
+                          <Check className="h-3 w-3" />
+                          Selected
                         </motion.div>
                       )}
                     </div>
@@ -205,8 +212,11 @@ export default function ThemeSelector({
 
               {/* Loading overlay */}
               {isLoading && isSelected && (
-                <div className="absolute inset-0 bg-white/50 rounded-lg flex items-center justify-center">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+                <div className="absolute inset-0 bg-white/80 rounded-lg flex items-center justify-center backdrop-blur-sm">
+                  <div className="flex items-center gap-2 text-orange-600">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-orange-500"></div>
+                    <span className="text-sm font-medium">Updating...</span>
+                  </div>
                 </div>
               )}
             </motion.div>
@@ -214,17 +224,16 @@ export default function ThemeSelector({
         })}
       </div>
 
-      {/* Theme Preview Note */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <div className="flex items-start gap-3">
-          <div className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0 mt-0.5">
-            <span className="text-white text-xs font-bold">i</span>
+      {/* Info Note */}
+      <div className="bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-xl p-4">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center flex-shrink-0">
+            <Palette className="h-4 w-4 text-white" />
           </div>
           <div>
-            <h4 className="text-sm font-medium text-blue-900">Live Preview</h4>
-            <p className="text-sm text-blue-700 mt-1">
-              Your portfolio will automatically update with the new theme. 
-              Changes are saved instantly and visible on your public portfolio.
+            <h4 className="text-sm font-semibold text-orange-900">Live Preview</h4>
+            <p className="text-sm text-orange-700 mt-1">
+              Changes apply instantly to your portfolio preview and public site
             </p>
           </div>
         </div>

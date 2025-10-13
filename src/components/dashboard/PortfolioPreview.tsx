@@ -109,6 +109,13 @@ export function PortfolioPreview({ username, previewMode, portfolio }: Portfolio
               margin-bottom: 0 !important;
               border: 1px solid #374151 !important;
             }
+            /* Light theme spacing override */
+            .preview-override .text-center {
+              gap: 16px !important;
+            }
+            .preview-override .text-center > * {
+              margin-bottom: 16px !important;
+            }
           `}</style>
           <div 
             style={{ 

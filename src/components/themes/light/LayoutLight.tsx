@@ -77,7 +77,7 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
         aria-label="Profile introduction"
       >
         <div className="mx-auto px-4 sm:px-6 lg:px-8 max-w-4xl">
-          <div className="text-center space-y-8">
+          <div className="text-center space-y-4">
             {/* Profile Picture */}
             <motion.div
               className="flex justify-center"
@@ -134,7 +134,7 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
               className="flex justify-center gap-6"
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.8, delay: 0.8 }}
+              transition={{ duration: 0.8, delay: 0.7 }}
             >
               {portfolio.socials && portfolio.socials
                 .filter(social => social.isPinned)
@@ -149,7 +149,7 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
                       whileTap={{ scale: 0.95 }}
                       initial={{ opacity: 0, scale: 0.8 }}
                       animate={{ opacity: 1, scale: 1 }}
-                      transition={{ duration: 0.3, delay: 0.9 + index * 0.1 }}
+                      transition={{ duration: 0.3, delay: 0.8 + index * 0.1 }}
                       aria-label={`Visit ${social.platform} profile`}
                     >
                       <Icon className="h-6 w-6 group-hover:drop-shadow-lg" />
