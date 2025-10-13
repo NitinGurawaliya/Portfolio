@@ -1,15 +1,17 @@
 import { NextRequest, NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
 import { devLog } from "@/lib/logger"
-import type { Prisma } from "@prisma/client"
 import { sendEmail } from "@/lib/sendEmail"
 import { generatePortfolioPublishedEmail } from "@/lib/templates/welcomeEmail"
+import { withAuth, withErrorHandling } from "@/lib/middleware"
+import { validateRequest } from "@/lib/middleware"
+import { portfolioPublishAllSchema } from "@/lib/validators"
+import { prisma } from "@/lib/prisma"
 
-export async function POST(req: NextRequest) {
+export const POST = withAuth(withErrorHandling(validateRequest(portfolioPublishAllSchema)(async (req: NextRequest, ctx) => {
   try {
     devLog("🚀 Starting publish-all request...")
     
-    const body = await req.json()
+    const body = ctx.data
     devLog("📦 Request body received:", JSON.stringify(body, null, 2))
     
     const { 
@@ -336,4 +338,4 @@ export async function POST(req: NextRequest) {
   } finally {
     // Do not disconnect global prisma; connection is managed centrally
   }
-}
+})))

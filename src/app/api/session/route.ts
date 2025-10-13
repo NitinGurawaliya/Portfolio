@@ -1,18 +1,13 @@
 import { NextRequest, NextResponse } from "next/server"
+import { withAuth, withErrorHandling } from "@/lib/middleware"
 
-export async function GET(req: NextRequest) {
-  try {
+export const GET = withAuth(
+  withErrorHandling(async (req: NextRequest, ctx) => {
     const sessionCookie = req.cookies.get("github-session")?.value
-    if (!sessionCookie) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
-    }
-
+    if (!sessionCookie) return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
     const session = JSON.parse(sessionCookie)
-    // Do not return access token to the client
     const { accessToken: _omit, ...safeSession } = session
     return NextResponse.json({ success: true, session: safeSession })
-  } catch (error) {
-    return NextResponse.json({ error: "Invalid session" }, { status: 401 })
-  }
-}
+  })
+)
 

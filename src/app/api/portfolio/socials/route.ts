@@ -1,116 +1,20 @@
 import { NextRequest, NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
-import type { Prisma } from "@prisma/client"
+import { withAuth, withErrorHandling } from "@/lib/middleware"
+import { validateRequest } from "@/lib/middleware"
+import { portfolioSocialsSchema } from "@/lib/validators"
+import { saveSocials } from "@/lib/services"
 
-// Platform URL generators
-const generatePlatformUrl = (platform: string, username: string): string => {
-  const platforms: Record<string, string> = {
-    github: `https://github.com/${username}`,
-    twitter: `https://twitter.com/${username}`,
-    linkedin: `https://linkedin.com/in/${username}`,
-    instagram: `https://instagram.com/${username}`,
-    facebook: `https://facebook.com/${username}`,
-    youtube: `https://youtube.com/@${username}`,
-    stackoverflow: `https://stackoverflow.com/users/${username}`,
-    reddit: `https://reddit.com/u/${username}`,
-  }
-  return platforms[platform] || `https://${platform}.com/${username}`
-}
-
-export async function POST(req: NextRequest) {
-  try {
-    const body = await req.json()
-    const { socials, userId, userData } = body
-
-    if (!userId) {
-      return NextResponse.json(
-        { error: "User ID is required" },
-        { status: 400 }
-      )
-    }
-
-    const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-      // Ensure user exists
-      const user = await tx.user.upsert({
-        where: { githubId: userId.toString() },
-        update: {
-          name: userData?.name || "",
-          email: userData?.email || "",
-          githubUsername: userData?.githubUsername || "",
-          avatarUrl: userData?.avatarUrl || "",
-          bio: userData?.bio || "",
-          location: userData?.location || "",
-          websiteUrl: userData?.websiteUrl || "",
-          twitterUsername: userData?.twitterUsername || "",
-          company: userData?.company || "",
-          publicRepos: userData?.publicRepos || 0,
-          followers: userData?.followers || 0,
-          following: userData?.following || 0,
-        },
-        create: {
-          githubId: userId.toString(),
-          name: userData?.name || "",
-          email: userData?.email || "",
-          githubUsername: userData?.githubUsername || "",
-          avatarUrl: userData?.avatarUrl || "",
-          bio: userData?.bio || "",
-          location: userData?.location || "",
-          websiteUrl: userData?.websiteUrl || "",
-          twitterUsername: userData?.twitterUsername || "",
-          company: userData?.company || "",
-          publicRepos: userData?.publicRepos || 0,
-          followers: userData?.followers || 0,
-          following: userData?.following || 0,
-        },
-      })
-
-      // Ensure portfolio exists
-      const portfolio = await tx.portfolio.upsert({
-        where: { userId: user.id },
-        update: {},
-        create: {
-          userId: user.id,
-          isPublished: false,
-        },
-      })
-
-      // Delete existing socials and recreate
-      await tx.social.deleteMany({
-        where: { portfolioId: portfolio.id }
-      })
-
-      // Add new socials
-      if (socials && socials.length > 0) {
-        await tx.social.createMany({
-          data: socials.map((social: any) => ({
-            portfolioId: portfolio.id,
-            platform: social.platform,
-            username: social.username,
-            url: social.url || generatePlatformUrl(social.platform, social.username),
-            isPinned: social.isPinned || false,
-          }))
-        })
-      }
-
-      return portfolio
+export const POST = withAuth(
+  withErrorHandling(
+    validateRequest(portfolioSocialsSchema)(async (_req: NextRequest, ctx) => {
+      const { userId: rawUserId, userData, socials } = ctx.data
+      const userId = rawUserId || ctx.user?.id
+      if (!userId) return NextResponse.json({ error: "User ID is required" }, { status: 400 })
+      const result = await saveSocials({ userId, userData, socials })
+      return NextResponse.json({ success: true, message: "Social accounts saved successfully", portfolio: result })
     })
-
-    return NextResponse.json({
-      success: true,
-      message: "Social accounts saved successfully",
-      portfolio: result
-    })
-
-  } catch (error) {
-    console.error("Error saving social accounts:", error)
-    return NextResponse.json(
-      { error: "Failed to save social accounts" },
-      { status: 500 }
-    )
-  } finally {
-    // Do not disconnect global prisma; connection is managed centrally
-  }
-}
+  )
+)
 
 export async function GET(req: NextRequest) {
   try {
@@ -124,14 +28,9 @@ export async function GET(req: NextRequest) {
       )
     }
 
-    const portfolio = await prisma.portfolio.findFirst({
-      where: {
-        user: { githubId: userId }
-      },
-      include: {
-        socials: true
-      }
-    })
+    // keep simple for now; can be moved to service if needed
+    const { prisma } = await import("@/lib/prisma")
+    const portfolio = await prisma.portfolio.findFirst({ where: { user: { githubId: userId } }, include: { socials: true } })
 
     return NextResponse.json({
       success: true,

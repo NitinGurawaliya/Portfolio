@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { withErrorHandling } from '@/lib/middleware'
+import { getThemeByPortfolioId, updateThemeByPortfolioId } from '@/lib/services'
 
 // Define themes directly in API route to avoid client component imports
 const THEMES = {
@@ -33,10 +34,10 @@ const THEMES = {
 
 type ThemeKey = keyof typeof THEMES
 
-export async function PATCH(
+export const PATCH = withErrorHandling(async (
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+) => {
   try {
     const { id } = await params
     const portfolioId = parseInt(id)
@@ -51,24 +52,7 @@ export async function PATCH(
       )
     }
 
-    // Update portfolio theme
-    const updatedPortfolio = await prisma.portfolio.update({
-      where: { id: portfolioId },
-      data: {
-        selectedTheme: theme as ThemeKey,
-        updatedAt: new Date()
-      },
-      include: {
-        user: true,
-        skills: true,
-        socials: true,
-        repositories: {
-          include: {
-            repository: true
-          }
-        }
-      }
-    })
+    const updatedPortfolio = await updateThemeByPortfolioId({ portfolioId, theme })
 
     return NextResponse.json({
       success: true,
@@ -83,24 +67,17 @@ export async function PATCH(
       { status: 500 }
     )
   }
-}
+})
 
-export async function GET(
+export const GET = withErrorHandling(async (
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+) => {
   try {
     const { id } = await params
     const portfolioId = parseInt(id)
 
-    const portfolio = await prisma.portfolio.findUnique({
-      where: { id: portfolioId },
-      select: {
-        id: true,
-        selectedTheme: true,
-        themeConfig: true
-      }
-    })
+    const portfolio = await getThemeByPortfolioId({ portfolioId })
 
     if (!portfolio) {
       return NextResponse.json(
@@ -110,8 +87,8 @@ export async function GET(
     }
 
     return NextResponse.json({
-      currentTheme: portfolio.selectedTheme,
-      themeConfig: portfolio.themeConfig,
+      currentTheme: (portfolio as any).selectedTheme,
+      themeConfig: (portfolio as any).themeConfig,
       availableThemes: THEMES
     })
 
@@ -122,4 +99,4 @@ export async function GET(
       { status: 500 }
     )
   }
-}
+})

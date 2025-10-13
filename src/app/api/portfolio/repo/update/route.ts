@@ -1,24 +1,19 @@
 import { NextRequest, NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
 import { devLog } from "@/lib/logger"
+import { withErrorHandling } from "@/lib/middleware"
+import { validateRequest } from "@/lib/middleware"
+import { z } from "zod"
+import { prisma } from "@/lib/prisma"
 
-export async function POST(req: NextRequest) {
-  try {
-    const body = await req.json()
-    const { 
-      githubId, 
-      name, 
-      description 
-    } = body
+const repoUpdateSchema = z.object({ githubId: z.union([z.number(), z.string()]), name: z.string().optional(), description: z.string().optional() })
+
+export const POST = withErrorHandling(
+  validateRequest(repoUpdateSchema)(async (req: NextRequest, ctx) => {
+    const { githubId, name, description } = ctx.data
 
     devLog("Updating repository:", { githubId, name, description })
 
-    if (!githubId) {
-      return NextResponse.json(
-        { error: "GitHub ID is required" },
-        { status: 400 }
-      )
-    }
+    if (!githubId) return NextResponse.json({ error: "GitHub ID is required" }, { status: 400 })
 
     // Update the repository directly
     const updatedRepo = await prisma.repository.update({
@@ -42,12 +37,5 @@ export async function POST(req: NextRequest) {
         description: updatedRepo.description
       }
     })
-
-  } catch (error) {
-    console.error("Error updating repository:", error)
-    return NextResponse.json(
-      { error: "Failed to update repository" },
-      { status: 500 }
-    )
-  }
-}
+  })
+)
