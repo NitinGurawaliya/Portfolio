@@ -59,6 +59,9 @@ export async function generateMetadata({
     const bio = portfolio.bio || `Check out ${displayName}'s developer portfolio`
     const profilePic = portfolio.profilePic || `${baseUrl}/default-avatar.png`
     
+    // Generate dynamic OG image URL
+    const ogImageUrl = `${baseUrl}/api/og?username=${encodeURIComponent(username)}&displayName=${encodeURIComponent(displayName)}&jobTitle=${encodeURIComponent(jobTitle)}&bio=${encodeURIComponent(bio.slice(0, 100))}&profilePic=${encodeURIComponent(profilePic)}`
+    
     // Extract skills for keywords
     const skills = portfolio.skills?.map((s: any) => s.name).join(", ") || ""
     const languages = portfolio.repositories
@@ -93,18 +96,18 @@ export async function generateMetadata({
         siteName: "DevFolio",
         images: [
           {
-            url: profilePic,
-            width: 400,
-            height: 400,
-            alt: `${displayName}'s profile picture`
+            url: ogImageUrl,
+            width: 1200,
+            height: 630,
+            alt: `${displayName}'s developer portfolio`
           }
         ],
       },
       twitter: {
-        card: "summary",
+        card: "summary_large_image",
         title: `${displayName}${jobTitle ? ` - ${jobTitle}` : ""}`,
         description: bio,
-        images: [profilePic],
+        images: [ogImageUrl],
         creator: portfolio.socials?.find((s: any) => s.platform === 'twitter')?.username 
           ? `@${portfolio.socials.find((s: any) => s.platform === 'twitter').username}` 
           : "@devfolio"

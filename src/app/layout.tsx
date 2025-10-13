@@ -34,7 +34,7 @@ export const metadata: Metadata = {
     siteName: "DevFolio",
     images: [
       {
-        url: "/og-image.png",
+        url: `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/api/og-landing`,
         width: 1200,
         height: 630,
         alt: "DevFolio - Developer Portfolio Builder"
@@ -45,7 +45,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "DevFolio - Create Your Developer Portfolio in Minutes",
     description: "DevFolio helps developers create stunning portfolios by importing projects from GitHub. Showcase your work and share your developer journey.",
-    images: ["/og-image.png"],
+    images: [`${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/api/og-landing`],
     creator: "@devfolio"
   },
   robots: {
