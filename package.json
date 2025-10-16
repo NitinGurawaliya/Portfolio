@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "eslint",
     "postinstall": "prisma generate",
-    "resolve-migration": "node scripts/resolve-migration.js"
+    "resolve-migration": "node scripts/resolve-migration.js",
+    "deploy-migrations": "node scripts/deploy-migrations.js"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.10.0",

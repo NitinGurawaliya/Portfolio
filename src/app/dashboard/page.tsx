@@ -119,7 +119,7 @@ export default function DashboardPage() {
     const selected: Repository[] = [
       // Include selected GitHub repos
       ...selectedRepos
-        .map(id => allRepos.find(r => r.id === id))
+      .map(id => allRepos.find(r => r.id === id))
         .filter((r): r is Repository => Boolean(r)),
       // Include all imported projects (they are automatically selected)
       ...importedProjects
@@ -177,9 +177,9 @@ export default function DashboardPage() {
         githubUsername: user.githubUsername,
         location: user.location,
         company: user.company,
-      websiteUrl: user.websiteUrl,
+        websiteUrl: user.websiteUrl,
+      }
     }
-  }
   }, [user, portfolioData, skills, socials, selectedRepos, deployedUrls, importedProjects, selectedTheme, customNames, customDescriptions, repoOrder])
 
   // Track changes to enable/disable publish button
@@ -204,12 +204,12 @@ export default function DashboardPage() {
       return
     }
     
-        const currentData = {
-          portfolioData,
+    const currentData = {
+      portfolioData,
           selectedRepos: [...selectedRepos].sort(), // Sort for consistent comparison
           skills: [...skills].sort((a, b) => a.id.localeCompare(b.id)),
           socials: [...socials].sort((a, b) => a.id - b.id),
-          deployedUrls,
+      deployedUrls,
           customNames,
           customDescriptions,
           githubUrls,
@@ -337,7 +337,7 @@ export default function DashboardPage() {
         console.log("🔍 loadExistingPortfolioData completed")
       })
       .catch(() => {
-        router.push("/auth")
+      router.push("/auth")
       })
       .finally(() => setLoading(false))
   }, [router])
@@ -432,23 +432,23 @@ export default function DashboardPage() {
                 }
                 
                 return {
-                  id: parseInt(repo.repository.githubId),
-                  name: repo.repository.name,
-                  fullName: repo.repository.fullName || repo.repository.name,
-                  description: repo.repository.description || "",
-                  htmlUrl: repo.repository.htmlUrl,
-                  homepage: repo.deployedUrl || "",
-                  language: repo.repository.language || "Web Project",
+                id: parseInt(repo.repository.githubId),
+                name: repo.repository.name,
+                fullName: repo.repository.fullName || repo.repository.name,
+                description: repo.repository.description || "",
+                htmlUrl: repo.repository.htmlUrl,
+                homepage: repo.deployedUrl || "",
+                language: repo.repository.language || "Web Project",
                   languages: languages,
-                  stargazersCount: repo.repository.stargazersCount || 0,
-                  forksCount: repo.repository.forksCount || 0,
-                  isPrivate: repo.repository.isPrivate || false,
-                  isFork: repo.repository.isFork || false,
-                  size: repo.repository.size || 0,
-                  createdAt: repo.repository.createdAt,
-                  updatedAt: repo.repository.updatedAt,
-                  pushedAt: repo.repository.pushedAt || repo.repository.updatedAt,
-                  isImported: true
+                stargazersCount: repo.repository.stargazersCount || 0,
+                forksCount: repo.repository.forksCount || 0,
+                isPrivate: repo.repository.isPrivate || false,
+                isFork: repo.repository.isFork || false,
+                size: repo.repository.size || 0,
+                createdAt: repo.repository.createdAt,
+                updatedAt: repo.repository.updatedAt,
+                pushedAt: repo.repository.pushedAt || repo.repository.updatedAt,
+                isImported: true
                 }
               })
             devLog("Setting imported projects:", importedProjects)
@@ -1034,7 +1034,7 @@ export default function DashboardPage() {
     )
   }
 
-          return (
+  return (
             <>
               <Toaster 
                 position="top-left"
@@ -1049,18 +1049,18 @@ export default function DashboardPage() {
                   },
                 }}
               />
-              <DashboardLayout 
-                user={user} 
-                activeSection={activeSection}
-                onSectionChange={setActiveSection}
-                livePortfolio={livePortfolio}
-                portfolioData={portfolioData}
+    <DashboardLayout 
+      user={user} 
+      activeSection={activeSection}
+      onSectionChange={setActiveSection}
+      livePortfolio={livePortfolio}
+      portfolioData={portfolioData}
                 hasUnsavedChanges={hasUnsavedChanges && !isInitialLoad}
-                onPublish={handlePublishAll}
-                isPublishing={isPublishing}
-              >
-                {renderActiveSection()}
-              </DashboardLayout>
+      onPublish={handlePublishAll}
+      isPublishing={isPublishing}
+    >
+      {renderActiveSection()}
+    </DashboardLayout>
             </>
-          )
+  )
 }
