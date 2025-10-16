@@ -562,24 +562,39 @@ export default function DashboardPage() {
               })() : {},
               importedProjects: portfolio.repositories ? portfolio.repositories
                 .filter((repo: any) => repo.repository.isImported)
-                .map((repo: any) => ({
-                  id: parseInt(repo.repository.githubId),
-                  name: repo.repository.name,
-                  fullName: repo.repository.fullName || repo.repository.name,
-                  description: repo.repository.description || "",
-                  htmlUrl: repo.repository.htmlUrl,
-                  homepage: repo.deployedUrl || "",
-                  language: repo.repository.language || "Web Project",
-                  stargazersCount: repo.repository.stargazersCount || 0,
-                  forksCount: repo.repository.forksCount || 0,
-                  isPrivate: repo.repository.isPrivate || false,
-                  isFork: repo.repository.isFork || false,
-                  size: repo.repository.size || 0,
-                  createdAt: repo.repository.createdAt,
-                  updatedAt: repo.repository.updatedAt,
-                  pushedAt: repo.repository.pushedAt || repo.repository.updatedAt,
-                  isImported: true
-                })) : [],
+                .map((repo: any) => {
+                  // Parse languages if available
+                  let languages: string[] = []
+                  if (repo.repository.languages) {
+                    try {
+                      languages = JSON.parse(repo.repository.languages)
+                    } catch (e) {
+                      languages = repo.repository.language ? [repo.repository.language] : []
+                    }
+                  } else if (repo.repository.language) {
+                    languages = [repo.repository.language]
+                  }
+                  
+                  return {
+                    id: parseInt(repo.repository.githubId),
+                    name: repo.repository.name,
+                    fullName: repo.repository.fullName || repo.repository.name,
+                    description: repo.repository.description || "",
+                    htmlUrl: repo.repository.htmlUrl,
+                    homepage: repo.deployedUrl || "",
+                    language: repo.repository.language || "Web Project",
+                    languages: languages,
+                    stargazersCount: repo.repository.stargazersCount || 0,
+                    forksCount: repo.repository.forksCount || 0,
+                    isPrivate: repo.repository.isPrivate || false,
+                    isFork: repo.repository.isFork || false,
+                    size: repo.repository.size || 0,
+                    createdAt: repo.repository.createdAt,
+                    updatedAt: repo.repository.updatedAt,
+                    pushedAt: repo.repository.pushedAt || repo.repository.updatedAt,
+                    isImported: true
+                  }
+                }) : [],
               selectedTheme: currentSelectedTheme,
               repoOrder: portfolio.repositories ? portfolio.repositories.map((repo: any) => parseInt(repo.repository.githubId)) : []
             }
