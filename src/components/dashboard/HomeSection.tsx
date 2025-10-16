@@ -23,9 +23,14 @@ interface HomeSectionProps {
   user: any
   portfolioData?: any
   onUpdate: (data: any) => void
+  usernameAvailability?: {
+    isChecking: boolean
+    isAvailable: boolean | null
+    message: string
+  }
 }
 
-export function HomeSection({ user, portfolioData, onUpdate }: HomeSectionProps) {
+export function HomeSection({ user, portfolioData, onUpdate, usernameAvailability }: HomeSectionProps) {
   const [formData, setFormData] = useState({
     displayName: "",
     jobTitle: "",
@@ -34,15 +39,7 @@ export function HomeSection({ user, portfolioData, onUpdate }: HomeSectionProps)
     customUsername: "",
   })
   const fileInputRef = useState<HTMLInputElement | null>(null)[0]
-  const [usernameAvailability, setUsernameAvailability] = useState<{
-    checking: boolean
-    available: boolean | null
-    message: string
-  }>({
-    checking: false,
-    available: null,
-    message: ""
-  })
+  // Username availability is now managed by parent component
   // Update form data when portfolioData changes (from saved data) or user changes
   // Only initialize once when the component mounts or when portfolioData is first loaded
   const [isInitialized, setIsInitialized] = useState(false)
@@ -105,78 +102,11 @@ export function HomeSection({ user, portfolioData, onUpdate }: HomeSectionProps)
     }
   }
 
-  // Check username availability
-  const checkUsernameAvailability = async (username: string) => {
-    if (!username || username.trim().length < 3) {
-      setUsernameAvailability({
-        checking: false,
-        available: null,
-        message: ""
-      })
-      return
-    }
+  // Username availability check is now handled by parent component
 
-    setUsernameAvailability({
-      checking: true,
-      available: null,
-      message: "Checking availability..."
-    })
-
-    try {
-      const response = await fetch(`/api/portfolio/publish?username=${encodeURIComponent(username)}`)
-      const data = await response.json()
-      
-      if (response.status === 404) {
-        // Username is available
-        setUsernameAvailability({
-          checking: false,
-          available: true,
-          message: "✓ Username is available"
-        })
-      } else if (response.ok) {
-        // Username exists - check if it's the current user's
-        if (data.portfolio && data.portfolio.userId === user?.id) {
-          setUsernameAvailability({
-            checking: false,
-            available: true,
-            message: "✓ This is your current username"
-          })
-        } else {
-          setUsernameAvailability({
-            checking: false,
-            available: false,
-            message: "✗ Username is already taken"
-          })
-        }
-      }
-    } catch (error) {
-      console.error("Error checking username:", error)
-      setUsernameAvailability({
-        checking: false,
-        available: null,
-        message: ""
-      })
-    }
-  }
-
-  // Debounced username check (wait 500ms after user stops typing)
-  const debouncedCheckUsername = useCallback(
-    debounce((username: string) => checkUsernameAvailability(username), 500),
-    [user]
-  )
-
-  // Handle username change with debounced check
+  // Handle username change (availability check is handled by parent)
   const handleUsernameChange = (value: string) => {
     handleInputChange("customUsername", value)
-    if (value && value.trim().length >= 3) {
-      debouncedCheckUsername(value.trim())
-    } else {
-      setUsernameAvailability({
-        checking: false,
-        available: null,
-        message: ""
-      })
-    }
   }
 
   return (
@@ -287,21 +217,21 @@ export function HomeSection({ user, portfolioData, onUpdate }: HomeSectionProps)
                 placeholder="Your portfolio username"
               />
                 <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                  {usernameAvailability.checking && (
+                  {usernameAvailability?.isChecking && (
                     <Loader2 className="h-4 w-4 text-gray-400 animate-spin" />
                   )}
-                  {!usernameAvailability.checking && usernameAvailability.available === true && (
+                  {!usernameAvailability?.isChecking && usernameAvailability?.isAvailable === true && (
                     <CheckCircle2 className="h-4 w-4 text-green-500" />
                   )}
-                  {!usernameAvailability.checking && usernameAvailability.available === false && (
+                  {!usernameAvailability?.isChecking && usernameAvailability?.isAvailable === false && (
                     <XCircle className="h-4 w-4 text-red-500" />
                   )}
                 </div>
               </div>
-              {usernameAvailability.message && (
+              {usernameAvailability?.message && (
                 <p className={`text-[11px] font-medium ${
-                  usernameAvailability.available === true ? 'text-green-600' : 
-                  usernameAvailability.available === false ? 'text-red-600' : 
+                  usernameAvailability.isAvailable === true ? 'text-green-600' : 
+                  usernameAvailability.isAvailable === false ? 'text-red-600' : 
                   'text-gray-500'
                 }`}>
                   {usernameAvailability.message}

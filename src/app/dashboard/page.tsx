@@ -92,6 +92,17 @@ export default function DashboardPage() {
   const [githubUrls, setGithubUrls] = useState<Record<number, string>>({})
   const [selectedTheme, setSelectedTheme] = useState<string>('dark')
   const [repoOrder, setRepoOrder] = useState<number[]>([])
+  
+  // Username availability state
+  const [usernameAvailability, setUsernameAvailability] = useState<{
+    isChecking: boolean
+    isAvailable: boolean | null
+    message: string
+  }>({
+    isChecking: false,
+    isAvailable: null,
+    message: ""
+  })
 
   // Change tracking state
   const [originalData, setOriginalData] = useState<{
@@ -241,7 +252,7 @@ export default function DashboardPage() {
           socials: [...(currentData.socials || [])].sort((a, b) => a.id - b.id),
           importedProjects: [...(currentData.importedProjects || [])].sort((a, b) => a.id - b.id),
           selectedTheme: currentData.selectedTheme || 'dark',
-          repoOrder: [...(currentData.repoOrder || [])] // Don't sort!
+          repoOrder: currentData.repoOrder || [] // Keep original order for comparison
         })
         const cleanOriginalData = normalizeData({
           ...originalData,
@@ -250,7 +261,7 @@ export default function DashboardPage() {
           socials: [...(originalData.socials || [])].sort((a, b) => a.id - b.id),
           importedProjects: [...(originalData.importedProjects || [])].sort((a, b) => a.id - b.id),
           selectedTheme: originalData.selectedTheme || 'dark',
-          repoOrder: [...(originalData.repoOrder || [])] // Don't sort!
+          repoOrder: originalData.repoOrder || [] // Keep original order for comparison
         })
     
     const hasChanges = JSON.stringify(cleanCurrentData) !== JSON.stringify(cleanOriginalData)
@@ -781,6 +792,21 @@ export default function DashboardPage() {
   }
 
   const handlePublishAll = async () => {
+    if (isPublishing) return
+    
+    // Check if username is available before publishing
+    if (portfolioData.customUsername && portfolioData.customUsername.trim()) {
+      if (usernameAvailability.isAvailable === false) {
+        alert("Username is already taken. Please choose a different username.")
+        return
+      }
+      
+      if (usernameAvailability.isChecking) {
+        alert("Please wait while we check username availability.")
+        return
+      }
+    }
+    
     setIsPublishing(true)
     try {
       const allRepositories = [...(user?.repositories || []), ...importedProjects]
@@ -873,6 +899,65 @@ export default function DashboardPage() {
 
   const handleUpdatePortfolioData = (data: any) => {
     setPortfolioData(prev => ({ ...prev, ...data }))
+    
+    // Check username availability if customUsername changed
+    if (data.customUsername !== undefined && data.customUsername.trim()) {
+      checkUsernameAvailability(data.customUsername.trim())
+    } else {
+      // Reset availability state if username is empty
+      setUsernameAvailability({
+        isChecking: false,
+        isAvailable: null,
+        message: ""
+      })
+    }
+  }
+  
+  const checkUsernameAvailability = async (username: string) => {
+    if (!username.trim()) {
+      setUsernameAvailability({
+        isChecking: false,
+        isAvailable: null,
+        message: ""
+      })
+      return
+    }
+    
+    setUsernameAvailability({
+      isChecking: true,
+      isAvailable: null,
+      message: "Checking availability..."
+    })
+    
+    try {
+      const response = await fetch(`/api/portfolio/publish?username=${encodeURIComponent(username)}`)
+      
+      if (response.ok) {
+        setUsernameAvailability({
+          isChecking: false,
+          isAvailable: false,
+          message: "Username already taken"
+        })
+      } else if (response.status === 404) {
+        setUsernameAvailability({
+          isChecking: false,
+          isAvailable: true,
+          message: "Username available"
+        })
+      } else {
+        setUsernameAvailability({
+          isChecking: false,
+          isAvailable: null,
+          message: "Error checking availability"
+        })
+      }
+    } catch (error) {
+      setUsernameAvailability({
+        isChecking: false,
+        isAvailable: null,
+        message: "Error checking availability"
+      })
+    }
   }
 
   const handleToggleRepo = (repoId: number) => {
@@ -964,6 +1049,7 @@ export default function DashboardPage() {
             user={user} 
             portfolioData={portfolioData}
             onUpdate={handleUpdatePortfolioData}
+            usernameAvailability={usernameAvailability}
           />
         )
       case "repos":
