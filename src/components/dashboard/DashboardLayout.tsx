@@ -16,7 +16,8 @@ import {
   ExternalLink,
   Loader2,
   LogOut,
-  Palette
+  Palette,
+  Globe
 } from "lucide-react"
 import { DevFolioInlineLoader } from "@/components/ui/DevFolioLoader"
 
@@ -53,6 +54,7 @@ export function DashboardLayout({
     { id: "skills", label: "Skills", icon: Wrench },
     { id: "socials", label: "Socials", icon: Users },
     { id: "theme", label: "Theme", icon: Palette },
+    { id: "domain", label: "Domain", icon: Globe },
   ]
 
   const handleLogout = () => {

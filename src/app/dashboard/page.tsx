@@ -9,6 +9,7 @@ import { ReposSection } from "@/components/dashboard/ReposSection"
 import { SkillsSection } from "@/components/dashboard/SkillsSection"
 import { SocialsSection } from "@/components/dashboard/SocialsSection"
 import ThemeSelector from "@/components/dashboard/ThemeSelector"
+import { CustomDomainSection } from "@/components/dashboard/CustomDomainSection"
 import { DevFolioLoader } from "@/components/ui/DevFolioLoader"
 import toast, { Toaster } from "react-hot-toast"
 
@@ -90,6 +91,8 @@ export default function DashboardPage() {
   const [customDescriptions, setCustomDescriptions] = useState<Record<number, string>>({})
   const [githubUrls, setGithubUrls] = useState<Record<number, string>>({})
   const [selectedTheme, setSelectedTheme] = useState<string>('dark')
+  const [portfolioId, setPortfolioId] = useState<number | null>(null)
+  const [isPortfolioPublished, setIsPortfolioPublished] = useState(false)
 
   // Change tracking state
   const [originalData, setOriginalData] = useState<{
@@ -331,6 +334,10 @@ export default function DashboardPage() {
         console.log("🔍 Found existing portfolio:", !!portfolio)
         
         if (portfolio) {
+          // Set portfolio ID and published status
+          console.log('📋 Loading portfolio:', { id: portfolio.id, isPublished: portfolio.isPublished })
+          setPortfolioId(portfolio.id)
+          setIsPortfolioPublished(portfolio.isPublished)
           // Update portfolio data with saved data
           setPortfolioData({
             displayName: portfolio.displayName || "",
@@ -763,6 +770,23 @@ export default function DashboardPage() {
       const result = await response.json()
 
       if (response.ok) {
+        // Update published status and portfolio ID
+        setIsPortfolioPublished(true)
+        
+        // Fetch the portfolio ID after publishing
+        if (result.portfolioId) {
+          setPortfolioId(result.portfolioId)
+        } else {
+          // Fetch portfolio to get ID
+          const portfolioResponse = await fetch(`/api/portfolio/publish?username=${user?.githubUsername}`)
+          if (portfolioResponse.ok) {
+            const portfolioData = await portfolioResponse.json()
+            if (portfolioData.portfolio?.id) {
+              setPortfolioId(portfolioData.portfolio.id)
+            }
+          }
+        }
+        
         // Update original data to match current data (no more unsaved changes)
         // Make sure to sort arrays the same way as in change detection
         setOriginalData({
@@ -960,6 +984,13 @@ export default function DashboardPage() {
             currentTheme={selectedTheme as any}
             userId={user?.id || 0}
             onThemeChange={handleThemeChange}
+          />
+        )
+      case "domain":
+        return (
+          <CustomDomainSection
+            portfolioId={portfolioId || 0}
+            isPublished={isPortfolioPublished}
           />
         )
       default:

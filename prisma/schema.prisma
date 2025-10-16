@@ -33,6 +33,7 @@ model User {
   updatedAt     DateTime @updatedAt
   repositories  Repository[]
   portfolio     Portfolio?
+  customDomains CustomDomain[]
 }
 
 model Repository {
@@ -88,6 +89,9 @@ model Portfolio {
   // Selected repositories
   repositories PortfolioRepository[]
   
+  // Custom domain
+  customDomain CustomDomain?
+  
   isPublished Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -127,4 +131,26 @@ model PortfolioRepository {
   customDescription String?  // Custom description override for this repository
   isVisible   Boolean  @default(true)
   createdAt   DateTime @default(now())
+}
+
+model CustomDomain {
+  id                String   @id @default(cuid())
+  domain            String   @unique
+  portfolioId       Int      @unique // One domain per portfolio
+  portfolio         Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+  userId            Int
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Verification
+  verified          Boolean  @default(false)
+  verificationToken String   // For TXT record
+  
+  // Metadata
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  lastCheckedAt     DateTime?
+  
+  @@index([userId])
+  @@index([domain])
+  @@index([verified])
 }
