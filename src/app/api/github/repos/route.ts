@@ -24,8 +24,35 @@ export async function GET(req: NextRequest) {
       cache: "no-store",
     })
 
-    const data = await githubRes.json()
-    return NextResponse.json(data, { status: githubRes.status })
+    const repos = await githubRes.json()
+    
+    // Fetch languages for each repository
+    const reposWithLanguages = await Promise.all(
+      repos.map(async (repo: any) => {
+        try {
+          const langRes = await fetch(`https://api.github.com/repos/${repo.full_name}/languages`, {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              Accept: "application/vnd.github.v3+json",
+            },
+            cache: "no-store",
+          })
+          
+          if (langRes.ok) {
+            const languages = await langRes.json()
+            repo.languages = Object.keys(languages) // Add languages array
+          } else {
+            repo.languages = repo.language ? [repo.language] : []
+          }
+        } catch (error) {
+          console.error(`Error fetching languages for ${repo.name}:`, error)
+          repo.languages = repo.language ? [repo.language] : []
+        }
+        return repo
+      })
+    )
+    
+    return NextResponse.json(reposWithLanguages, { status: githubRes.status })
   } catch (error) {
     return NextResponse.json({ error: "Failed to fetch repos" }, { status: 500 })
   }

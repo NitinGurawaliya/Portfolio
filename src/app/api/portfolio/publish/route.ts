@@ -254,6 +254,7 @@ export async function GET(req: NextRequest) {
             deployedUrl: true,
             customName: true,
             customDescription: true,
+            displayOrder: true,
             isVisible: true,
             repository: {
               select: {
@@ -265,6 +266,7 @@ export async function GET(req: NextRequest) {
                 htmlUrl: true,
                 githubUrl: true,
                 language: true,
+                languages: true,
                 stargazersCount: true,
                 forksCount: true,
                 size: true,
@@ -276,6 +278,9 @@ export async function GET(req: NextRequest) {
                 pushedAt: true
               }
             }
+          },
+          orderBy: {
+            displayOrder: 'asc'
           }
         }
       }

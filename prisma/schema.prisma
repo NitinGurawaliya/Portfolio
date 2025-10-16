@@ -42,9 +42,10 @@ model Repository {
   fullName    String
   description String?
   htmlUrl     String
-  cloneUrl    String
   githubUrl   String?  // GitHub URL for URL-imported projects
+  cloneUrl    String
   language    String?
+  languages   String?  // JSON array of all languages used
   stargazersCount Int
   forksCount  Int
   size        Int
@@ -125,6 +126,24 @@ model PortfolioRepository {
   deployedUrl String?
   customName  String?  // Custom name override for this repository
   customDescription String?  // Custom description override for this repository
+  technologies String? // Comma-separated list of additional technologies
+  displayOrder Int?    // Order of display on portfolio
   isVisible   Boolean  @default(true)
   createdAt   DateTime @default(now())
+}
+
+model CustomDomain {
+  id                 String   @id @default(cuid())
+  userId             Int
+  portfolioId        Int
+  domain             String   @unique
+  verified           Boolean  @default(false)
+  verificationToken  String?
+  lastCheckedAt      DateTime?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  
+  @@index([domain])
+  @@index([userId])
+  @@index([verified])
 }

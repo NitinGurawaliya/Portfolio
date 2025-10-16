@@ -200,20 +200,96 @@ const skillsDatabase = [
   { name: "Storybook", category: "Tools", icon: SiStorybook, color: "#FF4785" },
 ]
 
+// Additional AI/ML, Data Science, and Cybersecurity skills
+const aiMlSkills = [
+  "TensorFlow",
+  "PyTorch",
+  "Keras",
+  "Scikit-learn",
+  "Pandas",
+  "NumPy",
+  "Jupyter",
+  "OpenAI",
+  "Hugging Face",
+  "LangChain",
+  "Machine Learning",
+  "Deep Learning",
+  "Natural Language Processing",
+  "Computer Vision",
+  "Data Science",
+  "AI/ML",
+]
+
+const devOpsSkills = [
+  "CI/CD",
+  "Linux",
+  "Bash",
+  "Shell Scripting",
+  "Monitoring",
+  "Grafana",
+  "Prometheus",
+  "ELK Stack",
+  "CloudFormation",
+]
+
+const cybersecuritySkills = [
+  "Security",
+  "Penetration Testing",
+  "Ethical Hacking",
+  "OWASP",
+  "Cryptography",
+  "Network Security",
+  "Web Security",
+  "Security Auditing",
+]
+
+const otherSkills = [
+  "GraphQL",
+  "REST API",
+  "Microservices",
+  "Serverless",
+  "WebSockets",
+  "OAuth",
+  "JWT",
+  "Agile",
+  "Scrum",
+  "Blockchain",
+  "Web3",
+  "Solidity",
+  "Smart Contracts",
+]
+
 export function SkillsSection({ skills, onAddSkill, onRemoveSkill }: SkillsSectionProps) {
   const [searchTerm, setSearchTerm] = useState("")
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
   const [hoveredSkill, setHoveredSkill] = useState<string | null>(null)
+  const [customSkillInput, setCustomSkillInput] = useState("")
+  const [showCustomSkillInput, setShowCustomSkillInput] = useState(false)
+  
+  // Merge all skills databases
+  const allSkillNames = useMemo(() => {
+    const additionalSkills = [
+      ...aiMlSkills.map(name => ({ name, category: "AI/ML" })),
+      ...devOpsSkills.map(name => ({ name, category: "DevOps" })),
+      ...cybersecuritySkills.map(name => ({ name, category: "Cybersecurity" })),
+      ...otherSkills.map(name => ({ name, category: "Other" })),
+    ]
+    return [...skillsDatabase, ...additionalSkills.map(skill => ({
+      ...skill,
+      icon: Wrench,
+      color: "#6B7280"
+    }))]
+  }, [])
 
   // Filter skills based on search term
   const filteredSkills = useMemo(() => {
-    if (!searchTerm.trim()) return skillsDatabase
-    return skillsDatabase.filter(skill =>
+    if (!searchTerm.trim()) return allSkillNames
+    return allSkillNames.filter(skill =>
       skill.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       skill.category.toLowerCase().includes(searchTerm.toLowerCase())
     )
-  }, [searchTerm])
+  }, [searchTerm, allSkillNames])
 
   // Get skills that are already added
   const addedSkillNames = useMemo(() => 
@@ -226,6 +302,17 @@ export function SkillsSection({ skills, onAddSkill, onRemoveSkill }: SkillsSecti
       setSearchTerm("")
       // Keep dropdown open for multiple selections
       // setIsDropdownOpen(false)
+    }
+  }
+
+  const handleAddCustomSkill = () => {
+    if (customSkillInput.trim() && !addedSkillNames.has(customSkillInput.trim().toLowerCase())) {
+      onAddSkill({
+        name: customSkillInput.trim(),
+        category: "Custom"
+      })
+      setCustomSkillInput("")
+      setShowCustomSkillInput(false)
     }
   }
 
@@ -259,9 +346,22 @@ export function SkillsSection({ skills, onAddSkill, onRemoveSkill }: SkillsSecti
               </motion.div>
             Skills & Technologies
           </CardTitle>
-            <p className="text-gray-600 font-medium text-sm">
-              Search and add your technical skills to showcase your expertise
-          </p>
+            <div className="flex items-center justify-between">
+              <p className="text-gray-600 font-medium text-sm">
+                Search and add your technical skills to showcase your expertise
+              </p>
+              {!showCustomSkillInput && (
+                <Button
+                  onClick={() => setShowCustomSkillInput(true)}
+                  variant="outline"
+                  size="sm"
+                  className="text-black hover:bg-black hover:text-white"
+                >
+                  <Plus className="h-3 w-3 mr-1" />
+                  Custom
+                </Button>
+              )}
+            </div>
         </CardHeader>
       </Card>
       </motion.div>
@@ -274,6 +374,42 @@ export function SkillsSection({ skills, onAddSkill, onRemoveSkill }: SkillsSecti
       >
         <Card className="bg-white   transition-all duration-300">
         <CardContent className="pt-2 space-y-3">
+            {/* Custom Skill Input */}
+            <AnimatePresence>
+              {showCustomSkillInput && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="flex gap-2"
+                >
+                  <Input
+                    value={customSkillInput}
+                    onChange={(e) => setCustomSkillInput(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleAddCustomSkill()}
+                    placeholder="Enter custom skill name..."
+                    className="bg-gray-50 text-black font-medium text-sm focus:bg-white placeholder:text-gray-400"
+                  />
+                  <Button
+                    onClick={handleAddCustomSkill}
+                    className="bg-black text-white hover:bg-gray-800"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      setShowCustomSkillInput(false)
+                      setCustomSkillInput("")
+                    }}
+                    variant="outline"
+                    className="text-black"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             {/* Search Input */}
             <div className="relative">
               <div className="relative">
@@ -286,7 +422,7 @@ export function SkillsSection({ skills, onAddSkill, onRemoveSkill }: SkillsSecti
                   }}
                   onFocus={() => setIsDropdownOpen(true)}
                   placeholder="Search for skill..."
-                  className="pl-10 pr-10 bg-gray-50 text-black font-medium text-sm focus:bg-white"
+                  className="pl-10 pr-10 bg-gray-50 text-black font-medium text-sm focus:bg-white placeholder:text-gray-400"
                 />
                 <Button
                   variant="ghost"

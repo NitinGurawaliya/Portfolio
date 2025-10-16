@@ -281,13 +281,30 @@ export default function LayoutDark({ theme, portfolio }: LayoutDarkProps) {
                       </motion.button>
                     </div>
                     
-                    {/* Language badge - simple */}
-                    <div className="flex items-center mt-auto">
-                      {repo.repository.language && (
-                        <span className="text-orange-300 text-sm font-medium">
-                          {repo.repository.language}
-                        </span>
-                      )}
+                    {/* All Languages badges */}
+                    <div className="flex items-center flex-wrap gap-2 mt-auto">
+                      {(() => {
+                        // Parse languages from JSON string
+                        let languages: string[] = []
+                        if (repo.repository.languages) {
+                          try {
+                            languages = JSON.parse(repo.repository.languages)
+                          } catch (e) {
+                            // Fallback to single language
+                            if (repo.repository.language) {
+                              languages = [repo.repository.language]
+                            }
+                          }
+                        } else if (repo.repository.language) {
+                          languages = [repo.repository.language]
+                        }
+                        
+                        return languages.map((lang, idx) => (
+                          <span key={idx} className="text-orange-300 text-xs sm:text-sm font-medium px-2 py-1 bg-orange-500/10 rounded border border-orange-500/30">
+                            {lang}
+                          </span>
+                        ))
+                      })()}
                     </div>
                   </div>
                 </motion.article>

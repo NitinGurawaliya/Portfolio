@@ -126,6 +126,7 @@ export async function POST(req: NextRequest) {
                   cloneUrl: repo.cloneUrl || repo.htmlUrl,
                   githubUrl: githubUrl,
                   language: repo.language || "",
+                  languages: repo.languages ? JSON.stringify(repo.languages) : null,
                   stargazersCount: repo.stargazersCount || 0,
                   forksCount: repo.forksCount || 0,
                   size: repo.size || 0,
@@ -149,6 +150,7 @@ export async function POST(req: NextRequest) {
                   cloneUrl: repo.cloneUrl || repo.htmlUrl,
                   githubUrl: githubUrl,
                   language: repo.language || "",
+                  languages: repo.languages ? JSON.stringify(repo.languages) : null,
                   stargazersCount: repo.stargazersCount || 0,
                   forksCount: repo.forksCount || 0,
                   size: repo.size || 0,
@@ -172,6 +174,28 @@ export async function POST(req: NextRequest) {
           }))
         }
         devLog('Selected repositories processing completed')
+      }
+    }
+
+    // Check if customUsername is already taken by another user
+    if (portfolioData.customUsername) {
+      const existingPortfolio = await prisma.portfolio.findFirst({
+        where: {
+          customUsername: portfolioData.customUsername,
+          userId: {
+            not: user.id
+          }
+        }
+      })
+
+      if (existingPortfolio) {
+        return NextResponse.json(
+          { 
+            error: `Username "${portfolioData.customUsername}" is already taken. Please choose a different username.`,
+            field: "customUsername"
+          },
+          { status: 400 }
+        )
       }
     }
 
@@ -253,17 +277,31 @@ export async function POST(req: NextRequest) {
           }
         })
 
-        const portfolioRepos = repoRecords.map((repo: { id: number; githubId: bigint }) => {
-          const githubIdStr = repo.githubId.toString()
+        // Create a map for quick lookup
+        const repoMap = new Map()
+        repoRecords.forEach(repo => {
+          repoMap.set(repo.githubId.toString(), repo)
+        })
+
+        // Map repositories in the order specified by selectedRepos
+        const portfolioRepos = selectedRepos.map((githubId: number, index: number) => {
+          const repo = repoMap.get(githubId.toString())
+          if (!repo) {
+            devLog(`⚠️ Repository with GitHub ID ${githubId} not found`)
+            return null
+          }
+          
+          const githubIdStr = githubId.toString()
           return {
             portfolioId: portfolio.id,
             repositoryId: repo.id,
             deployedUrl: deployedUrls[githubIdStr] || null,
             customName: customNames?.[githubIdStr] || null,
             customDescription: customDescriptions?.[githubIdStr] || null,
+            displayOrder: index + 1, // Set display order based on selectedRepos order
             isVisible: true,
           }
-        })
+        }).filter(Boolean) // Remove null entries
 
         await tx.portfolioRepository.createMany({
           data: portfolioRepos

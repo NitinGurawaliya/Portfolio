@@ -206,7 +206,7 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
                   aria-label={`View ${repo.repository.name} project`}
                 >
                   <div className="relative bg-gray-100 rounded-lg p-4 sm:p-6 hover:bg-gray-200 transition-all duration-300 border border-gray-200 w-full">
-                    <div className="flex items-start justify-between">
+                    <div className="flex items-start justify-between mb-3">
                       <div className="flex-1 min-w-0">
                         <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-2 break-words">
                           {repo.customName || repo.repository.name}
@@ -228,6 +228,32 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
                       >
                         <SiGithub className="h-4 w-4" />
                       </motion.button>
+                    </div>
+                    
+                    {/* All Languages badges */}
+                    <div className="flex items-center flex-wrap gap-2 mt-auto">
+                      {(() => {
+                        // Parse languages from JSON string
+                        let languages: string[] = []
+                        if (repo.repository.languages) {
+                          try {
+                            languages = JSON.parse(repo.repository.languages)
+                          } catch (e) {
+                            // Fallback to single language
+                            if (repo.repository.language) {
+                              languages = [repo.repository.language]
+                            }
+                          }
+                        } else if (repo.repository.language) {
+                          languages = [repo.repository.language]
+                        }
+                        
+                        return languages.map((lang, idx) => (
+                          <span key={idx} className="text-gray-700 text-xs sm:text-sm font-medium px-2 py-1 bg-gray-200 rounded border border-gray-300">
+                            {lang}
+                          </span>
+                        ))
+                      })()}
                     </div>
                   </div>
                 </motion.article>

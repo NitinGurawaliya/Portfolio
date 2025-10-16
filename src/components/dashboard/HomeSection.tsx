@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -12,9 +12,12 @@ import { motion } from "framer-motion"
 import { 
   Upload,
   User,
-  Sparkles
+  Sparkles,
+  CheckCircle2,
+  XCircle,
+  Loader2
 } from "lucide-react"
-import { DevFolioInlineLoader } from "@/components/ui/DevFolioLoader"
+import { debounce } from "lodash"
 
 interface HomeSectionProps {
   user: any
@@ -30,94 +33,150 @@ export function HomeSection({ user, portfolioData, onUpdate }: HomeSectionProps)
     profilePic: "",
     customUsername: "",
   })
-  
-  // Username validation state
-  const [usernameValidation, setUsernameValidation] = useState({
-    isChecking: false,
-    isValid: true,
+  const fileInputRef = useState<HTMLInputElement | null>(null)[0]
+  const [usernameAvailability, setUsernameAvailability] = useState<{
+    checking: boolean
+    available: boolean | null
+    message: string
+  }>({
+    checking: false,
+    available: null,
     message: ""
   })
   // Update form data when portfolioData changes (from saved data) or user changes
+  // Only initialize once when the component mounts or when portfolioData is first loaded
+  const [isInitialized, setIsInitialized] = useState(false)
+  
   useEffect(() => {
-    if (portfolioData) {
-      setFormData({
-        displayName: portfolioData.displayName || user?.name || "",
-        jobTitle: portfolioData.jobTitle || "",
-        bio: portfolioData.bio || user?.bio || "",
-        profilePic: portfolioData.profilePic || user?.avatarUrl || "",
-        customUsername: portfolioData.customUsername || user?.githubUsername || "",
-      })
-    } else if (user) {
-      setFormData({
-        displayName: user?.name || "",
-        jobTitle: "",
-        bio: user?.bio || "",
-        profilePic: user?.avatarUrl || "",
-        customUsername: user?.githubUsername || "",
-      })
+    // Only update if we haven't initialized yet or if portfolioData becomes available for the first time
+    if (!isInitialized) {
+      if (portfolioData && Object.keys(portfolioData).length > 0) {
+        setFormData({
+          displayName: portfolioData.displayName || user?.name || "",
+          jobTitle: portfolioData.jobTitle || "",
+          bio: portfolioData.bio || user?.bio || "",
+          profilePic: portfolioData.profilePic || user?.avatarUrl || "",
+          customUsername: portfolioData.customUsername || user?.githubUsername || "",
+        })
+        setIsInitialized(true)
+      } else if (user && !portfolioData) {
+        setFormData({
+          displayName: user?.name || "",
+          jobTitle: "",
+          bio: user?.bio || "",
+          profilePic: user?.avatarUrl || "",
+          customUsername: user?.githubUsername || "",
+        })
+        setIsInitialized(true)
+      }
     }
-  }, [user, portfolioData])
+  }, [user, portfolioData, isInitialized])
 
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => {
+      const next = { ...prev, [field]: value }
+      onUpdate(next)
+      return next
+    })
+  }
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      // Check file size (2MB limit)
+      if (file.size > 2 * 1024 * 1024) {
+        alert("File size must be less than 2MB")
+        return
+      }
+      
+      // Check file type
+      if (!file.type.match(/image\/(jpeg|jpg|png|gif)/)) {
+        alert("Only JPG, PNG, and GIF files are allowed")
+        return
+      }
+      
+      // Create a FileReader to convert image to base64
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        const base64String = reader.result as string
+        handleInputChange("profilePic", base64String)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  // Check username availability
   const checkUsernameAvailability = async (username: string) => {
     if (!username || username.trim().length < 3) {
-      setUsernameValidation({
-        isChecking: false,
-        isValid: true,
+      setUsernameAvailability({
+        checking: false,
+        available: null,
         message: ""
       })
       return
     }
 
-    setUsernameValidation({
-      isChecking: true,
-      isValid: true,
+    setUsernameAvailability({
+      checking: true,
+      available: null,
       message: "Checking availability..."
     })
 
     try {
-      const response = await fetch('/api/portfolio/check-username', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          username: username,
-          currentUserId: user?.id
+      const response = await fetch(`/api/portfolio/publish?username=${encodeURIComponent(username)}`)
+      const data = await response.json()
+      
+      if (response.status === 404) {
+        // Username is available
+        setUsernameAvailability({
+          checking: false,
+          available: true,
+          message: "✓ Username is available"
         })
-      })
-
-      const result = await response.json()
-
-      setUsernameValidation({
-        isChecking: false,
-        isValid: result.available,
-        message: result.message
-      })
+      } else if (response.ok) {
+        // Username exists - check if it's the current user's
+        if (data.portfolio && data.portfolio.userId === user?.id) {
+          setUsernameAvailability({
+            checking: false,
+            available: true,
+            message: "✓ This is your current username"
+          })
+        } else {
+          setUsernameAvailability({
+            checking: false,
+            available: false,
+            message: "✗ Username is already taken"
+          })
+        }
+      }
     } catch (error) {
-      console.error('Error checking username:', error)
-      setUsernameValidation({
-        isChecking: false,
-        isValid: false,
-        message: "Error checking username availability"
+      console.error("Error checking username:", error)
+      setUsernameAvailability({
+        checking: false,
+        available: null,
+        message: ""
       })
     }
   }
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => {
-      const next = { ...prev, [field]: value }
-      
-      // Check username availability when username changes
-      if (field === 'customUsername') {
-        checkUsernameAvailability(value)
-      }
-      
-      // Use setTimeout to avoid setState during render
-      setTimeout(() => {
-        onUpdate(next)
-      }, 0)
-      return next
-    })
+  // Debounced username check (wait 500ms after user stops typing)
+  const debouncedCheckUsername = useCallback(
+    debounce((username: string) => checkUsernameAvailability(username), 500),
+    [user]
+  )
+
+  // Handle username change with debounced check
+  const handleUsernameChange = (value: string) => {
+    handleInputChange("customUsername", value)
+    if (value && value.trim().length >= 3) {
+      debouncedCheckUsername(value.trim())
+    } else {
+      setUsernameAvailability({
+        checking: false,
+        available: null,
+        message: ""
+      })
+    }
   }
 
   return (
@@ -142,7 +201,7 @@ export function HomeSection({ user, portfolioData, onUpdate }: HomeSectionProps)
               >
                 👋
               </motion.div>
-              <span className="ml-2">Welcome to Your <span className="text-orange-600">Portfolio</span></span>
+              <span className="ml-2">Welcome to Your Portfolio</span>
             </CardTitle>
             <motion.p 
               className="text-gray-600 mt-1 font-medium text-sm"
@@ -176,7 +235,26 @@ export function HomeSection({ user, portfolioData, onUpdate }: HomeSectionProps)
               </AvatarFallback>
             </Avatar>
             <div>
-              <Button variant="outline" size="sm" className="mb-2 hover:bg-orange-600 hover:text-white hover:border-orange-600 font-medium text-xs">
+              <input
+                type="file"
+                ref={(el) => {
+                  if (el) {
+                    const inputRef = el
+                    inputRef.setAttribute('accept', 'image/jpeg,image/jpg,image/png,image/gif')
+                  }
+                }}
+                onChange={handlePhotoChange}
+                accept="image/jpeg,image/jpg,image/png,image/gif"
+                className="hidden"
+                id="photo-upload"
+              />
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="mb-2 text-black hover:bg-black hover:text-white font-medium text-xs"
+                onClick={() => document.getElementById('photo-upload')?.click()}
+                type="button"
+              >
                 <Upload className="h-3 w-3 mr-1.5" />
                 Change Photo
               </Button>
@@ -194,39 +272,42 @@ export function HomeSection({ user, portfolioData, onUpdate }: HomeSectionProps)
                 id="displayName"
                 value={formData.displayName}
                 onChange={(e) => handleInputChange("displayName", e.target.value)}
-                className="bg-gray-50 text-black font-medium text-sm focus:bg-white"
+                className="bg-gray-50 text-black font-medium text-sm focus:bg-white placeholder:text-gray-400"
                 placeholder="Your display name"
               />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="customUsername" className="text-black font-medium text-sm">Portfolio Username</Label>
               <div className="relative">
-                <Input
-                  id="customUsername"
-                  value={formData.customUsername}
-                  onChange={(e) => handleInputChange("customUsername", e.target.value)}
-                  className={`bg-gray-50 text-black font-medium text-sm focus:bg-white ${
-                    !usernameValidation.isValid ? 'border-red-500 focus:border-red-500' : 
-                    usernameValidation.isValid && usernameValidation.message ? 'border-green-500 focus:border-green-500' : ''
-                  }`}
-                  placeholder="Your portfolio username"
-                />
-                {usernameValidation.isChecking && (
-                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                    <div className="w-4 h-4 bg-gradient-to-r from-orange-500 to-orange-600 rounded-full animate-spin"></div>
-                  </div>
-                )}
+              <Input
+                id="customUsername"
+                value={formData.customUsername}
+                onChange={(e) => handleUsernameChange(e.target.value)}
+                className="bg-gray-50 text-black font-medium text-sm focus:bg-white pr-10 placeholder:text-gray-400"
+                placeholder="Your portfolio username"
+              />
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  {usernameAvailability.checking && (
+                    <Loader2 className="h-4 w-4 text-gray-400 animate-spin" />
+                  )}
+                  {!usernameAvailability.checking && usernameAvailability.available === true && (
+                    <CheckCircle2 className="h-4 w-4 text-green-500" />
+                  )}
+                  {!usernameAvailability.checking && usernameAvailability.available === false && (
+                    <XCircle className="h-4 w-4 text-red-500" />
+                  )}
+                </div>
               </div>
-              <div className="space-y-1">
-                <p className="text-[11px] text-gray-500">This will be used in your portfolio URL: /portfolio/{formData.customUsername || 'username'}</p>
-                {usernameValidation.message && (
-                  <p className={`text-[11px] font-medium ${
-                    usernameValidation.isValid ? 'text-green-600' : 'text-red-600'
-                  }`}>
-                    {usernameValidation.message}
-                  </p>
-                )}
-              </div>
+              {usernameAvailability.message && (
+                <p className={`text-[11px] font-medium ${
+                  usernameAvailability.available === true ? 'text-green-600' : 
+                  usernameAvailability.available === false ? 'text-red-600' : 
+                  'text-gray-500'
+                }`}>
+                  {usernameAvailability.message}
+                </p>
+              )}
+              <p className="text-[11px] text-gray-500">This will be used in your portfolio URL: /portfolio/{formData.customUsername || 'username'}</p>
             </div>
           </div>
 
@@ -237,7 +318,7 @@ export function HomeSection({ user, portfolioData, onUpdate }: HomeSectionProps)
               id="jobTitle"
               value={formData.jobTitle}
               onChange={(e) => handleInputChange("jobTitle", e.target.value)}
-              className="bg-gray-50  text-black font-medium text-sm focus:bg-white"
+              className="bg-gray-50 text-black font-medium text-sm focus:bg-white placeholder:text-gray-400"
               placeholder="e.g., Full Stack Developer, Software Engineer, etc."
             />
           </div>
@@ -248,7 +329,7 @@ export function HomeSection({ user, portfolioData, onUpdate }: HomeSectionProps)
               id="bio"
               value={formData.bio}
               onChange={(e) => handleInputChange("bio", e.target.value)}
-              className="bg-gray-50  text-black font-medium text-sm focus:bg-white"
+              className="bg-gray-50 text-black font-medium text-sm focus:bg-white placeholder:text-gray-400"
               placeholder="Tell us about yourself..."
               rows={3}
             />

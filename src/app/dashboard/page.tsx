@@ -37,6 +37,7 @@ interface Repository {
   htmlUrl: string
   homepage?: string
   language: string
+  languages?: string[] // All languages used in the repo
   stargazersCount: number
   forksCount: number
   isPrivate: boolean
@@ -90,6 +91,7 @@ export default function DashboardPage() {
   const [customDescriptions, setCustomDescriptions] = useState<Record<number, string>>({})
   const [githubUrls, setGithubUrls] = useState<Record<number, string>>({})
   const [selectedTheme, setSelectedTheme] = useState<string>('dark')
+  const [repoOrder, setRepoOrder] = useState<number[]>([])
 
   // Change tracking state
   const [originalData, setOriginalData] = useState<{
@@ -103,6 +105,7 @@ export default function DashboardPage() {
     githubUrls: Record<number, string>
     importedProjects: Repository[]
     selectedTheme: string
+    repoOrder: number[]
   } | null>(null)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const [isPublishing, setIsPublishing] = useState(false)
@@ -125,16 +128,31 @@ export default function DashboardPage() {
       index === self.findIndex(r => r.id === repo.id)
     )
 
-    const repositories = selected.map(repo => ({
+    // Sort repositories according to repoOrder
+    const sortedRepos = repoOrder.length > 0 
+      ? [...selected].sort((a, b) => {
+          const indexA = repoOrder.indexOf(a.id)
+          const indexB = repoOrder.indexOf(b.id)
+          if (indexA === -1 && indexB === -1) return 0
+          if (indexA === -1) return 1
+          if (indexB === -1) return -1
+          return indexA - indexB
+        })
+      : selected
+
+    const repositories = sortedRepos.map(repo => ({
       id: repo.id,
       deployedUrl: deployedUrls[repo.id] || repo.homepage || "",
       isVisible: true,
+      customName: customNames[repo.id] || null,
+      customDescription: customDescriptions[repo.id] || null,
       repository: {
         id: repo.id,
         name: repo.name,
         description: repo.description,
         htmlUrl: repo.htmlUrl,
         language: repo.language,
+        languages: repo.languages ? JSON.stringify(repo.languages) : null, // Store as JSON string for preview
         stargazersCount: repo.stargazersCount,
         forksCount: repo.forksCount,
       }
@@ -159,10 +177,10 @@ export default function DashboardPage() {
         githubUsername: user.githubUsername,
         location: user.location,
         company: user.company,
-        websiteUrl: user.websiteUrl,
-      }
+      websiteUrl: user.websiteUrl,
     }
-  }, [user, portfolioData, skills, socials, selectedRepos, deployedUrls, importedProjects, selectedTheme])
+  }
+  }, [user, portfolioData, skills, socials, selectedRepos, deployedUrls, importedProjects, selectedTheme, customNames, customDescriptions, repoOrder])
 
   // Track changes to enable/disable publish button
   useEffect(() => {
@@ -196,7 +214,8 @@ export default function DashboardPage() {
           customDescriptions,
           githubUrls,
           importedProjects: [...importedProjects].sort((a, b) => a.id - b.id),
-          selectedTheme
+          selectedTheme,
+          repoOrder: [...repoOrder] // Don't sort - order matters!
         }
     
         // Helper function to clean and normalize data
@@ -221,7 +240,8 @@ export default function DashboardPage() {
           skills: [...(currentData.skills || [])].sort((a, b) => a.id.localeCompare(b.id)),
           socials: [...(currentData.socials || [])].sort((a, b) => a.id - b.id),
           importedProjects: [...(currentData.importedProjects || [])].sort((a, b) => a.id - b.id),
-          selectedTheme: currentData.selectedTheme || 'dark'
+          selectedTheme: currentData.selectedTheme || 'dark',
+          repoOrder: [...(currentData.repoOrder || [])] // Don't sort!
         })
         const cleanOriginalData = normalizeData({
           ...originalData,
@@ -229,7 +249,8 @@ export default function DashboardPage() {
           skills: [...(originalData.skills || [])].sort((a, b) => a.id.localeCompare(b.id)),
           socials: [...(originalData.socials || [])].sort((a, b) => a.id - b.id),
           importedProjects: [...(originalData.importedProjects || [])].sort((a, b) => a.id - b.id),
-          selectedTheme: originalData.selectedTheme || 'dark'
+          selectedTheme: originalData.selectedTheme || 'dark',
+          repoOrder: [...(originalData.repoOrder || [])] // Don't sort!
         })
     
     const hasChanges = JSON.stringify(cleanCurrentData) !== JSON.stringify(cleanOriginalData)
@@ -241,7 +262,7 @@ export default function DashboardPage() {
       cleanOriginalData
     })
     setHasUnsavedChanges(hasChanges)
-  }, [portfolioData, selectedRepos, skills, socials, deployedUrls, customNames, customDescriptions, githubUrls, importedProjects, selectedTheme, originalData, isInitialLoad])
+  }, [portfolioData, selectedRepos, skills, socials, deployedUrls, customNames, customDescriptions, githubUrls, importedProjects, selectedTheme, repoOrder, originalData, isInitialLoad])
 
   useEffect(() => {
     // Fetch session from server (httpOnly cookie)
@@ -262,6 +283,7 @@ export default function DashboardPage() {
         const userData = await userRes.json()
         const reposData = await reposRes.json()
 
+        // Languages are now fetched by the API endpoint
         const repositories = reposData.map((repo: any) => ({
           id: repo.id,
           name: repo.name,
@@ -270,6 +292,7 @@ export default function DashboardPage() {
           htmlUrl: repo.html_url,
           homepage: repo.homepage || "",
           language: repo.language || "",
+          languages: repo.languages || [], // Already fetched by API
           stargazersCount: repo.stargazers_count,
           forksCount: repo.forks_count,
           isPrivate: repo.private,
@@ -395,24 +418,39 @@ export default function DashboardPage() {
             // Set imported projects (URL-imported repositories)
             const importedProjects = portfolio.repositories
               .filter((repo: any) => repo.repository.isImported)
-              .map((repo: any) => ({
-                id: parseInt(repo.repository.githubId),
-                name: repo.repository.name,
-                fullName: repo.repository.fullName || repo.repository.name,
-                description: repo.repository.description || "",
-                htmlUrl: repo.repository.htmlUrl,
-                homepage: repo.deployedUrl || "",
-                language: repo.repository.language || "Web Project",
-                stargazersCount: repo.repository.stargazersCount || 0,
-                forksCount: repo.repository.forksCount || 0,
-                isPrivate: repo.repository.isPrivate || false,
-                isFork: repo.repository.isFork || false,
-                size: repo.repository.size || 0,
-                createdAt: repo.repository.createdAt,
-                updatedAt: repo.repository.updatedAt,
-                pushedAt: repo.repository.pushedAt || repo.repository.updatedAt,
-                isImported: true
-              }))
+              .map((repo: any) => {
+                // Parse languages if available
+                let languages: string[] = []
+                if (repo.repository.languages) {
+                  try {
+                    languages = JSON.parse(repo.repository.languages)
+                  } catch (e) {
+                    languages = repo.repository.language ? [repo.repository.language] : []
+                  }
+                } else if (repo.repository.language) {
+                  languages = [repo.repository.language]
+                }
+                
+                return {
+                  id: parseInt(repo.repository.githubId),
+                  name: repo.repository.name,
+                  fullName: repo.repository.fullName || repo.repository.name,
+                  description: repo.repository.description || "",
+                  htmlUrl: repo.repository.htmlUrl,
+                  homepage: repo.deployedUrl || "",
+                  language: repo.repository.language || "Web Project",
+                  languages: languages,
+                  stargazersCount: repo.repository.stargazersCount || 0,
+                  forksCount: repo.repository.forksCount || 0,
+                  isPrivate: repo.repository.isPrivate || false,
+                  isFork: repo.repository.isFork || false,
+                  size: repo.repository.size || 0,
+                  createdAt: repo.repository.createdAt,
+                  updatedAt: repo.repository.updatedAt,
+                  pushedAt: repo.repository.pushedAt || repo.repository.updatedAt,
+                  isImported: true
+                }
+              })
             devLog("Setting imported projects:", importedProjects)
             setImportedProjects(importedProjects)
             
@@ -424,6 +462,11 @@ export default function DashboardPage() {
             })
             devLog("Setting selected repos to:", githubIds)
             setSelectedRepos(githubIds)
+            
+            // Set repo order from database (repositories are already sorted by displayOrder from API)
+            const loadedRepoOrder = portfolio.repositories.map((repo: any) => parseInt(repo.repository.githubId))
+            devLog("Setting repo order to:", loadedRepoOrder)
+            setRepoOrder(loadedRepoOrder)
           }
           
           // Set skills
@@ -526,7 +569,8 @@ export default function DashboardPage() {
                   pushedAt: repo.repository.pushedAt || repo.repository.updatedAt,
                   isImported: true
                 })) : [],
-              selectedTheme: currentSelectedTheme
+              selectedTheme: currentSelectedTheme,
+              repoOrder: portfolio.repositories ? portfolio.repositories.map((repo: any) => parseInt(repo.repository.githubId)) : []
             }
             
             console.log("💾 Setting original data from existing portfolio:", originalDataToSet)
@@ -575,7 +619,8 @@ export default function DashboardPage() {
             customDescriptions: { ...customDescriptions },
             githubUrls: { ...githubUrls },
             selectedTheme: currentTheme,
-            importedProjects: [...importedProjects]
+            importedProjects: [...importedProjects],
+            repoOrder: [...repoOrder]
           }
             console.log("💾 Setting initial data (no existing portfolio):", initialData)
             setOriginalData(initialData)
@@ -609,7 +654,8 @@ export default function DashboardPage() {
           customDescriptions: { ...customDescriptions },
           githubUrls: { ...githubUrls },
           selectedTheme: currentTheme,
-          importedProjects: [...importedProjects]
+          importedProjects: [...importedProjects],
+          repoOrder: [...repoOrder]
         }
         console.log("💾 Setting fallback data due to error:", fallbackData)
         setOriginalData(fallbackData)
@@ -775,7 +821,8 @@ export default function DashboardPage() {
           customDescriptions: { ...customDescriptions },
           githubUrls: { ...githubUrls },
           selectedTheme,
-          importedProjects: [...importedProjects].sort((a, b) => a.id - b.id)
+          importedProjects: [...importedProjects].sort((a, b) => a.id - b.id),
+          repoOrder: [...repoOrder]
         })
         setHasUnsavedChanges(false)
         setIsInitialLoad(false)
@@ -800,6 +847,8 @@ export default function DashboardPage() {
         // Play notification sound
         playNotificationSound()
       } else {
+        // Show specific error message
+        alert(`❌ ${result.error || "Failed to publish portfolio"}`)
         throw new Error(result.error || "Failed to publish portfolio")
       }
     } catch (error) {
@@ -839,17 +888,11 @@ export default function DashboardPage() {
   }
 
   const handleUpdateCustomName = (repoId: number, name: string) => {
-    setCustomNames(prev => ({
-      ...prev,
-      [repoId]: name
-    }))
+    setCustomNames(prev => ({ ...prev, [repoId]: name }))
   }
 
   const handleUpdateCustomDescription = (repoId: number, description: string) => {
-    setCustomDescriptions(prev => ({
-      ...prev,
-      [repoId]: description
-    }))
+    setCustomDescriptions(prev => ({ ...prev, [repoId]: description }))
   }
 
   const handleUpdateGithubUrl = (repoId: number, url: string) => {
@@ -857,6 +900,10 @@ export default function DashboardPage() {
       ...prev,
       [repoId]: url
     }))
+  }
+
+  const handleUpdateRepoOrder = (newOrder: number[]) => {
+    setRepoOrder(newOrder)
   }
 
   const handleAddSkill = (skill: Omit<Skill, 'id'>) => {
@@ -928,11 +975,13 @@ export default function DashboardPage() {
             customNames={customNames}
             customDescriptions={customDescriptions}
             githubUrls={githubUrls}
+            repoOrder={repoOrder}
             onToggleRepo={handleToggleRepo}
             onUpdateDeployedUrl={handleUpdateDeployedUrl}
             onUpdateCustomName={handleUpdateCustomName}
             onUpdateCustomDescription={handleUpdateCustomDescription}
             onUpdateGithubUrl={handleUpdateGithubUrl}
+            onUpdateRepoOrder={handleUpdateRepoOrder}
             onAddImportedProject={handleAddImportedProject}
           />
         )

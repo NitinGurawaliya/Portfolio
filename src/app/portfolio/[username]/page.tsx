@@ -135,12 +135,16 @@ interface PortfolioRepository {
   id: number
   deployedUrl: string
   isVisible: boolean
+  customName?: string
+  customDescription?: string
+  displayOrder?: number
   repository: {
     id: number
     name: string
     description: string
     htmlUrl: string
     language: string
+    languages?: string // JSON string of language array
     stargazersCount: number
     forksCount: number
   }
@@ -452,10 +456,10 @@ export default function PublicPortfolioPage() {
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1 mr-4">
                         <h3 className="text-lg font-bold text-white group-hover:text-gray-200 transition-colors duration-200 mb-2">
-                          {repo.repository.name.length > 14 ? `${repo.repository.name.substring(0, 14)}...` : repo.repository.name}
+                          {(repo.customName || repo.repository.name).length > 14 ? `${(repo.customName || repo.repository.name).substring(0, 14)}...` : (repo.customName || repo.repository.name)}
                       </h3>
                         <p className="text-gray-400 text-xs leading-relaxed line-clamp-2 mb-3">
-                          {repo.repository.description || "No description available for this project."}
+                          {repo.customDescription || repo.repository.description || "No description available for this project."}
                         </p>
                       </div>
                       <div className="flex-shrink-0">
@@ -473,14 +477,45 @@ export default function PublicPortfolioPage() {
                       </div>
                     </div>
                     
-                    {/* Language badge at bottom where stars/forks were */}
-                    <div className="flex items-center">
-                        {repo.repository.language && (
-                        <div className="flex items-center px-3 py-1 rounded-full bg-transparent border border-orange-500/40">
-                          <div className={`w-2 h-2 rounded-full ${getLanguageColor(repo.repository.language)} mr-2`}></div>
-                          <span className="text-gray-200 text-sm font-medium">{repo.repository.language}</span>
-                          </div>
-                        )}
+                    {/* All Languages badges */}
+                    <div className="flex items-center flex-wrap gap-2">
+                        {(() => {
+                          // Parse languages from JSON string
+                          let languages: string[] = []
+                          if (repo.repository.languages) {
+                            try {
+                              languages = JSON.parse(repo.repository.languages)
+                            } catch (e) {
+                              // Fallback to single language
+                              if (repo.repository.language && repo.repository.language.trim()) {
+                                languages = [repo.repository.language]
+                              }
+                            }
+                          } else if (repo.repository.language && repo.repository.language.trim()) {
+                            languages = [repo.repository.language]
+                          }
+                          
+                          // Filter out empty, null, undefined, or "Unknown" languages
+                          const validLanguages = languages.filter(lang => 
+                            lang && 
+                            lang.trim() && 
+                            lang.toLowerCase() !== 'unknown' &&
+                            lang !== 'null' &&
+                            lang !== 'undefined'
+                          )
+                          
+                          // If no valid languages, don't show anything
+                          if (validLanguages.length === 0) {
+                            return null
+                          }
+                          
+                          return validLanguages.map((lang, idx) => (
+                            <div key={idx} className="flex items-center px-3 py-1 rounded-full bg-transparent border border-orange-500/40">
+                              <div className={`w-2 h-2 rounded-full ${getLanguageColor(lang)} mr-2`}></div>
+                              <span className="text-gray-200 text-xs font-medium">{lang}</span>
+                            </div>
+                          ))
+                        })()}
                         </div>
                       </div>
                 </motion.div>

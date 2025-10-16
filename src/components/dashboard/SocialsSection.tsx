@@ -21,7 +21,8 @@ import {
   X,
   ExternalLink,
   Users,
-  Globe
+  Globe,
+  Phone
 } from "lucide-react"
 import { SiStackoverflow, SiReddit } from "react-icons/si"
 
@@ -64,6 +65,17 @@ const platformConfigs = [
     urlPattern: "mailto:{username}",
     description: "Your email address",
     textColor: "#374151"
+  },
+  {
+    id: "phone",
+    name: "Phone",
+    icon: Phone,
+    color: "#10B981",
+    bgGradient: "linear-gradient(135deg, #10B981, #059669)",
+    placeholder: "+1234567890",
+    urlPattern: "tel:{username}",
+    description: "Your phone number",
+    textColor: "#ffffff"
   },
   {
     id: "twitter",
@@ -140,6 +152,17 @@ const platformConfigs = [
     placeholder: "username",
     urlPattern: "https://reddit.com/u/{username}",
     description: "Your Reddit profile",
+    textColor: "#ffffff"
+  },
+  {
+    id: "other",
+    name: "Other Link",
+    icon: Globe,
+    color: "#8B5CF6",
+    bgGradient: "linear-gradient(135deg, #8B5CF6, #7C3AED)",
+    placeholder: "https://yourwebsite.com",
+    urlPattern: "{username}",
+    description: "Any other custom link",
     textColor: "#ffffff"
   },
 ]
@@ -268,24 +291,40 @@ export function SocialsSection({
                   transition={{ duration: 0.3, delay: index * 0.05 }}
                   className="flex items-center space-x-3 rounded-xl overflow-hidden transition-all duration-300 hover:shadow-lg"
                 >
-                  {/* Platform Icon */}
-                  <div 
+                  {/* Platform Icon with Animation */}
+                  <motion.div 
                     className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
                     style={{ backgroundColor: platform.color }}
+                    whileHover={{ scale: 1.1, rotate: 5 }}
+                    whileTap={{ scale: 0.95 }}
+                    transition={{ duration: 0.2 }}
                   >
-                    <Icon 
-                      className="h-6 w-6" 
-                      style={{ color: platform.textColor }}
-                    />
-                  </div>
+                    <motion.div
+                      animate={{ 
+                        y: [0, -2, 0],
+                      }}
+                      transition={{ 
+                        duration: 2,
+                        repeat: Infinity,
+                        ease: "easeInOut"
+                      }}
+                    >
+                      <Icon 
+                        className="h-6 w-6" 
+                        style={{ color: platform.textColor }}
+                      />
+                    </motion.div>
+                  </motion.div>
                   
                   {/* Input Field with Brand Styling */}
-                  <div 
+                  <motion.div 
                     className="flex-1 relative rounded-xl overflow-hidden"
                     style={{ 
                       background: username ? platform.bgGradient : '#f3f4f6',
                       border: username ? 'none' : '1px solid #e5e7eb'
                     }}
+                    whileHover={{ scale: 1.02 }}
+                    transition={{ duration: 0.2 }}
                   >
                     <div 
                       className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium"
@@ -297,7 +336,7 @@ export function SocialsSection({
                       value={username}
                       onChange={(e) => handleUsernameChange(platform.id, e.target.value)}
                       placeholder={platform.placeholder}
-                      className="pl-8 pr-4 bg-transparent border-none text-sm font-medium h-12 focus:ring-0 focus:outline-none"
+                      className="pl-8 pr-10 bg-transparent border-none text-sm font-medium h-12 focus:ring-0 focus:outline-none"
                       style={{ 
                         color: username ? platform.textColor : '#374151',
                       }}
@@ -315,22 +354,32 @@ export function SocialsSection({
                         <X className="h-3 w-3" />
                       </Button>
                     )}
-                  </div>
+                  </motion.div>
                   
-                  {/* Pin Button */}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handlePinToggle(platform.id)}
-                    className={`h-10 w-10 p-0 rounded-xl transition-all duration-200 ${
-                      isPinned 
-                        ? "bg-blue-500 text-white hover:bg-blue-600 shadow-md" 
-                        : "bg-gray-100 text-gray-400 hover:text-gray-600 hover:bg-gray-200"
-                    }`}
-                    disabled={!username.trim()}
+                  {/* Pin Button with Animation */}
+                  <motion.div
+                    whileHover={{ scale: 1.1, rotate: isPinned ? 0 : 10 }}
+                    whileTap={{ scale: 0.9 }}
                   >
-                    <Pin className="h-4 w-4" />
-                  </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handlePinToggle(platform.id)}
+                      className={`h-10 w-10 p-0 rounded-xl transition-all duration-200 ${
+                        isPinned 
+                          ? "bg-blue-500 text-white hover:bg-blue-600 shadow-md" 
+                          : "bg-gray-100 text-gray-400 hover:text-gray-600 hover:bg-gray-200"
+                      }`}
+                      disabled={!username.trim()}
+                    >
+                      <motion.div
+                        animate={isPinned ? { rotate: [0, -10, 10, -10, 0] } : {}}
+                        transition={{ duration: 0.5 }}
+                      >
+                        <Pin className="h-4 w-4" />
+                      </motion.div>
+                    </Button>
+                  </motion.div>
                 </motion.div>
               )
             })}
@@ -368,13 +417,19 @@ export function SocialsSection({
                         key={platform.id}
                         initial={{ opacity: 0, scale: 0.8 }}
                         animate={{ opacity: 1, scale: 1 }}
+                        whileHover={{ scale: 1.05, y: -2 }}
                         transition={{ duration: 0.3, delay: index * 0.1 }}
-                        className="flex items-center space-x-1.5 px-2 py-1.5 bg-gray-50 rounded-lg border"
+                        className="flex items-center space-x-1.5 px-2 py-1.5 bg-gray-50 rounded-lg border cursor-pointer hover:shadow-md"
                       >
-                        <Icon 
-                          className="h-3 w-3" 
-                          style={{ color: platform.color }}
-                        />
+                        <motion.div
+                          animate={{ rotate: [0, 5, -5, 0] }}
+                          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                        >
+                          <Icon 
+                            className="h-3 w-3" 
+                            style={{ color: platform.color }}
+                          />
+                        </motion.div>
                         <span className="text-xs font-medium text-black">
                           @{username}
                         </span>
