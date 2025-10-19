@@ -22,6 +22,7 @@ export async function POST(req: NextRequest) {
       customDescriptions,
       githubUrls,
       selectedTheme,
+      repoOrder,
       repositories,
       userId,
       userData 
@@ -283,11 +284,20 @@ export async function POST(req: NextRequest) {
           repoMap.set(repo.githubId.toString(), repo)
         })
 
-        // Map repositories in the order specified by selectedRepos
-        const portfolioRepos = selectedRepos.map((githubId: number, index: number) => {
+        // Map repositories in the order specified by repoOrder (if provided) or selectedRepos
+        const orderToUse = (repoOrder && repoOrder.length > 0) ? repoOrder : selectedRepos
+        devLog(`📋 Using order array with ${orderToUse.length} items:`, orderToUse)
+        
+        const portfolioRepos = orderToUse.map((githubId: number, index: number) => {
           const repo = repoMap.get(githubId.toString())
           if (!repo) {
-            devLog(`⚠️ Repository with GitHub ID ${githubId} not found`)
+            devLog(`⚠️ Repository with GitHub ID ${githubId} not found in repoMap`)
+            return null
+          }
+          
+          // Only include if it's in selectedRepos
+          if (!selectedRepos.includes(githubId)) {
+            devLog(`⚠️ Repository ${githubId} is in order but not selected, skipping`)
             return null
           }
           
@@ -298,10 +308,12 @@ export async function POST(req: NextRequest) {
             deployedUrl: deployedUrls[githubIdStr] || null,
             customName: customNames?.[githubIdStr] || null,
             customDescription: customDescriptions?.[githubIdStr] || null,
-            displayOrder: index + 1, // Set display order based on selectedRepos order
+            displayOrder: index + 1, // Set display order based on repoOrder/selectedRepos order
             isVisible: true,
           }
         }).filter(Boolean) // Remove null entries
+        
+        devLog(`✅ Created ${portfolioRepos.length} portfolio repos with display orders`)
 
         await tx.portfolioRepository.createMany({
           data: portfolioRepos

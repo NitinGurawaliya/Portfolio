@@ -59,8 +59,8 @@ export async function generateMetadata({
     const bio = portfolio.bio || `Check out ${displayName}'s developer portfolio`
     const profilePic = portfolio.profilePic || `${baseUrl}/default-avatar.png`
     
-    // Generate dynamic OG image URL
-    const ogImageUrl = `${baseUrl}/api/og?username=${encodeURIComponent(username)}&displayName=${encodeURIComponent(displayName)}&jobTitle=${encodeURIComponent(jobTitle)}&bio=${encodeURIComponent(bio.slice(0, 100))}&profilePic=${encodeURIComponent(profilePic)}`
+    // Generate dynamic OG image URL - Use absolute URL for better social media support
+    const ogImageUrl = `${baseUrl}/api/og?username=${encodeURIComponent(username)}&displayName=${encodeURIComponent(displayName)}&jobTitle=${encodeURIComponent(jobTitle)}&bio=${encodeURIComponent(bio.slice(0, 100))}&profilePic=${encodeURIComponent(profilePic)}&t=${Date.now()}`
     
     // Extract skills for keywords
     const skills = portfolio.skills?.map((s: any) => s.name).join(", ") || ""
@@ -90,7 +90,7 @@ export async function generateMetadata({
       openGraph: {
         type: "profile",
         locale: "en_US",
-        url: `/${username}`,
+        url: `${baseUrl}/${username}`,
         title: `${displayName}${jobTitle ? ` - ${jobTitle}` : ""} | DevFolio`,
         description: bio,
         siteName: "DevFolio",
@@ -99,7 +99,8 @@ export async function generateMetadata({
             url: ogImageUrl,
             width: 1200,
             height: 630,
-            alt: `${displayName}'s developer portfolio`
+            alt: `${displayName}'s developer portfolio`,
+            type: 'image/png',
           }
         ],
       },
@@ -108,8 +109,8 @@ export async function generateMetadata({
         title: `${displayName}${jobTitle ? ` - ${jobTitle}` : ""}`,
         description: bio,
         images: [ogImageUrl],
-        creator: portfolio.socials?.find((s: any) => s.platform === 'twitter')?.username 
-          ? `@${portfolio.socials.find((s: any) => s.platform === 'twitter').username}` 
+        creator: portfolio.socials?.find((s: any) => s.platform === 'twitter' || s.platform === 'x')?.username 
+          ? `@${portfolio.socials.find((s: any) => s.platform === 'twitter' || s.platform === 'x').username}` 
           : "@devfolio"
       },
       robots: {

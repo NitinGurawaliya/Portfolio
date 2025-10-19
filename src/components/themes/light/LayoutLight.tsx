@@ -4,6 +4,7 @@ import { Building } from "lucide-react"
 import { SiGithub, SiX, SiLinkedin, SiInstagram, SiFacebook, SiYoutube, SiGmail, SiStackoverflow, SiReddit } from "react-icons/si"
 import { Globe } from "lucide-react"
 import { SkillIcon } from "@/lib/skill-icons"
+import { useState, useEffect } from "react"
 
 interface ThemeConfig {
   name: string
@@ -57,6 +58,28 @@ const getSocialIcon = (platform: string) => {
 }
 
 export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
+  const [displayedBio, setDisplayedBio] = useState('')
+  const [bioIndex, setBioIndex] = useState(0)
+  const [isTypingComplete, setIsTypingComplete] = useState(false)
+
+  // Typing animation effect for bio
+  useEffect(() => {
+    if (!portfolio.bio) {
+      setIsTypingComplete(true)
+      return
+    }
+
+    if (bioIndex < portfolio.bio.length) {
+      const timeout = setTimeout(() => {
+        setDisplayedBio(portfolio.bio.slice(0, bioIndex + 1))
+        setBioIndex(bioIndex + 1)
+      }, 30) // Typing speed (30ms per character)
+      return () => clearTimeout(timeout)
+    } else {
+      setIsTypingComplete(true)
+    }
+  }, [bioIndex, portfolio.bio])
+
   return (
     <div 
       className="min-h-screen"
@@ -126,7 +149,14 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.8, delay: 0.6 }}
             >
-              {portfolio.bio}
+              {displayedBio}
+              {!isTypingComplete && (
+                <motion.span
+                  className="inline-block w-0.5 h-5 bg-purple-600 ml-1"
+                  animate={{ opacity: [1, 0, 1] }}
+                  transition={{ duration: 0.8, repeat: Infinity }}
+                />
+              )}
             </motion.p>
 
             {/* Social Icons - Centered */}

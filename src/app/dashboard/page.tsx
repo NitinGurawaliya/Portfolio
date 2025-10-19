@@ -215,19 +215,25 @@ export default function DashboardPage() {
       return
     }
     
+    // Normalize imported projects to ensure languages field is consistent
+    const normalizedImportedProjects = importedProjects.map(project => ({
+      ...project,
+      languages: project.languages || []
+    }))
+    
     const currentData = {
       portfolioData,
-          selectedRepos: [...selectedRepos].sort(), // Sort for consistent comparison
-          skills: [...skills].sort((a, b) => a.id.localeCompare(b.id)),
-          socials: [...socials].sort((a, b) => a.id - b.id),
+      selectedRepos: [...selectedRepos].sort(), // Sort for consistent comparison
+      skills: [...skills].sort((a, b) => a.id.localeCompare(b.id)),
+      socials: [...socials].sort((a, b) => a.id - b.id),
       deployedUrls,
-          customNames,
-          customDescriptions,
-          githubUrls,
-          importedProjects: [...importedProjects].sort((a, b) => a.id - b.id),
-          selectedTheme,
-          repoOrder: [...repoOrder] // Don't sort - order matters!
-        }
+      customNames,
+      customDescriptions,
+      githubUrls,
+      importedProjects: normalizedImportedProjects.sort((a, b) => a.id - b.id),
+      selectedTheme,
+      repoOrder: [...repoOrder] // Don't sort - order matters!
+    }
     
         // Helper function to clean and normalize data
         const normalizeData = (data: any) => {
@@ -254,12 +260,18 @@ export default function DashboardPage() {
           selectedTheme: currentData.selectedTheme || 'dark',
           repoOrder: currentData.repoOrder || [] // Keep original order for comparison
         })
+        // Normalize originalData importedProjects to ensure languages field
+        const normalizedOriginalImportedProjects = (originalData.importedProjects || []).map(project => ({
+          ...project,
+          languages: project.languages || []
+        }))
+        
         const cleanOriginalData = normalizeData({
           ...originalData,
           selectedRepos: [...(originalData.selectedRepos || [])].sort(),
           skills: [...(originalData.skills || [])].sort((a, b) => a.id.localeCompare(b.id)),
           socials: [...(originalData.socials || [])].sort((a, b) => a.id - b.id),
-          importedProjects: [...(originalData.importedProjects || [])].sort((a, b) => a.id - b.id),
+          importedProjects: normalizedOriginalImportedProjects.sort((a, b) => a.id - b.id),
           selectedTheme: originalData.selectedTheme || 'dark',
           repoOrder: originalData.repoOrder || [] // Keep original order for comparison
         })
@@ -841,6 +853,7 @@ export default function DashboardPage() {
           customDescriptions,
           githubUrls,
           selectedTheme,
+          repoOrder,
           repositories: allRepositories,
           userId: user?.id,
           userData: user
@@ -851,7 +864,12 @@ export default function DashboardPage() {
 
       if (response.ok) {
         // Update original data to match current data (no more unsaved changes)
-        // Make sure to sort arrays the same way as in change detection
+        // Make sure to normalize data the same way as in change detection
+        const normalizedImportedProjects = importedProjects.map(project => ({
+          ...project,
+          languages: project.languages || []
+        }))
+        
         setOriginalData({
           portfolioData: { ...portfolioData },
           selectedRepos: [...selectedRepos].sort(),
@@ -862,7 +880,7 @@ export default function DashboardPage() {
           customDescriptions: { ...customDescriptions },
           githubUrls: { ...githubUrls },
           selectedTheme,
-          importedProjects: [...importedProjects].sort((a, b) => a.id - b.id),
+          importedProjects: normalizedImportedProjects.sort((a, b) => a.id - b.id),
           repoOrder: [...repoOrder]
         })
         setHasUnsavedChanges(false)

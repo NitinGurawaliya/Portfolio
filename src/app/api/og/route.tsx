@@ -3,6 +3,9 @@ import { NextRequest } from 'next/server'
 
 export const runtime = 'edge'
 
+// Cache the OG images for better performance
+export const revalidate = 3600 // Revalidate every hour
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
