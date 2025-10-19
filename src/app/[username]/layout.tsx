@@ -60,7 +60,7 @@ export async function generateMetadata({
     const profilePic = portfolio.profilePic || `${baseUrl}/default-avatar.png`
     
     // Generate dynamic OG image URL - Use absolute URL for better social media support
-    const ogImageUrl = `${baseUrl}/api/og?username=${encodeURIComponent(username)}&displayName=${encodeURIComponent(displayName)}&jobTitle=${encodeURIComponent(jobTitle)}&bio=${encodeURIComponent(bio.slice(0, 100))}&profilePic=${encodeURIComponent(profilePic)}&t=${Date.now()}`
+    const ogImageUrl = `${baseUrl}/api/og?username=${encodeURIComponent(username)}&displayName=${encodeURIComponent(displayName)}&jobTitle=${encodeURIComponent(jobTitle)}&bio=${encodeURIComponent(bio.slice(0, 100))}&profilePic=${encodeURIComponent(profilePic)}&v=${Math.floor(Date.now() / 3600000)}`
     
     // Extract skills for keywords
     const skills = portfolio.skills?.map((s: any) => s.name).join(", ") || ""

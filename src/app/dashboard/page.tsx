@@ -121,6 +121,7 @@ export default function DashboardPage() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const [isPublishing, setIsPublishing] = useState(false)
   const [isInitialLoad, setIsInitialLoad] = useState(true)
+  const [isPublishComplete, setIsPublishComplete] = useState(false)
 
   // Build live portfolio data for preview (unsaved changes reflected)
   const livePortfolio = useMemo(() => {
@@ -207,11 +208,13 @@ export default function DashboardPage() {
       importedProjects: importedProjects.length
     })
     
-    // Don't track changes during initial load or if we don't have original data
-    if (isInitialLoad || !originalData) {
-      console.log("⏸️ Skipping change tracking - initial load:", isInitialLoad, "no original data:", !originalData)
+    // Don't track changes during initial load, after publish, or if we don't have original data
+    if (isInitialLoad || isPublishComplete || !originalData) {
+      console.log("⏸️ Skipping change tracking - initial load:", isInitialLoad, "publish complete:", isPublishComplete, "no original data:", !originalData)
       console.log("🔍 OriginalData details:", originalData)
-      setHasUnsavedChanges(false) // Ensure publish button is disabled during initial load
+      if (!originalData) {
+        setHasUnsavedChanges(false) // Only set to false if we don't have originalData
+      }
       return
     }
     
@@ -284,8 +287,14 @@ export default function DashboardPage() {
       cleanCurrentData,
       cleanOriginalData
     })
+    
+    if (hasChanges) {
+      console.log("⚠️ Changes detected - Publish button will be enabled")
+    } else {
+      console.log("✅ No changes detected - Publish button will be disabled")
+    }
     setHasUnsavedChanges(hasChanges)
-  }, [portfolioData, selectedRepos, skills, socials, deployedUrls, customNames, customDescriptions, githubUrls, importedProjects, selectedTheme, repoOrder, originalData, isInitialLoad])
+  }, [portfolioData, selectedRepos, skills, socials, deployedUrls, customNames, customDescriptions, githubUrls, importedProjects, selectedTheme, repoOrder, originalData, isInitialLoad, isPublishComplete])
 
   useEffect(() => {
     // Fetch session from server (httpOnly cookie)
@@ -823,14 +832,20 @@ export default function DashboardPage() {
     
     // Check if username is available before publishing
     if (portfolioData.customUsername && portfolioData.customUsername.trim()) {
-      if (usernameAvailability.isAvailable === false) {
-        alert("Username is already taken. Please choose a different username.")
-        return
-      }
+      const newUsername = portfolioData.customUsername.trim()
+      const currentUsername = originalData?.portfolioData?.customUsername
       
-      if (usernameAvailability.isChecking) {
-        alert("Please wait while we check username availability.")
-        return
+      // Only validate if username is different from current username
+      if (newUsername !== currentUsername) {
+        if (usernameAvailability.isAvailable === false) {
+          alert("Username is already taken. Please choose a different username.")
+          return
+        }
+        
+        if (usernameAvailability.isChecking) {
+          alert("Please wait while we check username availability.")
+          return
+        }
       }
     }
     
@@ -883,8 +898,17 @@ export default function DashboardPage() {
           importedProjects: normalizedImportedProjects.sort((a, b) => a.id - b.id),
           repoOrder: [...repoOrder]
         })
+        
+        // Force disable publish button immediately
         setHasUnsavedChanges(false)
-        setIsInitialLoad(false)
+        setIsPublishComplete(true)
+        console.log("🚫 Publish button disabled after successful publish")
+        
+        // Reset publish complete flag after a delay to allow change tracking to resume
+        setTimeout(() => {
+          setIsPublishComplete(false)
+          console.log("✅ Change tracking resumed after successful publish")
+        }, 1000)
         
         // Show success toast and play sound
         toast.success("🎉 Portfolio published successfully!", {
@@ -935,7 +959,20 @@ export default function DashboardPage() {
     
     // Check username availability if customUsername changed
     if (data.customUsername !== undefined && data.customUsername.trim()) {
-      checkUsernameAvailability(data.customUsername.trim())
+      const newUsername = data.customUsername.trim()
+      const currentUsername = originalData?.portfolioData?.customUsername
+      
+      // Only check availability if username actually changed
+      if (newUsername !== currentUsername) {
+        checkUsernameAvailability(newUsername)
+      } else {
+        // If it's the same username, show it's the current user's username
+        setUsernameAvailability({
+          isChecking: false,
+          isAvailable: true,
+          message: "This is your current username"
+        })
+      }
     } else {
       // Reset availability state if username is empty
       setUsernameAvailability({
@@ -952,6 +989,16 @@ export default function DashboardPage() {
         isChecking: false,
         isAvailable: null,
         message: ""
+      })
+      return
+    }
+    
+    // Check if the username is the current user's username
+    if (originalData?.portfolioData?.customUsername === username.trim()) {
+      setUsernameAvailability({
+        isChecking: false,
+        isAvailable: true,
+        message: "This is your current username"
       })
       return
     }
@@ -1037,9 +1084,24 @@ export default function DashboardPage() {
   }
 
   const handleAddImportedProject = (project: Repository) => {
-    setImportedProjects(prev => [...prev, project])
+    console.log("📦 Adding imported project to state:", project)
+    setImportedProjects(prev => {
+      const newProjects = [...prev, project]
+      console.log("📦 Updated importedProjects:", newProjects)
+      return newProjects
+    })
     // Also add to selectedRepos so it appears in the UI
-    setSelectedRepos(prev => [...prev, project.id])
+    setSelectedRepos(prev => {
+      const newSelected = [...prev, project.id]
+      console.log("📦 Updated selectedRepos:", newSelected)
+      return newSelected
+    })
+    // Add to repoOrder so it appears in correct position
+    setRepoOrder(prev => {
+      const newOrder = [...prev, project.id]
+      console.log("📦 Updated repoOrder:", newOrder)
+      return newOrder
+    })
   }
 
   const handleAddSocial = (social: Omit<Social, 'id'>) => {

@@ -128,6 +128,16 @@ export function ReposSection({
       return indexA - indexB
     })
 
+  // Debug logging
+  useEffect(() => {
+    console.log("🔍 ReposSection Debug:", {
+      repositories: repositories.length,
+      selectedRepos,
+      localRepoOrder,
+      selectedRepositories: selectedRepositories.length
+    })
+  }, [repositories, selectedRepos, localRepoOrder, selectedRepositories])
+
   // Sync with parent's repoOrder
   useEffect(() => {
     if (initialRepoOrder && initialRepoOrder.length > 0) {
@@ -331,18 +341,14 @@ export function ReposSection({
       
       // Add to imported projects if callback is provided
       if (onAddImportedProject) {
+        console.log("🔄 Adding imported project:", projectData)
         onAddImportedProject(projectData)
       }
       
       // Set deployed URL to the original URL since this is the live project
       const newDeployedUrls = { ...deployedUrls, [projectData.id]: projectUrl.trim() }
       setDeployedUrls(newDeployedUrls)
-      
-      // Add the imported project to the parent state
-      if (onAddImportedProject) {
-        onAddImportedProject(projectData)
-      }
-      onToggleRepo(projectData.id)
+      console.log("✅ Imported project setup complete for ID:", projectData.id)
       
       // Clear the input
       setProjectUrl("")

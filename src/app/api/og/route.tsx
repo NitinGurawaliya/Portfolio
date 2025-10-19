@@ -14,6 +14,14 @@ export async function GET(request: NextRequest) {
     const jobTitle = searchParams.get('jobTitle') || 'Developer'
     const bio = searchParams.get('bio') || `Check out ${displayName}'s developer portfolio`
     const profilePic = searchParams.get('profilePic') || 'https://github.com/github.png'
+    
+    // Debug logging
+    console.log('OG Image Request:', { username, displayName, jobTitle, bio, profilePic })
+    
+    // Validate required parameters
+    if (!username) {
+      return new Response('Missing username parameter', { status: 400 })
+    }
 
     return new ImageResponse(
       (
@@ -74,6 +82,7 @@ export async function GET(request: NextRequest) {
                   backgroundImage: `url(${profilePic})`,
                   backgroundSize: 'cover',
                   backgroundPosition: 'center',
+                  backgroundColor: '#f97316', // Fallback color
                 }}
               />
               {/* DevFolio Badge */}
@@ -233,9 +242,12 @@ export async function GET(request: NextRequest) {
       }
     )
   } catch (e: any) {
-    console.log(`${e.message}`)
-    return new Response(`Failed to generate the image`, {
+    console.error('OG Image Generation Error:', e)
+    return new Response(`Failed to generate the image: ${e.message}`, {
       status: 500,
+      headers: {
+        'Content-Type': 'text/plain',
+      },
     })
   }
 }
