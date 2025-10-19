@@ -2,9 +2,11 @@ import { ImageResponse } from 'next/og'
 import { NextRequest } from 'next/server'
 
 export const runtime = 'edge'
+export const revalidate = 3600 // Revalidate every hour
 
 export async function GET(request: NextRequest) {
   try {
+    console.log('OG Landing Image Request:', { url: request.url })
     return new ImageResponse(
       (
         <div
@@ -208,9 +210,12 @@ export async function GET(request: NextRequest) {
       }
     )
   } catch (e: any) {
-    console.log(`${e.message}`)
-    return new Response(`Failed to generate the image`, {
+    console.error('OG Landing Image Generation Error:', e)
+    return new Response(`Failed to generate the image: ${e.message}`, {
       status: 500,
+      headers: {
+        'Content-Type': 'text/plain',
+      },
     })
   }
 }
