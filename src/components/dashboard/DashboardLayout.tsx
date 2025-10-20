@@ -254,7 +254,7 @@ export function DashboardLayout({
               <div
                 onClick={() => {
                   const currentDomain = window.location.origin
-                  window.open(`${currentDomain}/${portfolioData?.customUsername || user?.githubUsername || 'username'}`, '_blank')
+                  window.open(`${currentDomain}/${livePortfolio?.customUsername || portfolioData?.customUsername || user?.githubUsername || 'username'}`, '_blank')
                 }}
                 className="flex items-center bg-gray-50 border border-gray-300 rounded-lg px-2 py-1.5 cursor-pointer hover:bg-gray-100 hover:border-gray-400 hover:shadow-md transition-all duration-200 min-w-[180px]"
               >
@@ -263,7 +263,7 @@ export function DashboardLayout({
                     {typeof window !== 'undefined' ? window.location.host : 'localhost:3000'}/
                   </span>
                   <span className="text-blue-600 text-xs font-semibold">
-                    {portfolioData?.customUsername || user?.githubUsername || 'username'}
+                    {livePortfolio?.customUsername || portfolioData?.customUsername || user?.githubUsername || 'username'}
                   </span>
                 </div>
                 <ExternalLink className="h-3 w-3 text-gray-400 ml-1.5" />

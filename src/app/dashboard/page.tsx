@@ -1,8 +1,6 @@
 "use client"
 
-import { useRouter } from "next/navigation"
-import { devLog } from "@/lib/logger"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useState } from "react"
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout"
 import { HomeSection } from "@/components/dashboard/HomeSection"
 import { ReposSection } from "@/components/dashboard/ReposSection"
@@ -11,1185 +9,168 @@ import { SocialsSection } from "@/components/dashboard/SocialsSection"
 import ThemeSelector from "@/components/dashboard/ThemeSelector"
 import { DevFolioLoader } from "@/components/ui/DevFolioLoader"
 import toast, { Toaster } from "react-hot-toast"
+import { useSession } from "@/hooks/useSession"
+import { usePortfolio } from "@/hooks/usePortfolio"
+import { usePortfolioHandlers } from "@/hooks/usePortfolioHandlers"
+import { publishPortfolio } from "@/lib/services/portfolio-service"
+import { playNotificationSound } from "@/lib/portfolio-utils"
+import { successToastConfig, errorToastConfig } from "@/lib/utils"
 
-interface User {
-  id: number
-  name: string
-  email: string
-  githubUsername: string
-  avatarUrl: string
-  bio: string
-  location: string
-  websiteUrl: string
-  twitterUsername: string
-  company: string
-  publicRepos: number
-  followers: number
-  following: number
-  repositories: Repository[]
-}
-
-interface Repository {
-  id: number
-  name: string
-  fullName: string
-  description: string
-  htmlUrl: string
-  homepage?: string
-  language: string
-  languages?: string[] // All languages used in the repo
-  stargazersCount: number
-  forksCount: number
-  isPrivate: boolean
-  isFork: boolean
-  size: number
-  createdAt: string
-  updatedAt: string
-  pushedAt: string
-  isImported?: boolean
-  favicon?: string
-  siteName?: string
-  keywords?: string
-  author?: string
-}
-
-interface Skill {
-  id: string
-  name: string
-  category: string
-}
-
-interface Social {
-  id: number
-  platform: string
-  username: string
-  url: string
-  isPinned: boolean
-}
 
 export default function DashboardPage() {
-  const router = useRouter()
-  const [user, setUser] = useState<User | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [session, setSession] = useState<any>(null)
   const [activeSection, setActiveSection] = useState("home")
-  
-  // Portfolio data state
-  const [portfolioData, setPortfolioData] = useState({
-    displayName: "",
-    jobTitle: "",
-    bio: "",
-    profilePic: "",
-    customUsername: "",
-  })
-  const [selectedRepos, setSelectedRepos] = useState<number[]>([])
-  const [skills, setSkills] = useState<Skill[]>([])
-  const [socials, setSocials] = useState<Social[]>([])
-  const [deployedUrls, setDeployedUrls] = useState<Record<number, string>>({})
-  const [importedProjects, setImportedProjects] = useState<Repository[]>([])
-  const [customNames, setCustomNames] = useState<Record<number, string>>({})
-  const [customDescriptions, setCustomDescriptions] = useState<Record<number, string>>({})
-  const [githubUrls, setGithubUrls] = useState<Record<number, string>>({})
-  const [selectedTheme, setSelectedTheme] = useState<string>('dark')
-  const [repoOrder, setRepoOrder] = useState<number[]>([])
-  
-  // Username availability state
-  const [usernameAvailability, setUsernameAvailability] = useState<{
-    isChecking: boolean
-    isAvailable: boolean | null
-    message: string
-  }>({
-    isChecking: false,
-    isAvailable: null,
-    message: ""
-  })
-
-  // Change tracking state
-  const [originalData, setOriginalData] = useState<{
-    portfolioData: any
-    selectedRepos: number[]
-    skills: Skill[]
-    socials: Social[]
-    deployedUrls: Record<number, string>
-    customNames: Record<number, string>
-    customDescriptions: Record<number, string>
-    githubUrls: Record<number, string>
-    importedProjects: Repository[]
-    selectedTheme: string
-    repoOrder: number[]
-  } | null>(null)
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const [isPublishing, setIsPublishing] = useState(false)
-  const [isInitialLoad, setIsInitialLoad] = useState(true)
-  const [isPublishComplete, setIsPublishComplete] = useState(false)
+  
+  // Session hook
+  const { user, loading } = useSession()
+  
+  // Portfolio hook
+  const portfolio = usePortfolio(user)
+  
+  // Handlers hook - portfolio data को original data के रूप में pass करें
+  const handlers = usePortfolioHandlers(
+    portfolio.setPortfolioData,
+    portfolio.setSelectedRepos,
+    portfolio.setSkills,
+    portfolio.setSocials,
+    portfolio.setDeployedUrls,
+    portfolio.setCustomNames,
+    portfolio.setCustomDescriptions,
+    portfolio.setGithubUrls,
+    portfolio.setImportedProjects,
+    portfolio.setRepoOrder,
+    portfolio.setSelectedTheme,
+    portfolio.originalData,  // Pass original data properly
+    user  // Pass user for GitHub username comparison
+  )
 
-  // Build live portfolio data for preview (unsaved changes reflected)
-  const livePortfolio = useMemo(() => {
-    if (!user) return null
-
-    const allRepos: Repository[] = [...(user?.repositories || []), ...importedProjects]
-    const selected: Repository[] = [
-      // Include selected GitHub repos
-      ...selectedRepos
-      .map(id => allRepos.find(r => r.id === id))
-        .filter((r): r is Repository => Boolean(r)),
-      // Include all imported projects (they are automatically selected)
-      ...importedProjects
-    ].filter((repo, index, self) => 
-      // Remove duplicates based on repo.id
-      index === self.findIndex(r => r.id === repo.id)
-    )
-
-    // Sort repositories according to repoOrder
-    const sortedRepos = repoOrder.length > 0 
-      ? [...selected].sort((a, b) => {
-          const indexA = repoOrder.indexOf(a.id)
-          const indexB = repoOrder.indexOf(b.id)
-          if (indexA === -1 && indexB === -1) return 0
-          if (indexA === -1) return 1
-          if (indexB === -1) return -1
-          return indexA - indexB
-        })
-      : selected
-
-    const repositories = sortedRepos.map(repo => ({
-      id: repo.id,
-      deployedUrl: deployedUrls[repo.id] || repo.homepage || "",
-      isVisible: true,
-      customName: customNames[repo.id] || null,
-      customDescription: customDescriptions[repo.id] || null,
-      repository: {
-        id: repo.id,
-        name: repo.name,
-        description: repo.description,
-        htmlUrl: repo.htmlUrl,
-        language: repo.language,
-        languages: repo.languages ? JSON.stringify(repo.languages) : null, // Store as JSON string for preview
-        stargazersCount: repo.stargazersCount,
-        forksCount: repo.forksCount,
-      }
-    }))
-
-    const skillsForPreview = skills.map((s, index) => ({
-      id: parseInt(s.id) || index + 1,
-      name: s.name,
-      category: s.category,
-    }))
-
-    return {
-      id: user.id,
-      displayName: portfolioData.displayName,
-      bio: portfolioData.bio,
-      profilePic: portfolioData.profilePic,
-      selectedTheme: selectedTheme,
-      skills: skillsForPreview,
-      socials: socials,
-      repositories,
-      user: {
-        githubUsername: user.githubUsername,
-        location: user.location,
-        company: user.company,
-        websiteUrl: user.websiteUrl,
-      }
-    }
-  }, [user, portfolioData, skills, socials, selectedRepos, deployedUrls, importedProjects, selectedTheme, customNames, customDescriptions, repoOrder])
-
-  // Track changes to enable/disable publish button
+  // Load existing portfolio data when user is loaded
   useEffect(() => {
-    console.log("🔍 Change tracking effect triggered:", {
-      isInitialLoad,
-      hasOriginalData: !!originalData,
-      originalDataKeys: originalData ? Object.keys(originalData) : null,
-      portfolioData,
-      selectedRepos: selectedRepos.length,
-      skills: skills.length,
-      socials: socials.length,
-      deployedUrls: Object.keys(deployedUrls).length,
-      importedProjects: importedProjects.length
-    })
-    
-    // Don't track changes during initial load, after publish, or if we don't have original data
-    if (isInitialLoad || isPublishComplete || !originalData) {
-      console.log("⏸️ Skipping change tracking - initial load:", isInitialLoad, "publish complete:", isPublishComplete, "no original data:", !originalData)
-      console.log("🔍 OriginalData details:", originalData)
-      if (!originalData) {
-        setHasUnsavedChanges(false) // Only set to false if we don't have originalData
+    if (user) {
+      const initialData = {
+        displayName: user.name || user.githubUsername,
+        jobTitle: "",
+        bio: user.bio || "",
+        profilePic: user.avatarUrl,
+        customUsername: "", // Don't set GitHub username as default, let loadExistingData handle it
       }
-      return
-    }
-    
-    // Normalize imported projects to ensure languages field is consistent
-    const normalizedImportedProjects = importedProjects.map(project => ({
-      ...project,
-      languages: project.languages || []
-    }))
-    
-    const currentData = {
-      portfolioData,
-      selectedRepos: [...selectedRepos].sort(), // Sort for consistent comparison
-      skills: [...skills].sort((a, b) => a.id.localeCompare(b.id)),
-      socials: [...socials].sort((a, b) => a.id - b.id),
-      deployedUrls,
-      customNames,
-      customDescriptions,
-      githubUrls,
-      importedProjects: normalizedImportedProjects.sort((a, b) => a.id - b.id),
-      selectedTheme,
-      repoOrder: [...repoOrder] // Don't sort - order matters!
-    }
-    
-        // Helper function to clean and normalize data
-        const normalizeData = (data: any) => {
-          return JSON.parse(JSON.stringify(data, (key, value) => {
-            // Remove null/undefined
-            if (value === null || value === undefined) return undefined
-            // Don't remove empty strings for portfolioData properties to maintain structure
-            if (value === "" && key !== "displayName" && key !== "jobTitle" && key !== "bio" && key !== "profilePic" && key !== "customUsername") return undefined
-            // Remove empty objects/arrays
-            if (typeof value === 'object' && value !== null) {
-              if (Array.isArray(value) && value.length === 0) return undefined
-              if (!Array.isArray(value) && Object.keys(value).length === 0) return undefined
-            }
-            return value
-          }))
-        }
-    
-        const cleanCurrentData = normalizeData({
-          ...currentData,
-          selectedRepos: [...(currentData.selectedRepos || [])].sort(),
-          skills: [...(currentData.skills || [])].sort((a, b) => a.id.localeCompare(b.id)),
-          socials: [...(currentData.socials || [])].sort((a, b) => a.id - b.id),
-          importedProjects: [...(currentData.importedProjects || [])].sort((a, b) => a.id - b.id),
-          selectedTheme: currentData.selectedTheme || 'dark',
-          repoOrder: currentData.repoOrder || [] // Keep original order for comparison
-        })
-        // Normalize originalData importedProjects to ensure languages field
-        const normalizedOriginalImportedProjects = (originalData.importedProjects || []).map(project => ({
-          ...project,
-          languages: project.languages || []
-        }))
-        
-        const cleanOriginalData = normalizeData({
-          ...originalData,
-          selectedRepos: [...(originalData.selectedRepos || [])].sort(),
-          skills: [...(originalData.skills || [])].sort((a, b) => a.id.localeCompare(b.id)),
-          socials: [...(originalData.socials || [])].sort((a, b) => a.id - b.id),
-          importedProjects: normalizedOriginalImportedProjects.sort((a, b) => a.id - b.id),
-          selectedTheme: originalData.selectedTheme || 'dark',
-          repoOrder: originalData.repoOrder || [] // Keep original order for comparison
-        })
-    
-    const hasChanges = JSON.stringify(cleanCurrentData) !== JSON.stringify(cleanOriginalData)
-    console.log("📊 Change detection:", { 
-      hasChanges, 
-      cleanCurrentDataString: JSON.stringify(cleanCurrentData), 
-      cleanOriginalDataString: JSON.stringify(cleanOriginalData),
-      cleanCurrentData,
-      cleanOriginalData
-    })
-    
-    if (hasChanges) {
-      console.log("⚠️ Changes detected - Publish button will be enabled")
-    } else {
-      console.log("✅ No changes detected - Publish button will be disabled")
-    }
-    setHasUnsavedChanges(hasChanges)
-  }, [portfolioData, selectedRepos, skills, socials, deployedUrls, customNames, customDescriptions, githubUrls, importedProjects, selectedTheme, repoOrder, originalData, isInitialLoad, isPublishComplete])
-
-  useEffect(() => {
-    // Fetch session from server (httpOnly cookie)
-    fetch("/api/session", { cache: "no-store" })
-      .then(async (res) => {
-        if (!res.ok) throw new Error("No session")
-        const data = await res.json()
-        setSession(data.session)
-        return data.session
-      })
-      .then(async () => {
-        // Fetch GitHub data via server proxy endpoints
-        const [userRes, reposRes] = await Promise.all([
-          fetch("/api/github/user", { cache: "no-store" }),
-          fetch("/api/github/repos", { cache: "no-store" }),
-        ])
-        if (!userRes.ok || !reposRes.ok) throw new Error("GitHub fetch failed")
-        const userData = await userRes.json()
-        const reposData = await reposRes.json()
-
-        // Languages are now fetched by the API endpoint
-        const repositories = reposData.map((repo: any) => ({
-          id: repo.id,
-          name: repo.name,
-          fullName: repo.full_name,
-          description: repo.description || "",
-          htmlUrl: repo.html_url,
-          homepage: repo.homepage || "",
-          language: repo.language || "",
-          languages: repo.languages || [], // Already fetched by API
-          stargazersCount: repo.stargazers_count,
-          forksCount: repo.forks_count,
-          isPrivate: repo.private,
-          isFork: repo.fork,
-          size: repo.size || 0,
-          createdAt: repo.created_at,
-          updatedAt: repo.updated_at,
-          pushedAt: repo.pushed_at,
-        }))
-
-        const builtUser: User = {
-          id: userData.id,
-          name: userData.name || userData.login,
-          email: userData.email || "",
-          githubUsername: userData.login,
-          avatarUrl: userData.avatar_url,
-          bio: userData.bio || "",
-          location: userData.location || "",
-          websiteUrl: userData.blog || "",
-          twitterUsername: userData.twitter_username || "",
-          company: userData.company || "",
-          publicRepos: userData.public_repos,
-          followers: userData.followers,
-          following: userData.following,
-          repositories,
-        }
-
-        setUser(builtUser)
-
-        const initialPortfolioData = {
-          displayName: userData.name || userData.login,
-          jobTitle: "",
-          bio: userData.bio || "",
-          profilePic: userData.avatar_url,
-          customUsername: userData.login,
-        }
-        
-        setPortfolioData(initialPortfolioData)
-        console.log("🔍 Set portfolio data, about to call loadExistingPortfolioData")
-
-        await loadExistingPortfolioData(userData.login, initialPortfolioData)
-        console.log("🔍 loadExistingPortfolioData completed")
-      })
-      .catch(() => {
-      router.push("/auth")
-      })
-      .finally(() => setLoading(false))
-  }, [router])
-
-  const loadExistingPortfolioData = async (username: string, initialPortfolioData?: any) => {
-    console.log("🚀 loadExistingPortfolioData called with:", { username, initialPortfolioData })
-    try {
-      const response = await fetch(`/api/portfolio/publish?username=${username}`)
-      console.log("📡 Portfolio fetch response:", response.status, response.ok)
       
-      if (response.ok) {
-        const result = await response.json()
-        const portfolio = result.portfolio
-        console.log("🔍 Found existing portfolio:", !!portfolio)
-        
-        if (portfolio) {
-          // Update portfolio data with saved data
-          setPortfolioData({
-            displayName: portfolio.displayName || "",
-            jobTitle: portfolio.jobTitle || "",
-            bio: portfolio.bio || "",
-            profilePic: portfolio.profilePic || "",
-            customUsername: portfolio.customUsername || "",
-          })
-
-          // Theme will be set later in the setTimeout to avoid change tracking issues
-
-          // Load social accounts
-          if (portfolio.socials && portfolio.socials.length > 0) {
-            setSocials(portfolio.socials.map((social: any) => ({
-              id: social.id,
-              platform: social.platform,
-              username: social.username,
-              url: social.url,
-              isPinned: social.isPinned
-            })))
-          }
-          
-          // Set deployed URLs, custom names, and descriptions
-          if (portfolio.repositories && portfolio.repositories.length > 0) {
-            devLog("Portfolio repositories from DB:", portfolio.repositories)
-            
-            const urls: Record<number, string> = {}
-            const names: Record<number, string> = {}
-            const descriptions: Record<number, string> = {}
-            const githubUrls: Record<number, string> = {}
-            
-            portfolio.repositories.forEach((repo: any) => {
-              const githubId = parseInt(repo.repository.githubId)
-              devLog("Processing repo:", repo.repository.name, "GitHub ID:", githubId, "Deployed URL:", repo.deployedUrl, "GitHub URL:", repo.repository.githubUrl)
-              
-              if (repo.deployedUrl) {
-                urls[githubId] = repo.deployedUrl
-              }
-              // Only set custom names/descriptions if they exist (not default values)
-              if (repo.customName) {
-                names[githubId] = repo.customName
-              }
-              if (repo.customDescription) {
-                descriptions[githubId] = repo.customDescription
-              }
-              // Load GitHub URL for imported projects
-              if (repo.repository.githubUrl) {
-                githubUrls[githubId] = repo.repository.githubUrl
-              }
-            })
-            
-            devLog("Final deployed URLs object:", urls)
-            devLog("Final custom names object:", names)
-            devLog("Final custom descriptions object:", descriptions)
-            devLog("Final GitHub URLs object:", githubUrls)
-            
-            setDeployedUrls(urls)
-            setCustomNames(names)
-            setCustomDescriptions(descriptions)
-            setGithubUrls(githubUrls)
-            
-            // Set imported projects (URL-imported repositories)
-            const importedProjects = portfolio.repositories
-              .filter((repo: any) => repo.repository.isImported)
-              .map((repo: any) => {
-                // Parse languages if available
-                let languages: string[] = []
-                if (repo.repository.languages) {
-                  try {
-                    languages = JSON.parse(repo.repository.languages)
-                  } catch (e) {
-                    languages = repo.repository.language ? [repo.repository.language] : []
-                  }
-                } else if (repo.repository.language) {
-                  languages = [repo.repository.language]
-                }
-                
-                return {
-                id: parseInt(repo.repository.githubId),
-                name: repo.repository.name,
-                fullName: repo.repository.fullName || repo.repository.name,
-                description: repo.repository.description || "",
-                htmlUrl: repo.repository.htmlUrl,
-                homepage: repo.deployedUrl || "",
-                language: repo.repository.language || "Web Project",
-                  languages: languages,
-                stargazersCount: repo.repository.stargazersCount || 0,
-                forksCount: repo.repository.forksCount || 0,
-                isPrivate: repo.repository.isPrivate || false,
-                isFork: repo.repository.isFork || false,
-                size: repo.repository.size || 0,
-                createdAt: repo.repository.createdAt,
-                updatedAt: repo.repository.updatedAt,
-                pushedAt: repo.repository.pushedAt || repo.repository.updatedAt,
-                isImported: true
-                }
-              })
-            devLog("Setting imported projects:", importedProjects)
-            setImportedProjects(importedProjects)
-            
-            // Set selected repos - keep the original logic but ensure imported projects are included
-            const githubIds = portfolio.repositories.map((repo: any) => {
-              const githubId = parseInt(repo.repository.githubId)
-              devLog("Mapping repo:", repo.repository.name, "GitHub ID:", githubId, "Type:", typeof githubId)
-              return githubId
-            })
-            devLog("Setting selected repos to:", githubIds)
-            setSelectedRepos(githubIds)
-            
-            // Set repo order from database (repositories are already sorted by displayOrder from API)
-            const loadedRepoOrder = portfolio.repositories.map((repo: any) => parseInt(repo.repository.githubId))
-            devLog("Setting repo order to:", loadedRepoOrder)
-            setRepoOrder(loadedRepoOrder)
-          }
-          
-          // Set skills
-          if (portfolio.skills && portfolio.skills.length > 0) {
-            devLog("Loading skills from portfolio:", portfolio.skills)
-            const formattedSkills = portfolio.skills.map((skill: any) => ({
-              id: skill.id.toString(),
-              name: skill.name,
-              category: skill.category
-            }))
-            devLog("Formatted skills:", formattedSkills)
-            setSkills(formattedSkills)
-          } else {
-            devLog("No skills found in portfolio data")
-          }
-
-          // Set original data for change tracking after loading
-          setTimeout(() => {
-            const currentSelectedTheme = portfolio.selectedTheme || 'dark'
-            setSelectedTheme(currentSelectedTheme) // Make sure theme state matches DB
-            
-            const originalDataToSet = {
-              portfolioData: {
-                displayName: portfolio.displayName || "",
-                jobTitle: portfolio.jobTitle || "",
-                bio: portfolio.bio || "",
-                profilePic: portfolio.profilePic || "",
-                customUsername: portfolio.customUsername || "",
-              },
-              selectedRepos: portfolio.repositories ? portfolio.repositories.map((repo: any) => parseInt(repo.repository.githubId)) : [],
-              skills: portfolio.skills ? portfolio.skills.map((skill: any) => ({
-                id: skill.id.toString(),
-                name: skill.name,
-                category: skill.category
-              })) : [],
-              socials: portfolio.socials ? portfolio.socials.map((social: any) => ({
-                id: social.id,
-                platform: social.platform,
-                username: social.username,
-                url: social.url,
-                isPinned: social.isPinned
-              })) : [],
-              deployedUrls: portfolio.repositories ? (() => {
-                const urls: Record<number, string> = {}
-                portfolio.repositories.forEach((repo: any) => {
-                  const githubId = parseInt(repo.repository.githubId)
-                  if (repo.deployedUrl) {
-                    urls[githubId] = repo.deployedUrl
-                  }
-                })
-                return urls
-              })() : {},
-              customNames: portfolio.repositories ? (() => {
-                const names: Record<number, string> = {}
-                portfolio.repositories.forEach((repo: any) => {
-                  const githubId = parseInt(repo.repository.githubId)
-                  if (repo.customName) {
-                    names[githubId] = repo.customName
-                  }
-                })
-                return names
-              })() : {},
-              customDescriptions: portfolio.repositories ? (() => {
-                const descriptions: Record<number, string> = {}
-                portfolio.repositories.forEach((repo: any) => {
-                  const githubId = parseInt(repo.repository.githubId)
-                  if (repo.customDescription) {
-                    descriptions[githubId] = repo.customDescription
-                  }
-                })
-                return descriptions
-              })() : {},
-              githubUrls: portfolio.repositories ? (() => {
-                const urls: Record<number, string> = {}
-                portfolio.repositories.forEach((repo: any) => {
-                  const githubId = parseInt(repo.repository.githubId)
-                  if (repo.repository.githubUrl) {
-                    urls[githubId] = repo.repository.githubUrl
-                  }
-                })
-                return urls
-              })() : {},
-              importedProjects: portfolio.repositories ? portfolio.repositories
-                .filter((repo: any) => repo.repository.isImported)
-                .map((repo: any) => {
-                  // Parse languages if available
-                  let languages: string[] = []
-                  if (repo.repository.languages) {
-                    try {
-                      languages = JSON.parse(repo.repository.languages)
-                    } catch (e) {
-                      languages = repo.repository.language ? [repo.repository.language] : []
-                    }
-                  } else if (repo.repository.language) {
-                    languages = [repo.repository.language]
-                  }
-                  
-                  return {
-                    id: parseInt(repo.repository.githubId),
-                    name: repo.repository.name,
-                    fullName: repo.repository.fullName || repo.repository.name,
-                    description: repo.repository.description || "",
-                    htmlUrl: repo.repository.htmlUrl,
-                    homepage: repo.deployedUrl || "",
-                    language: repo.repository.language || "Web Project",
-                    languages: languages,
-                    stargazersCount: repo.repository.stargazersCount || 0,
-                    forksCount: repo.repository.forksCount || 0,
-                    isPrivate: repo.repository.isPrivate || false,
-                    isFork: repo.repository.isFork || false,
-                    size: repo.repository.size || 0,
-                    createdAt: repo.repository.createdAt,
-                    updatedAt: repo.repository.updatedAt,
-                    pushedAt: repo.repository.pushedAt || repo.repository.updatedAt,
-                    isImported: true
-                  }
-                }) : [],
-              selectedTheme: currentSelectedTheme,
-              repoOrder: portfolio.repositories ? portfolio.repositories.map((repo: any) => parseInt(repo.repository.githubId)) : []
-            }
-            
-            console.log("💾 Setting original data from existing portfolio:", originalDataToSet)
-            setOriginalData(originalDataToSet)
-            setIsInitialLoad(false)
-            console.log("✅ Initial load completed, change tracking enabled")
-          }, 200) // Increased timeout to ensure all state updates are complete
-        } else {
-          console.log("🔍 No existing portfolio found in response")
-        }
-      } else {
-        // No existing portfolio data, set initial data and mark as loaded
-        console.log("📝 No existing portfolio data found (404), setting initial data")
-          console.log("🔍 Current state before setting initial data:", {
-            portfolioData,
-            selectedRepos,
-            skills,
-            socials,
-            deployedUrls,
-            customNames,
-            customDescriptions,
-            githubUrls,
-            importedProjects
-          })
-          setTimeout(() => {
-          const currentPortfolioData = initialPortfolioData || portfolioData
-          console.log("🔍 Using portfolio data:", currentPortfolioData)
-          
-          // Ensure theme state is properly initialized
-          const currentTheme = selectedTheme || 'dark'
-          setSelectedTheme(currentTheme)
-          
-          const initialData = {
-            portfolioData: {
-              displayName: currentPortfolioData.displayName || "",
-              jobTitle: currentPortfolioData.jobTitle || "",
-              bio: currentPortfolioData.bio || "",
-              profilePic: currentPortfolioData.profilePic || "",
-              customUsername: currentPortfolioData.customUsername || "",
-            },
-            selectedRepos: [...selectedRepos],
-            skills: [...skills],
-            socials: [...socials],
-            deployedUrls: { ...deployedUrls },
-            customNames: { ...customNames },
-            customDescriptions: { ...customDescriptions },
-            githubUrls: { ...githubUrls },
-            selectedTheme: currentTheme,
-            importedProjects: [...importedProjects],
-            repoOrder: [...repoOrder]
-          }
-            console.log("💾 Setting initial data (no existing portfolio):", initialData)
-            setOriginalData(initialData)
-            setIsInitialLoad(false)
-            console.log("✅ Initial load completed (no existing data), change tracking enabled")
-            console.log("🔍 After setOriginalData - originalData should be set, isInitialLoad:", false)
-          }, 200)
-      }
-    } catch (error) {
-      console.error("❌ Error loading existing portfolio data:", error)
-      // Even if there's an error, mark as loaded to prevent infinite loading
-      setTimeout(() => {
-        const currentPortfolioData = initialPortfolioData || portfolioData
-        // Ensure theme state is properly initialized
-        const currentTheme = selectedTheme || 'dark'
-        setSelectedTheme(currentTheme)
-        
-        const fallbackData = {
-          portfolioData: {
-            displayName: currentPortfolioData.displayName || "",
-            jobTitle: currentPortfolioData.jobTitle || "",
-            bio: currentPortfolioData.bio || "",
-            profilePic: currentPortfolioData.profilePic || "",
-            customUsername: currentPortfolioData.customUsername || "",
-          },
-          selectedRepos: [...selectedRepos],
-          skills: [...skills],
-          socials: [...socials],
-          deployedUrls: { ...deployedUrls },
-          customNames: { ...customNames },
-          customDescriptions: { ...customDescriptions },
-          githubUrls: { ...githubUrls },
-          selectedTheme: currentTheme,
-          importedProjects: [...importedProjects],
-          repoOrder: [...repoOrder]
-        }
-        console.log("💾 Setting fallback data due to error:", fallbackData)
-        setOriginalData(fallbackData)
-        setIsInitialLoad(false)
-        console.log("✅ Initial load completed (error fallback), change tracking enabled")
-      }, 200)
+      portfolio.setPortfolioData(initialData)
+      // Try to load with GitHub username (will search both custom and GitHub usernames)
+      portfolio.loadExistingData(user.githubUsername, initialData)
     }
-  }
+  }, [user])
 
-  const fetchUserData = async (accessToken: string) => {
-    try {
-      const userResponse = await fetch("https://api.github.com/user", {
-        headers: {
-          "Authorization": `Bearer ${accessToken}`,
-          "Accept": "application/vnd.github.v3+json",
-        },
-      })
-      
-      const reposResponse = await fetch("https://api.github.com/user/repos?sort=updated&per_page=100", {
-        headers: {
-          "Authorization": `Bearer ${accessToken}`,
-          "Accept": "application/vnd.github.v3+json",
-        },
-      })
-      
-      if (userResponse.ok && reposResponse.ok) {
-        const userData = await userResponse.json()
-        const reposData = await reposResponse.json()
-        
-        const repositories = reposData.map((repo: any) => ({
-          id: repo.id,
-          name: repo.name,
-          fullName: repo.full_name,
-          description: repo.description || "",
-          htmlUrl: repo.html_url,
-          homepage: repo.homepage || "",
-          language: repo.language || "",
-          stargazersCount: repo.stargazers_count,
-          forksCount: repo.forks_count,
-          isPrivate: repo.private,
-          isFork: repo.fork,
-          size: repo.size || 0,
-          createdAt: repo.created_at,
-          updatedAt: repo.updated_at,
-          pushedAt: repo.pushed_at,
-        }))
-        
-          devLog("GitHub repositories fetched:", repositories.map((r:any) => ({ id: r.id, name: r.name, type: typeof r.id })))
-        
-        const user: User = {
-          id: userData.id,
-          name: userData.name || userData.login,
-          email: userData.email || "",
-          githubUsername: userData.login,
-          avatarUrl: userData.avatar_url,
-          bio: userData.bio || "",
-          location: userData.location || "",
-          websiteUrl: userData.blog || "",
-          twitterUsername: userData.twitter_username || "",
-          company: userData.company || "",
-          publicRepos: userData.public_repos,
-          followers: userData.followers,
-          following: userData.following,
-          repositories: repositories
-        }
-        
-        setUser(user)
-        
-        // Initialize portfolio data with GitHub data
-        setPortfolioData({
-          displayName: userData.name || userData.login,
-          jobTitle: "",
-          bio: userData.bio || "",
-          profilePic: userData.avatar_url,
-          customUsername: userData.login,
-        })
-
-        // Load existing portfolio data from database
-        devLog("About to load existing portfolio data for:", userData.login)
-        await loadExistingPortfolioData(userData.login)
-        
-        // Add a small delay to ensure state updates
-        setTimeout(() => {
-          devLog("After loading portfolio data - Skills:", skills.length, "Selected repos:", selectedRepos.length)
-          devLog("Current skills state:", skills)
-          devLog("Current selectedRepos state:", selectedRepos)
-        }, 100)
-      }
-    } catch (error) {
-      console.error("Error fetching GitHub data:", error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  // Sound notification function - Success chime
-  const playNotificationSound = () => {
-    try {
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
-      
-      // Create a pleasant success chime (C-E-G chord)
-      const frequencies = [523.25, 659.25, 783.99] // C5, E5, G5
-      
-      frequencies.forEach((freq, index) => {
-        const oscillator = audioContext.createOscillator()
-        const gainNode = audioContext.createGain()
-        
-        oscillator.connect(gainNode)
-        gainNode.connect(audioContext.destination)
-        
-        oscillator.frequency.setValueAtTime(freq, audioContext.currentTime + index * 0.05)
-        
-        gainNode.gain.setValueAtTime(0, audioContext.currentTime + index * 0.05)
-        gainNode.gain.linearRampToValueAtTime(0.2, audioContext.currentTime + index * 0.05 + 0.1)
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + index * 0.05 + 0.8)
-        
-        oscillator.start(audioContext.currentTime + index * 0.05)
-        oscillator.stop(audioContext.currentTime + index * 0.05 + 0.8)
-      })
-    } catch (error) {
-      console.log("Could not play notification sound:", error)
-    }
-  }
-
+  // Publish handler
   const handlePublishAll = async () => {
     if (isPublishing) return
     
-    // Check if username is available before publishing
-    if (portfolioData.customUsername && portfolioData.customUsername.trim()) {
-      const newUsername = portfolioData.customUsername.trim()
-      const currentUsername = originalData?.portfolioData?.customUsername
-      
-      // Only validate if username is different from current username
-      if (newUsername !== currentUsername) {
-        if (usernameAvailability.isAvailable === false) {
-          alert("Username is already taken. Please choose a different username.")
-          return
-        }
-        
-        if (usernameAvailability.isChecking) {
-          alert("Please wait while we check username availability.")
-          return
-        }
-      }
+    // Validate username availability
+    const newUsername = portfolio.portfolioData.customUsername?.trim()
+    if (newUsername && handlers.usernameAvailability.isAvailable === false) {
+      alert("Username is already taken. Please choose a different username.")
+      return
+    }
+    
+    if (handlers.usernameAvailability.isChecking) {
+      alert("Please wait while we check username availability.")
+      return
     }
     
     setIsPublishing(true)
     try {
-      const allRepositories = [...(user?.repositories || []), ...importedProjects]
+      const allRepositories = [...(user?.repositories || []), ...portfolio.importedProjects]
       
-      const response = await fetch("/api/portfolio/publish-all", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          portfolioData,
-          selectedRepos,
-          skills,
-          socials,
-          deployedUrls,
-          customNames,
-          customDescriptions,
-          githubUrls,
-          selectedTheme,
-          repoOrder,
-          repositories: allRepositories,
-          userId: user?.id,
-          userData: user
-        })
+      await publishPortfolio({
+        portfolioData: portfolio.portfolioData,
+        selectedRepos: portfolio.selectedRepos,
+        skills: portfolio.skills,
+        socials: portfolio.socials,
+        deployedUrls: portfolio.deployedUrls,
+        customNames: portfolio.customNames,
+        customDescriptions: portfolio.customDescriptions,
+        githubUrls: portfolio.githubUrls,
+        selectedTheme: portfolio.selectedTheme,
+        repoOrder: portfolio.repoOrder,
+        repositories: allRepositories,
+        userId: user?.id || 0,
+        userData: user
       })
 
-      const result = await response.json()
-
-      if (response.ok) {
-        // Update original data to match current data (no more unsaved changes)
-        // Make sure to normalize data the same way as in change detection
-        const normalizedImportedProjects = importedProjects.map(project => ({
-          ...project,
-          languages: project.languages || []
-        }))
-        
-        setOriginalData({
-          portfolioData: { ...portfolioData },
-          selectedRepos: [...selectedRepos].sort(),
-          skills: [...skills].sort((a, b) => a.id.localeCompare(b.id)),
-          socials: [...socials].sort((a, b) => a.id - b.id),
-          deployedUrls: { ...deployedUrls },
-          customNames: { ...customNames },
-          customDescriptions: { ...customDescriptions },
-          githubUrls: { ...githubUrls },
-          selectedTheme,
-          importedProjects: normalizedImportedProjects.sort((a, b) => a.id - b.id),
-          repoOrder: [...repoOrder]
-        })
-        
-        // Force disable publish button immediately
-        setHasUnsavedChanges(false)
-        setIsPublishComplete(true)
-        console.log("🚫 Publish button disabled after successful publish")
-        
-        // Reset publish complete flag after a delay to allow change tracking to resume
-        setTimeout(() => {
-          setIsPublishComplete(false)
-          console.log("✅ Change tracking resumed after successful publish")
-        }, 1000)
-        
-        // Show success toast and play sound
-        toast.success("🎉 Portfolio published successfully!", {
-          duration: 3000,
-          position: "top-left",
-          style: {
-            background: "#f97316",
-            color: "#fff",
-            fontWeight: "500",
-            border: "1px solid #ea580c",
-            borderRadius: "8px",
-          },
-          iconTheme: {
-            primary: "#fff",
-            secondary: "#f97316",
-          },
-        })
-        
-        // Play notification sound
-        playNotificationSound()
-      } else {
-        // Show specific error message
-        alert(`❌ ${result.error || "Failed to publish portfolio"}`)
-        throw new Error(result.error || "Failed to publish portfolio")
-      }
-    } catch (error) {
+      // Reset after publish
+      portfolio.resetAfterPublish()
+      
+      // Show success toast and play sound
+      toast.success("🎉 Portfolio published successfully!", successToastConfig)
+      playNotificationSound()
+    } catch (error: any) {
       console.error("Error publishing portfolio:", error)
       
       // Show error toast
-      toast.error("Failed to publish portfolio. Please try again.", {
-        duration: 3000,
-        position: "top-left",
-        style: {
-          background: "#dc2626",
-          color: "#fff",
-          fontWeight: "500",
-          border: "1px solid #b91c1c",
-          borderRadius: "8px",
-        },
-      })
+      toast.error(
+        error.message || "Failed to publish portfolio. Please try again.", 
+        errorToastConfig
+      )
     } finally {
       setIsPublishing(false)
     }
   }
 
-  const handleUpdatePortfolioData = (data: any) => {
-    setPortfolioData(prev => ({ ...prev, ...data }))
-    
-    // Check username availability if customUsername changed
-    if (data.customUsername !== undefined && data.customUsername.trim()) {
-      const newUsername = data.customUsername.trim()
-      const currentUsername = originalData?.portfolioData?.customUsername
-      
-      // Only check availability if username actually changed
-      if (newUsername !== currentUsername) {
-        checkUsernameAvailability(newUsername)
-      } else {
-        // If it's the same username, show it's the current user's username
-        setUsernameAvailability({
-          isChecking: false,
-          isAvailable: true,
-          message: "This is your current username"
-        })
-      }
-    } else {
-      // Reset availability state if username is empty
-      setUsernameAvailability({
-        isChecking: false,
-        isAvailable: null,
-        message: ""
-      })
-    }
-  }
-  
-  const checkUsernameAvailability = async (username: string) => {
-    if (!username.trim()) {
-      setUsernameAvailability({
-        isChecking: false,
-        isAvailable: null,
-        message: ""
-      })
-      return
-    }
-    
-    // Check if the username is the current user's username
-    if (originalData?.portfolioData?.customUsername === username.trim()) {
-      setUsernameAvailability({
-        isChecking: false,
-        isAvailable: true,
-        message: "This is your current username"
-      })
-      return
-    }
-    
-    setUsernameAvailability({
-      isChecking: true,
-      isAvailable: null,
-      message: "Checking availability..."
-    })
-    
-    try {
-      const response = await fetch(`/api/portfolio/publish?username=${encodeURIComponent(username)}`)
-      
-      if (response.ok) {
-        setUsernameAvailability({
-          isChecking: false,
-          isAvailable: false,
-          message: "Username already taken"
-        })
-      } else if (response.status === 404) {
-        setUsernameAvailability({
-          isChecking: false,
-          isAvailable: true,
-          message: "Username available"
-        })
-      } else {
-        setUsernameAvailability({
-          isChecking: false,
-          isAvailable: null,
-          message: "Error checking availability"
-        })
-      }
-    } catch (error) {
-      setUsernameAvailability({
-        isChecking: false,
-        isAvailable: null,
-        message: "Error checking availability"
-      })
-    }
-  }
-
-  const handleToggleRepo = (repoId: number) => {
-    setSelectedRepos(prev => 
-      prev.includes(repoId) 
-        ? prev.filter(id => id !== repoId)
-        : [...prev, repoId]
-    )
-  }
-
-  const handleUpdateDeployedUrl = (repoId: number, url: string) => {
-    setDeployedUrls(prev => ({ ...prev, [repoId]: url }))
-  }
-
-  const handleUpdateCustomName = (repoId: number, name: string) => {
-    setCustomNames(prev => ({ ...prev, [repoId]: name }))
-  }
-
-  const handleUpdateCustomDescription = (repoId: number, description: string) => {
-    setCustomDescriptions(prev => ({ ...prev, [repoId]: description }))
-  }
-
-  const handleUpdateGithubUrl = (repoId: number, url: string) => {
-    setGithubUrls(prev => ({
-      ...prev,
-      [repoId]: url
-    }))
-  }
-
-  const handleUpdateRepoOrder = (newOrder: number[]) => {
-    setRepoOrder(newOrder)
-  }
-
-  const handleAddSkill = (skill: Omit<Skill, 'id'>) => {
-    const newSkill: Skill = {
-      ...skill,
-      id: Date.now().toString()
-    }
-    setSkills(prev => [...prev, newSkill])
-  }
-
-  const handleRemoveSkill = (skillId: string) => {
-    setSkills(prev => prev.filter(skill => skill.id !== skillId))
-  }
-
-  const handleAddImportedProject = (project: Repository) => {
-    console.log("📦 Adding imported project to state:", project)
-    setImportedProjects(prev => {
-      const newProjects = [...prev, project]
-      console.log("📦 Updated importedProjects:", newProjects)
-      return newProjects
-    })
-    // Also add to selectedRepos so it appears in the UI
-    setSelectedRepos(prev => {
-      const newSelected = [...prev, project.id]
-      console.log("📦 Updated selectedRepos:", newSelected)
-      return newSelected
-    })
-    // Add to repoOrder so it appears in correct position
-    setRepoOrder(prev => {
-      const newOrder = [...prev, project.id]
-      console.log("📦 Updated repoOrder:", newOrder)
-      return newOrder
-    })
-  }
-
-  const handleAddSocial = (social: Omit<Social, 'id'>) => {
-    const newSocial: Social = {
-      ...social,
-      id: Date.now() // Temporary ID, will be replaced by database
-    }
-    setSocials(prev => [...prev, newSocial])
-  }
-
-  const handleRemoveSocial = (socialId: number) => {
-    setSocials(prev => prev.filter(social => social.id !== socialId))
-  }
-
-  const handleTogglePin = (socialId: number) => {
-    setSocials(prev => prev.map(social => 
-      social.id === socialId 
-        ? { ...social, isPinned: !social.isPinned }
-        : social
-    ))
-  }
-
-  const handleUpdateSocial = (socialId: number, updates: Partial<Social>) => {
-    setSocials(prev => prev.map(social => 
-      social.id === socialId 
-        ? { ...social, ...updates }
-        : social
-    ))
-  }
-
-  const handleThemeChange = (theme: string) => {
-    setSelectedTheme(theme)
-  }
-
+  // Render active section
   const renderActiveSection = () => {
     switch (activeSection) {
       case "home":
         return (
           <HomeSection 
             user={user} 
-            portfolioData={portfolioData}
-            onUpdate={handleUpdatePortfolioData}
-            usernameAvailability={usernameAvailability}
+            portfolioData={portfolio.portfolioData}
+            onUpdate={handlers.handleUpdatePortfolioData}
+            usernameAvailability={handlers.usernameAvailability}
           />
         )
       case "repos":
         return (
           <ReposSection
-            repositories={[...(user?.repositories || []), ...importedProjects]}
-            selectedRepos={selectedRepos}
-            deployedUrls={deployedUrls}
-            customNames={customNames}
-            customDescriptions={customDescriptions}
-            githubUrls={githubUrls}
-            repoOrder={repoOrder}
-            onToggleRepo={handleToggleRepo}
-            onUpdateDeployedUrl={handleUpdateDeployedUrl}
-            onUpdateCustomName={handleUpdateCustomName}
-            onUpdateCustomDescription={handleUpdateCustomDescription}
-            onUpdateGithubUrl={handleUpdateGithubUrl}
-            onUpdateRepoOrder={handleUpdateRepoOrder}
-            onAddImportedProject={handleAddImportedProject}
+            repositories={[...(user?.repositories || []), ...portfolio.importedProjects]}
+            selectedRepos={portfolio.selectedRepos}
+            deployedUrls={portfolio.deployedUrls}
+            customNames={portfolio.customNames}
+            customDescriptions={portfolio.customDescriptions}
+            githubUrls={portfolio.githubUrls}
+            repoOrder={portfolio.repoOrder}
+            onToggleRepo={handlers.handleToggleRepo}
+            onUpdateDeployedUrl={handlers.handleUpdateDeployedUrl}
+            onUpdateCustomName={handlers.handleUpdateCustomName}
+            onUpdateCustomDescription={handlers.handleUpdateCustomDescription}
+            onUpdateGithubUrl={handlers.handleUpdateGithubUrl}
+            onUpdateRepoOrder={handlers.handleUpdateRepoOrder}
+            onAddImportedProject={handlers.handleAddImportedProject}
           />
         )
       case "skills":
         return (
           <SkillsSection
-            skills={skills}
-            onAddSkill={handleAddSkill}
-            onRemoveSkill={handleRemoveSkill}
+            skills={portfolio.skills}
+            onAddSkill={handlers.handleAddSkill}
+            onRemoveSkill={handlers.handleRemoveSkill}
           />
         )
       case "socials":
         return (
           <SocialsSection
-            socials={socials}
-            onAddSocial={handleAddSocial}
-            onRemoveSocial={handleRemoveSocial}
-            onTogglePin={handleTogglePin}
-            onUpdateSocial={handleUpdateSocial}
+            socials={portfolio.socials}
+            onAddSocial={handlers.handleAddSocial}
+            onRemoveSocial={handlers.handleRemoveSocial}
+            onTogglePin={handlers.handleTogglePin}
+            onUpdateSocial={handlers.handleUpdateSocial}
           />
         )
       case "theme":
         return (
           <ThemeSelector
-            currentTheme={selectedTheme as any}
+            currentTheme={portfolio.selectedTheme as any}
             userId={user?.id || 0}
-            onThemeChange={handleThemeChange}
+            onThemeChange={handlers.handleThemeChange}
           />
         )
       default:
@@ -1197,7 +178,7 @@ export default function DashboardPage() {
     }
   }
 
-  if (loading) {
+  if (loading || portfolio.isLoadingPortfolio) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <DevFolioLoader size="lg" />
@@ -1216,32 +197,20 @@ export default function DashboardPage() {
   }
 
   return (
-            <>
-              <Toaster 
-                position="top-left"
-                toastOptions={{
-                  duration: 3000,
-                  style: {
-                    background: '#f97316',
-                    color: '#fff',
-                    border: '1px solid #ea580c',
-                    borderRadius: '8px',
-                    fontWeight: '500',
-                  },
-                }}
-              />
-    <DashboardLayout 
-      user={user} 
-      activeSection={activeSection}
-      onSectionChange={setActiveSection}
-      livePortfolio={livePortfolio}
-      portfolioData={portfolioData}
-                hasUnsavedChanges={hasUnsavedChanges && !isInitialLoad}
-      onPublish={handlePublishAll}
-      isPublishing={isPublishing}
-    >
-      {renderActiveSection()}
-    </DashboardLayout>
-            </>
+    <>
+      <Toaster position="top-left" />
+      <DashboardLayout 
+        user={user} 
+        activeSection={activeSection}
+        onSectionChange={setActiveSection}
+        livePortfolio={portfolio.livePortfolio}
+        portfolioData={portfolio.portfolioData}
+        hasUnsavedChanges={portfolio.hasUnsavedChanges && !portfolio.isInitialLoad}
+        onPublish={handlePublishAll}
+        isPublishing={isPublishing}
+      >
+        {renderActiveSection()}
+      </DashboardLayout>
+    </>
   )
 }

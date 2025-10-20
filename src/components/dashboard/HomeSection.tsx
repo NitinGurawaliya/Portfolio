@@ -45,29 +45,45 @@ export function HomeSection({ user, portfolioData, onUpdate, usernameAvailabilit
   const [isInitialized, setIsInitialized] = useState(false)
   
   useEffect(() => {
-    // Only update if we haven't initialized yet or if portfolioData becomes available for the first time
-    if (!isInitialized) {
-      if (portfolioData && Object.keys(portfolioData).length > 0) {
-        setFormData({
-          displayName: portfolioData.displayName || user?.name || "",
-          jobTitle: portfolioData.jobTitle || "",
-          bio: portfolioData.bio || user?.bio || "",
-          profilePic: portfolioData.profilePic || user?.avatarUrl || "",
-          customUsername: portfolioData.customUsername || user?.githubUsername || "",
-        })
-        setIsInitialized(true)
-      } else if (user && !portfolioData) {
-        setFormData({
-          displayName: user?.name || "",
-          jobTitle: "",
-          bio: user?.bio || "",
-          profilePic: user?.avatarUrl || "",
-          customUsername: user?.githubUsername || "",
-        })
-        setIsInitialized(true)
-      }
+    console.log("🔍 HomeSection useEffect:", { portfolioData, user, isInitialized })
+    
+    if (portfolioData && Object.keys(portfolioData).length > 0) {
+      console.log("🔍 Setting formData from portfolioData:", portfolioData)
+      setFormData({
+        displayName: portfolioData.displayName || user?.name || "",
+        jobTitle: portfolioData.jobTitle || "",
+        bio: portfolioData.bio || user?.bio || "",
+        profilePic: portfolioData.profilePic || user?.avatarUrl || "",
+        customUsername: portfolioData.customUsername || "", // Don't fallback to GitHub username if portfolio exists
+      })
+      setIsInitialized(true)
+    } else if (user && !portfolioData && !isInitialized) {
+      console.log("🔍 Setting formData from user (no portfolio):", user)
+      setFormData({
+        displayName: user?.name || "",
+        jobTitle: "",
+        bio: user?.bio || "",
+        profilePic: user?.avatarUrl || "",
+        customUsername: user?.githubUsername || "",
+      })
+      setIsInitialized(true)
     }
   }, [user, portfolioData, isInitialized])
+
+  // Additional effect to handle portfolioData updates after initialization
+  useEffect(() => {
+    if (portfolioData && Object.keys(portfolioData).length > 0) {
+      console.log("🔍 Portfolio data updated, updating formData:", portfolioData)
+      setFormData(prev => ({
+        ...prev,
+        displayName: portfolioData.displayName || prev.displayName,
+        jobTitle: portfolioData.jobTitle || prev.jobTitle,
+        bio: portfolioData.bio || prev.bio,
+        profilePic: portfolioData.profilePic || prev.profilePic,
+        customUsername: portfolioData.customUsername || prev.customUsername
+      }))
+    }
+  }, [portfolioData?.displayName, portfolioData?.jobTitle, portfolioData?.bio, portfolioData?.profilePic, portfolioData?.customUsername])
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => {
@@ -237,7 +253,7 @@ export function HomeSection({ user, portfolioData, onUpdate, usernameAvailabilit
                   {usernameAvailability.message}
                 </p>
               )}
-              <p className="text-[11px] text-gray-500">This will be used in your portfolio URL: /portfolio/{formData.customUsername || 'username'}</p>
+              <p className="text-[11px] text-gray-500">This will be used in your portfolio URL: /portfolio/{formData.customUsername || user?.githubUsername || 'username'}</p>
             </div>
           </div>
 

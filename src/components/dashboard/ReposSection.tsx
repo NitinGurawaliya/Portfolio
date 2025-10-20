@@ -173,9 +173,17 @@ export function ReposSection({
   }, [selectedRepos])
 
   useEffect(() => {
-    if (initialDeployedUrls) {
+    if (initialDeployedUrls && Object.keys(initialDeployedUrls).length > 0) {
       console.log("Syncing deployed URLs from props:", initialDeployedUrls)
-      setDeployedUrls(initialDeployedUrls)
+      setDeployedUrls(prev => {
+        // Only update if there are actual differences
+        const hasChanges = JSON.stringify(prev) !== JSON.stringify(initialDeployedUrls)
+        if (hasChanges) {
+          console.log("Deployed URLs changed, updating...")
+          return initialDeployedUrls
+        }
+        return prev
+      })
     }
   }, [initialDeployedUrls])
 
