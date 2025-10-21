@@ -64,7 +64,7 @@ export async function generateMetadata({
     
     // Generate dynamic favicon URL using user's profile picture
     const faviconUrl = profilePic && profilePic.startsWith('http') 
-      ? `${baseUrl}/api/favicon?url=${encodeURIComponent(profilePic)}&username=${encodeURIComponent(username)}&v=${Date.now()}`
+      ? `${baseUrl}/api/favicon?url=${encodeURIComponent(profilePic)}&username=${encodeURIComponent(username)}&v=${Math.floor(Date.now() / 300000)}`
       : `${baseUrl}/favicon-d.svg`
     
     // Extract skills for keywords

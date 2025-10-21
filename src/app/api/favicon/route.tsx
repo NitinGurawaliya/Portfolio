@@ -2,7 +2,7 @@ import { ImageResponse } from 'next/og'
 import { NextRequest } from 'next/server'
 
 export const runtime = 'edge'
-export const revalidate = 60 // Cache for 1 minute
+export const revalidate = 300 // Cache for 5 minutes
 
 export async function GET(request: NextRequest) {
   try {
@@ -27,9 +27,18 @@ export async function GET(request: NextRequest) {
     // Fetch the profile image
     let profileImageData = null
     try {
-      const imageResponse = await fetch(imageUrl)
-      if (imageResponse.ok) {
+      const imageResponse = await fetch(imageUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; DevFolio-Favicon/1.0)',
+        },
+        signal: AbortSignal.timeout(5000), // 5 second timeout
+      })
+      
+      if (imageResponse.ok && imageResponse.headers.get('content-type')?.startsWith('image/')) {
         profileImageData = await imageResponse.arrayBuffer()
+        console.log('Successfully fetched profile image for favicon')
+      } else {
+        console.log('Invalid response for profile image:', imageResponse.status, imageResponse.statusText)
       }
     } catch (err) {
       console.log('Failed to fetch profile image for favicon:', err)
@@ -75,14 +84,20 @@ export async function GET(request: NextRequest) {
       {
         width: 32,
         height: 32,
+        headers: {
+          'Content-Type': 'image/png',
+          'Cache-Control': 'public, max-age=300, must-revalidate',
+        },
       }
     )
   } catch (e: any) {
     console.error('Favicon Generation Error:', e)
+    // Return a proper error response with fallback
     return new Response(null, {
       status: 302,
       headers: {
         'Location': '/favicon-d.svg',
+        'Cache-Control': 'public, max-age=300, must-revalidate',
       },
     })
   }
