@@ -111,10 +111,26 @@ export function PortfolioPreview({ username, previewMode, portfolio }: Portfolio
             }
             /* Light theme spacing override */
             .preview-override .text-center {
-              gap: 16px !important;
+              gap: 8px !important;
             }
             .preview-override .text-center > * {
-              margin-bottom: 16px !important;
+              margin-bottom: 8px !important;
+            }
+            /* Reduce overall spacing in preview */
+            .preview-override section {
+              padding: 1rem 0 !important;
+            }
+            .preview-override .py-12 {
+              padding-top: 1rem !important;
+              padding-bottom: 1rem !important;
+            }
+            .preview-override .py-16 {
+              padding-top: 1.5rem !important;
+              padding-bottom: 1.5rem !important;
+            }
+            .preview-override .py-20 {
+              padding-top: 2rem !important;
+              padding-bottom: 2rem !important;
             }
           `}</style>
           <div 

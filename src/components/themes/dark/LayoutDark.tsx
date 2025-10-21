@@ -93,7 +93,7 @@ export default function LayoutDark({ theme, portfolio }: LayoutDarkProps) {
 
       {/* Hero Section */}
       <motion.section 
-        className="relative z-10 pt-12 md:pt-16 lg:pt-20 pb-8 md:pb-12 lg:pb-16"
+        className="relative z-10 pt-8 md:pt-12 lg:pt-16 pb-6 md:pb-8 lg:pb-10"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 1 }}
@@ -139,7 +139,7 @@ export default function LayoutDark({ theme, portfolio }: LayoutDarkProps) {
                         <motion.button
                           key={social.id}
                           onClick={() => window.open(social.url, '_blank')}
-                          className="group p-3 md:p-4 rounded-xl bg-gray-900/50 border border-orange-500/20 text-orange-400 hover:bg-orange-500/10 hover:border-orange-500/40 hover:text-orange-300 transition-all duration-300 backdrop-blur-sm"
+                          className="group p-2 md:p-3 rounded-xl bg-gray-900/50 border border-orange-500/20 text-orange-400 hover:bg-orange-500/10 hover:border-orange-500/40 hover:text-orange-300 transition-all duration-300 backdrop-blur-sm"
                           whileHover={{ scale: 1.05, y: -2 }}
                           whileTap={{ scale: 0.95 }}
                           initial={{ opacity: 0, scale: 0.8 }}
@@ -147,7 +147,7 @@ export default function LayoutDark({ theme, portfolio }: LayoutDarkProps) {
                           transition={{ duration: 0.3, delay: index * 0.1 }}
                           aria-label={`Visit ${social.platform} profile`}
                         >
-                          <Icon className="h-5 w-5 md:h-6 md:w-6 group-hover:drop-shadow-lg" />
+                          <Icon className="h-4 w-4 md:h-5 md:w-5 group-hover:drop-shadow-lg" />
                         </motion.button>
                       )
                     })}
@@ -155,7 +155,7 @@ export default function LayoutDark({ theme, portfolio }: LayoutDarkProps) {
               </div>
 
               {/* Text Content */}
-              <div className="space-y-4">
+              <div className="space-y-2">
                 <motion.h1 
                   className="text-xl md:text-2xl lg:text-3xl font-bold mb-2 text-white leading-tight"
                   initial={{ y: 30, opacity: 0 }}
@@ -245,7 +245,7 @@ export default function LayoutDark({ theme, portfolio }: LayoutDarkProps) {
       {/* Projects Section */}
       {portfolio.repositories && portfolio.repositories.filter(repo => repo.isVisible).length > 0 && (
         <motion.section 
-          className="relative z-10 py-12 md:py-16 lg:py-20"
+          className="relative z-10 py-6 md:py-8 lg:py-10"
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
@@ -292,9 +292,12 @@ export default function LayoutDark({ theme, portfolio }: LayoutDarkProps) {
                         <h3 className="text-lg sm:text-xl font-bold text-white group-hover:text-orange-300 transition-colors duration-300 mb-2 break-words">
                           {repo.customName || repo.repository.name}
                         </h3>
-                        <p className="text-gray-400 text-sm sm:text-base leading-relaxed mb-3 break-words">
-                          {repo.customDescription || repo.repository.description || "No description available for this project."}
-                        </p>
+                        <div 
+                          className="text-gray-400 text-sm sm:text-base leading-relaxed mb-3 break-words prose prose-sm max-w-none prose-invert"
+                          dangerouslySetInnerHTML={{
+                            __html: repo.customDescription || repo.repository.description || "No description available for this project."
+                          }}
+                        />
                       </div>
                       <motion.button
                         onClick={(e) => {
@@ -329,11 +332,13 @@ export default function LayoutDark({ theme, portfolio }: LayoutDarkProps) {
                           languages = [repo.repository.language]
                         }
                         
-                        return languages.map((lang, idx) => (
-                          <span key={idx} className="text-orange-300 text-xs sm:text-sm font-medium px-2 py-1 bg-orange-500/10 rounded border border-orange-500/30">
-                            {lang}
-                          </span>
-                        ))
+                        return languages
+                          .filter(lang => lang.toLowerCase() !== 'web') // Filter out "Web" tag
+                          .map((lang, idx) => (
+                            <span key={idx} className="text-orange-300 text-xs sm:text-sm font-medium px-2 py-1 bg-orange-500/10 rounded border border-orange-500/30">
+                              {lang}
+                            </span>
+                          ))
                       })()}
                     </div>
                   </div>

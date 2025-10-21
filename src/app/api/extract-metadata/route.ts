@@ -100,7 +100,7 @@ export async function POST(req: NextRequest) {
       description: metadata.description.substring(0, 500), // Limit length
       htmlUrl: metadata.url,
       homepage: metadata.url,
-      language: 'Web Project',
+      language: '',
       stargazersCount: 0,
       forksCount: 0,
       isPrivate: false,

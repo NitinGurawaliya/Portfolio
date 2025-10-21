@@ -93,7 +93,7 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
 
       {/* Hero Section - Centered Layout */}
       <motion.section 
-        className="relative z-10 pt-16 md:pt-20 lg:pt-24 pb-12 md:pb-16 lg:pb-20"
+        className="relative z-10 pt-8 md:pt-12 lg:pt-16 pb-6 md:pb-8 lg:pb-10"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 1 }}
@@ -194,7 +194,7 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
       {/* Projects Section */}
       {portfolio.repositories && portfolio.repositories.filter(repo => repo.isVisible).length > 0 && (
         <motion.section 
-          className="relative z-10 py-12 md:py-16 lg:py-20"
+          className="relative z-10 py-6 md:py-8 lg:py-10"
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
@@ -241,9 +241,12 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
                         <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-2 break-words">
                           {repo.customName || repo.repository.name}
                         </h3>
-                        <p className="text-sm sm:text-base text-gray-600 leading-relaxed break-words">
-                          {repo.customDescription || repo.repository.description || "No description available for this project."}
-                        </p>
+                        <div 
+                          className="text-sm sm:text-base text-gray-600 leading-relaxed break-words prose prose-sm max-w-none"
+                          dangerouslySetInnerHTML={{
+                            __html: repo.customDescription || repo.repository.description || "No description available for this project."
+                          }}
+                        />
                       </div>
                       <motion.button
                         onClick={(e) => {
@@ -278,11 +281,13 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
                           languages = [repo.repository.language]
                         }
                         
-                        return languages.map((lang, idx) => (
-                          <span key={idx} className="text-gray-700 text-xs sm:text-sm font-medium px-2 py-1 bg-gray-200 rounded border border-gray-300">
-                            {lang}
-                          </span>
-                        ))
+                        return languages
+                          .filter(lang => lang.toLowerCase() !== 'web') // Filter out "Web" tag
+                          .map((lang, idx) => (
+                            <span key={idx} className="text-gray-700 text-xs sm:text-sm font-medium px-2 py-1 bg-gray-200 rounded border border-gray-300">
+                              {lang}
+                            </span>
+                          ))
                       })()}
                     </div>
                   </div>
@@ -453,7 +458,7 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
                       viewport={{ once: true }}
                       aria-label={`Visit ${social.platform} profile`}
                     >
-                      <Icon className="h-7 w-7 lg:h-8 lg:w-8" />
+                      <Icon className="h-5 w-5 md:h-6 md:w-6 lg:h-7 lg:w-7" />
                     </motion.button>
                   )
                 })}

@@ -62,6 +62,11 @@ export async function generateMetadata({
     // Generate dynamic OG image URL - Use absolute URL for better social media support
     const ogImageUrl = `${baseUrl}/api/og?username=${encodeURIComponent(username)}&displayName=${encodeURIComponent(displayName)}&jobTitle=${encodeURIComponent(jobTitle)}&bio=${encodeURIComponent(bio.slice(0, 100))}&profilePic=${encodeURIComponent(profilePic)}&v=${Math.floor(Date.now() / 3600000)}`
     
+    // Generate dynamic favicon URL using user's profile picture
+    const faviconUrl = profilePic && profilePic.startsWith('http') 
+      ? `${baseUrl}/api/favicon?url=${encodeURIComponent(profilePic)}&username=${encodeURIComponent(username)}&v=${Date.now()}`
+      : `${baseUrl}/favicon-d.svg`
+    
     // Extract skills for keywords
     const skills = portfolio.skills?.map((s: any) => s.name).join(", ") || ""
     const languages = portfolio.repositories
@@ -123,6 +128,11 @@ export async function generateMetadata({
           "max-image-preview": "large",
           "max-snippet": -1,
         },
+      },
+      icons: {
+        icon: faviconUrl,
+        shortcut: faviconUrl,
+        apple: "/icon-192.png",
       },
     }
   } catch (error) {

@@ -55,12 +55,45 @@ interface Repository {
   updatedAt: string
   pushedAt: string
   isImported?: boolean
+  favicon?: string
+  siteName?: string
+  keywords?: string
+  author?: string
 }
 
 interface SelectedRepository extends Repository {
   deployedUrl?: string
   customName?: string
   customDescription?: string
+}
+
+interface PortfolioRepository {
+  id: number
+  deployedUrl: string
+  customName?: string
+  customDescription?: string
+  isVisible: boolean
+  name: string
+  description: string
+  language: string
+  languages?: string[]
+  stargazersCount: number
+  forksCount: number
+  updatedAt: string
+  htmlUrl: string
+  repository: {
+    id: number
+    name: string
+    description: string
+    htmlUrl: string
+    githubUrl?: string
+    language: string
+    stargazersCount: number
+    forksCount: number
+    isImported?: boolean
+    favicon?: string
+    homepage?: string
+  }
 }
 
 interface ReposSectionProps {
@@ -98,6 +131,7 @@ export function ReposSection({
 }: ReposSectionProps) {
   const [searchTerm, setSearchTerm] = useState("")
   const [deployedUrls, setDeployedUrls] = useState<Record<number, string>>(initialDeployedUrls || {})
+  const [githubUrls, setGithubUrls] = useState<Record<number, string>>(initialGithubUrls || {})
   const [editingRepo, setEditingRepo] = useState<number | null>(null)
   const [editingField, setEditingField] = useState<string | null>(null)
   const [customNames, setCustomNames] = useState<Record<number, string>>(initialCustomNames || {})
@@ -117,8 +151,35 @@ export function ReposSection({
     )
   )
 
-  const selectedRepositories = repositories
+  const selectedRepositories: PortfolioRepository[] = repositories
     .filter(repo => selectedRepos.includes(repo.id))
+    .map(repo => ({
+      id: repo.id,
+      deployedUrl: deployedUrls[repo.id] || '',
+      customName: customNames[repo.id] || '',
+      customDescription: customDescriptions[repo.id] || '',
+      isVisible: true,
+      name: repo.name,
+      description: repo.description,
+      language: repo.language,
+      languages: repo.languages,
+      stargazersCount: repo.stargazersCount,
+      forksCount: repo.forksCount,
+      updatedAt: repo.updatedAt,
+      htmlUrl: repo.htmlUrl,
+      repository: {
+        id: repo.id,
+        name: repo.name,
+        description: repo.description,
+        htmlUrl: repo.htmlUrl,
+        language: repo.language,
+        stargazersCount: repo.stargazersCount,
+        forksCount: repo.forksCount,
+        isImported: repo.isImported,
+        favicon: repo.favicon,
+        homepage: repo.homepage
+      }
+    }))
     .sort((a, b) => {
       const indexA = localRepoOrder.indexOf(a.id)
       const indexB = localRepoOrder.indexOf(b.id)
@@ -127,6 +188,22 @@ export function ReposSection({
       if (indexB === -1) return -1
       return indexA - indexB
     })
+
+  // Auto-fill fields for GitHub projects
+  useEffect(() => {
+    selectedRepositories.forEach(repo => {
+      // If it's a GitHub project and has deployed URL, pre-fill it
+      if (repo.repository.htmlUrl && !deployedUrls[repo.id]) {
+        // Check if repo has homepage URL from GitHub
+        if (repo.repository.homepage) {
+          setDeployedUrls(prev => ({
+            ...prev,
+            [repo.id]: repo.repository.homepage || ''
+          }))
+        }
+      }
+    })
+  }, [selectedRepositories, deployedUrls])
 
   // Debug logging
   useEffect(() => {
@@ -379,6 +456,20 @@ export function ReposSection({
     }
   }
 
+  // GitHub URL validation
+  const isValidGitHubUrl = (url: string) => {
+    const githubRegex = /^https?:\/\/github\.com\/[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+\/?$/
+    return githubRegex.test(url)
+  }
+
+  const handleGithubUrlChange = (repoId: number, url: string) => {
+    setGithubUrls(prev => ({
+      ...prev,
+      [repoId]: url
+    }))
+    onUpdateGithubUrl?.(repoId, url)
+  }
+
   const getLanguageColor = (language: string) => {
     const colors: Record<string, string> = {
       'JavaScript': 'bg-yellow-400',
@@ -471,10 +562,14 @@ export function ReposSection({
         </Card>
       </motion.div>
 
-      {/* Project Input and GitHub Dropdown */}
+      {/* Project Input and GitHub Dropdown - Highlighted */}
       <motion.div variants={itemVariants}>
-        <Card className="bg-white   transition-all duration-300">
-          <CardContent className="pt-0">
+        <Card className="bg-gradient-to-r from-orange-50 to-yellow-50 border-2 border-orange-200 transition-all duration-300">
+          <CardContent className="pt-4">
+            <div className="flex items-center space-x-2 mb-3">
+              <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
+              <span className="text-orange-700 font-semibold text-sm">✨ Add Project by URL</span>
+            </div>
             <div className="flex items-center gap-3 sm:gap-4 flex-wrap sm:flex-nowrap">
               {/* Project URL Input with inline button */}
               <motion.div 
@@ -714,37 +809,35 @@ export function ReposSection({
                                 />
                               </motion.div>
 
-                              {/* Project Description - Inline Editable */}
-                              <motion.div
-                                className="mb-4"
-                                whileHover={{ scale: 1.01 }}
-                                transition={{ duration: 0.2 }}
-                              >
-                                <Input
-                                  value={customDescription}
-                                  onChange={(e) => handleInlineEdit(repo.id, 'description', e.target.value)}
-                                  className="text-gray-700 font-medium border-0 bg-transparent p-0 focus:bg-gray-50 focus:border-2 border-gray-300 focus:p-2 transition-all duration-300 placeholder:text-gray-400"
-                                  placeholder="Project description"
+                              {/* Project Description - Text Display */}
+                              <div className="mb-4">
+                                <div 
+                                  className="text-gray-700 font-medium leading-relaxed prose prose-sm max-w-none"
+                                  dangerouslySetInnerHTML={{
+                                    __html: customDescription || repo.description || "No description available"
+                                  }}
                                 />
-                              </motion.div>
+                              </div>
 
                               {/* Repository Stats & Technologies */}
                               <div className="mb-3">
                                 <div className="flex items-center flex-wrap gap-2 mb-2">
                                   {/* Display all languages from the repository */}
                                   {repo.languages && repo.languages.length > 0 ? (
-                                    repo.languages.map((lang, idx) => (
-                                      <div key={idx} className="flex items-center px-2 py-1 bg-gray-100 rounded-md">
-                                        <motion.div 
-                                          className={`w-2.5 h-2.5 rounded-full ${getLanguageColor(lang)} mr-1.5`}
-                                          animate={{ scale: [1, 1.2, 1] }}
-                                          transition={{ duration: 2, repeat: Infinity }}
-                                        />
-                                        <span className="font-bold text-xs text-gray-700">{lang}</span>
-                                      </div>
-                                    ))
-                                  ) : repo.language && (
-                                    // Fallback to single language if languages array not available
+                                    repo.languages
+                                      .filter(lang => lang.toLowerCase() !== 'web') // Filter out "Web" tag
+                                      .map((lang, idx) => (
+                                        <div key={idx} className="flex items-center px-2 py-1 bg-gray-100 rounded-md">
+                                          <motion.div 
+                                            className={`w-2.5 h-2.5 rounded-full ${getLanguageColor(lang)} mr-1.5`}
+                                            animate={{ scale: [1, 1.2, 1] }}
+                                            transition={{ duration: 2, repeat: Infinity }}
+                                          />
+                                          <span className="font-bold text-xs text-gray-700">{lang}</span>
+                                        </div>
+                                      ))
+                                  ) : repo.language && repo.language.toLowerCase() !== 'web' && (
+                                    // Fallback to single language if languages array not available (excluding "Web")
                                     <div className="flex items-center px-2 py-1 bg-gray-100 rounded-md">
                                       <motion.div 
                                         className={`w-2.5 h-2.5 rounded-full ${getLanguageColor(repo.language)} mr-1.5`}
@@ -782,43 +875,78 @@ export function ReposSection({
                                 </div>
                               </div>
 
-                              {/* Additional Technologies Input */}
-                              <div className="mt-3">
-                                <Label htmlFor={`tech-${repo.id}`} className="text-black font-bold mb-2 block text-sm">
-                                  Other Technologies (comma-separated)
-                                </Label>
-                                <motion.div
-                                  whileHover={{ scale: 1.01 }}
-                                  transition={{ duration: 0.2 }}
-                                >
-                                  <Input
-                                    id={`tech-${repo.id}`}
-                                    value={customTechnologies[repo.id] || ""}
-                                    onChange={(e) => handleInlineEdit(repo.id, 'technologies', e.target.value)}
-                                    placeholder="e.g., React, Node.js, MongoDB"
-                                    className="border-0 bg-transparent p-0 focus:bg-gray-50 focus:border-2 border-gray-300 focus:p-2 transition-all duration-300 font-medium text-sm text-black placeholder:text-gray-400"
-                                  />
-                                </motion.div>
-                              </div>
 
-                              {/* Deployed URL Input - Inline Editable */}
-                              <div className="mt-3">
-                                <Label htmlFor={`deployed-${repo.id}`} className="text-black font-bold mb-2 block text-sm">
-                                  Deployed URL (optional)
-                                </Label>
-                                <motion.div
-                                  whileHover={{ scale: 1.01 }}
-                                  transition={{ duration: 0.2 }}
-                                >
-                                  <Input
-                                    id={`deployed-${repo.id}`}
-                                    value={deployedUrls[repo.id] || ""}
-                                    onChange={(e) => handleInlineEdit(repo.id, 'deployedUrl', e.target.value)}
-                                    placeholder="Auto-filled from GitHub or add custom URL"
-                                    className="border-0 bg-transparent p-0 focus:bg-gray-50 focus:border-2 border-gray-300 focus:p-2 transition-all duration-300 font-medium text-sm text-black placeholder:text-gray-400"
-                                  />
-                                </motion.div>
-                              </div>
+                              {/* Deployed URL Input - Only for GitHub projects */}
+                              {repo.repository.htmlUrl && (
+                                <div className="mt-3">
+                                  <Label htmlFor={`deployed-${repo.id}`} className="text-black font-bold mb-2 block text-sm">
+                                    Deployed URL (optional)
+                                  </Label>
+                                  <motion.div
+                                    whileHover={{ scale: 1.01 }}
+                                    transition={{ duration: 0.2 }}
+                                  >
+                                    <Input
+                                      id={`deployed-${repo.id}`}
+                                      value={deployedUrls[repo.id] || ""}
+                                      onChange={(e) => handleInlineEdit(repo.id, 'deployedUrl', e.target.value)}
+                                      placeholder={repo.repository.homepage ? "Auto-filled from GitHub" : "Add your deployed URL"}
+                                      className="border-0 bg-transparent p-0 focus:bg-gray-50 focus:border-2 border-gray-300 focus:p-2 transition-all duration-300 font-medium text-sm text-black placeholder:text-gray-400"
+                                    />
+                                  </motion.div>
+                                </div>
+                              )}
+
+                              {/* GitHub URL Input - Only for URL projects */}
+                              {!repo.repository.htmlUrl && (
+                                <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                                  <div className="flex items-center gap-2 mb-3">
+                                    <Github className="h-5 w-5 text-blue-600" />
+                                    <Label htmlFor={`github-${repo.id}`} className="text-blue-700 font-bold text-sm">
+                                      GitHub Repository (optional)
+                                    </Label>
+                                  </div>
+                                  <div className="relative">
+                                    <Input
+                                      id={`github-${repo.id}`}
+                                      value={githubUrls?.[repo.id] || ""}
+                                      onChange={(e) => handleGithubUrlChange(repo.id, e.target.value)}
+                                      placeholder="https://github.com/username/repository"
+                                      className={`border rounded-md px-3 py-2 pr-10 text-sm text-gray-700 placeholder:text-gray-400 focus:ring-2 transition-all duration-200 ${
+                                        githubUrls?.[repo.id] && !isValidGitHubUrl(githubUrls[repo.id])
+                                          ? 'border-red-300 focus:ring-red-500 focus:border-red-500 bg-red-50'
+                                          : 'border-blue-300 focus:ring-blue-500 focus:border-blue-500 bg-white'
+                                      }`}
+                                    />
+                                    {githubUrls?.[repo.id] && isValidGitHubUrl(githubUrls[repo.id]) && (
+                                      <motion.div
+                                        initial={{ opacity: 0, scale: 0.8 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        className="absolute right-2 top-1/2 transform -translate-y-1/2"
+                                      >
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => window.open(githubUrls[repo.id], '_blank')}
+                                          className="h-6 w-6 p-0 text-gray-600 hover:text-gray-800 hover:bg-gray-100"
+                                        >
+                                          <ExternalLink className="h-3 w-3" />
+                                        </Button>
+                                      </motion.div>
+                                    )}
+                                  </div>
+                                  {githubUrls?.[repo.id] && !isValidGitHubUrl(githubUrls[repo.id]) ? (
+                                    <p className="text-xs text-red-500 mt-2 flex items-center gap-1">
+                                      <span>⚠️</span>
+                                      Please enter a valid GitHub repository URL
+                                    </p>
+                                  ) : (
+                                    <p className="text-xs text-blue-600 mt-2">
+                                      💡 Add GitHub repository URL to show source code link in your portfolio
+                                    </p>
+                                  )}
+                                </div>
+                              )}
                             </div>
                             
                             {/* Action Buttons */}

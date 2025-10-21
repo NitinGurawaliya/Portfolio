@@ -121,7 +121,7 @@ export const formatImportedProjects = (portfolioRepos: any[]): Repository[] => {
         description: repo.repository.description || "",
         htmlUrl: repo.repository.htmlUrl,
         homepage: repo.deployedUrl || "",
-        language: repo.repository.language || "Web Project",
+        language: repo.repository.language || "",
         languages: languages,
         stargazersCount: repo.repository.stargazersCount || 0,
         forksCount: repo.repository.forksCount || 0,
