@@ -2,25 +2,30 @@ import { ImageResponse } from 'next/og'
 import { NextRequest } from 'next/server'
 
 export const runtime = 'edge'
-
-// Cache the OG images for better performance
-export const revalidate = 3600 // Revalidate every hour
+export const revalidate = 60 // Revalidate every minute
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
-    const username = searchParams.get('username')
+    
+    // Get parameters from URL
+    const username = searchParams.get('username') || 'developer'
     const displayName = searchParams.get('displayName') || username
     const jobTitle = searchParams.get('jobTitle') || 'Developer'
-    const bio = searchParams.get('bio') || `Check out ${displayName}'s developer portfolio`
-    const profilePic = searchParams.get('profilePic') || 'https://github.com/github.png'
-    
-    // Debug logging
-    console.log('OG Image Request:', { username, displayName, jobTitle, bio, profilePic })
-    
-    // Validate required parameters
-    if (!username) {
-      return new Response('Missing username parameter', { status: 400 })
+    const bio = searchParams.get('bio') || 'Check out my developer portfolio'
+    const profilePic = searchParams.get('profilePic') || ''
+
+    console.log('OG Portfolio Image Request:', { username, displayName, jobTitle })
+
+    // Fetch profile image if provided
+    let profileImageData = null
+    if (profilePic && profilePic.startsWith('http')) {
+      try {
+        const imageResponse = await fetch(profilePic)
+        profileImageData = await imageResponse.arrayBuffer()
+      } catch (err) {
+        console.log('Failed to fetch profile image:', err)
+      }
     }
 
     return new ImageResponse(
@@ -31,14 +36,13 @@ export async function GET(request: NextRequest) {
             width: '100%',
             display: 'flex',
             flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
             backgroundColor: '#000000',
-            backgroundImage: 'linear-gradient(45deg, #000000 0%, #1a1a1a 50%, #000000 100%)',
+            backgroundImage: 'linear-gradient(135deg, #000000 0%, #0a0a0a 50%, #000000 100%)',
             fontFamily: 'Inter, sans-serif',
+            position: 'relative',
           }}
         >
-          {/* Background Pattern */}
+          {/* Background Grid Pattern */}
           <div
             style={{
               position: 'absolute',
@@ -47,162 +51,21 @@ export async function GET(request: NextRequest) {
               right: 0,
               bottom: 0,
               backgroundImage: `
-                radial-gradient(circle at 20% 20%, rgba(249, 115, 22, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 80% 80%, rgba(249, 115, 22, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 40% 60%, rgba(249, 115, 22, 0.05) 0%, transparent 50%)
+                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                radial-gradient(circle at 20% 30%, rgba(249, 115, 22, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(249, 115, 22, 0.06) 0%, transparent 50%)
               `,
+              backgroundSize: '40px 40px, 40px 40px, 100% 100%, 100% 100%',
             }}
           />
 
-          {/* Main Content */}
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '40px',
-              maxWidth: '900px',
-              textAlign: 'center',
-            }}
-          >
-            {/* Profile Picture with DevFolio Badge */}
-            <div
-              style={{
-                position: 'relative',
-                marginBottom: '30px',
-              }}
-            >
-              <div
-                style={{
-                  width: '120px',
-                  height: '120px',
-                  borderRadius: '60px',
-                  border: '4px solid #f97316',
-                  backgroundImage: `url(${profilePic})`,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center',
-                  backgroundColor: '#f97316', // Fallback color
-                }}
-              />
-              {/* DevFolio Badge */}
-              <div
-                style={{
-                  position: 'absolute',
-                  bottom: '-8px',
-                  right: '-8px',
-                  width: '40px',
-                  height: '40px',
-                  backgroundColor: '#f97316',
-                  borderRadius: '8px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '16px',
-                  fontWeight: 'bold',
-                  color: '#000000',
-                  border: '3px solid #000000',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-                }}
-              >
-                D
-              </div>
-            </div>
-
-            {/* Name */}
-            <h1
-              style={{
-                fontSize: '48px',
-                fontWeight: 'bold',
-                color: '#ffffff',
-                margin: '0 0 10px 0',
-                lineHeight: 1.2,
-              }}
-            >
-              {displayName}
-            </h1>
-
-            {/* Job Title */}
-            <div
-              style={{
-                fontSize: '24px',
-                color: '#f97316',
-                fontWeight: '600',
-                marginBottom: '20px',
-              }}
-            >
-              {jobTitle}
-            </div>
-
-            {/* Bio */}
-            <div
-              style={{
-                fontSize: '20px',
-                color: '#e5e5e5',
-                lineHeight: 1.4,
-                marginBottom: '40px',
-                maxWidth: '600px',
-              }}
-            >
-              {bio}
-            </div>
-
-            {/* DevFolio Branding */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '16px',
-                padding: '16px 32px',
-                backgroundColor: 'rgba(249, 115, 22, 0.15)',
-                border: '2px solid rgba(249, 115, 22, 0.4)',
-                borderRadius: '12px',
-                marginBottom: '20px',
-              }}
-            >
-              <div
-                style={{
-                  width: '32px',
-                  height: '32px',
-                  backgroundColor: '#f97316',
-                  borderRadius: '8px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '18px',
-                  fontWeight: 'bold',
-                  color: '#000000',
-                }}
-              >
-                D
-              </div>
-              <div
-                style={{
-                  fontSize: '20px',
-                  fontWeight: 'bold',
-                  color: '#f97316',
-                }}
-              >
-                DevFolio
-              </div>
-              <div
-                style={{
-                  fontSize: '16px',
-                  color: '#e5e5e5',
-                  fontWeight: '500',
-                }}
-              >
-                Portfolio Builder
-              </div>
-            </div>
-          </div>
-
-          {/* Bottom Right Logo */}
+          {/* Header - DevFolio Branding */}
           <div
             style={{
               position: 'absolute',
-              bottom: '30px',
-              right: '40px',
+              top: '40px',
+              left: '50px',
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
@@ -210,29 +73,191 @@ export async function GET(request: NextRequest) {
           >
             <div
               style={{
-                width: '32px',
-                height: '32px',
-                backgroundColor: '#f97316',
-                borderRadius: '6px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '18px',
+                fontSize: '20px',
                 fontWeight: 'bold',
-                color: '#000000',
+                background: 'linear-gradient(to right, #ea580c, #c2410c)',
+                backgroundClip: 'text',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
               }}
             >
-              D
+              DevFolio
             </div>
+          </div>
+
+          {/* Main Content Container */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '100%',
+              height: '100%',
+              padding: '80px 60px',
+              position: 'relative',
+              zIndex: 1,
+            }}
+          >
+            {/* Profile Card */}
             <div
               style={{
-                fontSize: '16px',
-                color: '#a3a3a3',
-                fontWeight: '500',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '50px',
+                backgroundColor: 'rgba(255, 255, 255, 0.03)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                borderRadius: '24px',
+                padding: '50px 60px',
+                maxWidth: '1000px',
+                backdropFilter: 'blur(10px)',
               }}
             >
-              devfolio.cc
+              {/* Profile Image */}
+              <div
+                style={{
+                  display: 'flex',
+                  flexShrink: 0,
+                }}
+              >
+                {profileImageData ? (
+                  <img
+                    // @ts-ignore
+                    src={profileImageData}
+                    alt={displayName}
+                    style={{
+                      width: '180px',
+                      height: '180px',
+                      borderRadius: '90px',
+                      border: '4px solid rgba(249, 115, 22, 0.5)',
+                      boxShadow: '0 0 40px rgba(249, 115, 22, 0.3)',
+                      objectFit: 'cover',
+                    }}
+                  />
+                ) : (
+                  <div
+                    style={{
+                      width: '180px',
+                      height: '180px',
+                      borderRadius: '90px',
+                      background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '72px',
+                      fontWeight: 'bold',
+                      color: '#000000',
+                      border: '4px solid rgba(249, 115, 22, 0.5)',
+                      boxShadow: '0 0 40px rgba(249, 115, 22, 0.3)',
+                    }}
+                  >
+                    {displayName.charAt(0).toUpperCase()}
+                  </div>
+                )}
+              </div>
+
+              {/* Profile Info */}
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '12px',
+                  flex: 1,
+                }}
+              >
+                {/* Display Name */}
+                <div
+                  style={{
+                    fontSize: '52px',
+                    fontWeight: 'bold',
+                    color: '#ffffff',
+                    lineHeight: 1.1,
+                    letterSpacing: '-0.02em',
+                  }}
+                >
+                  {displayName}
+                </div>
+
+                {/* Job Title */}
+                <div
+                  style={{
+                    fontSize: '28px',
+                    fontWeight: '500',
+                    background: 'linear-gradient(to right, #f97316, #ea580c)',
+                    backgroundClip: 'text',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    marginBottom: '8px',
+                  }}
+                >
+                  {jobTitle}
+                </div>
+
+                {/* Bio */}
+                <div
+                  style={{
+                    fontSize: '20px',
+                    color: '#a3a3a3',
+                    lineHeight: 1.4,
+                    display: '-webkit-box',
+                    WebkitLineClamp: 3,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden',
+                  }}
+                >
+                  {bio}
+                </div>
+
+                {/* Username Badge */}
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    marginTop: '8px',
+                  }}
+                >
+                  <div
+                    style={{
+                      padding: '8px 16px',
+                      backgroundColor: 'rgba(249, 115, 22, 0.1)',
+                      border: '1px solid rgba(249, 115, 22, 0.3)',
+                      borderRadius: '20px',
+                      fontSize: '16px',
+                      color: '#f97316',
+                      fontWeight: '500',
+                    }}
+                  >
+                    devfolio.cc/{username}
+                  </div>
+                </div>
+              </div>
             </div>
+          </div>
+
+          {/* Bottom Right - Powered by */}
+          <div
+            style={{
+              position: 'absolute',
+              bottom: '40px',
+              right: '50px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              fontSize: '16px',
+              color: '#737373',
+            }}
+          >
+            <span>Powered by</span>
+            <span
+              style={{
+                fontWeight: 'bold',
+                background: 'linear-gradient(to right, #ea580c, #c2410c)',
+                backgroundClip: 'text',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+              }}
+            >
+              DevFolio
+            </span>
           </div>
         </div>
       ),
@@ -242,7 +267,7 @@ export async function GET(request: NextRequest) {
       }
     )
   } catch (e: any) {
-    console.error('OG Image Generation Error:', e)
+    console.error('OG Portfolio Image Generation Error:', e)
     return new Response(`Failed to generate the image: ${e.message}`, {
       status: 500,
       headers: {
