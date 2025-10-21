@@ -92,7 +92,7 @@ export default function PublicPortfolioPage() {
   const Layout = getLayoutComponent(theme.layout)
 
   return (
-    <>
+    <div className="scroll-smooth" style={{ scrollBehavior: 'smooth' }}>
       {/* Structured Data for SEO */}
         <StructuredData
           type="Person"
@@ -115,6 +115,6 @@ export default function PublicPortfolioPage() {
       <Suspense fallback={<div className="min-h-screen bg-black flex items-center justify-center"><DevFolioLoader size="lg" /></div>}>
         <Layout theme={theme} portfolio={portfolio} />
       </Suspense>
-    </>
+    </div>
   )
 }

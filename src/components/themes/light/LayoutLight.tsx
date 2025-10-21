@@ -83,10 +83,11 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
 
   return (
     <div 
-      className="min-h-screen"
+      className="min-h-screen scroll-smooth"
       style={{ 
         background: theme.colors.background,
-        color: theme.colors.text 
+        color: theme.colors.text,
+        scrollBehavior: 'smooth'
       }}
     >
       {/* Light Background */}
@@ -302,7 +303,7 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
             </motion.h2>
             
             {/* Manual Scroll Skills Grid */}
-            <div className="overflow-x-auto scrollbar-hide">
+            <div className="overflow-x-auto scrollbar-hide scroll-smooth" style={{ scrollBehavior: 'smooth' }}>
               <div className="flex gap-2 xs:gap-3 sm:gap-4 py-1 xs:py-2 min-w-max">
                 {portfolio.skills.map((skill, index) => (
                   <motion.div

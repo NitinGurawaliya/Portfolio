@@ -233,7 +233,7 @@ export function GitHubActivity({ username, theme }: GitHubActivityProps) {
             </div>
             
             {/* Contribution Graph - Mobile Responsive */}
-            <div className="overflow-x-auto scrollbar-hide">
+            <div className="overflow-x-auto scrollbar-hide scroll-smooth" style={{ scrollBehavior: 'smooth' }}>
               <div className="flex gap-0.5 sm:gap-1 min-w-max">
                 {/* Days of week labels */}
                 <div className="flex flex-col gap-0.5 sm:gap-1 mr-1 sm:mr-2">
