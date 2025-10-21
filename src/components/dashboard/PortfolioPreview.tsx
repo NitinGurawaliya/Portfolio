@@ -41,7 +41,7 @@ export function PortfolioPreview({ username, previewMode, portfolio }: Portfolio
   }
 
   // Get the selected theme or default to dark
-  const themeKey = (portfolio.selectedTheme || 'dark') as 'dark' | 'light'
+  const themeKey = (portfolio.selectedTheme || 'light') as 'dark' | 'light'
   const theme = getTheme(themeKey)
   const LayoutComponent = getLayoutComponent(theme.layout as any)
 

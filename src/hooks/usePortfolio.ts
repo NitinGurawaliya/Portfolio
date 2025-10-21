@@ -27,7 +27,7 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
   const [customNames, setCustomNames] = useState<Record<number, string>>({})
   const [customDescriptions, setCustomDescriptions] = useState<Record<number, string>>({})
   const [githubUrls, setGithubUrls] = useState<Record<number, string>>({})
-  const [selectedTheme, setSelectedTheme] = useState<string>('dark')
+  const [selectedTheme, setSelectedTheme] = useState<string>('light')
   const [repoOrder, setRepoOrder] = useState<number[]>([])
   
   const [originalData, setOriginalData] = useState<PortfolioState | null>(null)
@@ -115,7 +115,7 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
       customDescriptions: currentData.customDescriptions,
       githubUrls: currentData.githubUrls,
       importedProjects: [...(currentData.importedProjects || [])].sort((a, b) => a.id - b.id),
-      selectedTheme: currentData.selectedTheme || 'dark',
+      selectedTheme: currentData.selectedTheme || 'light',
       repoOrder: currentData.repoOrder || []
     }))
     
@@ -134,7 +134,7 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
       customDescriptions: originalData.customDescriptions,
       githubUrls: originalData.githubUrls,
       importedProjects: normalizedOriginalImportedProjects.sort((a, b) => a.id - b.id),
-      selectedTheme: originalData.selectedTheme || 'dark',
+      selectedTheme: originalData.selectedTheme || 'light',
       repoOrder: originalData.repoOrder || []
     }))
     
@@ -313,7 +313,7 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
 
         // Set original data after loading
         setTimeout(() => {
-          const currentSelectedTheme = portfolio.selectedTheme || 'dark'
+          const currentSelectedTheme = portfolio.selectedTheme || 'light'
           setSelectedTheme(currentSelectedTheme)
           
           const originalDataToSet = normalizeData(createOrderedData({
@@ -356,7 +356,7 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
         // No existing portfolio
         setTimeout(() => {
           const currentPortfolioData = initialData || portfolioData
-          const currentTheme = selectedTheme || 'dark'
+          const currentTheme = selectedTheme || 'light'
           setSelectedTheme(currentTheme)
           
           const initialDataToSet = normalizeData(createOrderedData({
@@ -389,7 +389,7 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
       // Fallback
       setTimeout(() => {
         const currentPortfolioData = initialData || portfolioData
-        const currentTheme = selectedTheme || 'dark'
+        const currentTheme = selectedTheme || 'light'
         setSelectedTheme(currentTheme)
         
         const fallbackData = normalizeData(createOrderedData({

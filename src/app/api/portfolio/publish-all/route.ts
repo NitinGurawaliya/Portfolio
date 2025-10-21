@@ -214,7 +214,7 @@ export async function POST(req: NextRequest) {
           bio: portfolioData.bio,
           profilePic: portfolioData.profilePic,
           customUsername: portfolioData.customUsername,
-          selectedTheme: selectedTheme || 'dark',
+          selectedTheme: selectedTheme || 'light',
           isPublished: true,
           updatedAt: new Date(),
         },
@@ -225,7 +225,7 @@ export async function POST(req: NextRequest) {
           bio: portfolioData.bio,
           profilePic: portfolioData.profilePic,
           customUsername: portfolioData.customUsername,
-          selectedTheme: selectedTheme || 'dark',
+          selectedTheme: selectedTheme || 'light',
           isPublished: true,
         },
       })

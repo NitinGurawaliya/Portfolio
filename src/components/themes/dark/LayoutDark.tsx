@@ -5,6 +5,7 @@ import { SiGithub, SiX, SiLinkedin, SiInstagram, SiFacebook, SiYoutube, SiGmail,
 import { Globe } from "lucide-react"
 import { SkillIcon } from "@/lib/skill-icons"
 import { useState, useEffect } from "react"
+import { GitHubActivity } from "@/components/GitHubActivity"
 
 interface ThemeConfig {
   name: string
@@ -393,6 +394,14 @@ export default function LayoutDark({ theme, portfolio }: LayoutDarkProps) {
             </div>
           </div>
         </motion.section>
+      )}
+
+      {/* GitHub Activity Section */}
+      {portfolio.user?.githubUsername && (
+        <GitHubActivity 
+          username={portfolio.user.githubUsername} 
+          theme="dark" 
+        />
       )}
 
       {/* Get in Touch Section */}

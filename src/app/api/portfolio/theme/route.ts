@@ -132,7 +132,7 @@ export async function GET(request: NextRequest) {
     })
 
     return NextResponse.json({
-      currentTheme: portfolio?.selectedTheme || 'dark',
+      currentTheme: portfolio?.selectedTheme || 'light',
       themeConfig: portfolio?.themeConfig,
       availableThemes: THEMES
     })

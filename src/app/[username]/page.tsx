@@ -87,7 +87,7 @@ export default function PublicPortfolioPage() {
   }
 
   // Dynamic theme rendering
-  const themeKey = (portfolio.selectedTheme as ThemeKey) || 'dark'
+  const themeKey = (portfolio.selectedTheme as ThemeKey) || 'light'
   const theme = getTheme(themeKey)
   const Layout = getLayoutComponent(theme.layout)
 

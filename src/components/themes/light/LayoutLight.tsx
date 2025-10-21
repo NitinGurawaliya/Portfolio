@@ -5,6 +5,7 @@ import { SiGithub, SiX, SiLinkedin, SiInstagram, SiFacebook, SiYoutube, SiGmail,
 import { Globe } from "lucide-react"
 import { SkillIcon } from "@/lib/skill-icons"
 import { useState, useEffect } from "react"
+import { GitHubActivity } from "@/components/GitHubActivity"
 
 interface ThemeConfig {
   name: string
@@ -93,22 +94,22 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
 
       {/* Hero Section - Centered Layout */}
       <motion.section 
-        className="relative z-10 pt-8 md:pt-12 lg:pt-16 pb-6 md:pb-8 lg:pb-10"
+        className="relative z-10 pt-6 md:pt-8 lg:pt-10 pb-2 md:pb-3 lg:pb-4"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 1 }}
         aria-label="Profile introduction"
       >
-        <div className="mx-auto px-4 sm:px-6 lg:px-8 max-w-4xl">
-          <div className="text-center space-y-4">
+        <div className="mx-auto px-2 sm:px-4 md:px-6 lg:px-8 max-w-6xl">
+          <div className="text-left space-y-2 sm:space-y-3 lg:space-y-4">
             {/* Profile Picture */}
             <motion.div
-              className="flex justify-center"
+              className="flex justify-start"
               initial={{ scale: 0, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ duration: 0.8, delay: 0.2 }}
             >
-              <Avatar className="w-32 h-32 md:w-36 md:h-36 lg:w-40 lg:h-40 border-4 border-cyan-400/30 bg-white shadow-2xl">
+              <Avatar className="w-16 h-16 xs:w-20 xs:h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 lg:w-32 lg:h-32 xl:w-36 xl:h-36 border-2 sm:border-4 border-cyan-400/30 bg-white shadow-lg sm:shadow-2xl">
                 <AvatarImage 
                   src={portfolio.profilePic} 
                   className="object-cover" 
@@ -122,7 +123,7 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
 
             {/* Name */}
             <motion.h1 
-              className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-800"
+              className="text-lg xs:text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold text-gray-800"
               initial={{ y: 30, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.8, delay: 0.4 }}
@@ -133,7 +134,7 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
             {/* Job Title */}
             {portfolio.jobTitle && (
               <motion.p 
-                className="text-xl md:text-2xl lg:text-3xl text-purple-600 font-semibold"
+                className="text-sm xs:text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl text-purple-600 font-semibold"
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.8, delay: 0.5 }}
@@ -143,8 +144,8 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
             )}
 
             {/* Bio */}
-            <motion.p 
-              className="text-lg md:text-xl text-gray-600 leading-relaxed max-w-2xl mx-auto"
+              <motion.p 
+                className="text-xs xs:text-sm sm:text-base md:text-lg lg:text-xl text-gray-600 leading-relaxed max-w-xs xs:max-w-sm sm:max-w-md md:max-w-lg lg:max-w-2xl xl:max-w-3xl"
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.8, delay: 0.6 }}
@@ -159,51 +160,186 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
               )}
             </motion.p>
 
-            {/* Social Icons - Centered */}
-            <motion.div 
-              className="flex justify-center gap-6"
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.8, delay: 0.7 }}
-            >
-              {portfolio.socials && portfolio.socials
-                .filter(social => social.isPinned)
-                .map((social, index) => {
-                  const Icon = getSocialIcon(social.platform)
-                  return (
-                    <motion.button
-                      key={social.id}
-                      onClick={() => window.open(social.url, '_blank')}
-                      className="group p-4 rounded-full bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all duration-300 shadow-lg"
-                      whileHover={{ scale: 1.1, y: -2 }}
-                      whileTap={{ scale: 0.95 }}
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ duration: 0.3, delay: 0.8 + index * 0.1 }}
-                      aria-label={`Visit ${social.platform} profile`}
-                    >
-                      <Icon className="h-6 w-6 group-hover:drop-shadow-lg" />
-                    </motion.button>
-                  )
-                })}
-            </motion.div>
           </div>
         </div>
       </motion.section>
 
+      {/* Social Icons Section - Above Skills */}
+      {portfolio.socials && portfolio.socials.length > 0 && (
+        <motion.section 
+          className="relative z-10 py-2 md:py-3"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          viewport={{ once: true }}
+          aria-label="Social media links"
+        >
+          <div className="mx-auto px-2 sm:px-4 md:px-6 lg:px-8 max-w-screen-xl">
+            <div className="flex justify-start gap-2 xs:gap-3 sm:gap-4 md:gap-6 flex-wrap">
+              {portfolio.socials
+                .filter(social => social.username && social.username.trim())
+                .map((social, index) => {
+                  const Icon = getSocialIcon(social.platform)
+                  
+                  const platformStyles = {
+                    github: { 
+                      bg: 'bg-white', 
+                      border: 'border-gray-200', 
+                      text: 'text-gray-800', 
+                      hover: 'hover:bg-gray-50 hover:text-gray-900 hover:border-gray-300',
+                      shadow: 'hover:shadow-md'
+                    },
+                    email: { 
+                      bg: 'bg-white', 
+                      border: 'border-gray-200', 
+                      text: 'text-gray-800', 
+                      hover: 'hover:bg-gray-50 hover:text-gray-900 hover:border-gray-300',
+                      shadow: 'hover:shadow-md'
+                    },
+                    twitter: { 
+                      bg: 'bg-white', 
+                      border: 'border-gray-200', 
+                      text: 'text-gray-800', 
+                      hover: 'hover:bg-gray-50 hover:text-gray-900 hover:border-gray-300',
+                      shadow: 'hover:shadow-md'
+                    },
+                    x: { 
+                      bg: 'bg-white', 
+                      border: 'border-gray-200', 
+                      text: 'text-gray-800', 
+                      hover: 'hover:bg-gray-50 hover:text-gray-900 hover:border-gray-300',
+                      shadow: 'hover:shadow-xl hover:shadow-gray-700/40'
+                    },
+                    instagram: { 
+                      bg: 'bg-white', 
+                      border: 'border-gray-200', 
+                      text: 'text-gray-800', 
+                      hover: 'hover:bg-gray-50 hover:text-gray-900 hover:border-gray-300',
+                      shadow: 'hover:shadow-xl hover:shadow-purple-500/40'
+                    },
+                    linkedin: { 
+                      bg: 'bg-white', 
+                      border: 'border-gray-200', 
+                      text: 'text-gray-800', 
+                      hover: 'hover:bg-gray-50 hover:text-gray-900 hover:border-gray-300',
+                      shadow: 'hover:shadow-xl hover:shadow-blue-600/40'
+                    },
+                    facebook: { 
+                      bg: 'bg-white', 
+                      border: 'border-gray-200', 
+                      text: 'text-gray-800', 
+                      hover: 'hover:bg-gray-50 hover:text-gray-900 hover:border-gray-300',
+                      shadow: 'hover:shadow-xl hover:shadow-blue-500/40'
+                    },
+                    youtube: { 
+                      bg: 'bg-white', 
+                      border: 'border-gray-200', 
+                      text: 'text-gray-800', 
+                      hover: 'hover:bg-gray-50 hover:text-gray-900 hover:border-gray-300',
+                      shadow: 'hover:shadow-xl hover:shadow-red-500/40'
+                    },
+                    stackoverflow: { 
+                      bg: 'bg-white', 
+                      border: 'border-gray-200', 
+                      text: 'text-gray-800', 
+                      hover: 'hover:bg-gray-50 hover:text-gray-900 hover:border-gray-300',
+                      shadow: 'hover:shadow-xl hover:shadow-orange-500/40'
+                    },
+                    reddit: { 
+                      bg: 'bg-white', 
+                      border: 'border-gray-200', 
+                      text: 'text-gray-800', 
+                      hover: 'hover:bg-orange-600/90 hover:text-white hover:border-orange-300/70',
+                      shadow: 'hover:shadow-xl hover:shadow-orange-400/40'
+                    }
+                  }
+                  
+                  const style = platformStyles[social.platform as keyof typeof platformStyles] || platformStyles.github
+                  const rotations = [5, -5, 3, -3, 7, -7, 4, -4]
+                  const rotation = rotations[index % rotations.length]
+                  
+                  return (
+                    <motion.button
+                      key={social.id}
+                      onClick={() => window.open(social.url, '_blank')}
+                      className={`p-2 xs:p-3 sm:p-4 rounded-lg ${style.bg} border ${style.border} ${style.text} ${style.hover} ${style.shadow} transition-all duration-300 shadow-sm`}
+                      whileHover={{ scale: 1.1, y: -3, rotate: rotation }}
+                      whileTap={{ scale: 0.95 }}
+                      initial={{ opacity: 0, y: 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5, delay: index * 0.1 }}
+                      viewport={{ once: true }}
+                      aria-label={`Visit ${social.platform} profile`}
+                    >
+                      <Icon className="h-4 w-4 xs:h-5 xs:w-5 sm:h-6 sm:w-6 md:h-7 md:w-7" />
+                    </motion.button>
+                  )
+                })}
+            </div>
+          </div>
+        </motion.section>
+      )}
+
+      {/* Skills Section - Auto Scrolling */}
+      {portfolio.skills && portfolio.skills.length > 0 && (
+        <motion.section 
+          className="relative z-10 py-2 md:py-3"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          viewport={{ once: true }}
+          aria-label="Technical skills"
+        >
+          <div className="mx-auto px-2 sm:px-4 md:px-6 lg:px-8 max-w-screen-xl">
+            <motion.h2 
+              className="text-sm xs:text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl font-bold mb-2 xs:mb-3 sm:mb-4 md:mb-6 text-gray-900 text-left"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              viewport={{ once: true }}
+            >
+              Skills I've Learned
+            </motion.h2>
+            
+            {/* Manual Scroll Skills Grid */}
+            <div className="overflow-x-auto scrollbar-hide">
+              <div className="flex gap-2 xs:gap-3 sm:gap-4 py-1 xs:py-2 min-w-max">
+                {portfolio.skills.map((skill, index) => (
+                  <motion.div
+                    key={skill.id}
+                    className="group relative flex-shrink-0"
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: index * 0.05 }}
+                    viewport={{ once: true }}
+                    whileHover={{ scale: 1.05, y: -2 }}
+                    whileTap={{ scale: 0.95 }}
+                    aria-label={`${skill.name} skill`}
+                  >
+                    <div className="bg-black text-white px-2 xs:px-3 sm:px-4 py-1 xs:py-1.5 sm:py-2 rounded-md xs:rounded-lg font-medium text-xs xs:text-sm hover:bg-gray-800 transition-all duration-300 cursor-pointer border border-gray-800 hover:border-gray-700 whitespace-nowrap">
+                      {skill.name}
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </motion.section>
+      )}
+
       {/* Projects Section */}
       {portfolio.repositories && portfolio.repositories.filter(repo => repo.isVisible).length > 0 && (
         <motion.section 
-          className="relative z-10 py-6 md:py-8 lg:py-10"
+          className="relative z-10 py-3 md:py-4 lg:py-5"
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
           viewport={{ once: true }}
           aria-label="Projects showcase"
         >
-          <div className="mx-auto px-4 sm:px-6 lg:px-8 max-w-screen-xl">
+          <div className="mx-auto px-2 sm:px-4 md:px-6 lg:px-8 max-w-screen-xl">
             <motion.h2 
-              className="text-xl md:text-2xl lg:text-3xl font-bold mb-6 md:mb-8 text-gray-900 text-center"
+              className="text-sm xs:text-base sm:text-lg md:text-xl lg:text-2xl font-bold mb-2 xs:mb-3 sm:mb-4 md:mb-6 text-gray-900 text-left"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
@@ -211,7 +347,7 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
             >
               Projects I've Made
             </motion.h2>
-            <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:gap-8 max-w-4xl mx-auto px-4">
+            <div className="grid grid-cols-1 gap-2 xs:gap-3 sm:gap-4 md:gap-6 max-w-4xl mx-auto px-2 xs:px-4">
               {portfolio.repositories
                 .filter(repo => repo.isVisible)
                 .map((repo, index) => (
@@ -235,14 +371,14 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
                   tabIndex={0}
                   aria-label={`View ${repo.repository.name} project`}
                 >
-                  <div className="relative bg-gray-100 rounded-lg p-4 sm:p-6 hover:bg-gray-200 transition-all duration-300 border border-gray-200 w-full">
+                  <div className="relative bg-gray-100 rounded-lg p-2 xs:p-3 sm:p-4 md:p-6 hover:bg-gray-200 transition-all duration-300 border border-gray-200 w-full">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-2 break-words">
+                        <h3 className="text-sm xs:text-base sm:text-lg md:text-xl font-bold text-gray-800 mb-1 xs:mb-2 break-words">
                           {repo.customName || repo.repository.name}
                         </h3>
                         <div 
-                          className="text-sm sm:text-base text-gray-600 leading-relaxed break-words prose prose-sm max-w-none"
+                          className="text-xs xs:text-sm sm:text-base text-gray-600 leading-relaxed break-words prose prose-sm max-w-none"
                           dangerouslySetInnerHTML={{
                             __html: repo.customDescription || repo.repository.description || "No description available for this project."
                           }}
@@ -259,7 +395,7 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
                         whileTap={{ scale: 0.9 }}
                         aria-label={`View ${repo.repository.name} on GitHub`}
                       >
-                        <SiGithub className="h-4 w-4" />
+                        <SiGithub className="h-3 w-3 xs:h-4 xs:w-4" />
                       </motion.button>
                     </div>
                     
@@ -298,178 +434,23 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
         </motion.section>
       )}
 
-      {/* Skills Section */}
-      {portfolio.skills && portfolio.skills.length > 0 && (
-        <motion.section 
-          className="relative z-10 py-12 md:py-16 lg:py-20"
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          viewport={{ once: true }}
-          aria-label="Technical skills"
-        >
-          <div className="mx-auto px-4 sm:px-6 lg:px-8 max-w-screen-xl">
-            <motion.h2 
-              className="text-xl md:text-2xl lg:text-3xl font-bold mb-6 md:mb-8 text-gray-900 text-center"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              viewport={{ once: true }}
-            >
-              Skills I've Learned
-            </motion.h2>
-            <div className="flex flex-wrap justify-center gap-2 md:gap-3 max-w-4xl mx-auto px-4">
-              {portfolio.skills.map((skill, index) => (
-                <motion.div
-                  key={skill.id}
-                  className="group relative"
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: index * 0.05 }}
-                  viewport={{ once: true }}
-                  whileHover={{ scale: 1.05, y: -2 }}
-                  whileTap={{ scale: 0.95 }}
-                  aria-label={`${skill.name} skill`}
-                >
-                  <div className="bg-black text-white px-3 py-2 rounded-md font-medium text-sm hover:bg-gray-800 transition-all duration-300 cursor-pointer border border-gray-800 hover:border-gray-700">
-                    {skill.name}
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </motion.section>
+
+      {/* GitHub Activity Section */}
+      {portfolio.user?.githubUsername ? (
+        <GitHubActivity 
+          username={portfolio.user.githubUsername} 
+          theme="light" 
+        />
+      ) : (
+        <div className="py-8 text-center">
+          <p className="text-gray-500">GitHub username not available</p>
+        </div>
       )}
 
-      {/* Get in Touch Section */}
-      {portfolio.socials && portfolio.socials.filter(social => social.username && social.username.trim()).length > 0 && (
-        <motion.section 
-          className="relative z-10 py-12 md:py-16 lg:py-20"
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          viewport={{ once: true }}
-          aria-label="Contact and social links"
-        >
-          <div className="mx-auto px-4 sm:px-6 lg:px-8 max-w-screen-xl">
-            <motion.h2 
-              className="text-xl md:text-2xl lg:text-3xl font-bold mb-6 md:mb-8 text-gray-900 text-center"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              viewport={{ once: true }}
-              style={{ textShadow: '0 0 15px rgba(59, 130, 246, 0.4)' }}
-            >
-              Let's Connect
-            </motion.h2>
-            <div className="flex justify-center gap-4 md:gap-6 lg:gap-8 flex-wrap max-w-2xl mx-auto">
-              {portfolio.socials && portfolio.socials
-                .filter(social => social.username && social.username.trim())
-                .map((social, index) => {
-                  const Icon = getSocialIcon(social.platform)
-                  
-                  const platformStyles = {
-                    github: { 
-                      bg: 'bg-gray-800/90', 
-                      border: 'border-gray-700/50', 
-                      text: 'text-white', 
-                      hover: 'hover:bg-gray-900/90 hover:text-white hover:border-gray-600/70',
-                      shadow: 'hover:shadow-xl hover:shadow-gray-900/40'
-                    },
-                    email: { 
-                      bg: 'bg-blue-600/90', 
-                      border: 'border-blue-500/50', 
-                      text: 'text-white', 
-                      hover: 'hover:bg-blue-700/90 hover:text-white hover:border-blue-400/70',
-                      shadow: 'hover:shadow-xl hover:shadow-blue-500/40'
-                    },
-                    twitter: { 
-                      bg: 'bg-black/90', 
-                      border: 'border-gray-600/50', 
-                      text: 'text-white', 
-                      hover: 'hover:bg-gray-900/90 hover:text-white hover:border-gray-500/70',
-                      shadow: 'hover:shadow-xl hover:shadow-gray-700/40'
-                    },
-                    x: { 
-                      bg: 'bg-black/90', 
-                      border: 'border-gray-600/50', 
-                      text: 'text-white', 
-                      hover: 'hover:bg-gray-900/90 hover:text-white hover:border-gray-500/70',
-                      shadow: 'hover:shadow-xl hover:shadow-gray-700/40'
-                    },
-                    instagram: { 
-                      bg: 'bg-gradient-to-r from-purple-600 to-pink-600/90', 
-                      border: 'border-purple-500/50', 
-                      text: 'text-white', 
-                      hover: 'hover:from-purple-700 hover:to-pink-700/90 hover:text-white hover:border-purple-400/70',
-                      shadow: 'hover:shadow-xl hover:shadow-purple-500/40'
-                    },
-                    linkedin: { 
-                      bg: 'bg-blue-700/90', 
-                      border: 'border-blue-600/50', 
-                      text: 'text-white', 
-                      hover: 'hover:bg-blue-800/90 hover:text-white hover:border-blue-500/70',
-                      shadow: 'hover:shadow-xl hover:shadow-blue-600/40'
-                    },
-                    facebook: { 
-                      bg: 'bg-blue-600/90', 
-                      border: 'border-blue-500/50', 
-                      text: 'text-white', 
-                      hover: 'hover:bg-blue-700/90 hover:text-white hover:border-blue-400/70',
-                      shadow: 'hover:shadow-xl hover:shadow-blue-500/40'
-                    },
-                    youtube: { 
-                      bg: 'bg-red-600/90', 
-                      border: 'border-red-500/50', 
-                      text: 'text-white', 
-                      hover: 'hover:bg-red-700/90 hover:text-white hover:border-red-400/70',
-                      shadow: 'hover:shadow-xl hover:shadow-red-500/40'
-                    },
-                    stackoverflow: { 
-                      bg: 'bg-orange-600/90', 
-                      border: 'border-orange-500/50', 
-                      text: 'text-white', 
-                      hover: 'hover:bg-orange-700/90 hover:text-white hover:border-orange-400/70',
-                      shadow: 'hover:shadow-xl hover:shadow-orange-500/40'
-                    },
-                    reddit: { 
-                      bg: 'bg-orange-500/90', 
-                      border: 'border-orange-400/50', 
-                      text: 'text-white', 
-                      hover: 'hover:bg-orange-600/90 hover:text-white hover:border-orange-400/70',
-                      shadow: 'hover:shadow-xl hover:shadow-orange-500/40'
-                    }
-                  }
-                  
-                  const style = platformStyles[social.platform as keyof typeof platformStyles] || platformStyles.github
-                  const rotations = [5, -5, 3, -3, 7, -7, 4, -4]
-                  const rotation = rotations[index % rotations.length]
-                  
-                  return (
-                    <motion.button
-                      key={social.id}
-                      onClick={() => window.open(social.url, '_blank')}
-                      className={`p-5 lg:p-6 rounded-2xl backdrop-blur-xl ${style.bg} border ${style.border} ${style.text} ${style.hover} ${style.shadow} transition-all duration-300`}
-                      whileHover={{ scale: 1.1, y: -3, rotate: rotation }}
-                      whileTap={{ scale: 0.95 }}
-                      initial={{ opacity: 0, y: 20 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.5, delay: index * 0.1 }}
-                      viewport={{ once: true }}
-                      aria-label={`Visit ${social.platform} profile`}
-                    >
-                      <Icon className="h-5 w-5 md:h-6 md:w-6 lg:h-7 lg:w-7" />
-                    </motion.button>
-                  )
-                })}
-            </div>
-          </div>
-        </motion.section>
-      )}
 
       {/* Footer */}
       <motion.footer 
-        className="relative z-10 py-6 lg:py-8"
+        className="relative z-10 py-3 lg:py-4"
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
         transition={{ duration: 0.8 }}
