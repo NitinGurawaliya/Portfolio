@@ -2,7 +2,7 @@ import { ImageResponse } from 'next/og'
 import { NextRequest } from 'next/server'
 
 export const runtime = 'edge'
-export const revalidate = 3600 // Revalidate every hour
+export const revalidate = 60 // Revalidate every minute
 
 export async function GET(request: NextRequest) {
   try {
@@ -18,12 +18,12 @@ export async function GET(request: NextRequest) {
             alignItems: 'center',
             justifyContent: 'center',
             backgroundColor: '#000000',
-            backgroundImage: 'linear-gradient(135deg, #000000 0%, #1a1a1a 50%, #000000 100%)',
+            backgroundImage: 'linear-gradient(135deg, #000000 0%, #0a0a0a 50%, #000000 100%)',
             fontFamily: 'Inter, sans-serif',
             position: 'relative',
           }}
         >
-          {/* Background Pattern */}
+          {/* Background Grid Pattern */}
           <div
             style={{
               position: 'absolute',
@@ -32,12 +32,38 @@ export async function GET(request: NextRequest) {
               right: 0,
               bottom: 0,
               backgroundImage: `
-                radial-gradient(circle at 25% 25%, rgba(249, 115, 22, 0.15) 0%, transparent 50%),
-                radial-gradient(circle at 75% 75%, rgba(249, 115, 22, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 50% 50%, rgba(249, 115, 22, 0.05) 0%, transparent 70%)
+                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                radial-gradient(circle at 30% 40%, rgba(249, 115, 22, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 70% 60%, rgba(249, 115, 22, 0.06) 0%, transparent 50%)
               `,
+              backgroundSize: '50px 50px, 50px 50px, 100% 100%, 100% 100%',
             }}
           />
+
+          {/* Header - DevFolio Logo */}
+          <div
+            style={{
+              position: 'absolute',
+              top: '40px',
+              left: '50px',
+              display: 'flex',
+              alignItems: 'center',
+            }}
+          >
+            <div
+              style={{
+                fontSize: '32px',
+                fontWeight: 'bold',
+                background: 'linear-gradient(to right, #ea580c, #c2410c)',
+                backgroundClip: 'text',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+              }}
+            >
+              DevFolio
+            </div>
+          </div>
 
           {/* Main Content */}
           <div
@@ -46,162 +72,118 @@ export async function GET(request: NextRequest) {
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              padding: '60px 40px',
-              maxWidth: '1000px',
+              padding: '80px 60px',
+              maxWidth: '900px',
               textAlign: 'center',
               position: 'relative',
               zIndex: 1,
             }}
           >
-            {/* DevFolio Logo */}
+            {/* Badge */}
             <div
               style={{
-                width: '120px',
-                height: '120px',
-                borderRadius: '24px',
-                backgroundColor: '#f97316',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
+                padding: '8px 16px',
+                backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: '50px',
                 marginBottom: '40px',
-                boxShadow: '0 20px 40px rgba(249, 115, 22, 0.3)',
-              }}
-            >
-              <div
-                style={{
-                  fontSize: '48px',
-                  fontWeight: 'bold',
-                  color: '#000000',
-                  fontFamily: 'Inter, sans-serif',
-                }}
-              >
-                D
-              </div>
-            </div>
-
-            {/* Main Title */}
-            <h1
-              style={{
-                fontSize: '56px',
-                fontWeight: 'bold',
-                color: '#ffffff',
-                margin: '0 0 20px 0',
-                lineHeight: 1.1,
-                background: 'linear-gradient(135deg, #ffffff 0%, #f97316 100%)',
-                backgroundClip: 'text',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-              }}
-            >
-              DevFolio
-            </h1>
-
-            {/* Subtitle */}
-            <div
-              style={{
-                fontSize: '28px',
+                fontSize: '16px',
                 color: '#e5e5e5',
-                fontWeight: '500',
-                marginBottom: '30px',
-                maxWidth: '600px',
               }}
             >
-              Create Your Developer Portfolio in Minutes
+              <span style={{ marginRight: '8px' }}>🔥</span>
+              <span>Free right now - grab it while it's hot</span>
             </div>
 
-            {/* Description */}
-            <div
-              style={{
-                fontSize: '20px',
-                color: '#a3a3a3',
-                lineHeight: 1.4,
-                marginBottom: '40px',
-                maxWidth: '700px',
-              }}
-            >
-              Connect your GitHub, pick a theme, and share your stunning portfolio with the world. No coding required.
-            </div>
-
-            {/* Feature Pills */}
+            {/* Main Heading */}
             <div
               style={{
                 display: 'flex',
-                flexWrap: 'wrap',
-                gap: '12px',
-                justifyContent: 'center',
-                marginBottom: '40px',
+                flexDirection: 'column',
+                alignItems: 'center',
+                marginBottom: '50px',
               }}
             >
-              {['GitHub Integration', 'Multiple Themes', 'SEO Optimized', 'Mobile Ready'].map((feature, index) => (
-                <div
-                  key={index}
+              <h1
+                style={{
+                  fontSize: '64px',
+                  fontWeight: 'bold',
+                  color: '#ffffff',
+                  margin: '0 0 10px 0',
+                  lineHeight: 1.1,
+                  letterSpacing: '-0.02em',
+                }}
+              >
+                Create stunning portfolios
+              </h1>
+              <h1
+                style={{
+                  fontSize: '64px',
+                  fontWeight: 'bold',
+                  margin: '0',
+                  lineHeight: 1.1,
+                  letterSpacing: '-0.02em',
+                  display: 'flex',
+                  alignItems: 'center',
+                }}
+              >
+                <span style={{ color: '#ffffff', marginRight: '16px' }}>from your</span>
+                <span
                   style={{
-                    padding: '8px 16px',
-                    backgroundColor: 'rgba(249, 115, 22, 0.1)',
-                    border: '1px solid rgba(249, 115, 22, 0.3)',
-                    borderRadius: '20px',
-                    fontSize: '16px',
-                    color: '#f97316',
-                    fontWeight: '500',
+                    background: 'linear-gradient(to right, #f97316, #ea580c)',
+                    backgroundClip: 'text',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
                   }}
                 >
-                  {feature}
-                </div>
-              ))}
+                  GitHub profile
+                </span>
+              </h1>
             </div>
 
             {/* CTA Button */}
             <div
               style={{
-                padding: '16px 32px',
+                display: 'flex',
+                alignItems: 'center',
+                padding: '18px 36px',
                 backgroundColor: '#f97316',
-                borderRadius: '12px',
-                fontSize: '20px',
-                fontWeight: 'bold',
+                borderRadius: '10px',
+                fontSize: '22px',
+                fontWeight: '600',
                 color: '#000000',
-                boxShadow: '0 10px 30px rgba(249, 115, 22, 0.4)',
+                boxShadow: '0 10px 40px rgba(249, 115, 22, 0.3)',
+                marginBottom: '50px',
               }}
             >
-              Get Started Free
+              <span>Let's Do This</span>
             </div>
-          </div>
 
-          {/* Bottom Branding */}
-          <div
-            style={{
-              position: 'absolute',
-              bottom: '30px',
-              right: '40px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-            }}
-          >
+            {/* Bottom Text */}
             <div
               style={{
-                fontSize: '18px',
-                color: '#a3a3a3',
-                fontWeight: '500',
+                fontSize: '16px',
+                color: '#737373',
               }}
             >
-              devfolio.cc
+              Used by devs who actually ship stuff
             </div>
           </div>
 
-          {/* Corner Accent */}
+          {/* Bottom Right - Domain */}
           <div
             style={{
               position: 'absolute',
-              top: '40px',
-              left: '40px',
-              width: '60px',
-              height: '60px',
-              border: '2px solid rgba(249, 115, 22, 0.3)',
-              borderTop: '2px solid #f97316',
-              borderLeft: '2px solid #f97316',
-              borderRadius: '12px',
+              bottom: '40px',
+              right: '50px',
+              fontSize: '16px',
+              color: '#737373',
             }}
-          />
+          >
+            devfolio.cc
+          </div>
         </div>
       ),
       {
