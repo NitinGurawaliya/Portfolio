@@ -3,6 +3,7 @@ import { Header } from "@/components/landing/header"
 import { HeroSection } from "@/components/landing/hero-section"
 import { FeaturesSection } from "@/components/landing/features-section"
 import { DemoSection } from "@/components/landing/demo-section"
+import { WallOfFame } from "@/components/landing/wall-of-fame"
 import { CTASection } from "@/components/landing/cta-section"
 import { Footer } from "@/components/landing/footer"
 import { SessionRedirect } from "@/components/SessionRedirect"
@@ -25,6 +26,7 @@ export default function HomePage() {
       <main>
         <HeroSection />
         <FeaturesSection />
+        <WallOfFame limit={6} />
         {/* <DemoSection /> */}
         <CTASection />
       </main>
