@@ -52,7 +52,9 @@ export async function GET(req: NextRequest) {
               select: {
                 name: true,
                 language: true,
-                stargazersCount: true
+                stargazersCount: true,
+                favicon: true,
+                logo: true
               }
             }
           },

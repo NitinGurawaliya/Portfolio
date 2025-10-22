@@ -48,6 +48,8 @@ export interface Repository {
   pushedAt: string
   isImported?: boolean
   favicon?: string
+  logo?: string
+  githubUrl?: string
   siteName?: string
   keywords?: string
   author?: string
@@ -133,6 +135,7 @@ export interface Portfolio {
       forksCount: number
       isImported?: boolean
       favicon?: string
+      logo?: string
     }
   }
 

@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && (npm run resolve-migration || echo 'Migration resolution skipped') && (prisma migrate deploy || echo 'Migration deploy failed, continuing...') && next build",
+    "build": "prisma generate && (npm run resolve-migration || echo 'Migration resolution skipped') && (prisma migrate deploy || echo 'Migration deploy failed, continuing...') && (node scripts/production-build-migration.js || echo 'Icon migration skipped') && next build",
     "start": "next start",
     "lint": "eslint",
     "postinstall": "prisma generate",

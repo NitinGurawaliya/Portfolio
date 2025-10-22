@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { ProjectIcon } from "@/components/ui/project-icon"
 import { motion, AnimatePresence, useMotionValue, useTransform } from "framer-motion"
 import { 
   Github, 
@@ -56,6 +57,7 @@ interface Repository {
   pushedAt: string
   isImported?: boolean
   favicon?: string
+  logo?: string
   siteName?: string
   keywords?: string
   author?: string
@@ -92,6 +94,7 @@ interface PortfolioRepository {
     forksCount: number
     isImported?: boolean
     favicon?: string
+    logo?: string
     homepage?: string
   }
 }
@@ -177,6 +180,7 @@ export function ReposSection({
         forksCount: repo.forksCount,
         isImported: repo.isImported,
         favicon: repo.favicon,
+        logo: repo.logo,
         homepage: repo.homepage
       }
     }))
@@ -191,19 +195,22 @@ export function ReposSection({
 
   // Auto-fill fields for GitHub projects
   useEffect(() => {
+    const updates: Record<number, string> = {}
     selectedRepositories.forEach(repo => {
       // If it's a GitHub project and has deployed URL, pre-fill it
       if (repo.repository.htmlUrl && !deployedUrls[repo.id]) {
         // Check if repo has homepage URL from GitHub
         if (repo.repository.homepage) {
-          setDeployedUrls(prev => ({
-            ...prev,
-            [repo.id]: repo.repository.homepage || ''
-          }))
+          updates[repo.id] = repo.repository.homepage || ''
         }
       }
     })
-  }, [selectedRepositories, deployedUrls])
+    
+    // Only update if there are changes to avoid infinite loops
+    if (Object.keys(updates).length > 0) {
+      setDeployedUrls(prev => ({ ...prev, ...updates }))
+    }
+  }, [selectedRepositories]) // Removed deployedUrls from dependencies to prevent infinite loop
 
   // Debug logging
   useEffect(() => {
@@ -795,19 +802,30 @@ export function ReposSection({
                         <CardContent className="p-2">
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
-                              {/* Project Name - Inline Editable */}
-                              <motion.div
-                                className="mb-3"
-                                whileHover={{ scale: 1.01 }}
-                                transition={{ duration: 0.2 }}
-                              >
-                                <Input
-                                  value={customName}
-                                  onChange={(e) => handleInlineEdit(repo.id, 'name', e.target.value)}
-                                  className="text-lg font-bold border-0 bg-transparent p-0 focus:bg-gray-50 focus:border-2 border-gray-300 focus:p-2 transition-all duration-300 text-black placeholder:text-gray-400"
-                                  placeholder="Project name"
+                              {/* Project Icon at the top */}
+                              <div className="mb-3">
+                                <ProjectIcon
+                                  favicon={repo.repository.favicon}
+                                  logo={repo.repository.logo}
+                                  title={customName || repo.name}
+                                  size="md"
                                 />
-                              </motion.div>
+                              </div>
+                              
+                              {/* Project Name */}
+                              <div className="mb-3">
+                                <motion.div
+                                  whileHover={{ scale: 1.01 }}
+                                  transition={{ duration: 0.2 }}
+                                >
+                                  <Input
+                                    value={customName}
+                                    onChange={(e) => handleInlineEdit(repo.id, 'name', e.target.value)}
+                                    className="text-lg font-bold border-0 bg-transparent p-0 focus:bg-gray-50 focus:border-2 border-gray-300 focus:p-2 transition-all duration-300 text-black placeholder:text-gray-400"
+                                    placeholder="Project name"
+                                  />
+                                </motion.div>
+                              </div>
 
                               {/* Project Description - Text Display */}
                               <div className="mb-4">

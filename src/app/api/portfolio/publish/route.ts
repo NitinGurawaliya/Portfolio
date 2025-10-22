@@ -292,6 +292,11 @@ export async function GET(req: NextRequest) {
                 isPrivate: true,
                 isFork: true,
                 isImported: true,
+                favicon: true,
+                logo: true,
+                siteName: true,
+                keywords: true,
+                author: true,
                 createdAt: true,
                 updatedAt: true,
                 pushedAt: true

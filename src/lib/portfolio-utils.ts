@@ -110,7 +110,6 @@ export const mapPortfolioRepositories = (portfolioRepos: any[]) => {
  */
 export const formatImportedProjects = (portfolioRepos: any[]): Repository[] => {
   return portfolioRepos
-    .filter((repo: any) => repo.repository.isImported)
     .map((repo: any) => {
       const languages = parseRepositoryLanguages(repo)
       
@@ -131,6 +130,9 @@ export const formatImportedProjects = (portfolioRepos: any[]): Repository[] => {
         createdAt: repo.repository.createdAt,
         updatedAt: repo.repository.updatedAt,
         pushedAt: repo.repository.pushedAt || repo.repository.updatedAt,
+        favicon: repo.repository.favicon,
+        logo: repo.repository.logo,
+        githubUrl: repo.repository.githubUrl,
         isImported: true
       }
     })
@@ -154,15 +156,21 @@ export const buildLivePortfolio = (
 ) => {
   if (!user) return null
 
-  const allRepos: Repository[] = [...(user?.repositories || []), ...importedProjects]
-  const selected: Repository[] = [
-    ...selectedRepos
-      .map(id => allRepos.find(r => r.id === id))
-      .filter((r): r is Repository => Boolean(r)),
-    ...importedProjects
-  ].filter((repo, index, self) => 
-    index === self.findIndex(r => r.id === repo.id)
-  )
+  // Use database repositories (importedProjects) as the primary source since they have favicon/logo data
+  // Fall back to GitHub repositories only if not found in database
+  const allRepos: Repository[] = [...importedProjects, ...(user?.repositories || [])]
+  const mergedRepos = allRepos.reduce((acc, repo) => {
+    const existingIndex = acc.findIndex(r => r.id === repo.id)
+    if (existingIndex === -1) {
+      acc.push(repo)
+    }
+    // If repository already exists, keep the first one (database version has priority)
+    return acc
+  }, [] as Repository[])
+  
+  const selected: Repository[] = selectedRepos
+    .map(id => mergedRepos.find(r => r.id === id))
+    .filter((r): r is Repository => Boolean(r))
 
   // Sort repositories according to repoOrder
   const sortedRepos = repoOrder.length > 0 
@@ -191,6 +199,10 @@ export const buildLivePortfolio = (
       languages: repo.languages ? JSON.stringify(repo.languages) : null,
       stargazersCount: repo.stargazersCount,
       forksCount: repo.forksCount,
+      favicon: repo.favicon,
+      logo: repo.logo,
+      githubUrl: repo.githubUrl,
+      isImported: repo.isImported
     }
   }))
 

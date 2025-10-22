@@ -1,5 +1,6 @@
 import { motion } from "framer-motion"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { ProjectIcon } from "@/components/ui/project-icon"
 import { Building } from "lucide-react"
 import { SiGithub, SiX, SiLinkedin, SiInstagram, SiFacebook, SiYoutube, SiGmail, SiStackoverflow, SiReddit } from "react-icons/si"
 import { Globe } from "lucide-react"
@@ -375,7 +376,18 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
                   <div className="relative bg-gray-100 rounded-lg p-2 xs:p-3 sm:p-4 md:p-6 hover:bg-gray-200 transition-all duration-300 border border-gray-200 w-full">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-sm xs:text-base sm:text-lg md:text-xl font-bold text-gray-800 mb-1 xs:mb-2 break-words">
+                        {/* Project Icon at the top */}
+                        <div className="mb-2">
+                          <ProjectIcon
+                            favicon={repo.repository.favicon}
+                            logo={repo.repository.logo}
+                            title={repo.customName || repo.repository.name}
+                            size="md"
+                          />
+                        </div>
+                        
+                        {/* Project Name */}
+                        <h3 className="text-sm xs:text-base sm:text-lg md:text-xl font-bold text-gray-800 break-words mb-1 xs:mb-2">
                           {repo.customName || repo.repository.name}
                         </h3>
                         <div 

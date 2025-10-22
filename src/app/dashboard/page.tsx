@@ -129,9 +129,21 @@ export default function DashboardPage() {
           />
         )
       case "repos":
+        // Use database repositories (importedProjects) as the primary source since they have favicon/logo data
+        // Fall back to GitHub repositories only if not found in database
+        const allRepositories = [...portfolio.importedProjects, ...(user?.repositories || [])]
+        const mergedRepositories = allRepositories.reduce((acc, repo) => {
+          const existingIndex = acc.findIndex(r => r.id === repo.id)
+          if (existingIndex === -1) {
+            acc.push(repo)
+          }
+          // If repository already exists, keep the first one (database version has priority)
+          return acc
+        }, [] as any[])
+        
         return (
           <ReposSection
-            repositories={[...(user?.repositories || []), ...portfolio.importedProjects]}
+            repositories={mergedRepositories}
             selectedRepos={portfolio.selectedRepos}
             deployedUrls={portfolio.deployedUrls}
             customNames={portfolio.customNames}

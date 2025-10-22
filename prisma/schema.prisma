@@ -52,7 +52,8 @@ model Repository {
   isPrivate   Boolean
   isFork      Boolean
   isImported  Boolean  @default(false)
-  favicon     String?
+  favicon     String?  // Favicon URL from the website
+  logo        String?  // Generated logo as base64 string (fallback when no favicon)
   siteName    String?
   keywords    String?
   author      String?

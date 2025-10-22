@@ -1,5 +1,6 @@
 import { motion } from "framer-motion"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { ProjectIcon } from "@/components/ui/project-icon"
 import { Building } from "lucide-react"
 import { SiGithub, SiX, SiLinkedin, SiInstagram, SiFacebook, SiYoutube, SiGmail, SiStackoverflow, SiReddit } from "react-icons/si"
 import { Globe } from "lucide-react"
@@ -290,7 +291,18 @@ export default function LayoutDark({ theme, portfolio }: LayoutDarkProps) {
                   <div className="relative bg-transparent border border-orange-500/30 rounded-lg p-4 sm:p-6 hover:border-orange-500/50 transition-all duration-300 h-full flex flex-col w-full">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1 mr-4 min-w-0">
-                        <h3 className="text-lg sm:text-xl font-bold text-white group-hover:text-orange-300 transition-colors duration-300 mb-2 break-words">
+                        {/* Project Icon at the top */}
+                        <div className="mb-3">
+                          <ProjectIcon
+                            favicon={repo.repository.favicon}
+                            logo={repo.repository.logo}
+                            title={repo.customName || repo.repository.name}
+                            size="md"
+                          />
+                        </div>
+                        
+                        {/* Project Name */}
+                        <h3 className="text-lg sm:text-xl font-bold text-white group-hover:text-orange-300 transition-colors duration-300 break-words mb-2">
                           {repo.customName || repo.repository.name}
                         </h3>
                         <div 
