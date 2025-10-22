@@ -22,6 +22,22 @@ async function runProductionMigration() {
   try {
     console.log('🚀 Running production migration for repository icons...');
     
+    // First check if logo column exists
+    try {
+      await prisma.repository.findFirst({
+        select: {
+          logo: true
+        }
+      });
+    } catch (error) {
+      if (error.code === 'P2022' && error.meta?.column === 'Repository.logo') {
+        console.log('⚠️ Logo column does not exist yet. Skipping icon migration.');
+        console.log('💡 The logo column will be added by the pending migration.');
+        return;
+      }
+      throw error;
+    }
+    
     // Get all repositories without proper logo fallbacks
     const repos = await prisma.repository.findMany({
       where: {
