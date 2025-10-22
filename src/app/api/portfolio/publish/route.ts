@@ -4,6 +4,7 @@ import { devLog } from "@/lib/logger"
 import type { Prisma } from "@prisma/client"
 import { sendEmail } from "@/lib/sendEmail"
 import { generatePortfolioPublishedEmail } from "@/lib/templates/welcomeEmail"
+import { cache, CacheKeys, CacheTTL, getCachedData, setCachedData, invalidateCache } from "@/lib/cache"
 
 export async function POST(req: NextRequest) {
   try {
@@ -200,6 +201,13 @@ export async function POST(req: NextRequest) {
       devLog("⚠️ Skipping email - placeholder email detected:", result.user.email)
     }
 
+    // Invalidate cache for this portfolio
+    const portfolioUsername = result.portfolio.customUsername || result.user.githubUsername
+    if (portfolioUsername) {
+      invalidateCache(portfolioUsername)
+      console.log("🚀 Portfolio API: Cache invalidated for", portfolioUsername)
+    }
+
     return NextResponse.json({
       success: true,
       message: "Portfolio published successfully",
@@ -229,6 +237,17 @@ export async function GET(req: NextRequest) {
         { status: 400 }
       )
     }
+
+    // Check cache first
+    const cacheKey = username ? CacheKeys.portfolio(username) : CacheKeys.portfolio(`user_${userId}`)
+    const cachedData = getCachedData(cacheKey)
+    
+    if (cachedData) {
+      console.log("🚀 Portfolio API: Returning cached data for", username || userId)
+      return NextResponse.json(cachedData)
+    }
+
+    console.log("🚀 Portfolio API: Fetching fresh data from database for", username || userId)
 
     let whereClause: any = { isPublished: true }
 
@@ -303,10 +322,16 @@ export async function GET(req: NextRequest) {
       typeof value === 'bigint' ? value.toString() : value
     ))
 
-    return NextResponse.json({
+    const responseData = {
       success: true,
       portfolio: serializedPortfolio
-    })
+    }
+
+    // Cache the response
+    setCachedData(cacheKey, responseData, CacheTTL.PORTFOLIO)
+    console.log("🚀 Portfolio API: Data cached for", CacheTTL.PORTFOLIO, "minutes")
+
+    return NextResponse.json(responseData)
 
   } catch (error) {
     console.error("Error fetching portfolio:", error)

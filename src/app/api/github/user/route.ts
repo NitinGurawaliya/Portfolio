@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import { cache, CacheKeys, CacheTTL, getCachedData, setCachedData } from "@/lib/cache"
 
 export async function GET(req: NextRequest) {
   try {
@@ -12,6 +13,16 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "No access token" }, { status: 401 })
     }
 
+    // Check cache first
+    const cacheKey = CacheKeys.githubUser(session.user?.login || 'unknown')
+    const cachedData = getCachedData(cacheKey)
+    
+    if (cachedData) {
+      console.log("🚀 GitHub User API: Returning cached data")
+      return NextResponse.json(cachedData, { status: 200 })
+    }
+
+    console.log("🚀 GitHub User API: Fetching fresh data from GitHub")
     const userResponse = await fetch("https://api.github.com/user", {
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -21,6 +32,13 @@ export async function GET(req: NextRequest) {
     })
 
     const data = await userResponse.json()
+    
+    // Cache the response
+    if (userResponse.ok) {
+      setCachedData(cacheKey, data, CacheTTL.GITHUB_USER)
+      console.log("🚀 GitHub User API: Data cached for", CacheTTL.GITHUB_USER, "minutes")
+    }
+    
     return NextResponse.json(data, { status: userResponse.status })
   } catch (error) {
     return NextResponse.json({ error: "Failed to fetch user" }, { status: 500 })

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import { cache, CacheKeys, CacheTTL, getCachedData, setCachedData } from "@/lib/cache"
 
 export async function GET(req: NextRequest) {
   try {
@@ -12,6 +13,16 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "No access token" }, { status: 401 })
     }
 
+    // Check cache first
+    const cacheKey = CacheKeys.githubRepos(session.user?.login || 'unknown')
+    const cachedData = getCachedData(cacheKey)
+    
+    if (cachedData) {
+      console.log("🚀 GitHub Repos API: Returning cached data")
+      return NextResponse.json(cachedData, { status: 200 })
+    }
+
+    console.log("🚀 GitHub Repos API: Fetching fresh data from GitHub")
     const url = new URL("https://api.github.com/user/repos")
     url.searchParams.set("sort", "updated")
     url.searchParams.set("per_page", "100")
@@ -51,6 +62,12 @@ export async function GET(req: NextRequest) {
         return repo
       })
     )
+    
+    // Cache the response
+    if (githubRes.ok) {
+      setCachedData(cacheKey, reposWithLanguages, CacheTTL.GITHUB_REPOS)
+      console.log("🚀 GitHub Repos API: Data cached for", CacheTTL.GITHUB_REPOS, "minutes")
+    }
     
     return NextResponse.json(reposWithLanguages, { status: githubRes.status })
   } catch (error) {

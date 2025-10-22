@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { cache, CacheKeys, CacheTTL, getCachedData, setCachedData } from "@/lib/cache"
 
 export const runtime = 'edge'
 export const revalidate = 3600 // Cache for 1 hour
@@ -13,6 +14,17 @@ export async function GET(request: NextRequest) {
     if (!username) {
       return NextResponse.json({ error: 'Username is required' }, { status: 400 })
     }
+
+    // Check cache first
+    const cacheKey = CacheKeys.githubActivity(username)
+    const cachedData = getCachedData(cacheKey)
+    
+    if (cachedData) {
+      console.log("🚀 GitHub Activity API: Returning cached data")
+      return NextResponse.json(cachedData)
+    }
+
+    console.log("🚀 GitHub Activity API: Fetching fresh data from GitHub")
 
     // Fetch GitHub user data with token
     let userData = null
@@ -214,7 +226,7 @@ export async function GET(request: NextRequest) {
 
     console.log('Returning data with contributions:', contributionData.length, 'and repos:', pinnedRepos.length)
 
-    return NextResponse.json({
+    const responseData = {
       user: {
         login: userData.login,
         name: userData.name,
@@ -226,7 +238,13 @@ export async function GET(request: NextRequest) {
       },
       contributions: contributionData,
       pinnedRepos
-    })
+    }
+
+    // Cache the response
+    setCachedData(cacheKey, responseData, CacheTTL.GITHUB_ACTIVITY)
+    console.log("🚀 GitHub Activity API: Data cached for", CacheTTL.GITHUB_ACTIVITY, "minutes")
+
+    return NextResponse.json(responseData)
 
   } catch (error) {
     console.error('GitHub Activity API Error:', error)
