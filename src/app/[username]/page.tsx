@@ -35,13 +35,13 @@ export default function PublicPortfolioPage() {
 
   // Track portfolio view
   useEffect(() => {
-    if (portfolio?.userId) {
+    if (portfolio?.id) {
       fetch('/api/analytics/track-view', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           portfolioId: portfolio.id,
-          userId: portfolio.userId
+          userId: null // We don't have user ID in public portfolio view
         })
       }).catch(err => console.error('Failed to track view:', err))
     }

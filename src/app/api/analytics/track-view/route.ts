@@ -5,9 +5,9 @@ export async function POST(req: NextRequest) {
   try {
     const { portfolioId, userId } = await req.json()
     
-    if (!portfolioId || !userId) {
+    if (!portfolioId) {
       return NextResponse.json(
-        { error: "Missing required fields" },
+        { error: "Missing portfolioId" },
         { status: 400 }
       )
     }
@@ -19,13 +19,13 @@ export async function POST(req: NextRequest) {
     const userAgent = req.headers.get("user-agent") || "unknown"
     const referrer = req.headers.get("referer") || "direct"
     
-    console.log(`📊 Analytics: Tracking view for portfolio ${portfolioId} by user ${userId}`)
+    console.log(`📊 Analytics: Tracking view for portfolio ${portfolioId}${userId ? ` by user ${userId}` : ' (anonymous)'}`)
     
     // Create view record
     await prisma.portfolioView.create({
       data: {
         portfolioId,
-        userId,
+        userId: userId || 0, // Use 0 for anonymous users
         ipAddress,
         userAgent,
         referrer
