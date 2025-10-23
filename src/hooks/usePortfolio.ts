@@ -10,6 +10,19 @@ import {
 } from "@/lib/portfolio-utils"
 import { loadPortfolioData } from "@/lib/services/portfolio-service"
 
+// Analytics data load करने का function
+const loadAnalyticsData = async (portfolioId: number) => {
+  try {
+    const response = await fetch(`/api/analytics/stats?portfolioId=${portfolioId}`)
+    const data = await response.json()
+    console.log("📊 Analytics data loaded:", data)
+    return data
+  } catch (error) {
+    console.error("Error loading analytics data:", error)
+    return null
+  }
+}
+
 export const usePortfolio = (user: User | null, initialPortfolioData?: PortfolioData) => {
   // State
   const [portfolioData, setPortfolioData] = useState<PortfolioData>({
@@ -36,6 +49,13 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
   const [isPublishComplete, setIsPublishComplete] = useState(false)
   const [isPublishing, setIsPublishing] = useState(false)
   const [isLoadingPortfolio, setIsLoadingPortfolio] = useState(true)
+  
+  // Analytics state
+  const [analytics, setAnalytics] = useState<{
+    totalViews: number
+    lastViewedAt: string | null
+    dailyData: Array<{ date: string; count: number }>
+  } | null>(null)
 
   // Helper function to create data object with consistent key order
   const createOrderedData = (data: any) => {
@@ -312,11 +332,12 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
         }
 
         // Set original data after loading
-        setTimeout(() => {
+        setTimeout(async () => {
           const currentSelectedTheme = portfolio.selectedTheme || 'light'
           setSelectedTheme(currentSelectedTheme)
           
           const originalDataToSet = normalizeData(createOrderedData({
+            id: portfolio.id, // Add portfolio ID
             portfolioData: {
               displayName: portfolio.displayName || "",
               jobTitle: portfolio.jobTitle || "",
@@ -347,7 +368,20 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
           }))
           
           console.log("💾 Setting original data from existing portfolio")
+          console.log("🔍 Portfolio ID in originalData:", originalDataToSet.id)
+          console.log("🔍 Portfolio object:", portfolio)
           setOriginalData(originalDataToSet)
+          
+          // Load analytics data along with portfolio data
+          if (portfolio.id) {
+            console.log("📊 Loading analytics data for portfolio ID:", portfolio.id)
+            const analyticsData = await loadAnalyticsData(portfolio.id)
+            if (analyticsData) {
+              setAnalytics(analyticsData)
+              console.log("✅ Analytics data loaded:", analyticsData)
+            }
+          }
+          
           setIsInitialLoad(false)
           setIsLoadingPortfolio(false)
           console.log("✅ Initial load completed, change tracking enabled")
@@ -479,6 +513,7 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
     isLoadingPortfolio,
     livePortfolio,
     originalData,
+    analytics,
     
     // Setters
     setPortfolioData,

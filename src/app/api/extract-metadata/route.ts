@@ -52,11 +52,9 @@ async function extractFavicon(url: string, $: cheerio.CheerioAPI): Promise<strin
         })
         
         if (response.ok && response.headers.get('content-type')?.includes('image')) {
-          console.log(`✅ Found favicon: ${fullUrl}`)
           return fullUrl
         }
       } catch (error) {
-        console.log(`Failed to validate favicon: ${faviconUrl}`)
         continue
       }
     }
@@ -73,14 +71,12 @@ async function extractFavicon(url: string, $: cheerio.CheerioAPI): Promise<strin
       signal: AbortSignal.timeout(5000)
     })
     if (response.ok && response.headers.get('content-type')?.includes('image')) {
-      console.log(`✅ Found default favicon: ${defaultFavicon}`)
       return defaultFavicon
     }
   } catch (error) {
-    console.log('Default favicon.ico not found')
+    // Default favicon.ico not found
   }
   
-  console.log(`❌ No favicon found for ${url}`)
   return null
 }
 
@@ -167,7 +163,7 @@ export async function POST(req: NextRequest) {
     try {
       metadata.favicon = await extractFavicon(url, $)
     } catch (error) {
-      console.log('Error extracting favicon:', error)
+      // Error extracting favicon
     }
 
     // Generate logo as fallback if no favicon found

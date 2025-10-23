@@ -16,7 +16,8 @@ import {
   ExternalLink,
   Loader2,
   LogOut,
-  Palette
+  Palette,
+  BarChart3
 } from "lucide-react"
 import { DevFolioInlineLoader } from "@/components/ui/DevFolioLoader"
 
@@ -52,6 +53,7 @@ export function DashboardLayout({
     { id: "repos", label: "Repos", icon: Code },
     { id: "skills", label: "Skills", icon: Wrench },
     { id: "socials", label: "Socials", icon: Users },
+    { id: "analytics", label: "Analytics", icon: BarChart3 },
     { id: "theme", label: "Theme", icon: Palette },
   ]
 

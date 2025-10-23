@@ -13,11 +13,9 @@ export async function GET(req: NextRequest) {
     const cachedData = getCachedData(cacheKey)
     
     if (cachedData) {
-      console.log("🚀 Featured Portfolios API: Returning cached data")
       return NextResponse.json(cachedData)
     }
 
-    console.log("🚀 Featured Portfolios API: Fetching fresh data from database")
 
     // Fetch featured portfolios
     const portfolios = await prisma.portfolio.findMany({
@@ -100,7 +98,6 @@ export async function GET(req: NextRequest) {
 
     // Cache the response for 30 minutes
     setCachedData(cacheKey, responseData, 30)
-    console.log("🚀 Featured Portfolios API: Data cached for 30 minutes")
 
     return NextResponse.json(responseData)
   } catch (error) {

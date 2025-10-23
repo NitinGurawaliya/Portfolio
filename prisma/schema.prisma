@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -13,138 +7,135 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
 model User {
-  id            Int      @id @default(autoincrement())
-  name          String
-  email         String   @unique
-  githubId      String?  @unique
-  githubUsername String?
-  avatarUrl     String?
-  bio           String?
-  location      String?
-  websiteUrl    String?
+  id              Int          @id @default(autoincrement())
+  name            String
+  email           String       @unique
+  avatarUrl       String?
+  bio             String?
+  company         String?
+  createdAt       DateTime     @default(now())
+  followers       Int?
+  following       Int?
+  githubId        String?      @unique
+  githubUsername  String?
+  location        String?
+  publicRepos     Int?
   twitterUsername String?
-  company       String?
-  publicRepos   Int?
-  followers     Int?
-  following     Int?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  repositories  Repository[]
-  portfolio     Portfolio?
+  updatedAt       DateTime     @updatedAt
+  websiteUrl      String?
+  portfolio       Portfolio?
+  repositories    Repository[]
 }
 
 model Repository {
-  id          Int      @id @default(autoincrement())
-  githubId    BigInt   @unique
-  name        String
-  fullName    String
-  description String?
-  htmlUrl     String
-  githubUrl   String?  // GitHub URL for URL-imported projects
-  cloneUrl    String
-  language    String?
-  languages   String?  // JSON array of all languages used
-  stargazersCount Int
-  forksCount  Int
-  size        Int
-  isPrivate   Boolean
-  isFork      Boolean
-  isImported  Boolean  @default(false)
-  favicon     String?  // Favicon URL from the website
-  logo        String?  // Generated logo as base64 string (fallback when no favicon)
-  siteName    String?
-  keywords    String?
-  author      String?
-  createdAt   DateTime
-  updatedAt   DateTime
-  pushedAt    DateTime?
-  userId      Int
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                    Int                   @id @default(autoincrement())
+  githubId              BigInt                @unique
+  name                  String
+  fullName              String
+  description           String?
+  htmlUrl               String
+  cloneUrl              String
+  language              String?
+  stargazersCount       Int
+  forksCount            Int
+  size                  Int
+  isPrivate             Boolean
+  isFork                Boolean
+  createdAt             DateTime
+  updatedAt             DateTime
+  pushedAt              DateTime?
+  userId                Int
+  author                String?
+  favicon               String?
+  isImported            Boolean               @default(false)
+  keywords              String?
+  siteName              String?
+  githubUrl             String?
+  languages             String?
+  logo                  String?
   portfolioRepositories PortfolioRepository[]
+  user                  User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Portfolio {
-  id          Int      @id @default(autoincrement())
-  userId      Int      @unique
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  // Home section
-  displayName String?
-  jobTitle    String?
-  bio         String?
-  profilePic  String?
+  id             Int                   @id @default(autoincrement())
+  userId         Int                   @unique
+  displayName    String?
+  bio            String?
+  profilePic     String?
+  isPublished    Boolean               @default(false)
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
   customUsername String?
-  
-  // Theme Configuration
-  selectedTheme String   @default("light") // Theme identifier (dark, light)
-  themeConfig   Json?    // Custom theme overrides (colors, fonts, etc.)
-  
-  // Skills
-  skills      Skill[]
-  
-  // Social accounts
-  socials     Social[]
-  
-  // Selected repositories
-  repositories PortfolioRepository[]
-  
-  isPublished Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  jobTitle       String?
+  selectedTheme  String                @default("dark")
+  themeConfig    Json?
+  user           User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  repositories   PortfolioRepository[]
+  skills         Skill[]
+  socials        Social[]
 }
 
 model Skill {
-  id          Int      @id @default(autoincrement())
+  id          Int       @id @default(autoincrement())
   name        String
-  category    String?  // e.g., "Frontend", "Backend", "Database", "Tools"
+  category    String?
   portfolioId Int
+  createdAt   DateTime  @default(now())
   portfolio   Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
-  createdAt   DateTime @default(now())
 }
 
 model Social {
-  id          Int      @id @default(autoincrement())
+  id          Int       @id @default(autoincrement())
   portfolioId Int
+  platform    String
+  username    String
+  url         String?
+  isPinned    Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
   portfolio   Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
-  platform    String   // "github", "twitter", "linkedin", "instagram", "facebook", "youtube", "stackoverflow", "reddit"
-  username    String   // Username for the platform (e.g., "john_doe")
-  url         String?  // Full URL (optional, can be generated from username)
-  isPinned    Boolean  @default(false) // Show in top section and get in touch
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
 
-  @@unique([portfolioId, platform]) // One account per platform per portfolio
+  @@unique([portfolioId, platform])
 }
 
 model PortfolioRepository {
-  id          Int      @id @default(autoincrement())
-  portfolioId Int
-  portfolio   Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
-  repositoryId Int
-  repository  Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
-  deployedUrl String?
-  customName  String?  // Custom name override for this repository
-  customDescription String?  // Custom description override for this repository
-  technologies String? // Comma-separated list of additional technologies
-  displayOrder Int?    // Order of display on portfolio
-  isVisible   Boolean  @default(true)
-  createdAt   DateTime @default(now())
+  id                Int        @id @default(autoincrement())
+  portfolioId       Int
+  repositoryId      Int
+  deployedUrl       String?
+  isVisible         Boolean    @default(true)
+  createdAt         DateTime   @default(now())
+  displayOrder      Int?
+  customName        String?
+  customDescription String?
+  technologies      String?
+  portfolio         Portfolio  @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+  repository        Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
 }
 
-model CustomDomain {
-  id                 String   @id @default(cuid())
-  userId             Int
-  portfolioId        Int
-  domain             String   @unique
-  verified           Boolean  @default(false)
-  verificationToken  String?
-  lastCheckedAt      DateTime?
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
-  
-  @@index([domain])
+model PortfolioView {
+  id          Int      @id @default(autoincrement())
+  portfolioId Int
+  userId      Int
+  viewedAt    DateTime @default(now())
+  ipAddress   String?
+  userAgent   String?
+  referrer    String?
+
+  @@index([portfolioId])
   @@index([userId])
-  @@index([verified])
+  @@index([viewedAt])
+}
+
+model PortfolioAnalytics {
+  id           Int       @id @default(autoincrement())
+  portfolioId  Int       @unique
+  totalViews   Int       @default(0)
+  lastViewedAt DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @default(now()) @updatedAt
+
+  @@index([portfolioId])
 }

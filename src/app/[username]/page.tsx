@@ -33,6 +33,20 @@ export default function PublicPortfolioPage() {
     fetchPortfolio()
   }, [username])
 
+  // Track portfolio view
+  useEffect(() => {
+    if (portfolio?.userId) {
+      fetch('/api/analytics/track-view', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          portfolioId: portfolio.id,
+          userId: portfolio.userId
+        })
+      }).catch(err => console.error('Failed to track view:', err))
+    }
+  }, [portfolio])
+
   const fetchPortfolio = async () => {
     try {
       const response = await fetch(`/api/portfolio/publish?username=${username}`)

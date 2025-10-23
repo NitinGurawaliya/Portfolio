@@ -36,15 +36,12 @@ export async function POST(req: NextRequest) {
     if (existingUser?.email && !existingUser.email.includes('@placeholder.com')) {
       // Use existing real email from database (saved during auth)
       userEmail = existingUser.email
-      devLog("✅ Using existing real email from database:", userEmail)
     } else if (userData?.email && userData.email.trim()) {
       // Use email from frontend if available
       userEmail = userData.email.trim()
-      devLog("📧 Using email from frontend:", userEmail)
     } else {
       // Fallback to placeholder
       userEmail = `github-${userId}@placeholder.com`
-      devLog("⚠️ No real email found, using placeholder:", userEmail)
     }
     
     // Start a transaction to ensure data consistency
@@ -167,10 +164,7 @@ export async function POST(req: NextRequest) {
     })
 
     // Send email on every publish (non-blocking)
-    devLog("📧 Portfolio published! Email:", result.user.email, "| isPlaceholder:", result.user.email.includes('@placeholder.com'))
-    
     if (!result.user.email.includes('@placeholder.com')) {
-      devLog("🎉 Sending portfolio published email to:", result.user.email)
       
       const requestUrl = new URL(req.url)
       const baseUrl = `${requestUrl.protocol}//${requestUrl.host}`
@@ -197,15 +191,12 @@ export async function POST(req: NextRequest) {
         .catch((error) => {
           console.error("❌ Portfolio published email error:", error)
         })
-    } else {
-      devLog("⚠️ Skipping email - placeholder email detected:", result.user.email)
     }
 
     // Invalidate cache for this portfolio
     const portfolioUsername = result.portfolio.customUsername || result.user.githubUsername
     if (portfolioUsername) {
       invalidateCache(portfolioUsername)
-      console.log("🚀 Portfolio API: Cache invalidated for", portfolioUsername)
     }
 
     return NextResponse.json({
@@ -243,11 +234,8 @@ export async function GET(req: NextRequest) {
     const cachedData = getCachedData(cacheKey)
     
     if (cachedData) {
-      console.log("🚀 Portfolio API: Returning cached data for", username || userId)
       return NextResponse.json(cachedData)
     }
-
-    console.log("🚀 Portfolio API: Fetching fresh data from database for", username || userId)
 
     let whereClause: any = { isPublished: true }
 
@@ -310,10 +298,6 @@ export async function GET(req: NextRequest) {
       }
     })
 
-    devLog("Searching for portfolio with:", whereClause)
-    devLog("Found portfolio:", JSON.stringify(portfolio, (key, value) =>
-      typeof value === 'bigint' ? value.toString() : value
-    , 2))
 
     if (!portfolio) {
       return NextResponse.json(
@@ -334,7 +318,6 @@ export async function GET(req: NextRequest) {
 
     // Cache the response
     setCachedData(cacheKey, responseData, CacheTTL.PORTFOLIO)
-    console.log("🚀 Portfolio API: Data cached for", CacheTTL.PORTFOLIO, "minutes")
 
     return NextResponse.json(responseData)
 

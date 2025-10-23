@@ -5,12 +5,20 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && (npm run resolve-migration || echo 'Migration resolution skipped') && (prisma migrate deploy || echo 'Migration deploy failed, continuing...') && (node scripts/add-logo-column.js || echo 'Logo column addition skipped') && (node scripts/production-build-migration.js || echo 'Icon migration skipped') && next build",
+    "build": "prisma generate && prisma migrate deploy && node scripts/validate-database-schema.js && next build",
     "start": "next start",
     "lint": "eslint",
     "postinstall": "prisma generate",
     "resolve-migration": "node scripts/resolve-migration.js",
-    "deploy-migrations": "node scripts/deploy-migrations.js"
+    "deploy-migrations": "node scripts/deploy-migrations.js",
+    "migrate:deploy": "prisma migrate deploy",
+    "migrate:status": "prisma migrate status",
+    "migrate:reset": "prisma migrate reset",
+    "db:push": "prisma db push",
+    "db:pull": "prisma db pull",
+    "validate:schema": "node scripts/validate-database-schema.js",
+    "deploy:production": "node scripts/production-deploy.js",
+    "migrate:production": "node scripts/safe-production-migration.js"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.10.0",

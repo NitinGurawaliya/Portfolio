@@ -79,6 +79,7 @@ export interface PortfolioData {
 }
 
 export interface PortfolioState {
+  id?: number // Add portfolio ID
   portfolioData: PortfolioData
   selectedRepos: number[]
   skills: Skill[]

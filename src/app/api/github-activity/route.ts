@@ -9,7 +9,6 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const username = searchParams.get('username')
     
-    console.log('GitHub Activity API called with username:', username)
     
     if (!username) {
       return NextResponse.json({ error: 'Username is required' }, { status: 400 })
@@ -20,11 +19,9 @@ export async function GET(request: NextRequest) {
     const cachedData = getCachedData(cacheKey)
     
     if (cachedData) {
-      console.log("🚀 GitHub Activity API: Returning cached data")
       return NextResponse.json(cachedData)
     }
 
-    console.log("🚀 GitHub Activity API: Fetching fresh data from GitHub")
 
     // Fetch GitHub user data with token
     let userData = null

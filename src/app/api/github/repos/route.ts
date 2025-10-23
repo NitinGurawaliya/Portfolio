@@ -18,11 +18,9 @@ export async function GET(req: NextRequest) {
     const cachedData = getCachedData(cacheKey)
     
     if (cachedData) {
-      console.log("🚀 GitHub Repos API: Returning cached data")
       return NextResponse.json(cachedData, { status: 200 })
     }
 
-    console.log("🚀 GitHub Repos API: Fetching fresh data from GitHub")
     const url = new URL("https://api.github.com/user/repos")
     url.searchParams.set("sort", "updated")
     url.searchParams.set("per_page", "100")

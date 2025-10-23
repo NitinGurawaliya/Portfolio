@@ -18,11 +18,9 @@ export async function GET(req: NextRequest) {
     const cachedData = getCachedData(cacheKey)
     
     if (cachedData) {
-      console.log("🚀 GitHub User API: Returning cached data")
       return NextResponse.json(cachedData, { status: 200 })
     }
 
-    console.log("🚀 GitHub User API: Fetching fresh data from GitHub")
     const userResponse = await fetch("https://api.github.com/user", {
       headers: {
         Authorization: `Bearer ${accessToken}`,

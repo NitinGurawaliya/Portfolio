@@ -6,6 +6,7 @@ import { HomeSection } from "@/components/dashboard/HomeSection"
 import { ReposSection } from "@/components/dashboard/ReposSection"
 import { SkillsSection } from "@/components/dashboard/SkillsSection"
 import { SocialsSection } from "@/components/dashboard/SocialsSection"
+import { AnalyticsSection } from "@/components/dashboard/AnalyticsSection"
 import ThemeSelector from "@/components/dashboard/ThemeSelector"
 import { DevFolioLoader } from "@/components/ui/DevFolioLoader"
 import toast, { Toaster } from "react-hot-toast"
@@ -175,6 +176,17 @@ export default function DashboardPage() {
             onRemoveSocial={handlers.handleRemoveSocial}
             onTogglePin={handlers.handleTogglePin}
             onUpdateSocial={handlers.handleUpdateSocial}
+          />
+        )
+      case "analytics":
+        if (portfolio.isLoadingPortfolio) {
+          return <div>Loading portfolio data...</div>
+        }
+        console.log("🔍 Analytics Section - Portfolio ID:", portfolio.originalData?.id)
+        return (
+          <AnalyticsSection 
+            portfolioId={portfolio.originalData?.id || 0}
+            analyticsData={portfolio.analytics}
           />
         )
       case "theme":
