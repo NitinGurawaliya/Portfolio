@@ -50,20 +50,33 @@ export async function GET(req: NextRequest) {
       viewsByDate[date] = (viewsByDate[date] || 0) + 1
     })
     
-    // Generate daily data for the last 1 year (365 days) including today
+    // Generate daily data for the last 1 year (365 days) with generous advance
     const dailyData = []
-    const today = new Date()
-    today.setHours(23, 59, 59, 999) // Set to end of today
     
+    // Use a generous advance to handle all timezone edge cases
+    const now = new Date()
+    const advanceDays = parseInt(process.env.ANALYTICS_ADVANCE_DAYS || '7') // Configurable advance days
+    const endDate = new Date(now)
+    endDate.setDate(endDate.getDate() + advanceDays)
+    const endDateStr = endDate.toISOString().split('T')[0]
+    
+    console.log(`📅 Generating data for 365 days ending on ${endDateStr} (${advanceDays} days advance)`)
+    console.log(`📅 Current server time: ${now.toISOString()}`)
+    
+    // Generate 365 days of data (including advance days in future)
     for (let i = 364; i >= 0; i--) {
-      const date = new Date(today)
-      date.setDate(date.getDate() - i)
+      const date = new Date(now)
+      date.setDate(date.getDate() - i + advanceDays) // Add advance days
       const dateStr = date.toISOString().split('T')[0]
       dailyData.push({
         date: dateStr,
         count: viewsByDate[dateStr] || 0
       })
     }
+    
+    console.log(`📊 Generated ${dailyData.length} days of data`)
+    console.log(`📅 First day: ${dailyData[0]?.date}`)
+    console.log(`📅 Last day: ${dailyData[dailyData.length - 1]?.date}`)
     
     const activeDays = dailyData.filter(d => d.count > 0).length
     console.log(`✅ Analytics: Generated heatmap data for portfolio ${portfolioId} - ${activeDays} active days`)

@@ -91,6 +91,8 @@ export function AnalyticsSection({ portfolioId, analyticsData }: AnalyticsSectio
   const weeks = []
   if (analytics?.dailyData) {
     console.log('📊 Analytics data received:', analytics.dailyData.length, 'days')
+    console.log('📅 First date:', analytics.dailyData[0]?.date)
+    console.log('📅 Last date:', analytics.dailyData[analytics.dailyData.length - 1]?.date)
     
     // Ensure we have exactly 365 days of data
     let dailyData = analytics.dailyData
@@ -101,12 +103,16 @@ export function AnalyticsSection({ portfolioId, analyticsData }: AnalyticsSectio
         emptyDays.push({ date: '', count: 0 })
       }
       dailyData = [...emptyDays, ...dailyData]
+      console.log('📊 Padded data to 365 days')
     } else if (dailyData.length > 365) {
       // If we have more than 365 days, take the last 365
       dailyData = dailyData.slice(-365)
+      console.log('📊 Trimmed data to 365 days')
     }
     
     console.log('📊 Final daily data:', dailyData.length, 'days')
+    console.log('📅 Final first date:', dailyData[0]?.date)
+    console.log('📅 Final last date:', dailyData[dailyData.length - 1]?.date)
     
     // Group into weeks (exactly 52 weeks for 365 days)
     for (let i = 0; i < 52; i++) {
@@ -129,9 +135,13 @@ export function AnalyticsSection({ portfolioId, analyticsData }: AnalyticsSectio
     if (heatmapRef.current) {
       setTimeout(() => {
         if (heatmapRef.current) {
-          // Scroll to the rightmost position to show current day
-          heatmapRef.current.scrollLeft = heatmapRef.current.scrollWidth - heatmapRef.current.clientWidth
-          console.log("📊 Scrolled to current day, scrollLeft:", heatmapRef.current.scrollLeft)
+          // Scroll to show current day area (accounting for 7 days advance)
+          // Calculate approximate position for current day
+          const advanceDays = 7
+          const boxWidth = 13 // Approximate width per day box
+          const scrollPosition = heatmapRef.current.scrollWidth - heatmapRef.current.clientWidth - (advanceDays * boxWidth)
+          heatmapRef.current.scrollLeft = Math.max(0, scrollPosition)
+          console.log("📊 Scrolled to current day area (with advance days), scrollLeft:", heatmapRef.current.scrollLeft)
         }
       }, 300) // Increased timeout to ensure data is fully rendered
     }
