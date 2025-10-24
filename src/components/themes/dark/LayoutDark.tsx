@@ -7,6 +7,7 @@ import { Globe } from "lucide-react"
 import { SkillIcon } from "@/lib/skill-icons"
 import { useState, useEffect } from "react"
 import { GitHubActivity } from "@/components/GitHubActivity"
+import { trackProjectClick } from "@/lib/analytics-utils"
 
 interface ThemeConfig {
   name: string
@@ -277,6 +278,20 @@ export default function LayoutDark({ theme, portfolio }: LayoutDarkProps) {
                   viewport={{ once: true }}
                   whileHover={{ scale: 1.02, y: -4 }}
                   onClick={() => {
+                    // Track project click
+                    // Use GitHub repository ID for analytics
+                    const githubRepoId = repo.repository.id
+                    console.log(`🔍 DEBUG: Dark theme - Project click data:`, {
+                      portfolioId: portfolio.id,
+                      projectId: githubRepoId,
+                      projectName: repo.customName || repo.repository.name,
+                      projectIdType: typeof githubRepoId,
+                      portfolioIdType: typeof portfolio.id,
+                      repoId: repo.id,
+                      repoRepositoryId: repo.repository.id
+                    })
+                    trackProjectClick(portfolio.id, githubRepoId, repo.customName || repo.repository.name)
+                    
                     if (repo.deployedUrl) {
                       window.open(repo.deployedUrl, '_blank')
                     } else {
@@ -315,6 +330,10 @@ export default function LayoutDark({ theme, portfolio }: LayoutDarkProps) {
                       <motion.button
                         onClick={(e) => {
                           e.stopPropagation()
+                          // Track project click (GitHub button)
+                          // Use portfolio repository ID instead of GitHub repository ID for analytics
+                          const portfolioRepoId = repo.id || repo.repository.id
+                          trackProjectClick(portfolio.id, portfolioRepoId, repo.customName || repo.repository.name)
                           const githubUrl = repo.repository.githubUrl || repo.repository.htmlUrl
                           window.open(githubUrl, '_blank')
                         }}

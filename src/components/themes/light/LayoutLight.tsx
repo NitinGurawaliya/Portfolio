@@ -7,6 +7,7 @@ import { Globe } from "lucide-react"
 import { SkillIcon } from "@/lib/skill-icons"
 import { useState, useEffect } from "react"
 import { GitHubActivity } from "@/components/GitHubActivity"
+import { trackProjectClick } from "@/lib/analytics-utils"
 
 interface ThemeConfig {
   name: string
@@ -362,6 +363,20 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
                   viewport={{ once: true }}
                   whileHover={{ y: -2 }}
                   onClick={() => {
+                    // Track project click
+                    // Use GitHub repository ID for analytics
+                    const githubRepoId = repo.repository.id
+                    console.log(`🔍 DEBUG: Light theme - Project click data:`, {
+                      portfolioId: portfolio.id,
+                      projectId: githubRepoId,
+                      projectName: repo.customName || repo.repository.name,
+                      projectIdType: typeof githubRepoId,
+                      portfolioIdType: typeof portfolio.id,
+                      repoId: repo.id,
+                      repoRepositoryId: repo.repository.id
+                    })
+                    trackProjectClick(portfolio.id, githubRepoId, repo.customName || repo.repository.name)
+                    
                     if (repo.deployedUrl) {
                       window.open(repo.deployedUrl, '_blank')
                     } else {
@@ -400,6 +415,8 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
                       <motion.button
                         onClick={(e) => {
                           e.stopPropagation()
+                          // Track project click (GitHub button)
+                          trackProjectClick(portfolio.id, repo.repository.id, repo.customName || repo.repository.name)
                           const githubUrl = repo.repository.githubUrl || repo.repository.htmlUrl
                           window.open(githubUrl, '_blank')
                         }}

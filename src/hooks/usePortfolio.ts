@@ -13,10 +13,22 @@ import { loadPortfolioData } from "@/lib/services/portfolio-service"
 // Analytics data load करने का function
 const loadAnalyticsData = async (portfolioId: number) => {
   try {
+    // Fetch basic analytics
     const response = await fetch(`/api/analytics/stats?portfolioId=${portfolioId}`)
     const data = await response.json()
-    console.log("📊 Analytics data loaded:", data)
-    return data
+    
+    // Fetch detailed analytics
+    const detailedResponse = await fetch(`/api/analytics/detailed?portfolioId=${portfolioId}`)
+    const detailedData = await detailedResponse.json()
+    
+    const combinedData = {
+      ...data,
+      detailed: detailedData
+    }
+    
+    console.log("📊 Analytics data loaded:", combinedData)
+    console.log("📊 Detailed analytics:", detailedData)
+    return combinedData
   } catch (error) {
     console.error("Error loading analytics data:", error)
     return null
@@ -60,6 +72,7 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
   // Helper function to create data object with consistent key order
   const createOrderedData = (data: any) => {
     return {
+      id: data.id, // Add portfolio ID
       portfolioData: data.portfolioData,
       selectedRepos: data.selectedRepos,
       skills: data.skills,
@@ -370,6 +383,8 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
           console.log("💾 Setting original data from existing portfolio")
           console.log("🔍 Portfolio ID in originalData:", originalDataToSet.id)
           console.log("🔍 Portfolio object:", portfolio)
+          console.log("🔍 Portfolio ID from API:", portfolio.id)
+          console.log("🔍 Original data before normalize:", { id: portfolio.id })
           setOriginalData(originalDataToSet)
           
           // Load analytics data along with portfolio data

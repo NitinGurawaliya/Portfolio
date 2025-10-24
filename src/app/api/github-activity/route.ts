@@ -34,13 +34,13 @@ export async function GET(request: NextRequest) {
         }
       })
 
-      console.log('User API response status:', userResponse.status)
+      // console.log('User API response status:', userResponse.status) // Disabled to reduce terminal noise
 
       if (userResponse.ok) {
         userData = await userResponse.json()
-        console.log('User data fetched:', userData.login)
+        // console.log('User data fetched:', userData.login) // Disabled to reduce terminal noise
       } else {
-        console.log('User API failed, using fallback data')
+        // console.log('User API failed, using fallback data') // Disabled to reduce terminal noise
         userData = {
           login: username,
           name: username,
@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
         }
       }
     } catch (error) {
-      console.log('User API error, using fallback data:', error)
+      // console.log('User API error, using fallback data:', error) // Disabled to reduce terminal noise
       userData = {
         login: username,
         name: username,
@@ -100,7 +100,7 @@ export async function GET(request: NextRequest) {
 
       if (response.ok) {
         const data = await response.json()
-        console.log('GraphQL response:', data)
+        // console.log('GraphQL response:', data) // Disabled to reduce terminal noise
         
         if (data.data && data.data.user && data.data.user.contributionsCollection) {
           const calendar = data.data.user.contributionsCollection.contributionCalendar
@@ -112,11 +112,11 @@ export async function GET(request: NextRequest) {
           contributionData = generateMockContributions()
         }
       } else {
-        console.log('GraphQL API failed, using mock data')
+        // console.log('GraphQL API failed, using mock data') // Disabled to reduce terminal noise
         contributionData = generateMockContributions()
       }
     } catch (error) {
-      console.log('GraphQL API error, using mock data:', error)
+      // console.log('GraphQL API error, using mock data:', error) // Disabled to reduce terminal noise
       contributionData = generateMockContributions()
     }
 
@@ -168,7 +168,7 @@ export async function GET(request: NextRequest) {
 
       if (pinnedResponse.ok) {
         const pinnedData = await pinnedResponse.json()
-        console.log('Pinned repos GraphQL response:', pinnedData)
+        // console.log('Pinned repos GraphQL response:', pinnedData) // Disabled to reduce terminal noise
         
         if (pinnedData.data && pinnedData.data.user && pinnedData.data.user.pinnedItems) {
           pinnedRepos = pinnedData.data.user.pinnedItems.nodes.map((repo: any) => ({
@@ -213,7 +213,7 @@ export async function GET(request: NextRequest) {
           }
         }
       } else {
-        console.log('Pinned repos GraphQL failed, using empty array')
+        // console.log('Pinned repos GraphQL failed, using empty array') // Disabled to reduce terminal noise
         pinnedRepos = []
       }
     } catch (error) {

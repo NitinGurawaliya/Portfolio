@@ -4,11 +4,14 @@ import { Repository, Skill, Social } from "@/interface"
  * Data को normalize करता है - null/undefined values remove करता है
  */
 export const normalizeData = (data: any) => {
-  return JSON.parse(JSON.stringify(data, (key, value) => {
+  console.log("🔍 DEBUG: normalizeData input:", data)
+  const result = JSON.parse(JSON.stringify(data, (key, value) => {
     // Remove null/undefined
     if (value === null || value === undefined) return undefined
     // Don't remove empty strings for portfolioData properties
     if (value === "" && key !== "displayName" && key !== "jobTitle" && key !== "bio" && key !== "profilePic" && key !== "customUsername") return undefined
+    // Don't remove id field even if it's 0
+    if (key === "id" && (value === 0 || value === "0")) return value
     // Remove empty objects/arrays
     if (typeof value === 'object' && value !== null) {
       if (Array.isArray(value) && value.length === 0) return undefined
@@ -16,6 +19,8 @@ export const normalizeData = (data: any) => {
     }
     return value
   }))
+  console.log("🔍 DEBUG: normalizeData output:", result)
+  return result
 }
 
 /**
@@ -112,9 +117,11 @@ export const formatImportedProjects = (portfolioRepos: any[]): Repository[] => {
   return portfolioRepos
     .map((repo: any) => {
       const languages = parseRepositoryLanguages(repo)
+      const githubId = parseInt(repo.repository.githubId)
       
       return {
-        id: parseInt(repo.repository.githubId),
+        id: githubId, // Use GitHub ID as the main ID
+        githubId: githubId, // Also store as githubId property
         name: repo.repository.name,
         fullName: repo.repository.fullName || repo.repository.name,
         description: repo.repository.description || "",
@@ -185,13 +192,14 @@ export const buildLivePortfolio = (
     : selected
 
   const repositories = sortedRepos.map(repo => ({
-    id: repo.id,
+    id: repo.id, // This is the database repository ID
     deployedUrl: deployedUrls[repo.id] || repo.homepage || "",
     isVisible: true,
     customName: customNames[repo.id] || null,
     customDescription: customDescriptions[repo.id] || null,
     repository: {
-      id: repo.id,
+      id: repo.githubId || repo.id, // Use GitHub ID if available, otherwise use repo.id (which should be GitHub ID from formatImportedProjects)
+      githubId: repo.githubId || repo.id, // Add GitHub ID
       name: repo.name,
       description: repo.description,
       htmlUrl: repo.htmlUrl,

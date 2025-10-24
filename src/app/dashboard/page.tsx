@@ -183,10 +183,21 @@ export default function DashboardPage() {
           return <div>Loading portfolio data...</div>
         }
         console.log("🔍 Analytics Section - Portfolio ID:", portfolio.originalData?.id)
+        console.log("🔍 Dashboard Debug:")
+        console.log("📊 selectedRepos:", portfolio.selectedRepos)
+        console.log("📊 selectedRepos length:", portfolio.selectedRepos?.length)
+        console.log("📊 importedProjects:", portfolio.importedProjects)
+        console.log("📊 importedProjects length:", portfolio.importedProjects?.length)
+        console.log("📊 customNames:", portfolio.customNames)
+        console.log("📊 customDescriptions:", portfolio.customDescriptions)
         return (
           <AnalyticsSection 
             portfolioId={portfolio.originalData?.id || 0}
             analyticsData={portfolio.analytics}
+            selectedRepos={portfolio.selectedRepos}
+            importedProjects={portfolio.importedProjects}
+            customNames={portfolio.customNames}
+            customDescriptions={portfolio.customDescriptions}
           />
         )
       case "theme":

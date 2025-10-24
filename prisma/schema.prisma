@@ -139,3 +139,49 @@ model PortfolioAnalytics {
 
   @@index([portfolioId])
 }
+
+model ProjectClick {
+  id          Int      @id @default(autoincrement())
+  portfolioId Int
+  projectId   Int
+  projectName String
+  clickedAt   DateTime @default(now())
+  ipAddress   String?
+  userAgent   String?
+  referrer    String?
+
+  @@index([portfolioId])
+  @@index([projectId])
+  @@index([clickedAt])
+}
+
+model SocialClick {
+  id          Int      @id @default(autoincrement())
+  portfolioId Int
+  socialType  String   // 'github', 'linkedin', 'twitter', etc.
+  socialUrl   String
+  clickedAt   DateTime @default(now())
+  ipAddress   String?
+  userAgent   String?
+  referrer    String?
+
+  @@index([portfolioId])
+  @@index([socialType])
+  @@index([clickedAt])
+}
+
+model PortfolioSession {
+  id          Int      @id @default(autoincrement())
+  portfolioId Int
+  sessionId   String   @unique
+  startTime   DateTime @default(now())
+  endTime     DateTime?
+  timeSpent   Int?     // in seconds
+  ipAddress   String?
+  userAgent   String?
+  referrer    String?
+
+  @@index([portfolioId])
+  @@index([sessionId])
+  @@index([startTime])
+}
