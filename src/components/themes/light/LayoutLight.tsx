@@ -65,6 +65,7 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
   const [bioIndex, setBioIndex] = useState(0)
   const [isTypingComplete, setIsTypingComplete] = useState(false)
   const [viewsCount, setViewsCount] = useState(0)
+  const [projectViews, setProjectViews] = useState<{[key: number]: number}>({})
 
   // Fetch views count
   useEffect(() => {
@@ -82,6 +83,33 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
     
     if (portfolio.id) {
       fetchViews()
+    }
+  }, [portfolio.id])
+
+  // Fetch project views
+  useEffect(() => {
+    const fetchProjectViews = async () => {
+      try {
+        const response = await fetch(`/api/analytics/detailed?portfolioId=${portfolio.id}`)
+        if (response.ok) {
+          const data = await response.json()
+          if (data.projects) {
+            const views: {[key: number]: number} = {}
+            data.projects.forEach((project: any) => {
+              // Convert BigInt to number if needed
+              const projectId = typeof project.projectId === 'bigint' ? Number(project.projectId) : project.projectId
+              views[projectId] = project.clickCount || 0
+            })
+            setProjectViews(views)
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch project views:', error)
+      }
+    }
+    
+    if (portfolio.id) {
+      fetchProjectViews()
     }
   }, [portfolio.id])
 
@@ -411,6 +439,12 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
                     // Update views count
                     setViewsCount(prev => prev + 1)
                     
+                    // Update project views count
+                    setProjectViews(prev => ({
+                      ...prev,
+                      [githubRepoId]: (prev[githubRepoId] || 0) + 1
+                    }))
+                    
                     if (repo.deployedUrl) {
                       window.open(repo.deployedUrl, '_blank')
                     } else {
@@ -453,6 +487,11 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
                           trackProjectClick(portfolio.id, repo.repository.id, repo.customName || repo.repository.name)
                           // Update views count
                           setViewsCount(prev => prev + 1)
+                          // Update project views count
+                          setProjectViews(prev => ({
+                            ...prev,
+                            [repo.repository.id]: (prev[repo.repository.id] || 0) + 1
+                          }))
                           const githubUrl = repo.repository.githubUrl || repo.repository.htmlUrl
                           window.open(githubUrl, '_blank')
                         }}
@@ -465,32 +504,41 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
                       </motion.button>
                     </div>
                     
-                    {/* All Languages badges */}
-                    <div className="flex items-center flex-wrap gap-2 mt-auto">
-                      {(() => {
-                        // Parse languages from JSON string
-                        let languages: string[] = []
-                        if (repo.repository.languages) {
-                          try {
-                            languages = JSON.parse(repo.repository.languages)
-                          } catch (e) {
-                            // Fallback to single language
-                            if (repo.repository.language) {
-                              languages = [repo.repository.language]
+                    {/* Languages and Views */}
+                    <div className="flex items-center justify-between flex-wrap gap-2 mt-auto">
+                      {/* Languages badges */}
+                      <div className="flex items-center flex-wrap gap-2">
+                        {(() => {
+                          // Parse languages from JSON string
+                          let languages: string[] = []
+                          if (repo.repository.languages) {
+                            try {
+                              languages = JSON.parse(repo.repository.languages)
+                            } catch (e) {
+                              // Fallback to single language
+                              if (repo.repository.language) {
+                                languages = [repo.repository.language]
+                              }
                             }
+                          } else if (repo.repository.language) {
+                            languages = [repo.repository.language]
                           }
-                        } else if (repo.repository.language) {
-                          languages = [repo.repository.language]
-                        }
-                        
-                        return languages
-                          .filter(lang => lang.toLowerCase() !== 'web') // Filter out "Web" tag
-                          .map((lang, idx) => (
-                            <span key={idx} className="text-gray-700 text-xs sm:text-sm font-medium px-2 py-1 bg-gray-200 rounded border border-gray-300">
-                              {lang}
-                            </span>
-                          ))
-                      })()}
+                          
+                          return languages
+                            .filter(lang => lang.toLowerCase() !== 'web') // Filter out "Web" tag
+                            .map((lang, idx) => (
+                              <span key={idx} className="text-gray-700 text-xs sm:text-sm font-medium px-2 py-1 bg-gray-200 rounded border border-gray-300">
+                                {lang}
+                              </span>
+                            ))
+                        })()}
+                      </div>
+                      
+                      {/* Project Views */}
+                      <div className="flex items-center gap-1 text-xs text-gray-500">
+                        <Eye className="h-3 w-3" />
+                        <span>{projectViews[repo.repository.githubId] || 0} views</span>
+                      </div>
                     </div>
                   </div>
                 </motion.article>

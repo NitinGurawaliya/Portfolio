@@ -195,10 +195,6 @@ export default function DashboardPage() {
           <AnalyticsSection 
             portfolioId={portfolio.originalData?.id || 0}
             analyticsData={portfolio.analytics}
-            selectedRepos={portfolio.selectedRepos}
-            importedProjects={portfolio.importedProjects}
-            customNames={portfolio.customNames}
-            customDescriptions={portfolio.customDescriptions}
           />
         )
       case "theme":
