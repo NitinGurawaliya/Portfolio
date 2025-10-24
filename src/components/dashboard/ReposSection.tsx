@@ -29,7 +29,8 @@ import {
   ArrowRight,
   ChevronUp,
   ChevronDown as ChevronDownIcon,
-  GripVertical
+  GripVertical,
+  BarChart3
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -114,6 +115,7 @@ interface ReposSectionProps {
   onUpdateGithubUrl?: (repoId: number, url: string) => void
   onUpdateRepoOrder: (newOrder: number[]) => void
   onAddImportedProject?: (project: Repository) => void
+  analytics?: any
 }
 
 export function ReposSection({ 
@@ -130,7 +132,8 @@ export function ReposSection({
   onUpdateCustomDescription,
   onUpdateGithubUrl,
   onUpdateRepoOrder,
-  onAddImportedProject
+  onAddImportedProject,
+  analytics
 }: ReposSectionProps) {
   const [searchTerm, setSearchTerm] = useState("")
   const [deployedUrls, setDeployedUrls] = useState<Record<number, string>>(initialDeployedUrls || {})
@@ -541,110 +544,83 @@ export function ReposSection({
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.4 }}
             >
-              <CardTitle className="text-lg text-black flex items-center font-bold">
-                <motion.div
-                  whileHover={{ rotate: 360 }}
-                  transition={{ duration: 0.6 }}
-                >
-                  <Code2 className="h-5 w-5 mr-2" />
-                </motion.div>
-                Projects
-                <motion.div
-                  className="ml-2"
-                  animate={{ scale: [1, 1.2, 1] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                >
-                </motion.div>
-              </CardTitle>
-              <motion.p 
-                className="text-gray-600 mt-1 font-medium text-sm"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.2 }}
-              >
-                Showcase your best work by importing repositories from GitHub
-              </motion.p>
-            </motion.div>
-          </CardHeader>
-        </Card>
-      </motion.div>
-
-      {/* Project Input and GitHub Dropdown - Highlighted */}
-      <motion.div variants={itemVariants}>
-        <Card className="bg-gradient-to-r from-orange-50 to-yellow-50 border-2 border-orange-200 transition-all duration-300">
-          <CardContent className="pt-4">
-            <div className="flex items-center space-x-2 mb-3">
-              <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
-              <span className="text-orange-700 font-semibold text-sm">✨ Add Project by URL</span>
-            </div>
-            <div className="flex items-center gap-3 sm:gap-4 flex-wrap sm:flex-nowrap">
-              {/* Project URL Input with inline button */}
-              <motion.div 
-                className="flex-1 min-w-[220px] relative"
-                whileFocus={{ scale: 1.02 }}
-                transition={{ duration: 0.2 }}
-              >
-                <LinkIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Put your project URL here"
-                  value={projectUrl}
-                  onChange={(e) => setProjectUrl(e.target.value)}
-                  className="pl-10 pr-12 bg-gray-50  text-black font-medium h-9 text-sm focus:bg-white transition-all duration-300"
-                  onKeyDown={(e) => e.key === 'Enter' && projectUrl.trim() && handleUrlImport()}
-                />
-                {/* Inline Add Button - only show when there's text */}
-                {projectUrl.trim() && (
+              <CardTitle className="text-lg text-black flex items-center justify-between font-bold">
+                <div className="flex items-center">
                   <motion.div
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.8 }}
+                    whileHover={{ rotate: 360 }}
+                    transition={{ duration: 0.6 }}
+                  >
+                    <Code2 className="h-5 w-5 mr-2" />
+                  </motion.div>
+                  Projects
+                  <motion.div
+                    className="ml-2"
+                    animate={{ scale: [1, 1.2, 1] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  >
+                  </motion.div>
+                </div>
+                
+                {/* Input Section integrated with title */}
+                <div className="flex items-center gap-2">
+                  {/* Simple Input Box */}
+                  <motion.div 
+                    className="relative"
+                    whileFocus={{ scale: 1.01 }}
                     transition={{ duration: 0.2 }}
-                    className="absolute right-1 top-1/2 transform -translate-y-1/2"
                   >
-                    <Button
-                      onClick={handleUrlImport}
-                      disabled={isImportingUrl}
-                      className="h-7 w-7 p-0 bg-black text-white hover:bg-gray-800 transition-all duration-300 rounded"
-                    >
-                      {isImportingUrl ? (
-                        <Loader2 className="h-3 w-3 animate-spin" />
-                      ) : (
-                        <Plus className="h-3 w-3" />
-                      )}
-                    </Button>
-                  </motion.div>
-                )}
-              </motion.div>
-
-              <motion.div 
-                className="text-gray-400 text-sm font-medium"
-                animate={{ opacity: [0.5, 1, 0.5] }}
-                transition={{ duration: 2, repeat: Infinity }}
-              >
-                Or
-              </motion.div>
-
-              {/* GitHub Dropdown */}
-              <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
-                <DropdownMenuTrigger asChild>
-                  <motion.div
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="relative z-50"
-                  >
-                    <Button className="bg-black text-white rounded-lg hover:bg-gray-800 flex items-center space-x-2 font-medium h-9 text-sm transition-all duration-300">
-                      <Github className="h-3 w-3" />
-                      {/* <span>GitHub</span> */}
+                    <LinkIcon className="absolute left-2 top-1/2 transform -translate-y-1/2 h-3 w-3 text-gray-400" />
+                    <Input
+                      placeholder="Project URL"
+                      value={projectUrl}
+                      onChange={(e) => setProjectUrl(e.target.value)}
+                      className="pl-7 pr-8 bg-white border border-gray-300 text-black font-medium h-8 text-xs focus:border-gray-400 transition-all duration-300 w-48"
+                      onKeyDown={(e) => e.key === 'Enter' && projectUrl.trim() && handleUrlImport()}
+                    />
+                    {/* Inline Add Button */}
+                    {projectUrl.trim() && (
                       <motion.div
-                        animate={{ rotate: isDropdownOpen ? 180 : 0 }}
-                        transition={{ duration: 0.3 }}
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        transition={{ duration: 0.2 }}
+                        className="absolute right-1 top-1/2 transform -translate-y-1/2"
                       >
-                        <ChevronDown className="h-3 w-3" />
+                        <Button
+                          onClick={handleUrlImport}
+                          disabled={isImportingUrl}
+                          className="h-6 w-6 p-0 bg-black text-white hover:bg-gray-800 transition-all duration-300 rounded"
+                        >
+                          {isImportingUrl ? (
+                            <Loader2 className="h-2 w-2 animate-spin" />
+                          ) : (
+                            <Plus className="h-2 w-2" />
+                          )}
+                        </Button>
                       </motion.div>
-                    </Button>
+                    )}
                   </motion.div>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-96 bg-white shadow-2xl z-[60]">
+
+                  {/* GitHub Dropdown */}
+                  <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
+                    <DropdownMenuTrigger asChild>
+                      <motion.div
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="relative z-50"
+                      >
+                        <Button className="bg-black text-white rounded-lg hover:bg-gray-800 flex items-center space-x-1 font-medium h-8 text-xs transition-all duration-300 px-2">
+                          <Github className="h-3 w-3" />
+                          <motion.div
+                            animate={{ rotate: isDropdownOpen ? 180 : 0 }}
+                            transition={{ duration: 0.3 }}
+                          >
+                            <ChevronDown className="h-3 w-3" />
+                          </motion.div>
+                        </Button>
+                      </motion.div>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-96 bg-white shadow-2xl z-[60]">
                   <motion.div 
                     className="p-4 border-b border-gray-200"
                     initial={{ opacity: 0, y: -10 }}
@@ -739,8 +715,18 @@ export function ReposSection({
                   </div>
                 </DropdownMenuContent>
               </DropdownMenu>
-            </div>
-          </CardContent>
+                </div>
+              </CardTitle>
+              <motion.p 
+                className="text-gray-600 mt-1 font-medium text-sm"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.2 }}
+              >
+                Showcase your best work by importing repositories from GitHub
+              </motion.p>
+            </motion.div>
+          </CardHeader>
         </Card>
       </motion.div>
 
@@ -776,7 +762,7 @@ export function ReposSection({
               </motion.div>
             </motion.div> */}
             
-            <div className="grid gap-2">
+            <div className="grid grid-cols-3 gap-3">
               <AnimatePresence mode="popLayout">
                 {selectedRepositories.map((repo, index) => {
                   const isEditing = editingRepo === repo.id
@@ -799,250 +785,56 @@ export function ReposSection({
                       <Card 
                         className="bg-white border border-gray-200 hover:border-gray-300 transition-all duration-300 group"
                       >
-                        <CardContent className="p-2">
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              {/* Project Icon at the top */}
-                              <div className="mb-3">
-                                <ProjectIcon
-                                  favicon={repo.repository.favicon}
-                                  logo={repo.repository.logo}
-                                  title={customName || repo.name}
-                                  size="md"
-                                />
-                              </div>
-                              
-                              {/* Project Name */}
-                              <div className="mb-3">
-                                <motion.div
-                                  whileHover={{ scale: 1.01 }}
-                                  transition={{ duration: 0.2 }}
-                                >
-                                  <Input
-                                    value={customName}
-                                    onChange={(e) => handleInlineEdit(repo.id, 'name', e.target.value)}
-                                    className="text-lg font-bold border-0 bg-transparent p-0 focus:bg-gray-50 focus:border-2 border-gray-300 focus:p-2 transition-all duration-300 text-black placeholder:text-gray-400"
-                                    placeholder="Project name"
-                                  />
-                                </motion.div>
-                              </div>
+                        <CardContent className="p-0">
+                          <div className="flex flex-col h-full px-3 relative">
 
-                              {/* Project Description - Text Display */}
-                              <div className="mb-4">
-                                <div 
-                                  className="text-gray-700 font-medium leading-relaxed prose prose-sm max-w-none"
-                                  dangerouslySetInnerHTML={{
-                                    __html: customDescription || repo.description || "No description available"
-                                  }}
-                                />
-                              </div>
-
-                              {/* Repository Stats & Technologies */}
-                              <div className="mb-3">
-                                <div className="flex items-center flex-wrap gap-2 mb-2">
-                                  {/* Display all languages from the repository */}
-                                  {repo.languages && repo.languages.length > 0 ? (
-                                    repo.languages
-                                      .filter(lang => lang.toLowerCase() !== 'web') // Filter out "Web" tag
-                                      .map((lang, idx) => (
-                                        <div key={idx} className="flex items-center px-2 py-1 bg-gray-100 rounded-md">
-                                          <motion.div 
-                                            className={`w-2.5 h-2.5 rounded-full ${getLanguageColor(lang)} mr-1.5`}
-                                            animate={{ scale: [1, 1.2, 1] }}
-                                            transition={{ duration: 2, repeat: Infinity }}
-                                          />
-                                          <span className="font-bold text-xs text-gray-700">{lang}</span>
-                                        </div>
-                                      ))
-                                  ) : repo.language && repo.language.toLowerCase() !== 'web' && (
-                                    // Fallback to single language if languages array not available (excluding "Web")
-                                    <div className="flex items-center px-2 py-1 bg-gray-100 rounded-md">
-                                      <motion.div 
-                                        className={`w-2.5 h-2.5 rounded-full ${getLanguageColor(repo.language)} mr-1.5`}
-                                        animate={{ scale: [1, 1.2, 1] }}
-                                        transition={{ duration: 2, repeat: Infinity }}
-                                      />
-                                      <span className="font-bold text-xs text-gray-700">{repo.language}</span>
-                                    </div>
-                                  )}
-                                  {/* Display custom additional technologies */}
-                                  {customTechnologies[repo.id] && customTechnologies[repo.id].split(',').map((tech, idx) => (
-                                    tech.trim() && (
-                                      <div key={idx} className="px-2 py-1 bg-blue-50 text-blue-700 rounded-md text-xs font-medium">
-                                        {tech.trim()}
-                                      </div>
-                                    )
-                                  ))}
-                                </div>
-                                <div className="flex items-center space-x-5 text-sm text-gray-600 font-medium">
-                                  {repo.stargazersCount >= 10 && (
-                                    <div className="flex items-center">
-                                      <Star className="h-4 w-4 mr-1 text-yellow-500" />
-                                      <span className="font-bold">{repo.stargazersCount}</span>
-                                    </div>
-                                  )}
-                                  {repo.forksCount >= 10 && (
-                                    <div className="flex items-center">
-                                      <GitFork className="h-4 w-4 mr-1 text-blue-500" />
-                                      <span className="font-bold">{repo.forksCount}</span>
-                                    </div>
-                                  )}
-                                  <div className="text-xs">
-                                    Updated {new Date(repo.updatedAt).toLocaleDateString()}
-                                  </div>
-                                </div>
-                              </div>
-
-
-                              {/* Deployed URL Input - Only for GitHub projects */}
-                              {repo.repository.htmlUrl && (
-                                <div className="mt-3">
-                                  <Label htmlFor={`deployed-${repo.id}`} className="text-black font-bold mb-2 block text-sm">
-                                    Deployed URL (optional)
-                                  </Label>
-                                  <motion.div
-                                    whileHover={{ scale: 1.01 }}
-                                    transition={{ duration: 0.2 }}
-                                  >
-                                    <Input
-                                      id={`deployed-${repo.id}`}
-                                      value={deployedUrls[repo.id] || ""}
-                                      onChange={(e) => handleInlineEdit(repo.id, 'deployedUrl', e.target.value)}
-                                      placeholder={repo.repository.homepage ? "Auto-filled from GitHub" : "Add your deployed URL"}
-                                      className="border-0 bg-transparent p-0 focus:bg-gray-50 focus:border-2 border-gray-300 focus:p-2 transition-all duration-300 font-medium text-sm text-black placeholder:text-gray-400"
-                                    />
-                                  </motion.div>
-                                </div>
-                              )}
-
-                              {/* GitHub URL Input - Only for URL projects */}
-                              {!repo.repository.htmlUrl && (
-                                <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                                  <div className="flex items-center gap-2 mb-3">
-                                    <Github className="h-5 w-5 text-blue-600" />
-                                    <Label htmlFor={`github-${repo.id}`} className="text-blue-700 font-bold text-sm">
-                                      GitHub Repository (optional)
-                                    </Label>
-                                  </div>
-                                  <div className="relative">
-                                    <Input
-                                      id={`github-${repo.id}`}
-                                      value={githubUrls?.[repo.id] || ""}
-                                      onChange={(e) => handleGithubUrlChange(repo.id, e.target.value)}
-                                      placeholder="https://github.com/username/repository"
-                                      className={`border rounded-md px-3 py-2 pr-10 text-sm text-gray-700 placeholder:text-gray-400 focus:ring-2 transition-all duration-200 ${
-                                        githubUrls?.[repo.id] && !isValidGitHubUrl(githubUrls[repo.id])
-                                          ? 'border-red-300 focus:ring-red-500 focus:border-red-500 bg-red-50'
-                                          : 'border-blue-300 focus:ring-blue-500 focus:border-blue-500 bg-white'
-                                      }`}
-                                    />
-                                    {githubUrls?.[repo.id] && isValidGitHubUrl(githubUrls[repo.id]) && (
-                                      <motion.div
-                                        initial={{ opacity: 0, scale: 0.8 }}
-                                        animate={{ opacity: 1, scale: 1 }}
-                                        className="absolute right-2 top-1/2 transform -translate-y-1/2"
-                                      >
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          onClick={() => window.open(githubUrls[repo.id], '_blank')}
-                                          className="h-6 w-6 p-0 text-gray-600 hover:text-gray-800 hover:bg-gray-100"
-                                        >
-                                          <ExternalLink className="h-3 w-3" />
-                                        </Button>
-                                      </motion.div>
-                                    )}
-                                  </div>
-                                  {githubUrls?.[repo.id] && !isValidGitHubUrl(githubUrls[repo.id]) ? (
-                                    <p className="text-xs text-red-500 mt-2 flex items-center gap-1">
-                                      <span>⚠️</span>
-                                      Please enter a valid GitHub repository URL
-                                    </p>
-                                  ) : (
-                                    <p className="text-xs text-blue-600 mt-2">
-                                      💡 Add GitHub repository URL to show source code link in your portfolio
-                                    </p>
-                                  )}
-                                </div>
-                              )}
+                            {/* Project Icon at the top */}
+                            <div className="mb-2">
+                              <ProjectIcon
+                                favicon={repo.repository.favicon}
+                                logo={repo.repository.logo}
+                                title={customName || repo.name}
+                                size="md"
+                              />
                             </div>
                             
-                            {/* Action Buttons */}
-                            <div className="flex flex-col space-y-2 ml-6">
-                              {/* Reorder Buttons */}
-                              <div className="flex space-x-1 mb-2">
-                                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={(e) => {
-                                      e.preventDefault()
-                                      e.stopPropagation()
-                                      handleMoveUp(repo.id)
-                                    }}
-                                    disabled={index === 0}
-                                    className="h-7 w-7 p-0 text-gray-700 hover:bg-gray-100 hover:text-black disabled:opacity-30 disabled:cursor-not-allowed"
-                                    title="Move up"
-                                  >
-                                    <ChevronUp className="h-4 w-4" />
-                                  </Button>
-                                </motion.div>
-                                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={(e) => {
-                                      e.preventDefault()
-                                      e.stopPropagation()
-                                      handleMoveDown(repo.id)
-                                    }}
-                                    disabled={index === selectedRepositories.length - 1}
-                                    className="h-7 w-7 p-0 text-gray-700 hover:bg-gray-100 hover:text-black disabled:opacity-30 disabled:cursor-not-allowed"
-                                    title="Move down"
-                                  >
-                                    <ChevronDownIcon className="h-4 w-4" />
-                                  </Button>
-                                </motion.div>
-                              </div>
-                              <div className="flex space-x-2">
-                                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => window.open(repo.htmlUrl, '_blank')}
-                                    className="text-black border-gray-300 hover:bg-gray-900 hover:text-white hover:border-gray-900 font-bold h-8 px-3 transition-colors"
-                                  >
-                                    <Github className="h-3 w-3 mr-1" />
-                                    GitHub
-                                  </Button>
-                                </motion.div>
-                                {deployedUrls[repo.id] && (
-                                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => window.open(deployedUrls[repo.id], '_blank')}
-                                      className="text-black border-gray-300 hover:bg-gray-900 hover:text-white hover:border-gray-900 font-bold h-8 px-3 transition-colors"
-                                    >
-                                      <ExternalLink className="h-3 w-3 mr-1" />
-                                      Live
-                                    </Button>
-                                  </motion.div>
-                                )}
-                              </div>
-                              
-                              {/* Delete Button - Show on hover */}
-                              <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleRemoveRepo(repo.id)}
-                                    className="text-red-600 hover:text-red-800 hover:bg-red-50 h-8 px-2 font-bold"
-                                  >
-                                    <Trash2 className="h-3 w-3" />
-                                  </Button>
-                                </motion.div>
+                            {/* Project Name - Limited */}
+                            <div className="mb-2">
+                              <motion.div
+                                whileHover={{ scale: 1.01 }}
+                                transition={{ duration: 0.2 }}
+                              >
+                                <Input
+                                  value={customName}
+                                  onChange={(e) => handleInlineEdit(repo.id, 'name', e.target.value)}
+                                  className="text-sm font-bold border-0 bg-transparent p-0 focus:bg-gray-50 focus:border-2 border-gray-300 focus:p-1 transition-all duration-300 text-black placeholder:text-gray-400 truncate"
+                                  placeholder="Project name"
+                                  maxLength={20}
+                                />
+                              </motion.div>
+                            </div>
+
+                            {/* Project Description - Limited */}
+                            <div className="mb-3 flex-1">
+                              <motion.div
+                                whileHover={{ scale: 1.01 }}
+                                transition={{ duration: 0.2 }}
+                              >
+                                <Input
+                                  value={customDescription}
+                                  onChange={(e) => handleInlineEdit(repo.id, 'description', e.target.value)}
+                                  className="text-xs text-gray-600 border-0 bg-transparent p-0 focus:bg-gray-50 focus:border-2 border-gray-300 focus:p-1 transition-all duration-300 placeholder:text-gray-400 line-clamp-2"
+                                  placeholder="Project description"
+                                  maxLength={60}
+                                />
+                              </motion.div>
+                            </div>
+
+                            {/* Analytics - Times Visited */}
+                            <div className="absolute top-2 right-2 text-right">
+                              <div className="text-xs font-bold text-gray-600">Times visited</div>
+                              <div className="text-lg font-bold text-black">
+                                {analytics?.detailed?.projects?.find((p: any) => p.projectId === repo.id)?.clickCount || 0}
                               </div>
                             </div>
                           </div>

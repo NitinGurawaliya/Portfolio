@@ -78,18 +78,18 @@ export default function ThemeSelector({
   const getThemePreview = (themeConfig: ThemeConfig) => {
     return (
       <div 
-        className="w-full h-28 rounded-lg border relative overflow-hidden shadow-sm"
+        className="w-full h-20 rounded-lg border relative overflow-hidden shadow-sm"
         style={{ 
           background: themeConfig.colors.background,
           borderColor: themeConfig.colors.border || themeConfig.colors.accent + '30'
         }}
       >
         {/* Preview content */}
-        <div className="absolute inset-0 p-3">
+        <div className="absolute inset-0 p-2">
           {/* Profile section */}
-          <div className="flex items-center gap-3 mb-3">
+          <div className="flex items-center gap-2 mb-2">
             <div 
-              className="w-8 h-8 rounded-full border-2"
+              className="w-5 h-5 rounded-full border-2"
               style={{ 
                 borderColor: themeConfig.colors.accent,
                 backgroundColor: themeConfig.colors.cardBg || themeConfig.colors.background
@@ -97,14 +97,14 @@ export default function ThemeSelector({
             />
             <div className="flex-1">
               <div 
-                className="h-2 rounded mb-1"
+                className="h-1.5 rounded mb-1"
                 style={{ 
                   backgroundColor: themeConfig.colors.text,
                   width: '70%'
                 }}
               />
               <div 
-                className="h-1.5 rounded"
+                className="h-1 rounded"
                 style={{ 
                   backgroundColor: themeConfig.colors.accent,
                   width: '50%'
@@ -114,16 +114,16 @@ export default function ThemeSelector({
           </div>
           
           {/* Project cards */}
-          <div className="space-y-2">
+          <div className="space-y-1">
             <div 
-              className="h-4 rounded border"
+              className="h-3 rounded border"
               style={{ 
                 backgroundColor: themeConfig.colors.cardBg || themeConfig.colors.background,
                 borderColor: themeConfig.colors.border || themeConfig.colors.accent + '40'
               }}
             />
             <div 
-              className="h-4 rounded border"
+              className="h-3 rounded border"
               style={{ 
                 backgroundColor: themeConfig.colors.cardBg || themeConfig.colors.background,
                 borderColor: themeConfig.colors.border || themeConfig.colors.accent + '40'

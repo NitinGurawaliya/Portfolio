@@ -2,12 +2,9 @@
 
 import { useState, useEffect, useRef } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { ProjectIcon } from "@/components/ui/project-icon"
 import { motion } from "framer-motion"
 import { 
-  BarChart3,
-  ChevronDown,
-  ChevronUp
+  BarChart3
 } from "lucide-react"
 
 interface DailyData {
@@ -15,66 +12,25 @@ interface DailyData {
   count: number
 }
 
-interface ProjectStats {
-  projectId: number
-  projectName: string
-  clickCount: number
-  lastClicked: string
-}
-
-interface SocialStats {
-  socialType: string
-  socialUrl: string
-  clickCount: number
-  lastClicked: string
-}
-
-interface TimeSpentStats {
-  average: number
-  totalSessions: number
-  validSessions: number
-}
-
-interface DetailedAnalytics {
-  projects: ProjectStats[]
-  socials: SocialStats[]
-  timeSpent: TimeSpentStats
-}
 
 interface AnalyticsData {
   totalViews: number
   lastViewedAt: string | null
   dailyData: DailyData[]
-  detailed?: DetailedAnalytics
 }
 
 interface AnalyticsSectionProps {
   portfolioId: number
   analyticsData?: AnalyticsData | null
-  selectedRepos?: number[]
-  importedProjects?: any[]
-  customNames?: Record<number, string>
-  customDescriptions?: Record<number, string>
 }
 
-export function AnalyticsSection({ portfolioId, analyticsData, selectedRepos, importedProjects, customNames, customDescriptions }: AnalyticsSectionProps) {
+export function AnalyticsSection({ portfolioId, analyticsData }: AnalyticsSectionProps) {
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(analyticsData || null)
   const [loading, setLoading] = useState(!analyticsData)
   const [hoveredDay, setHoveredDay] = useState<{date: string, count: number, x: number, y: number} | null>(null)
-  const [currentPage, setCurrentPage] = useState(1)
-  const [showAllProjects, setShowAllProjects] = useState(false)
   const heatmapRef = useRef<HTMLDivElement>(null)
 
-  const projectsPerPage = 5
 
-  // Debug logging
-  console.log("🔍 AnalyticsSection Debug:")
-  console.log("📊 selectedRepos:", selectedRepos)
-  console.log("📊 selectedRepos length:", selectedRepos?.length)
-  console.log("📊 importedProjects:", importedProjects)
-  console.log("📊 importedProjects length:", importedProjects?.length)
-  console.log("📊 customNames:", customNames)
-  console.log("📊 customDescriptions:", customDescriptions)
 
   useEffect(() => {
     if (analyticsData) {
@@ -268,10 +224,10 @@ export function AnalyticsSection({ portfolioId, analyticsData, selectedRepos, im
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 gap-2 max-w-md">
         <motion.div variants={itemVariants}>
           <Card className="bg-white border border-gray-300 shadow-sm hover:shadow-md transition-shadow rounded-lg">
-            <CardContent className="p-3">
+            <CardContent className="p-2">
               <div className="text-center">
                 <p className="text-xs font-medium text-gray-600 mb-1">Total Views</p>
                 <p className="text-lg font-bold text-gray-900">{analytics?.totalViews || 0}</p>
@@ -282,7 +238,7 @@ export function AnalyticsSection({ portfolioId, analyticsData, selectedRepos, im
 
         <motion.div variants={itemVariants}>
           <Card className="bg-white border border-gray-300 shadow-sm hover:shadow-md transition-shadow rounded-lg">
-            <CardContent className="p-3">
+            <CardContent className="p-2">
               <div className="text-center">
                 <p className="text-xs font-medium text-gray-600 mb-1">Last Viewed</p>
                 <p className="text-lg font-bold text-gray-900">
@@ -301,7 +257,7 @@ export function AnalyticsSection({ portfolioId, analyticsData, selectedRepos, im
 
         <motion.div variants={itemVariants}>
           <Card className="bg-white border border-gray-300 shadow-sm hover:shadow-md transition-shadow rounded-lg">
-            <CardContent className="p-3">
+            <CardContent className="p-2">
               <div className="text-center">
                 <p className="text-xs font-medium text-gray-600 mb-1">Activity (1 year)</p>
                 <p className="text-lg font-bold text-gray-900">
@@ -312,174 +268,6 @@ export function AnalyticsSection({ portfolioId, analyticsData, selectedRepos, im
           </Card>
         </motion.div>
       </div>
-
-      {/* Project Analytics - Stack Layout */}
-      {(importedProjects && Array.isArray(importedProjects) && importedProjects.length > 0) || (selectedRepos && Array.isArray(selectedRepos) && selectedRepos.length > 0) ? (
-        <motion.div variants={itemVariants}>
-          <Card className="bg-white border border-gray-300 shadow-sm rounded-lg">
-            <CardHeader className="pb-4">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                  <div className="p-2 bg-blue-50 rounded-lg">
-                    <BarChart3 className="h-5 w-5 text-blue-600" />
-                  </div>
-                  Project Analytics
-                </CardTitle>
-                
-                {/* Show All Dropdown */}
-                <button
-                  onClick={() => setShowAllProjects(!showAllProjects)}
-                  className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"
-                >
-                  {showAllProjects ? 'Show Less' : 'Show All'}
-                  {showAllProjects ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                </button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {/* Stack Layout - Top to Bottom */}
-              <div className="space-y-3">
-                {(() => {
-                  const allProjects = (importedProjects && importedProjects.length > 0 ? importedProjects : []).filter(repo => repo && repo.id)
-                  const totalPages = Math.ceil(allProjects.length / projectsPerPage)
-                  const startIndex = showAllProjects ? 0 : (currentPage - 1) * projectsPerPage
-                  const endIndex = showAllProjects ? allProjects.length : startIndex + projectsPerPage
-                  const projectsToShow = allProjects.slice(startIndex, endIndex)
-                  
-                  return (
-                    <>
-                      {projectsToShow.map((repo) => {
-                        const projectName = customNames?.[repo.id] || repo.name || 'Project'
-                        const projectDescription = customDescriptions?.[repo.id] || repo.description || 'No description available'
-                        // Try to match by GitHub ID first, then by database ID
-                        const clickCount = analytics?.detailed?.projects?.find(p => p.projectId === repo.id || p.projectId === repo.githubId)?.clickCount || 0
-                        
-                        // Debug project click matching
-                        console.log(`🔍 DEBUG: Project ${projectName} (ID: ${repo.id}, GitHub ID: ${repo.githubId}):`, {
-                          projectId: repo.id,
-                          githubId: repo.githubId,
-                          projectName: projectName,
-                          clickCount: clickCount,
-                          allProjects: analytics?.detailed?.projects,
-                          matchingProject: analytics?.detailed?.projects?.find(p => p.projectId === repo.id || p.projectId === repo.githubId)
-                        })
-                        
-                        return (
-                          <div 
-                            key={repo.id} 
-                            className="bg-white border border-gray-200 rounded-lg p-4"
-                          >
-                            {/* Project Row Layout */}
-                            <div className="flex items-center gap-4">
-                              {/* Actual Project Icon/Favicon using ProjectIcon component */}
-                              <ProjectIcon
-                                favicon={repo.favicon}
-                                logo={repo.logo}
-                                title={projectName || 'Project'}
-                                size="lg"
-                                className="flex-shrink-0"
-                              />
-                              
-                              {/* Project Info */}
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center justify-between">
-                                  <div className="flex-1 min-w-0">
-                                    <h3 className="font-semibold text-gray-900 text-lg truncate">
-                                      {projectName || 'Project'}
-                                    </h3>
-                                    <p className="text-gray-600 text-sm mt-1 line-clamp-1">
-                                      {projectDescription}
-                                    </p>
-                                  </div>
-                                  
-                                  {/* Simple Click Count */}
-                                  <div className="text-right ml-4">
-                                    <div className="text-xs text-gray-500 font-medium">Times clicked</div>
-                                    <div className="text-lg font-bold text-gray-900">{clickCount}</div>
-                                  </div>
-                                </div>
-                                
-                                {/* Technologies */}
-                                <div className="flex flex-wrap gap-1 mt-2">
-                                  {repo?.language && (
-                                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
-                                      {repo.language}
-                                    </span>
-                                  )}
-                                  {repo?.topics?.slice(0, 3).map((topic: string) => (
-                                    <span key={topic} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
-                                      {topic}
-                                    </span>
-                                  ))}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        )
-                      })}
-                      
-                      {/* Pagination Controls */}
-                      {!showAllProjects && totalPages > 1 && (
-                        <div className="flex items-center justify-center gap-2 mt-6">
-                          <button
-                            onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                            disabled={currentPage === 1}
-                            className="px-3 py-2 text-sm text-gray-600 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            Previous
-                          </button>
-                          
-                          <div className="flex gap-1">
-                            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                              <button
-                                key={page}
-                                onClick={() => setCurrentPage(page)}
-                                className={`px-3 py-2 text-sm rounded-lg ${
-                                  page === currentPage 
-                                    ? 'bg-blue-100 text-blue-800 font-medium' 
-                                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                                }`}
-                              >
-                                {page}
-                              </button>
-                            ))}
-                          </div>
-                          
-                          <button
-                            onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                            disabled={currentPage === totalPages}
-                            className="px-3 py-2 text-sm text-gray-600 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            Next
-                          </button>
-                        </div>
-                      )}
-                    </>
-                  )
-                })()}
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-      ) : null}
-
-      {/* No Projects Message */}
-      {(!importedProjects || !Array.isArray(importedProjects) || importedProjects.length === 0) && (!selectedRepos || !Array.isArray(selectedRepos) || selectedRepos.length === 0) && (
-        <motion.div variants={itemVariants}>
-          <Card className="bg-white border border-gray-300 shadow-sm rounded-lg">
-            <CardContent className="p-8">
-              <div className="text-center">
-                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <BarChart3 className="h-8 w-8 text-gray-400" />
-                </div>
-                <h3 className="text-lg font-semibold text-gray-700 mb-2">No Projects Selected</h3>
-                <p className="text-gray-500 text-sm mb-4">Add projects to your portfolio to see analytics</p>
-                <p className="text-gray-400 text-xs">Go to the Repositories section to select projects</p>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-      )}
 
       {/* Activity Graph - Moved to Top */}
       <motion.div variants={itemVariants}>
@@ -539,6 +327,8 @@ export function AnalyticsSection({ portfolioId, analyticsData, selectedRepos, im
           </CardContent>
         </Card>
       </motion.div>
+
+
 
       {/* Custom Hover Tooltip */}
       {hoveredDay && (

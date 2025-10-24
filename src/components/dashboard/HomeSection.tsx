@@ -39,6 +39,14 @@ export function HomeSection({ user, portfolioData, onUpdate, usernameAvailabilit
     customUsername: "",
   })
   const fileInputRef = useState<HTMLInputElement | null>(null)[0]
+
+  // Animation variants
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 }
+  }
+
+
   // Username availability is now managed by parent component
   // Update form data when portfolioData changes (from saved data) or user changes
   // Only initialize once when the component mounts or when portfolioData is first loaded
@@ -69,6 +77,7 @@ export function HomeSection({ user, portfolioData, onUpdate, usernameAvailabilit
       setIsInitialized(true)
     }
   }, [user, portfolioData, isInitialized])
+
 
   // Additional effect to handle portfolioData updates after initialization
   useEffect(() => {
@@ -283,6 +292,7 @@ export function HomeSection({ user, portfolioData, onUpdate, usernameAvailabilit
         </CardContent>
       </Card>
       </motion.div>
+
 
     </motion.div>
   )

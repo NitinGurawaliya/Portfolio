@@ -17,7 +17,9 @@ import {
   Loader2,
   LogOut,
   Palette,
-  BarChart3
+  BarChart3,
+  Eye,
+  X
 } from "lucide-react"
 import { DevFolioInlineLoader } from "@/components/ui/DevFolioLoader"
 
@@ -46,7 +48,8 @@ export function DashboardLayout({
   onPublish,
   isPublishing = false
 }: DashboardLayoutProps) {
-  const [previewMode, setPreviewMode] = useState<"desktop" | "tablet" | "mobile">("mobile")
+  const [previewMode, setPreviewMode] = useState<"mobile">("mobile")
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false)
 
   const sidebarItems = [
     { id: "home", label: "Home", icon: Home },
@@ -81,7 +84,7 @@ export function DashboardLayout({
   }
 
   return (
-    <div className="h-screen w-full bg-white text-black overflow-hidden min-w-[1024px] flex">
+    <div className="h-screen w-full bg-white text-black overflow-hidden min-w-[1024px] flex relative">
       {/* Main Content - Using Flex Layout */}
         {/* Left Sidebar */}
         <motion.div 
@@ -216,38 +219,21 @@ export function DashboardLayout({
           </motion.div>
         </motion.div>
 
-        {/* Left Content - Full Height */}
-        <div 
-          key={`scroll-container-${activeSection}`}
-          className="w-[520px] p-3 md:p-4 overflow-y-auto overflow-x-hidden scrollbar-hide bg-white h-screen relative z-30 flex-shrink-0"
-        >
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeSection}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ 
-                duration: 0.2,
-                ease: "easeOut"
-              }}
-              variants={containerVariants}
-            >
-              {children}
-            </motion.div>
-          </AnimatePresence>
-        </div>
 
-        {/* Right Preview Pane with Controls */}
-        <div className="flex-1 bg-white overflow-hidden flex flex-col">
-          {/* Preview Controls at Top */}
+        {/* Main Dashboard Content Area */}
+        <div className="flex-1 bg-white overflow-hidden flex flex-col relative">
+          {/* Dashboard Controls at Top */}
           <motion.div 
             className="flex items-center justify-between w-full p-3 bg-white border-b border-gray-100 relative z-50"
             variants={itemVariants}
             initial="hidden"
             animate="visible"
           >
-            {/* Left - Portfolio URL Component */}
+            {/* Left - Empty space for balance */}
+            <div className="flex items-center space-x-2">
+            </div>
+
+            {/* Center - Portfolio URL Component */}
             <motion.div
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.99 }}
@@ -256,93 +242,121 @@ export function DashboardLayout({
               <div
                 onClick={() => {
                   const currentDomain = window.location.origin
-                  window.open(`${currentDomain}/${livePortfolio?.customUsername || portfolioData?.customUsername || user?.githubUsername || 'username'}`, '_blank')
+                  const username = livePortfolio?.customUsername || portfolioData?.customUsername || user?.githubUsername || 'username'
+                  window.open(`${currentDomain}/${username}`, '_blank')
                 }}
-                className="flex items-center bg-gray-50 border border-gray-300 rounded-lg px-2 py-1.5 cursor-pointer hover:bg-gray-100 hover:border-gray-400 hover:shadow-md transition-all duration-200 min-w-[180px]"
+                className="flex items-center bg-white border border-gray-300 rounded-lg px-3 py-2 cursor-pointer hover:bg-gray-50 hover:border-gray-400 hover:shadow-md transition-all duration-200 min-w-[220px]"
               >
                 <div className="flex items-center">
-                  <span className="text-gray-600 text-xs font-medium">
+                  <span className="text-gray-600 text-sm font-medium">
                     {typeof window !== 'undefined' ? window.location.host : 'localhost:3000'}/
                   </span>
-                  <span className="text-blue-600 text-xs font-semibold">
+                  <span className="text-blue-600 text-sm font-semibold">
                     {livePortfolio?.customUsername || portfolioData?.customUsername || user?.githubUsername || 'username'}
                   </span>
                 </div>
-                <ExternalLink className="h-3 w-3 text-gray-400 ml-1.5" />
+                <ExternalLink className="h-4 w-4 text-gray-400 ml-2" />
               </div>
             </motion.div>
 
-            {/* Center - Preview Mode Toggle */}
-            <motion.div 
-              className="flex items-center space-x-1 bg-gray-100 rounded-lg p-1 relative z-10"
-              variants={itemVariants}
-            >
-              {[
-                { mode: "desktop", icon: Monitor },
-                { mode: "tablet", icon: Tablet },
-                { mode: "mobile", icon: Smartphone }
-              ].map(({ mode, icon: Icon }) => (
-                <motion.div key={mode}>
-                  <Button
-                    variant={previewMode === mode ? "default" : "ghost"}
-                    size="sm"
-                    onClick={() => setPreviewMode(mode as any)}
-                    className={`h-7 w-7 p-0 relative z-20 cursor-pointer ${
-                      previewMode === mode 
-                        ? "bg-black text-white " 
-                        : "text-gray-600 hover:text-orange-600 hover:bg-orange-50"
-                    }`}
-                  >
-                    <motion.div
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.95 }}
-                      transition={{ duration: 0.1 }}
-                    >
-                      <Icon className="h-3 w-3" />
-                    </motion.div>
-                  </Button>
-                </motion.div>
-              ))}
-            </motion.div>
-
-            {/* Right - Publish Button */}
-            <Button
-              onClick={onPublish}
-              disabled={!hasUnsavedChanges || isPublishing}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                hasUnsavedChanges && !isPublishing
-                  ? "bg-orange-600 text-white hover:bg-orange-700"
-                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
-              }`}
-            >
-              {isPublishing ? (
-                <DevFolioInlineLoader />
-              ) : hasUnsavedChanges ? (
-                "Publish 🔥"
-              ) : (
-                "No Changes"
-              )}
-            </Button>
+            {/* Right - Preview and Publish Buttons */}
+            <div className="flex items-center space-x-2">
+              <Button
+                onClick={() => setIsPreviewOpen(!isPreviewOpen)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  isPreviewOpen 
+                    ? "bg-orange-600 text-white hover:bg-orange-700" 
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
+              >
+                <Eye className="h-4 w-4 mr-2" />
+                {isPreviewOpen ? "Hide Preview" : "Show Preview"}
+              </Button>
+              
+              <Button
+                onClick={onPublish}
+                disabled={!hasUnsavedChanges || isPublishing}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  hasUnsavedChanges && !isPublishing
+                    ? "bg-orange-600 text-white hover:bg-orange-700"
+                    : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                }`}
+              >
+                {isPublishing ? (
+                  <DevFolioInlineLoader />
+                ) : hasUnsavedChanges ? (
+                  "Publish 🔥"
+                ) : (
+                  "No Changes"
+                )}
+              </Button>
+            </div>
           </motion.div>
 
-          {/* Preview Content */}
-          <div className="flex-1 flex justify-center overflow-hidden pt-3 pl-3 pr-2 pb-2">
-            <div className={`${
-              previewMode === "mobile" 
-                ? "w-[280px]" 
-                : previewMode === "tablet"
-                ? "w-[420px]"
-                : "w-full max-w-[1200px]"
-            } h-full overflow-hidden rounded-xl shadow-lg border border-gray-200`}>
-              <PortfolioPreview 
-                username={user?.githubUsername} 
-                previewMode={previewMode}
-                portfolio={livePortfolio}
-                key={`${previewMode}-preview`}
-              />
-            </div>
+          {/* Dashboard Content */}
+          <div className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeSection}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ 
+                  duration: 0.2,
+                  ease: "easeOut"
+                }}
+                variants={containerVariants}
+                className="p-4"
+              >
+                {children}
+              </motion.div>
+            </AnimatePresence>
           </div>
         </div>
+
+        {/* Preview Sidebar - Slides in from right */}
+        <AnimatePresence>
+          {isPreviewOpen && (
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ 
+                type: "spring", 
+                damping: 25, 
+                stiffness: 200,
+                duration: 0.4
+              }}
+              className="fixed top-0 right-0 w-[400px] h-screen bg-white border-l border-gray-200 shadow-2xl z-50 flex flex-col"
+            >
+              {/* Sidebar Header */}
+              <div className="flex items-center justify-between p-4 border-b border-gray-100 bg-gray-50">
+                <h3 className="text-lg font-semibold text-gray-800">Portfolio Preview</h3>
+                <Button
+                  onClick={() => setIsPreviewOpen(false)}
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0 hover:bg-gray-200"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+
+
+              {/* Preview Content */}
+              <div className="flex-1 overflow-hidden">
+                <div className="w-full h-full overflow-hidden">
+                  <PortfolioPreview 
+                    username={user?.githubUsername} 
+                    previewMode={previewMode}
+                    portfolio={livePortfolio}
+                    key={`${previewMode}-preview`}
+                  />
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
   )
 }

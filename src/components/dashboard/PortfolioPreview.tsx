@@ -24,7 +24,7 @@ interface Portfolio {
 
 interface PortfolioPreviewProps {
   username?: string
-  previewMode: "desktop" | "tablet" | "mobile"
+  previewMode: "mobile"
   portfolio: Portfolio | null
 }
 
@@ -135,9 +135,9 @@ export function PortfolioPreview({ username, previewMode, portfolio }: Portfolio
           `}</style>
           <div 
             style={{ 
-              transform: previewMode === 'mobile' ? 'scale(0.6)' : previewMode === 'tablet' ? 'scale(0.8)' : 'scale(1)',
+              transform: 'scale(0.6)',
               transformOrigin: 'top left',
-              width: previewMode === 'mobile' ? '167%' : previewMode === 'tablet' ? '125%' : '100%'
+              width: '167%'
             }}
           >
             <div className="preview-override">

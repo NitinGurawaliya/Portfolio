@@ -422,7 +422,7 @@ export function SkillsSection({ skills, onAddSkill, onRemoveSkill }: SkillsSecti
                   }}
                   onFocus={() => setIsDropdownOpen(true)}
                   placeholder="Search for skill..."
-                  className="pl-10 pr-10 bg-gray-50 text-black font-medium text-sm focus:bg-white placeholder:text-gray-400"
+                  className="pl-10 pr-10 bg-gray-50 text-black font-medium text-sm focus:bg-white placeholder:text-gray-400 max-w-md"
                 />
                 <Button
                   variant="ghost"
@@ -529,7 +529,7 @@ export function SkillsSection({ skills, onAddSkill, onRemoveSkill }: SkillsSecti
               </CardHeader>
               <CardContent className="pt-2">
               <div 
-                className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-3"
+                className="grid grid-cols-8 sm:grid-cols-10 md:grid-cols-12 lg:grid-cols-15 gap-2"
                 onMouseMove={handleMouseMove}
               >
                 {skills.map((skill, index) => {

@@ -1,7 +1,7 @@
 import { motion } from "framer-motion"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ProjectIcon } from "@/components/ui/project-icon"
-import { Building } from "lucide-react"
+import { Building, Eye } from "lucide-react"
 import { SiGithub, SiX, SiLinkedin, SiInstagram, SiFacebook, SiYoutube, SiGmail, SiStackoverflow, SiReddit } from "react-icons/si"
 import { Globe } from "lucide-react"
 import { SkillIcon } from "@/lib/skill-icons"
@@ -64,6 +64,26 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
   const [displayedBio, setDisplayedBio] = useState('')
   const [bioIndex, setBioIndex] = useState(0)
   const [isTypingComplete, setIsTypingComplete] = useState(false)
+  const [viewsCount, setViewsCount] = useState(0)
+
+  // Fetch views count
+  useEffect(() => {
+    const fetchViews = async () => {
+      try {
+        const response = await fetch(`/api/analytics/stats?portfolioId=${portfolio.id}`)
+        if (response.ok) {
+          const data = await response.json()
+          setViewsCount(data.totalViews || 0)
+        }
+      } catch (error) {
+        console.error('Failed to fetch views:', error)
+      }
+    }
+    
+    if (portfolio.id) {
+      fetchViews()
+    }
+  }, [portfolio.id])
 
   // Typing animation effect for bio
   useEffect(() => {
@@ -162,6 +182,17 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
                 />
               )}
             </motion.p>
+
+            {/* Views Counter */}
+            <motion.div
+              className="flex items-center gap-2 text-xs xs:text-sm text-gray-500"
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.8, delay: 0.7 }}
+            >
+              <Eye className="h-3 w-3 xs:h-4 xs:w-4" />
+              <span>{viewsCount} views</span>
+            </motion.div>
 
           </div>
         </div>
@@ -377,6 +408,9 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
                     })
                     trackProjectClick(portfolio.id, githubRepoId, repo.customName || repo.repository.name)
                     
+                    // Update views count
+                    setViewsCount(prev => prev + 1)
+                    
                     if (repo.deployedUrl) {
                       window.open(repo.deployedUrl, '_blank')
                     } else {
@@ -417,6 +451,8 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
                           e.stopPropagation()
                           // Track project click (GitHub button)
                           trackProjectClick(portfolio.id, repo.repository.id, repo.customName || repo.repository.name)
+                          // Update views count
+                          setViewsCount(prev => prev + 1)
                           const githubUrl = repo.repository.githubUrl || repo.repository.htmlUrl
                           window.open(githubUrl, '_blank')
                         }}

@@ -50,12 +50,12 @@ export async function GET(req: NextRequest) {
       viewsByDate[date] = (viewsByDate[date] || 0) + 1
     })
     
-    // Generate daily data for the last 1 year (365 days) with generous advance
+    // Generate daily data for the last 1 year (365 days) with advance days
     const dailyData = []
     
-    // Use a generous advance to handle all timezone edge cases
+    // Use advance days to handle timezone edge cases and ensure proper heatmap display
     const now = new Date()
-    const advanceDays = parseInt(process.env.ANALYTICS_ADVANCE_DAYS || '7') // Configurable advance days
+    const advanceDays = 7 // 7 days advance for proper heatmap generation
     const endDate = new Date(now)
     endDate.setDate(endDate.getDate() + advanceDays)
     const endDateStr = endDate.toISOString().split('T')[0]

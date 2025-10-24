@@ -277,8 +277,9 @@ export function SocialsSection({
         transition={{ duration: 0.4, delay: 0.1 }}
       >
         <Card className="bg-white transition-all duration-300">
-          <CardContent className="pt-2 space-y-3">
-            {platformConfigs.map((platform, index) => {
+          <CardContent className="pt-2">
+            <div className="grid grid-cols-2 gap-4">
+              {platformConfigs.map((platform, index) => {
               const Icon = platform.icon
               const username = platformUsernames[platform.id] || ""
               const isPinned = platformPinned[platform.id] || false
@@ -383,6 +384,7 @@ export function SocialsSection({
                 </motion.div>
               )
             })}
+            </div>
           </CardContent>
         </Card>
       </motion.div>

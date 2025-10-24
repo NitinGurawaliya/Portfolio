@@ -158,6 +158,7 @@ export default function DashboardPage() {
             onUpdateGithubUrl={handlers.handleUpdateGithubUrl}
             onUpdateRepoOrder={handlers.handleUpdateRepoOrder}
             onAddImportedProject={handlers.handleAddImportedProject}
+            analytics={portfolio.analytics}
           />
         )
       case "skills":
