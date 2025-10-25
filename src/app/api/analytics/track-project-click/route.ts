@@ -132,6 +132,8 @@ export async function GET(request: NextRequest) {
     const projectId = searchParams.get('projectId')
     const days = parseInt(searchParams.get('days') || '7')
 
+    console.log('🚀 API GET: Starting request', { portfolioId, projectId, days })
+
     if (!portfolioId) {
       return NextResponse.json({ error: 'Portfolio ID is required' }, { status: 400 })
     }
@@ -149,27 +151,38 @@ export async function GET(request: NextRequest) {
 
     if (projectId) {
       try {
-        console.log('🔍 API: Looking for projectId:', projectId, 'type:', typeof projectId)
+        console.log('🔍 API: Looking for projectId (GitHub ID):', projectId, 'type:', typeof projectId)
         
-        // Try to find the portfolio repository ID first
-        const portfolioRepo = await prisma.portfolioRepository.findFirst({
+        // Find repository by GitHub ID
+        const repository = await prisma.repository.findFirst({
           where: {
-            portfolioId: parseInt(portfolioId),
-            OR: [
-              { repository: { githubId: BigInt(projectId) } },
-              { repositoryId: parseInt(projectId) }
-            ]
+            githubId: BigInt(projectId)
           },
           select: { id: true }
         })
         
-        console.log('🔍 API: Found portfolio repository:', portfolioRepo)
+        console.log('🔍 API: Found repository with ID:', repository?.id)
         
-        if (portfolioRepo) {
-          whereClause.projectId = BigInt(portfolioRepo.id)
-          console.log('🔍 API: Using projectId in whereClause:', whereClause.projectId)
+        if (repository) {
+          // Find portfolio repository using repositoryId
+          const portfolioRepo = await prisma.portfolioRepository.findFirst({
+            where: {
+              portfolioId: parseInt(portfolioId),
+              repositoryId: repository.id
+            },
+            select: { id: true }
+          })
+          
+          console.log('🔍 API: Found portfolio repository with ID:', portfolioRepo?.id)
+          
+          if (portfolioRepo) {
+            whereClause.projectId = BigInt(portfolioRepo.id)
+            console.log('🔍 API: Using projectId in whereClause:', whereClause.projectId.toString())
+          } else {
+            console.log('⚠️ API: No portfolio repository found for GitHub ID:', projectId)
+          }
         } else {
-          console.log('⚠️ API: No portfolio repository found for projectId:', projectId)
+          console.log('⚠️ API: No repository found for GitHub ID:', projectId)
         }
       } catch (error) {
         console.error('❌ Error finding portfolio repository:', error)
@@ -177,7 +190,12 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    console.log('📊 API GET: Final whereClause before query:', JSON.stringify(whereClause, null, 2))
+    // Serialize whereClause for logging (handle BigInt)
+    const whereClauseLog = { ...whereClause }
+    if (whereClauseLog.projectId) {
+      whereClauseLog.projectId = whereClauseLog.projectId.toString()
+    }
+    console.log('📊 API GET: Final whereClause before query:', JSON.stringify(whereClauseLog, null, 2))
 
     const dailyViews = await prisma.dailyProjectViews.findMany({
       where: whereClause,
@@ -187,8 +205,13 @@ export async function GET(request: NextRequest) {
     })
 
     console.log('📊 API GET: Found daily views:', dailyViews.length)
-    console.log('📊 API GET: Where clause:', JSON.stringify(whereClause, null, 2))
-    console.log('📊 API GET: Daily views data:', JSON.stringify(dailyViews, null, 2))
+    
+    // Convert BigInt to string for logging
+    const dailyViewsLog = dailyViews.map(view => ({
+      ...view,
+      projectId: view.projectId.toString()
+    }))
+    console.log('📊 API GET: Daily views data:', JSON.stringify(dailyViewsLog, null, 2))
 
     // Group by date and project
     const viewsByDate: { [key: string]: { [key: string]: number } } = {}
@@ -200,8 +223,6 @@ export async function GET(request: NextRequest) {
       }
       viewsByDate[dateKey][view.projectName] = view.views
     })
-
-    console.log('📊 API GET: Views by date:', JSON.stringify(viewsByDate, null, 2))
 
     // Create chart data
     const chartData = []
@@ -221,8 +242,6 @@ export async function GET(request: NextRequest) {
         projectNames.add(view.projectName)
       })
 
-      console.log('📊 API GET: Unique project names:', Array.from(projectNames))
-
       // Add views for each project
       projectNames.forEach(projectName => {
         dayData[projectName] = viewsByDate[dateKey]?.[projectName] || 0
@@ -231,25 +250,17 @@ export async function GET(request: NextRequest) {
       chartData.push(dayData)
     }
 
-    console.log('📊 API GET: Chart data created:', JSON.stringify(chartData, null, 2))
-    console.log('📊 API GET: Total views:', dailyViews.reduce((sum, view) => sum + view.views, 0))
+    const totalViews = dailyViews.reduce((sum, view) => sum + view.views, 0)
+    
+    console.log('✅ API GET: Returning response with', chartData.length, 'days,', totalViews, 'total views')
 
-    const response = {
+    return NextResponse.json({
       success: true, 
       data: chartData,
-      totalViews: dailyViews.reduce((sum, view) => sum + view.views, 0)
-    }
-
-    console.log('✅ API GET: Returning successful response:', JSON.stringify(response, null, 2))
-
-    return NextResponse.json(response)
-  } catch (error) {
-    console.error('❌ API GET: Error fetching project views:', error)
-    console.error('❌ API GET: Error details:', {
-      message: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined,
-      name: error instanceof Error ? error.name : undefined
+      totalViews
     })
+  } catch (error) {
+    console.error('❌ API GET: Error:', error instanceof Error ? error.message : 'Unknown error')
     return NextResponse.json({ 
       error: 'Internal server error',
       details: error instanceof Error ? error.message : 'Unknown error'
