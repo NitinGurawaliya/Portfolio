@@ -41,6 +41,8 @@ export function IndividualProjectChart({
 
   useEffect(() => {
     const fetchData = async () => {
+      console.log('🚀 IndividualProjectChart: Starting data fetch for:', { portfolioId, projectId, projectName })
+      
       setLoading(true)
       try {
         // Check if portfolioId is valid
@@ -56,25 +58,38 @@ export function IndividualProjectChart({
           days: '7'
         })
 
+        const apiUrl = `/api/analytics/track-project-click?${params}`
+        
         console.log('📊 IndividualProjectChart fetching data for:', {
           portfolioId,
           projectId,
           projectName,
-          url: `/api/analytics/track-project-click?${params}`,
+          url: apiUrl,
           portfolioIdType: typeof portfolioId,
           projectIdType: typeof projectId
         })
 
-        const response = await fetch(`/api/analytics/track-project-click?${params}`)
+        console.log('📊 IndividualProjectChart: Making fetch request to:', apiUrl)
+        
+        const response = await fetch(apiUrl)
+        
+        console.log('📊 IndividualProjectChart: Response received:', {
+          status: response.status,
+          statusText: response.statusText,
+          ok: response.ok
+        })
         
         if (!response.ok) {
+          const errorText = await response.text()
           console.error('❌ IndividualProjectChart API Error:', response.status, response.statusText)
+          console.error('❌ IndividualProjectChart Error body:', errorText)
           throw new Error('Failed to fetch project views data')
         }
 
         const result = await response.json()
         
         console.log('📊 IndividualProjectChart API Response:', result)
+        console.log('📊 IndividualProjectChart Response success:', result.success)
         console.log('📊 IndividualProjectChart chartData length:', result.data?.length || 0)
         console.log('📊 IndividualProjectChart totalViews:', result.totalViews)
         

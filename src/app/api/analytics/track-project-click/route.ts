@@ -148,22 +148,36 @@ export async function GET(request: NextRequest) {
     }
 
     if (projectId) {
-      // Try to find the portfolio repository ID first
-      const portfolioRepo = await prisma.portfolioRepository.findFirst({
-        where: {
-          portfolioId: parseInt(portfolioId),
-          OR: [
-            { repository: { githubId: BigInt(projectId) } },
-            { repositoryId: parseInt(projectId) }
-          ]
-        },
-        select: { id: true }
-      })
-      
-      if (portfolioRepo) {
-        whereClause.projectId = BigInt(portfolioRepo.id)
+      try {
+        console.log('🔍 API: Looking for projectId:', projectId, 'type:', typeof projectId)
+        
+        // Try to find the portfolio repository ID first
+        const portfolioRepo = await prisma.portfolioRepository.findFirst({
+          where: {
+            portfolioId: parseInt(portfolioId),
+            OR: [
+              { repository: { githubId: BigInt(projectId) } },
+              { repositoryId: parseInt(projectId) }
+            ]
+          },
+          select: { id: true }
+        })
+        
+        console.log('🔍 API: Found portfolio repository:', portfolioRepo)
+        
+        if (portfolioRepo) {
+          whereClause.projectId = BigInt(portfolioRepo.id)
+          console.log('🔍 API: Using projectId in whereClause:', whereClause.projectId)
+        } else {
+          console.log('⚠️ API: No portfolio repository found for projectId:', projectId)
+        }
+      } catch (error) {
+        console.error('❌ Error finding portfolio repository:', error)
+        // Continue without projectId filter
       }
     }
+
+    console.log('📊 API GET: Final whereClause before query:', JSON.stringify(whereClause, null, 2))
 
     const dailyViews = await prisma.dailyProjectViews.findMany({
       where: whereClause,
@@ -172,9 +186,9 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    console.log('📊 API: Found daily views:', dailyViews.length)
-    console.log('📊 API: Where clause:', whereClause)
-    console.log('📊 API: Daily views data:', dailyViews)
+    console.log('📊 API GET: Found daily views:', dailyViews.length)
+    console.log('📊 API GET: Where clause:', JSON.stringify(whereClause, null, 2))
+    console.log('📊 API GET: Daily views data:', JSON.stringify(dailyViews, null, 2))
 
     // Group by date and project
     const viewsByDate: { [key: string]: { [key: string]: number } } = {}
@@ -187,7 +201,7 @@ export async function GET(request: NextRequest) {
       viewsByDate[dateKey][view.projectName] = view.views
     })
 
-    console.log('📊 API: Views by date:', viewsByDate)
+    console.log('📊 API GET: Views by date:', JSON.stringify(viewsByDate, null, 2))
 
     // Create chart data
     const chartData = []
@@ -207,6 +221,8 @@ export async function GET(request: NextRequest) {
         projectNames.add(view.projectName)
       })
 
+      console.log('📊 API GET: Unique project names:', Array.from(projectNames))
+
       // Add views for each project
       projectNames.forEach(projectName => {
         dayData[projectName] = viewsByDate[dateKey]?.[projectName] || 0
@@ -215,16 +231,28 @@ export async function GET(request: NextRequest) {
       chartData.push(dayData)
     }
 
-    console.log('📊 API: Chart data created:', chartData)
-    console.log('📊 API: Total views:', dailyViews.reduce((sum, view) => sum + view.views, 0))
+    console.log('📊 API GET: Chart data created:', JSON.stringify(chartData, null, 2))
+    console.log('📊 API GET: Total views:', dailyViews.reduce((sum, view) => sum + view.views, 0))
 
-    return NextResponse.json({ 
+    const response = {
       success: true, 
       data: chartData,
       totalViews: dailyViews.reduce((sum, view) => sum + view.views, 0)
-    })
+    }
+
+    console.log('✅ API GET: Returning successful response:', JSON.stringify(response, null, 2))
+
+    return NextResponse.json(response)
   } catch (error) {
-    console.error('Error fetching project views:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error('❌ API GET: Error fetching project views:', error)
+    console.error('❌ API GET: Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      name: error instanceof Error ? error.name : undefined
+    })
+    return NextResponse.json({ 
+      error: 'Internal server error',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 })
   }
 }
