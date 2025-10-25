@@ -72,6 +72,7 @@ export interface Social {
 
 // Portfolio State Types
 export interface PortfolioData {
+  id?: number
   displayName: string
   jobTitle: string
   bio: string

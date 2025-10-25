@@ -347,7 +347,7 @@ export default function LayoutDark({ theme, portfolio }: LayoutDarkProps) {
                     </div>
                     
                     {/* All Languages badges */}
-                    <div className="flex items-center flex-wrap gap-2 mt-auto">
+                    <div className="flex items-center flex-wrap gap-2 mb-3">
                       {(() => {
                         // Parse languages from JSON string
                         let languages: string[] = []
@@ -373,10 +373,12 @@ export default function LayoutDark({ theme, portfolio }: LayoutDarkProps) {
                           ))
                       })()}
                     </div>
+
                   </div>
                 </motion.article>
               ))}
             </div>
+            
           </div>
         </motion.section>
       )}

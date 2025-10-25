@@ -540,10 +540,12 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
                         <span>{projectViews[repo.repository.githubId] || 0} views</span>
                       </div>
                     </div>
+
                   </div>
                 </motion.article>
               ))}
             </div>
+            
           </div>
         </motion.section>
       )}

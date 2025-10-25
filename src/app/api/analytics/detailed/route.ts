@@ -73,11 +73,11 @@ export async function GET(req: NextRequest) {
     // Group project clicks by repository ID (GitHub ID)
     const projectStats = projectClicks.reduce((acc, click) => {
       // Try to find by portfolio repository ID first
-      let repoInfo = projectIdToRepoId[click.projectId]
+      let repoInfo = projectIdToRepoId[Number(click.projectId)]
       
       // If not found, try by database repository ID
       if (!repoInfo) {
-        repoInfo = dbRepoIdToRepoId[click.projectId]
+        repoInfo = dbRepoIdToRepoId[Number(click.projectId)]
       }
       
       if (!repoInfo) {
@@ -91,9 +91,10 @@ export async function GET(req: NextRequest) {
       if (!acc[key]) {
         acc[key] = {
           projectId: repoInfo.githubId, // Use GitHub ID for frontend matching
+          portfolioProjectId: Number(click.projectId), // Convert BigInt to Number
           projectName: click.projectName,
           clickCount: 0,
-          lastClicked: click.clickedAt
+          lastClicked: click.clickedAt.toISOString() // Convert Date to string
         }
         console.log(`🔍 DEBUG: Created new entry for GitHub project ${repoInfo.githubId}`)
       }
@@ -124,7 +125,7 @@ export async function GET(req: NextRequest) {
           socialType: click.socialType,
           socialUrl: click.socialUrl,
           clickCount: 0,
-          lastClicked: click.clickedAt
+          lastClicked: click.clickedAt.toISOString() // Convert Date to string
         }
       }
       acc[click.socialType].clickCount++

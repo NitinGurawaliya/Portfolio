@@ -6,6 +6,7 @@ import { motion } from "framer-motion"
 import { 
   BarChart3
 } from "lucide-react"
+import { ProjectViewsChart } from "@/components/ProjectViewsChart"
 
 interface DailyData {
   date: string
@@ -358,6 +359,15 @@ export function AnalyticsSection({ portfolioId, analyticsData }: AnalyticsSectio
           <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-white"></div>
         </div>
       )}
+
+      {/* Project Views Chart */}
+      <motion.div variants={itemVariants}>
+        <ProjectViewsChart 
+          portfolioId={portfolioId}
+          className="bg-white border border-gray-300 shadow-sm"
+        />
+      </motion.div>
+
 
       </motion.div>
     </>

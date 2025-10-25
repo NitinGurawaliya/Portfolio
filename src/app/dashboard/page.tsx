@@ -142,6 +142,15 @@ export default function DashboardPage() {
           return acc
         }, [] as any[])
         
+        const portfolioId = portfolio.originalData?.id || portfolio.portfolioData.id
+        // TypeScript fix: PortfolioData now includes id property
+        console.log('🔍 Dashboard - Portfolio ID for ReposSection:', {
+          originalDataId: portfolio.originalData?.id,
+          portfolioDataId: portfolio.portfolioData.id,
+          finalPortfolioId: portfolioId,
+          portfolioIdType: typeof portfolioId
+        })
+        
         return (
           <ReposSection
             repositories={mergedRepositories}
@@ -159,6 +168,7 @@ export default function DashboardPage() {
             onUpdateRepoOrder={handlers.handleUpdateRepoOrder}
             onAddImportedProject={handlers.handleAddImportedProject}
             analytics={portfolio.analytics}
+            portfolioId={portfolioId}
           />
         )
       case "skills":

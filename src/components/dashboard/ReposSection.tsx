@@ -32,6 +32,7 @@ import {
   GripVertical,
   BarChart3
 } from "lucide-react"
+import { IndividualProjectChart } from "@/components/IndividualProjectChart"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -116,6 +117,7 @@ interface ReposSectionProps {
   onUpdateRepoOrder: (newOrder: number[]) => void
   onAddImportedProject?: (project: Repository) => void
   analytics?: any
+  portfolioId?: number
 }
 
 export function ReposSection({ 
@@ -133,7 +135,8 @@ export function ReposSection({
   onUpdateGithubUrl,
   onUpdateRepoOrder,
   onAddImportedProject,
-  analytics
+  analytics,
+  portfolioId
 }: ReposSectionProps) {
   const [searchTerm, setSearchTerm] = useState("")
   const [deployedUrls, setDeployedUrls] = useState<Record<number, string>>(initialDeployedUrls || {})
@@ -221,9 +224,16 @@ export function ReposSection({
       repositories: repositories.length,
       selectedRepos,
       localRepoOrder,
-      selectedRepositories: selectedRepositories.length
+      selectedRepositories: selectedRepositories.length,
+      portfolioId,
+      portfolioIdType: typeof portfolioId,
+      portfolioIdValid: portfolioId && portfolioId !== undefined
     })
-  }, [repositories, selectedRepos, localRepoOrder, selectedRepositories])
+    
+    if (!portfolioId || portfolioId === undefined) {
+      console.error('❌ ReposSection: portfolioId is undefined or invalid:', portfolioId)
+    }
+  }, [repositories, selectedRepos, localRepoOrder, selectedRepositories, portfolioId])
 
   // Sync with parent's repoOrder
   useEffect(() => {
@@ -239,7 +249,8 @@ export function ReposSection({
         // If empty, initialize with selected repos
         if (prev.length === 0) {
           const newOrder = selectedRepos
-          onUpdateRepoOrder(newOrder)
+          // Use setTimeout to avoid setState during render
+          setTimeout(() => onUpdateRepoOrder(newOrder), 0)
           return newOrder
         }
         // If new repos added, add them to the end
@@ -247,12 +258,14 @@ export function ReposSection({
         const removedRepos = prev.filter(id => !selectedRepos.includes(id))
         // Remove repos that were unselected and add new ones
         const newOrder = [...prev.filter(id => !removedRepos.includes(id)), ...newRepos]
-        onUpdateRepoOrder(newOrder)
+        // Use setTimeout to avoid setState during render
+        setTimeout(() => onUpdateRepoOrder(newOrder), 0)
         return newOrder
       })
     } else {
       setLocalRepoOrder([])
-      onUpdateRepoOrder([])
+      // Use setTimeout to avoid setState during render
+      setTimeout(() => onUpdateRepoOrder([]), 0)
     }
     console.log("ReposSection - Selected repos:", selectedRepos)
     console.log("ReposSection - Deployed URLs:", deployedUrls)
@@ -762,7 +775,7 @@ export function ReposSection({
               </motion.div>
             </motion.div> */}
             
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-3 gap-4">
               <AnimatePresence mode="popLayout">
                 {selectedRepositories.map((repo, index) => {
                   const isEditing = editingRepo === repo.id
@@ -783,9 +796,9 @@ export function ReposSection({
                       layoutId={`repo-${repo.id}`}
                     >
                       <Card 
-                        className="bg-white border border-gray-200 hover:border-gray-300 transition-all duration-300 group"
+                        className="bg-white border border-gray-200 hover:border-gray-300 transition-all duration-300 group h-[450px]"
                       >
-                        <CardContent className="p-0">
+                        <CardContent className="p-0 h-full">
                           <div className="flex flex-col h-full px-3 relative">
 
                             {/* Project Icon at the top */}
@@ -815,7 +828,7 @@ export function ReposSection({
                             </div>
 
                             {/* Project Description - Limited */}
-                            <div className="mb-3 flex-1">
+                            <div className="mb-2 flex-1">
                               <motion.div
                                 whileHover={{ scale: 1.01 }}
                                 transition={{ duration: 0.2 }}
@@ -837,6 +850,29 @@ export function ReposSection({
                                 {analytics?.detailed?.projects?.find((p: any) => p.projectId === repo.id)?.clickCount || 0}
                               </div>
                             </div>
+
+                            {/* Project Views Chart */}
+                            {portfolioId && portfolioId !== undefined ? (
+                              <div className="mt-1 flex-1 flex flex-col min-h-[260px]">
+                                <div className="text-sm text-gray-600 mb-1 font-medium">Views Trend (7 days)</div>
+                                <div className="flex-1 min-h-[240px] bg-gray-50 border border-gray-200 rounded p-1 overflow-hidden">
+                                  <IndividualProjectChart 
+                                    portfolioId={portfolioId}
+                                    projectId={repo.id}
+                                    projectName={customName || repo.name}
+                                    size="lg"
+                                    className="h-full w-full"
+                                  />
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="mt-1 flex-1 flex flex-col min-h-[260px]">
+                                <div className="text-sm text-gray-600 mb-1 font-medium">Views Trend (7 days)</div>
+                                <div className="flex-1 min-h-[240px] bg-gray-50 border border-gray-200 rounded p-1 flex items-center justify-center">
+                                  <div className="text-sm text-gray-400">Loading portfolio ID...</div>
+                                </div>
+                              </div>
+                            )}
                           </div>
                         </CardContent>
                       </Card>
