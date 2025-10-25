@@ -176,6 +176,7 @@ export function IndividualProjectChart({
   // Get project data from chart data
   const projectData = chartData.map(day => ({
     day: day.day,
+    date: day.date,
     views: day[projectName] || 0
   }))
 
@@ -215,11 +216,16 @@ export function IndividualProjectChart({
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={projectData} margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
             <XAxis 
-              dataKey="day" 
+              dataKey="date" 
               axisLine={false}
               tickLine={false}
               tick={{ fontSize: 8, fill: '#6b7280' }}
               interval="preserveStartEnd"
+              tickFormatter={(value) => {
+                // Format date as MM/DD
+                const date = new Date(value)
+                return `${date.getMonth() + 1}/${date.getDate()}`
+              }}
             />
             <YAxis 
               axisLine={false}
