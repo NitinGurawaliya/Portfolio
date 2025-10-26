@@ -5,7 +5,7 @@ export function HeroSection() {
   return (
     <section className="relative overflow-hidden py-8 lg:py-28">
       <div className="absolute inset-0 grid-bg opacity-30" />
-      <div className="container relative px-4 sm:px-6">
+      <div className="container relative px-4 sm:px-6 mx-auto">
         <div className="mx-auto max-w-4xl text-center">
           <div className="mb-6 sm:mb-8 inline-flex items-center rounded-full border border-border/40 bg-muted/50 px-3 py-1 text-xs sm:text-sm">
             <span className="mr-1 sm:mr-2">🔥</span>
