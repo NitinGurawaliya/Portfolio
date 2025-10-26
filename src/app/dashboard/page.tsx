@@ -103,6 +103,16 @@ export default function DashboardPage() {
       // Reset after publish
       portfolio.resetAfterPublish()
       
+      // Reload portfolio data to get updated projects with portfolioRepositoryId
+      if (result.portfolio && result.portfolio.id) {
+        console.log('🔄 Reloading portfolio data after publish...')
+        await portfolio.loadExistingData(user?.githubUsername || result.portfolio.customUsername || '', {
+          ...portfolio.portfolioData,
+          id: result.portfolio.id
+        })
+        console.log('✅ Portfolio data reloaded')
+      }
+      
       // Show success toast and play sound
       toast.success("🎉 Portfolio published successfully!", successToastConfig)
       playNotificationSound()

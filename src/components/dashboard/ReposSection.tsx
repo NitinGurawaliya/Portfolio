@@ -865,7 +865,7 @@ export function ReposSection({
                             </div>
 
                             {/* Project Views Chart */}
-                            {portfolioId && portfolioId !== undefined ? (
+                            {portfolioId ? (
                               <div className="mt-1 flex-1 flex flex-col">
                                 <div className="flex-1 bg-gray-50 border border-gray-200 rounded overflow-hidden">
                                   <IndividualProjectChart 
@@ -880,7 +880,9 @@ export function ReposSection({
                             ) : (
                               <div className="mt-1 flex-1 flex flex-col">
                                 <div className="flex-1 bg-gray-50 border border-gray-200 rounded flex items-center justify-center">
-                                  <div className="text-sm text-gray-400">Loading portfolio ID...</div>
+                                  <div className="text-xs text-gray-400 text-center px-2">
+                                    Loading portfolio...
+                                  </div>
                                 </div>
                               </div>
                             )}

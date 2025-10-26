@@ -280,6 +280,7 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
           bio: portfolio.bio || "",
           profilePic: portfolio.profilePic || "",
           customUsername: portfolio.customUsername || user?.githubUsername || "",
+          id: portfolio.id // Add portfolio ID
         })
         
         console.log("🔍 Set portfolio data:", {
@@ -288,16 +289,8 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
           bio: portfolio.bio || "",
           profilePic: portfolio.profilePic || "",
           customUsername: portfolio.customUsername || user?.githubUsername || "",
+          id: portfolio.id
         })
-        
-        // Force update portfolio data to ensure customUsername is set
-        setTimeout(() => {
-          console.log("🔍 Force updating portfolio data with customUsername:", portfolio.customUsername)
-          setPortfolioData(prev => ({
-            ...prev,
-            customUsername: portfolio.customUsername || prev.customUsername
-          }))
-        }, 100)
 
         // Load social accounts
         if (portfolio.socials && portfolio.socials.length > 0) {
@@ -401,45 +394,11 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
         console.log("✅ Initial load completed, change tracking enabled")
       } else {
         // No existing portfolio
-        setTimeout(() => {
-          const currentPortfolioData = initialData || portfolioData
-          const currentTheme = selectedTheme || 'light'
-          setSelectedTheme(currentTheme)
-          
-          const initialDataToSet = normalizeData(createOrderedData({
-            portfolioData: {
-              displayName: currentPortfolioData.displayName || "",
-              jobTitle: currentPortfolioData.jobTitle || "",
-              bio: currentPortfolioData.bio || "",
-              profilePic: currentPortfolioData.profilePic || "",
-              customUsername: currentPortfolioData.customUsername || user?.githubUsername || "",
-            },
-            selectedRepos: [...selectedRepos].sort(),
-            skills: [...skills].sort((a, b) => a.id.localeCompare(b.id)),
-            socials: [...socials].sort((a, b) => a.id - b.id),
-            deployedUrls: { ...deployedUrls },
-            customNames: { ...customNames },
-            customDescriptions: { ...customDescriptions },
-            githubUrls: { ...githubUrls },
-            selectedTheme: currentTheme,
-            importedProjects: [...importedProjects].sort((a, b) => a.id - b.id),
-            repoOrder: [...repoOrder]
-          }))
-          
-          setOriginalData(initialDataToSet)
-          setIsInitialLoad(false)
-          setIsLoadingPortfolio(false)
-        }, 200)
-      }
-    } catch (error) {
-      console.error("❌ Error loading existing portfolio data:", error)
-      // Fallback
-      setTimeout(() => {
         const currentPortfolioData = initialData || portfolioData
         const currentTheme = selectedTheme || 'light'
         setSelectedTheme(currentTheme)
         
-        const fallbackData = normalizeData(createOrderedData({
+        const initialDataToSet = normalizeData(createOrderedData({
           portfolioData: {
             displayName: currentPortfolioData.displayName || "",
             jobTitle: currentPortfolioData.jobTitle || "",
@@ -459,10 +418,40 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
           repoOrder: [...repoOrder]
         }))
         
-        setOriginalData(fallbackData)
+        setOriginalData(initialDataToSet)
         setIsInitialLoad(false)
         setIsLoadingPortfolio(false)
-      }, 200)
+      }
+    } catch (error) {
+      console.error("❌ Error loading existing portfolio data:", error)
+      // Fallback
+      const currentPortfolioData = initialData || portfolioData
+      const currentTheme = selectedTheme || 'light'
+      setSelectedTheme(currentTheme)
+      
+      const fallbackData = normalizeData(createOrderedData({
+        portfolioData: {
+          displayName: currentPortfolioData.displayName || "",
+          jobTitle: currentPortfolioData.jobTitle || "",
+          bio: currentPortfolioData.bio || "",
+          profilePic: currentPortfolioData.profilePic || "",
+          customUsername: currentPortfolioData.customUsername || user?.githubUsername || "",
+        },
+        selectedRepos: [...selectedRepos].sort(),
+        skills: [...skills].sort((a, b) => a.id.localeCompare(b.id)),
+        socials: [...socials].sort((a, b) => a.id - b.id),
+        deployedUrls: { ...deployedUrls },
+        customNames: { ...customNames },
+        customDescriptions: { ...customDescriptions },
+        githubUrls: { ...githubUrls },
+        selectedTheme: currentTheme,
+        importedProjects: [...importedProjects].sort((a, b) => a.id - b.id),
+        repoOrder: [...repoOrder]
+      }))
+      
+      setOriginalData(fallbackData)
+      setIsInitialLoad(false)
+      setIsLoadingPortfolio(false)
     }
   }
 
@@ -500,12 +489,8 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
     setHasUnsavedChanges(false)
     setOriginalData(newOriginalData)
     setIsPublishComplete(true)
-    
-    // After a microtask, reset isPublishing flag to re-enable change detection
-    setTimeout(() => {
-      setIsPublishing(false)
-      console.log("🔄 Publish complete - change detection re-enabled")
-    }, 0)
+    setIsPublishing(false)
+    console.log("🔄 Publish complete - change detection re-enabled")
   }
 
   return {
