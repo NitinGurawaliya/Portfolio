@@ -58,8 +58,6 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
   const [originalData, setOriginalData] = useState<PortfolioState | null>(null)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const [isInitialLoad, setIsInitialLoad] = useState(true)
-  const [isPublishComplete, setIsPublishComplete] = useState(false)
-  const [isPublishing, setIsPublishing] = useState(false)
   const [isLoadingPortfolio, setIsLoadingPortfolio] = useState(true)
   
   // Analytics state
@@ -166,14 +164,21 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
       repoOrder: originalData.repoOrder || []
     }))
     
-    const hasChanges = JSON.stringify(cleanCurrentData) !== JSON.stringify(cleanOriginalData)
-    console.log("📊 Change detection:", { 
-      hasChanges, 
-      isInitialLoad, 
-      originalDataExists: !!originalData 
-    })
-    
-         // Update hasUnsavedChanges based on detection
+         const hasChanges = JSON.stringify(cleanCurrentData) !== JSON.stringify(cleanOriginalData)
+     
+     // Only update hasUnsavedChanges if we're not in initial load
+     if (isInitialLoad) {
+       console.log("📊 Skipping change detection - initial load in progress")
+       return
+     }
+     
+     console.log("📊 Change detection:", { 
+       hasChanges, 
+       isInitialLoad, 
+       originalDataExists: !!originalData 
+     })
+     
+     // Update hasUnsavedChanges based on detection
      console.log("📊 Setting hasUnsavedChanges to:", hasChanges)
      setHasUnsavedChanges(hasChanges)
   }, [portfolioData, selectedRepos, skills, socials, deployedUrls, customNames, customDescriptions, githubUrls, importedProjects, selectedTheme, repoOrder, originalData, isInitialLoad])
@@ -327,7 +332,6 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
         console.log("🔍 Portfolio object:", portfolio)
         console.log("🔍 Portfolio ID from API:", portfolio.id)
         console.log("🔍 Original data before normalize:", { id: portfolio.id })
-        setOriginalData(originalDataToSet)
         
         // Load analytics data along with portfolio data
         if (portfolio.id) {
@@ -339,6 +343,8 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
           }
         }
         
+        // Set both originalData and isInitialLoad in the same render cycle
+        setOriginalData(originalDataToSet)
         setIsInitialLoad(false)
         setIsLoadingPortfolio(false)
         console.log("✅ Initial load completed, change tracking enabled")
@@ -365,45 +371,47 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
           githubUrls: { ...githubUrls },
           selectedTheme: currentTheme,
           importedProjects: [...importedProjects].sort((a, b) => a.id - b.id),
-          repoOrder: [...repoOrder]
-        }))
-        
-        setOriginalData(initialDataToSet)
-        setIsInitialLoad(false)
-        setIsLoadingPortfolio(false)
-      }
-    } catch (error) {
-      console.error("❌ Error loading existing portfolio data:", error)
-      // Fallback
-      const currentPortfolioData = initialData || portfolioData
-      const currentTheme = selectedTheme || 'light'
-      setSelectedTheme(currentTheme)
-      
-      const fallbackData = normalizeData(createOrderedData({
-        portfolioData: {
-          displayName: currentPortfolioData.displayName || "",
-          jobTitle: currentPortfolioData.jobTitle || "",
-          bio: currentPortfolioData.bio || "",
-          profilePic: currentPortfolioData.profilePic || "",
-          customUsername: currentPortfolioData.customUsername || user?.githubUsername || "",
-        },
-        selectedRepos: [...selectedRepos].sort(),
-        skills: [...skills].sort((a, b) => a.id.localeCompare(b.id)),
-        socials: [...socials].sort((a, b) => a.id - b.id),
-        deployedUrls: { ...deployedUrls },
-        customNames: { ...customNames },
-        customDescriptions: { ...customDescriptions },
-        githubUrls: { ...githubUrls },
-        selectedTheme: currentTheme,
-        importedProjects: [...importedProjects].sort((a, b) => a.id - b.id),
-        repoOrder: [...repoOrder]
-      }))
-      
-      setOriginalData(fallbackData)
-      setIsInitialLoad(false)
-      setIsLoadingPortfolio(false)
-    }
-  }
+                     repoOrder: [...repoOrder]
+         }))
+         
+         // Set both originalData and isInitialLoad in the same render cycle
+         setOriginalData(initialDataToSet)
+         setIsInitialLoad(false)
+         setIsLoadingPortfolio(false)
+       }
+     } catch (error) {
+       console.error("❌ Error loading existing portfolio data:", error)
+       // Fallback
+       const currentPortfolioData = initialData || portfolioData
+       const currentTheme = selectedTheme || 'light'
+       setSelectedTheme(currentTheme)
+       
+       const fallbackData = normalizeData(createOrderedData({
+         portfolioData: {
+           displayName: currentPortfolioData.displayName || "",
+           jobTitle: currentPortfolioData.jobTitle || "",
+           bio: currentPortfolioData.bio || "",
+           profilePic: currentPortfolioData.profilePic || "",
+           customUsername: currentPortfolioData.customUsername || user?.githubUsername || "",
+         },
+         selectedRepos: [...selectedRepos].sort(),
+         skills: [...skills].sort((a, b) => a.id.localeCompare(b.id)),
+         socials: [...socials].sort((a, b) => a.id - b.id),
+         deployedUrls: { ...deployedUrls },
+         customNames: { ...customNames },
+         customDescriptions: { ...customDescriptions },
+         githubUrls: { ...githubUrls },
+         selectedTheme: currentTheme,
+         importedProjects: [...importedProjects].sort((a, b) => a.id - b.id),
+         repoOrder: [...repoOrder]
+       }))
+       
+       // Set both originalData and isInitialLoad in the same render cycle
+       setOriginalData(fallbackData)
+       setIsInitialLoad(false)
+       setIsLoadingPortfolio(false)
+     }
+   }
 
   // Reset after publish
   const resetAfterPublish = () => {
@@ -432,11 +440,13 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
     
     console.log("🔄 Setting new original data (normalized):", newOriginalData)
     
-    // Update states - change detection will run immediately and see no changes
+    // Immediately set hasUnsavedChanges to false to disable publish button
     setHasUnsavedChanges(false)
+    
+    // Update originalData - this will trigger change detection which will see no changes
     setOriginalData(newOriginalData)
-    setIsPublishComplete(true)
-    console.log("🔄 Publish complete - change detection running normally")
+    
+    console.log("🔄 Publish complete - publish button disabled")
   }
 
   return {
