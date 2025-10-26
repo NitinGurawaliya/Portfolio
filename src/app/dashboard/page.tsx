@@ -137,8 +137,13 @@ export default function DashboardPage() {
           const existingIndex = acc.findIndex(r => r.id === repo.id)
           if (existingIndex === -1) {
             acc.push(repo)
+          } else {
+            // If repository already exists, prioritize the one with portfolioRepositoryId
+            // This ensures analytics IDs are preserved
+            if (repo.portfolioRepositoryId && !acc[existingIndex].portfolioRepositoryId) {
+              acc[existingIndex] = repo
+            }
           }
-          // If repository already exists, keep the first one (database version has priority)
           return acc
         }, [] as any[])
         

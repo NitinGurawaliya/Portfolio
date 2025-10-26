@@ -850,9 +850,15 @@ export function ReposSection({
                               <div className="text-xs font-bold text-gray-600">Times visited</div>
                               <div className="text-lg font-bold text-black">
                                 {(() => {
-                                  // repo.id is the GitHub ID based on formatImportedProjects
-                                  const githubId = repo.id;
-                                  const projectData = analytics?.detailed?.projects?.find((p: any) => p.projectId == githubId);
+                                  // Use PortfolioRepository ID for matching analytics
+                                  const portfolioRepoId = repo.portfolioRepositoryId;
+                                  const projectData = analytics?.detailed?.projects?.find((p: any) => p.projectId == portfolioRepoId);
+                                  if (!portfolioRepoId) {
+                                    console.warn(`⚠️ No portfolioRepositoryId for repo ${repo.name} (GitHub ID: ${repo.id})`);
+                                  }
+                                  if (portfolioRepoId && analytics?.detailed?.projects) {
+                                    console.log(`🔍 Looking for portfolioRepoId ${portfolioRepoId} in analytics, found:`, projectData);
+                                  }
                                   return projectData?.clickCount || 0;
                                 })()}
                               </div>

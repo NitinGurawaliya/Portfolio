@@ -230,7 +230,7 @@ export async function POST(req: NextRequest) {
         },
       })
 
-      // Delete existing skills, socials, and portfolio repositories
+      // Delete existing skills and socials
       await tx.skill.deleteMany({
         where: { portfolioId: portfolio.id }
       })
@@ -239,9 +239,7 @@ export async function POST(req: NextRequest) {
         where: { portfolioId: portfolio.id }
       })
 
-      await tx.portfolioRepository.deleteMany({
-        where: { portfolioId: portfolio.id }
-      })
+      // No need to soft delete - we'll use upsert to keep IDs stable
 
       // Add new skills
       if (skills && skills.length > 0) {
@@ -288,6 +286,18 @@ export async function POST(req: NextRequest) {
         const orderToUse = (repoOrder && repoOrder.length > 0) ? repoOrder : selectedRepos
         devLog(`📋 Using order array with ${orderToUse.length} items:`, orderToUse)
         
+        // Get existing portfolio repository records to map by repositoryId
+        const existingPortfolioRepos = await tx.portfolioRepository.findMany({
+          where: { portfolioId: portfolio.id }
+        })
+        
+        const existingRepoMap = new Map()
+        existingPortfolioRepos.forEach(existing => {
+          existingRepoMap.set(existing.repositoryId, existing)
+        })
+        
+        devLog(`📊 Found ${existingPortfolioRepos.length} existing portfolio repos`)
+        
         const portfolioRepos = orderToUse.map((githubId: number, index: number) => {
           const repo = repoMap.get(githubId.toString())
           if (!repo) {
@@ -313,11 +323,47 @@ export async function POST(req: NextRequest) {
           }
         }).filter(Boolean) // Remove null entries
         
-        devLog(`✅ Created ${portfolioRepos.length} portfolio repos with display orders`)
+        devLog(`✅ Prepared ${portfolioRepos.length} portfolio repos with display orders`)
 
-        await tx.portfolioRepository.createMany({
-          data: portfolioRepos
-        })
+        // Upsert each portfolio repo to preserve IDs for existing repos
+        for (const repoData of portfolioRepos) {
+          const existing = existingRepoMap.get(repoData.repositoryId)
+          
+          if (existing) {
+            // Update existing record to preserve analytics ID
+            await tx.portfolioRepository.update({
+              where: { id: existing.id },
+              data: {
+                deployedUrl: repoData.deployedUrl,
+                customName: repoData.customName,
+                customDescription: repoData.customDescription,
+                displayOrder: repoData.displayOrder,
+                isVisible: repoData.isVisible
+              }
+            })
+            devLog(`✅ Updated existing portfolio repo ${existing.id}`)
+          } else {
+            // Create new record for new repos
+            await tx.portfolioRepository.create({
+              data: repoData
+            })
+            devLog(`✅ Created new portfolio repo for repositoryId ${repoData.repositoryId}`)
+          }
+        }
+        
+                 // Soft delete portfolio repos that are no longer selected
+        const selectedRepoIds = repoRecords.map(r => r.id)
+        for (const existing of existingPortfolioRepos) {
+          if (!selectedRepoIds.includes(existing.repositoryId)) {
+            await tx.portfolioRepository.update({
+              where: { id: existing.id },
+              data: { 
+                isVisible: false
+              }
+            })
+            devLog(`✅ Soft deleted portfolio repo ${existing.id}`)
+          }
+        }
       }
 
       return portfolio

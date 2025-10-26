@@ -96,9 +96,14 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
           if (data.projects) {
             const views: {[key: number]: number} = {}
             data.projects.forEach((project: any) => {
-              // Convert BigInt to number if needed
-              const projectId = typeof project.projectId === 'bigint' ? Number(project.projectId) : project.projectId
-              views[projectId] = project.clickCount || 0
+              // Use PortfolioRepository ID or GitHub ID for matching
+              const projectId = project.projectId
+              const githubId = project.githubId
+              const clickCount = project.clickCount || 0
+              
+              // Store by both PortfolioRepository ID and GitHub ID for compatibility
+              if (projectId) views[projectId] = clickCount
+              if (githubId) views[githubId] = clickCount
             })
             setProjectViews(views)
           }

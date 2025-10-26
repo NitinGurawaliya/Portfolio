@@ -50,6 +50,7 @@ export async function GET(req: NextRequest) {
     // Create mapping from portfolio repository ID to GitHub repository ID
     const projectIdToRepoId = portfolioRepos.reduce((acc, repo) => {
       acc[repo.id] = {
+        portfolioRepoId: repo.id, // Include PortfolioRepository ID
         repositoryId: repo.repositoryId,
         githubId: Number(repo.repository.githubId),
         name: repo.repository.name
@@ -85,21 +86,24 @@ export async function GET(req: NextRequest) {
         return acc
       }
       
-      const key = repoInfo.githubId.toString()
-      console.log(`🔍 DEBUG: Processing click for project ${click.projectId} -> GitHub ID ${repoInfo.githubId} (${click.projectName})`)
+      // Use PortfolioRepository ID as the key for consistent matching
+      const portfolioRepoId = repoInfo.portfolioRepoId || Number(click.projectId)
+      const key = portfolioRepoId.toString()
+      console.log(`🔍 DEBUG: Processing click for project ${click.projectId} -> PortfolioRepository ID ${portfolioRepoId} (${click.projectName})`)
       
       if (!acc[key]) {
         acc[key] = {
-          projectId: repoInfo.githubId, // Use GitHub ID for frontend matching
-          portfolioProjectId: Number(click.projectId), // Convert BigInt to Number
+          projectId: portfolioRepoId, // Use PortfolioRepository ID for frontend matching
+          portfolioProjectId: Number(click.projectId), // Original portfolio repository ID from clicks table
+          githubId: repoInfo.githubId, // Also include GitHub ID for reference
           projectName: click.projectName,
           clickCount: 0,
           lastClicked: click.clickedAt.toISOString() // Convert Date to string
         }
-        console.log(`🔍 DEBUG: Created new entry for GitHub project ${repoInfo.githubId}`)
+        console.log(`🔍 DEBUG: Created new entry for PortfolioRepository ${portfolioRepoId}`)
       }
       acc[key].clickCount++
-      console.log(`🔍 DEBUG: Incremented count for GitHub project ${repoInfo.githubId}, new count: ${acc[key].clickCount}`)
+      console.log(`🔍 DEBUG: Incremented count for PortfolioRepository ${portfolioRepoId}, new count: ${acc[key].clickCount}`)
       return acc
     }, {} as Record<string, any>)
     
