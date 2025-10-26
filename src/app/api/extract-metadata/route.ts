@@ -25,38 +25,74 @@ async function extractFavicon(url: string, $: cheerio.CheerioAPI): Promise<strin
   const baseUrl = new URL(url).origin
   
   // Try multiple favicon sources in order of preference
+  // Only include icons that appear in the browser tab, not app icons
   const faviconSelectors = [
     'link[rel="icon"][sizes="32x32"]',
     'link[rel="icon"][sizes="16x16"]', 
     'link[rel="icon"]',
-    'link[rel="shortcut icon"]',
-    'link[rel="apple-touch-icon"]',
-    'link[rel="apple-touch-icon-precomposed"]'
+    'link[rel="shortcut icon"]'
+    // Note: We skip apple-touch-icon because that's for iOS bookmarks, not browser tab
   ]
   
+  // Collect all favicons first
+  const favicons: string[] = []
+  
   for (const selector of faviconSelectors) {
-    const faviconUrl = $(selector).attr('href')
-    if (faviconUrl) {
-      try {
+    const elements = $(selector)
+    elements.each((_, el) => {
+      const faviconUrl = $(el).attr('href')
+      if (faviconUrl) {
         const fullUrl = faviconUrl.startsWith('http') 
           ? faviconUrl 
           : new URL(faviconUrl, baseUrl).href
-        
-        // Validate that the favicon exists and is accessible
-        const response = await fetch(fullUrl, { 
-          method: 'HEAD',
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-          },
-          signal: AbortSignal.timeout(5000) // 5 second timeout
-        })
-        
-        if (response.ok && response.headers.get('content-type')?.includes('image')) {
-          return fullUrl
-        }
-      } catch (error) {
+        favicons.push(fullUrl)
+      }
+    })
+  }
+  
+  // Sort favicons - prioritize in this order:
+  // 1. Custom named ones (like favicon-d.svg, favicon.svg) 
+  // 2. Standard sizes (32x32, 16x16)
+  // 3. Generic favicon.ico last
+  favicons.sort((a, b) => {
+    const aIsCustom = a.includes('favicon-') && !a.includes('favicon.ico')
+    const bIsCustom = b.includes('favicon-') && !b.includes('favicon.ico')
+    const aIsFaviconIco = a.includes('favicon.ico')
+    const bIsFaviconIco = b.includes('favicon.ico')
+    
+    // Custom named ones come first
+    if (aIsCustom && !bIsCustom) return -1
+    if (!aIsCustom && bIsCustom) return 1
+    
+    // favicon.ico comes last
+    if (aIsFaviconIco && !bIsFaviconIco) return 1
+    if (!aIsFaviconIco && bIsFaviconIco) return -1
+    
+    return 0
+  })
+  
+  // Try each favicon in priority order
+  for (const faviconUrl of favicons) {
+    try {
+      // Skip generic Vercel/deployment platform logos
+      if (faviconUrl.includes('vercel.com') || faviconUrl.includes('/_next/')) {
         continue
       }
+      
+      // Validate that the favicon exists and is accessible
+      const response = await fetch(faviconUrl, { 
+        method: 'HEAD',
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        },
+        signal: AbortSignal.timeout(5000) // 5 second timeout
+      })
+      
+      if (response.ok && response.headers.get('content-type')?.includes('image')) {
+        return faviconUrl
+      }
+    } catch (error) {
+      continue
     }
   }
   
@@ -159,7 +195,7 @@ export async function POST(req: NextRequest) {
         '',
     }
 
-    // Extract and validate favicon
+    // Extract and validate favicon - uses whatever the site has in their browser tab
     try {
       metadata.favicon = await extractFavicon(url, $)
     } catch (error) {
