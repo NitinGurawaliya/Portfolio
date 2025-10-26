@@ -103,7 +103,7 @@ export function WallOfFame({ limit = 6 }: WallOfFameProps) {
   if (loading) {
     return (
       <section className="py-16 sm:py-20 lg:py-24">
-        <div className="container px-4 sm:px-6">
+        <div className="container px-4 sm:px-6 mx-auto">
           <div className="flex justify-center items-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
             <span className="ml-2 text-muted-foreground">Loading live portfolios...</span>
@@ -155,7 +155,7 @@ export function WallOfFame({ limit = 6 }: WallOfFameProps) {
 
   return (
     <section className="py-16 sm:py-20 lg:py-24">
-      <div className="container px-4 sm:px-6">
+      <div className="container px-4 sm:px-6 mx-auto">
         <div className="mx-auto max-w-2xl text-center mb-12 sm:mb-16">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -210,7 +210,7 @@ export function WallOfFame({ limit = 6 }: WallOfFameProps) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.3 + index * 0.1 }}
             >
-              <Link href={portfolio.portfolioUrl} target="_blank" className="block">
+              <Link href={portfolio.portfolioUrl} target="_blank" className="block h-full">
                 <Card className="group hover:shadow-xl transition-all duration-300 border-border/40 bg-card/50 backdrop-blur h-full cursor-pointer">
                   <CardContent className="p-6 h-full flex flex-col">
                     {/* Header */}
