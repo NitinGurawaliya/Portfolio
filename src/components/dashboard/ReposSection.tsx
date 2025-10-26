@@ -151,6 +151,9 @@ export function ReposSection({
   const [projectUrl, setProjectUrl] = useState("")
   const [isImportingUrl, setIsImportingUrl] = useState(false)
   
+  // Track initialization to prevent triggering changes during initial load
+  const [isInitialized, setIsInitialized] = useState(false)
+  
   // Use parent's repoOrder or initialize locally
   const [localRepoOrder, setLocalRepoOrder] = useState<number[]>(initialRepoOrder || [])
 
@@ -201,8 +204,16 @@ export function ReposSection({
       return indexA - indexB
     })
 
+  // Mark as initialized after first render
+  useEffect(() => {
+    setIsInitialized(true)
+  }, [])
+
   // Auto-fill fields for GitHub projects
   useEffect(() => {
+    // Only auto-fill after initialization to prevent triggering change detection during initial load
+    if (!isInitialized) return
+    
     const updates: Record<number, string> = {}
     selectedRepositories.forEach(repo => {
       // If it's a GitHub project and has deployed URL, pre-fill it
@@ -218,7 +229,7 @@ export function ReposSection({
     if (Object.keys(updates).length > 0) {
       setDeployedUrls(prev => ({ ...prev, ...updates }))
     }
-  }, [selectedRepositories]) // Removed deployedUrls from dependencies to prevent infinite loop
+  }, [selectedRepositories, isInitialized]) // Added isInitialized to dependencies
 
   // Debug logging
   useEffect(() => {
@@ -245,6 +256,9 @@ export function ReposSection({
   }, [initialRepoOrder])
 
   useEffect(() => {
+    // Only update repo order after initialization to prevent triggering change detection during initial load
+    if (!isInitialized) return
+    
     // Initialize or update order when selected repos change
     if (selectedRepos.length > 0) {
       setLocalRepoOrder(prev => {
@@ -272,7 +286,7 @@ export function ReposSection({
     console.log("ReposSection - Selected repos:", selectedRepos)
     console.log("ReposSection - Deployed URLs:", deployedUrls)
     console.log("ReposSection - Selected repositories:", selectedRepositories.map(r => ({ id: r.id, name: r.name })))
-  }, [selectedRepos])
+  }, [selectedRepos, isInitialized])
 
   useEffect(() => {
     if (initialDeployedUrls && Object.keys(initialDeployedUrls).length > 0) {

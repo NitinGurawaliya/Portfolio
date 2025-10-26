@@ -80,8 +80,9 @@ export function HomeSection({ user, portfolioData, onUpdate, usernameAvailabilit
 
 
   // Additional effect to handle portfolioData updates after initialization
+  // Only update if portfolioData has changed and we've been initialized
   useEffect(() => {
-    if (portfolioData && Object.keys(portfolioData).length > 0) {
+    if (portfolioData && Object.keys(portfolioData).length > 0 && isInitialized) {
       console.log("🔍 Portfolio data updated, updating formData:", portfolioData)
       setFormData(prev => ({
         ...prev,
@@ -92,7 +93,7 @@ export function HomeSection({ user, portfolioData, onUpdate, usernameAvailabilit
         customUsername: portfolioData.customUsername || prev.customUsername
       }))
     }
-  }, [portfolioData?.displayName, portfolioData?.jobTitle, portfolioData?.bio, portfolioData?.profilePic, portfolioData?.customUsername])
+  }, [portfolioData?.displayName, portfolioData?.jobTitle, portfolioData?.bio, portfolioData?.profilePic, portfolioData?.customUsername, isInitialized])
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => {
