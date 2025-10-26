@@ -266,28 +266,31 @@ export function HomeSection({ user, portfolioData, onUpdate, usernameAvailabilit
             </div>
           </div>
 
-          {/* Job Title */}
-          <div className="space-y-1.5">
-            <Label htmlFor="jobTitle" className="text-black font-medium text-sm">Job Title</Label>
-            <Input
-              id="jobTitle"
-              value={formData.jobTitle}
-              onChange={(e) => handleInputChange("jobTitle", e.target.value)}
-              className="bg-gray-50 text-black font-medium text-sm focus:bg-white placeholder:text-gray-400"
-              placeholder="e.g., Full Stack Developer, Software Engineer, etc."
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="bio" className="text-black font-medium text-sm">Bio</Label>
-            <Textarea
-              id="bio"
-              value={formData.bio}
-              onChange={(e) => handleInputChange("bio", e.target.value)}
-              className="bg-gray-50 text-black font-medium text-sm focus:bg-white placeholder:text-gray-400"
-              placeholder="Tell us about yourself..."
-              rows={3}
-            />
+          {/* Job Title and Bio Side by Side */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="jobTitle" className="text-black font-medium text-sm">Job Title</Label>
+              <Input
+                id="jobTitle"
+                value={formData.jobTitle}
+                onChange={(e) => handleInputChange("jobTitle", e.target.value)}
+                className="bg-gray-50 text-black font-medium text-sm focus:bg-white placeholder:text-gray-400"
+                placeholder="e.g., Full Stack Developer"
+                maxLength={50}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="bio" className="text-black font-medium text-sm">Bio</Label>
+              <Textarea
+                id="bio"
+                value={formData.bio}
+                onChange={(e) => handleInputChange("bio", e.target.value)}
+                className="bg-gray-50 text-black font-medium text-sm focus:bg-white placeholder:text-gray-400"
+                placeholder="Tell us about yourself..."
+                rows={3}
+                maxLength={150}
+              />
+            </div>
           </div>
         </CardContent>
       </Card>

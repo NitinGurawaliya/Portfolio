@@ -27,16 +27,16 @@ export async function POST(req: NextRequest) {
       projectNameType: typeof projectName 
     })
     
-    // Try to find portfolio repository by GitHub ID first, then by database ID
+    // Try to find portfolio repository - projectId should be PortfolioRepository ID
     let portfolioRepo = await prisma.portfolioRepository.findFirst({
       where: {
+        id: parseInt(projectId),
         portfolioId: parseInt(portfolioId),
-        repository: {
-          githubId: BigInt(projectId)
-        }
+        deletedAt: null // Only use non-deleted projects
       },
       select: {
         id: true,
+        customName: true,
         repository: {
           select: {
             name: true
@@ -45,15 +45,19 @@ export async function POST(req: NextRequest) {
       }
     })
     
-    // If not found by GitHub ID, try by database repository ID
+    // If not found by direct ID, try by GitHub ID (fallback for old tracking)
     if (!portfolioRepo) {
       portfolioRepo = await prisma.portfolioRepository.findFirst({
         where: {
           portfolioId: parseInt(portfolioId),
-          repositoryId: parseInt(projectId)
+          repository: {
+            githubId: BigInt(projectId)
+          },
+          deletedAt: null
         },
         select: {
           id: true,
+          customName: true,
           repository: {
             select: {
               name: true
@@ -61,17 +65,21 @@ export async function POST(req: NextRequest) {
           }
         }
       })
+      
+      if (portfolioRepo) {
+        console.log(`⚠️ Using fallback: Found portfolio repository ${portfolioRepo.id} for GitHub ID ${projectId}`)
+      }
     }
     
     if (!portfolioRepo) {
-      console.log(`🔍 DEBUG: No portfolio repository found for ID ${projectId} (tried both GitHub ID and database ID)`)
+      console.log(`❌ No valid portfolio repository found for projectId ${projectId} in portfolio ${portfolioId}`)
       return NextResponse.json(
-        { error: "Project not found in portfolio" },
+        { error: "Project not found in portfolio or has been removed" },
         { status: 404 }
       )
     }
     
-    console.log(`🔍 DEBUG: Found portfolio repository ID ${portfolioRepo.id} for GitHub ID ${projectId}`)
+    console.log(`✅ Using portfolio repository ID ${portfolioRepo.id}`)
     
     // Create project click record with portfolio repository ID
     await prisma.projectClick.create({
@@ -151,42 +159,40 @@ export async function GET(request: NextRequest) {
 
     if (projectId) {
       try {
-        console.log('🔍 API: Looking for projectId (GitHub ID):', projectId, 'type:', typeof projectId)
+        console.log('🔍 API: Looking for projectId:', projectId, 'type:', typeof projectId)
         
-        // Find repository by GitHub ID
-        const repository = await prisma.repository.findFirst({
+        // Try to use projectId directly as PortfolioRepository ID first
+        const portfolioRepo = await prisma.portfolioRepository.findFirst({
           where: {
-            githubId: BigInt(projectId)
+            id: parseInt(projectId),
+            portfolioId: parseInt(portfolioId),
+            deletedAt: null // Only include non-deleted projects
           },
           select: { id: true }
         })
         
-        console.log('🔍 API: Found repository with ID:', repository?.id)
+        console.log('🔍 API: Found portfolio repository with ID:', portfolioRepo?.id)
         
-        if (repository) {
-          // Find portfolio repository using repositoryId
-          const portfolioRepo = await prisma.portfolioRepository.findFirst({
-            where: {
-              portfolioId: parseInt(portfolioId),
-              repositoryId: repository.id
-            },
-            select: { id: true }
-          })
-          
-          console.log('🔍 API: Found portfolio repository with ID:', portfolioRepo?.id)
-          
-          if (portfolioRepo) {
-            whereClause.projectId = BigInt(portfolioRepo.id)
-            console.log('🔍 API: Using projectId in whereClause:', whereClause.projectId.toString())
-          } else {
-            console.log('⚠️ API: No portfolio repository found for GitHub ID:', projectId)
-          }
+        if (portfolioRepo) {
+          whereClause.projectId = BigInt(portfolioRepo.id)
+          console.log('🔍 API: Using projectId in whereClause:', whereClause.projectId.toString())
         } else {
-          console.log('⚠️ API: No repository found for GitHub ID:', projectId)
+          console.log('⚠️ API: No portfolio repository found for projectId:', projectId, 'in portfolio:', portfolioId)
+          // Don't continue with invalid IDs - this prevents orphaned data
+          return NextResponse.json({
+            success: true,
+            data: [],
+            totalViews: 0
+          })
         }
       } catch (error) {
         console.error('❌ Error finding portfolio repository:', error)
-        // Continue without projectId filter
+        // Return empty data instead of continuing with invalid IDs
+        return NextResponse.json({
+          success: true,
+          data: [],
+          totalViews: 0
+        })
       }
     }
 
@@ -197,6 +203,7 @@ export async function GET(request: NextRequest) {
     }
     console.log('📊 API GET: Final whereClause before query:', JSON.stringify(whereClauseLog, null, 2))
 
+    // Filter out views for deleted projects
     const dailyViews = await prisma.dailyProjectViews.findMany({
       where: whereClause,
       orderBy: {
@@ -204,7 +211,24 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    console.log('📊 API GET: Found daily views:', dailyViews.length)
+    // Only return views for projects that still exist and aren't deleted
+    const validProjectIds = new Set<number>()
+    if (portfolioId) {
+      const validProjects = await prisma.portfolioRepository.findMany({
+        where: {
+          portfolioId: parseInt(portfolioId),
+          deletedAt: null
+        },
+        select: { id: true }
+      })
+      validProjects.forEach(p => validProjectIds.add(p.id))
+    }
+
+    const filteredViews = dailyViews.filter(view => 
+      !portfolioId || !projectId || validProjectIds.has(Number(view.projectId))
+    )
+
+    console.log('📊 API GET: Found daily views:', filteredViews.length, '(filtered from', dailyViews.length, 'total)')
     
     // Convert BigInt to string for logging
     const dailyViewsLog = dailyViews.map(view => ({
@@ -216,7 +240,7 @@ export async function GET(request: NextRequest) {
     // Group by date and project
     const viewsByDate: { [key: string]: { [key: string]: number } } = {}
     
-    dailyViews.forEach(view => {
+    filteredViews.forEach(view => {
       const dateKey = view.date.toISOString().split('T')[0]
       if (!viewsByDate[dateKey]) {
         viewsByDate[dateKey] = {}
@@ -238,7 +262,7 @@ export async function GET(request: NextRequest) {
 
       // Get all unique project names
       const projectNames = new Set<string>()
-      dailyViews.forEach(view => {
+      filteredViews.forEach(view => {
         projectNames.add(view.projectName)
       })
 
@@ -250,14 +274,15 @@ export async function GET(request: NextRequest) {
       chartData.push(dayData)
     }
 
-    const totalViews = dailyViews.reduce((sum, view) => sum + view.views, 0)
+    const totalViews = filteredViews.reduce((sum, view) => sum + view.views, 0)
     
     console.log('✅ API GET: Returning response with', chartData.length, 'days,', totalViews, 'total views')
 
     return NextResponse.json({
       success: true, 
       data: chartData,
-      totalViews
+      totalViews,
+      validProjectsCount: validProjectIds.size
     })
   } catch (error) {
     console.error('❌ API GET: Error:', error instanceof Error ? error.message : 'Unknown error')

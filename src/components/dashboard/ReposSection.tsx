@@ -42,6 +42,7 @@ import {
 
 interface Repository {
   id: number
+  portfolioRepositoryId?: number // PortfolioRepository ID for analytics
   name: string
   fullName: string
   description: string
@@ -160,10 +161,11 @@ export function ReposSection({
     )
   )
 
-  const selectedRepositories: PortfolioRepository[] = repositories
+  const selectedRepositories: (PortfolioRepository & { portfolioRepositoryId?: number })[] = repositories
     .filter(repo => selectedRepos.includes(repo.id))
     .map(repo => ({
       id: repo.id,
+      portfolioRepositoryId: repo.portfolioRepositoryId,
       deployedUrl: deployedUrls[repo.id] || '',
       customName: customNames[repo.id] || '',
       customDescription: customDescriptions[repo.id] || '',
@@ -857,7 +859,7 @@ export function ReposSection({
                                 <div className="flex-1 bg-gray-50 border border-gray-200 rounded overflow-hidden">
                                   <IndividualProjectChart 
                                     portfolioId={portfolioId}
-                                    projectId={repo.id}
+                                    projectId={repo.portfolioRepositoryId || repo.id}
                                     projectName={customName || repo.name}
                                     size="lg"
                                     className="h-full w-full"

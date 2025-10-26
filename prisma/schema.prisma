@@ -107,12 +107,16 @@ model PortfolioRepository {
   deployedUrl       String?
   isVisible         Boolean    @default(true)
   createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @default(now()) @updatedAt
+  deletedAt        DateTime?  // Soft delete to preserve analytics integrity
   displayOrder      Int?
   customName        String?
   customDescription String?
   technologies      String?
   portfolio         Portfolio  @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
   repository        Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  
+  @@index([portfolioId, isVisible])
 }
 
 model PortfolioView {
@@ -204,7 +208,7 @@ model ProjectView {
 model DailyProjectViews {
   id          Int      @id @default(autoincrement())
   portfolioId Int
-  projectId   BigInt
+  projectId   BigInt  // PortfolioRepository ID
   projectName String
   date        DateTime @db.Date
   views       Int      @default(0)
@@ -215,4 +219,5 @@ model DailyProjectViews {
   @@index([portfolioId])
   @@index([projectId])
   @@index([date])
+  @@index([portfolioId, projectId]) // Composite index for faster lookups
 }

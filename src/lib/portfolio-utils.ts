@@ -122,6 +122,7 @@ export const formatImportedProjects = (portfolioRepos: any[]): Repository[] => {
       return {
         id: githubId, // Use GitHub ID as the main ID
         githubId: githubId, // Also store as githubId property
+        portfolioRepositoryId: repo.id, // Store PortfolioRepository ID for analytics
         name: repo.repository.name,
         fullName: repo.repository.fullName || repo.repository.name,
         description: repo.repository.description || "",
