@@ -116,7 +116,7 @@ export function WallOfFame({ limit = 6 }: WallOfFameProps) {
   if (error || portfolios.length === 0) {
     return (
       <section className="py-16 sm:py-20 lg:py-24">
-        <div className="container px-4 sm:px-6">
+        <div className="container px-4 sm:px-6 mx-auto">
           <div className="mx-auto max-w-2xl text-center">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
