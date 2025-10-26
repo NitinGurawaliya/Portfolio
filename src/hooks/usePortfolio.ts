@@ -104,15 +104,10 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
 
   // Track changes
   useEffect(() => {
-    // Skip change detection during initial load, publishing, or if no original data
+    // Skip change detection during initial load or if no original data
     if (isInitialLoad) {
       console.log("📊 Skipping change detection - initial load")
       setHasUnsavedChanges(false)
-      return
-    }
-    
-    if (isPublishing) {
-      console.log("📊 Skipping change detection - currently publishing")
       return
     }
     
@@ -175,58 +170,13 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
     console.log("📊 Change detection:", { 
       hasChanges, 
       isInitialLoad, 
-      isPublishComplete, 
       originalDataExists: !!originalData 
     })
     
-    // Debug: Log data comparison when there are unexpected changes
-    if (hasChanges && isPublishComplete) {
-      console.log("⚠️ WARNING: Changes detected immediately after publish!")
-      console.log("📊 Current Data Keys:", Object.keys(cleanCurrentData))
-      console.log("📊 Original Data Keys:", Object.keys(cleanOriginalData))
-      
-      // Find differences - check all keys from both objects
-      const allKeys = new Set([...Object.keys(cleanCurrentData), ...Object.keys(cleanOriginalData)])
-      let foundDifference = false
-      
-      allKeys.forEach(key => {
-        const currentValue = JSON.stringify(cleanCurrentData[key])
-        const originalValue = JSON.stringify(cleanOriginalData[key])
-        if (currentValue !== originalValue) {
-          foundDifference = true
-          console.log(`📊 🔴 DIFFERENCE FOUND in "${key}":`)
-          console.log(`  ✅ Current (${currentValue.length} chars):`, cleanCurrentData[key])
-          console.log(`  ❌ Original (${originalValue.length} chars):`, cleanOriginalData[key])
-          console.log(`  📝 Current JSON:`, currentValue.substring(0, 200))
-          console.log(`  📝 Original JSON:`, originalValue.substring(0, 200))
-        }
-      })
-      
-      if (!foundDifference) {
-        console.log("⚠️ WEIRD: hasChanges=true but no differences found in individual keys!")
-        console.log("📊 Full Current Data:", JSON.stringify(cleanCurrentData).substring(0, 500))
-        console.log("📊 Full Original Data:", JSON.stringify(cleanOriginalData).substring(0, 500))
-      }
-    }
-    
-    // Don't set changes during initial load
-    if (isInitialLoad) {
-      console.log("📊 Skipping change detection - isInitialLoad")
-      setHasUnsavedChanges(false)
-    } else if (!originalData) {
-      console.log("📊 Skipping change detection - no original data")
-      setHasUnsavedChanges(false)
-    } else {
-      // If we're in publish complete state but changes are detected, reset the flag
-      if (hasChanges && isPublishComplete) {
-        console.log("📊 Changes detected after publish - resetting isPublishComplete")
-        setIsPublishComplete(false)
-      }
-      
-      console.log("📊 Setting hasUnsavedChanges to:", hasChanges)
-      setHasUnsavedChanges(hasChanges)
-    }
-  }, [portfolioData, selectedRepos, skills, socials, deployedUrls, customNames, customDescriptions, githubUrls, importedProjects, selectedTheme, repoOrder, originalData, isInitialLoad, isPublishComplete, isPublishing])
+         // Update hasUnsavedChanges based on detection
+     console.log("📊 Setting hasUnsavedChanges to:", hasChanges)
+     setHasUnsavedChanges(hasChanges)
+  }, [portfolioData, selectedRepos, skills, socials, deployedUrls, customNames, customDescriptions, githubUrls, importedProjects, selectedTheme, repoOrder, originalData, isInitialLoad])
 
   // Load existing portfolio data
   const loadExistingData = async (username: string, initialData?: any) => {
@@ -460,9 +410,6 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
     console.log("🔄 resetAfterPublish called")
     console.log("🔄 Current portfolio data:", portfolioData)
     
-    // Set publishing flag to prevent change detection during state updates
-    setIsPublishing(true)
-    
     const normalizedImportedProjects = importedProjects.map(project => ({
       ...project,
       languages: project.languages || []
@@ -485,12 +432,11 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
     
     console.log("🔄 Setting new original data (normalized):", newOriginalData)
     
-    // Update all states while isPublishing flag prevents change detection
+    // Update states - change detection will run immediately and see no changes
     setHasUnsavedChanges(false)
     setOriginalData(newOriginalData)
     setIsPublishComplete(true)
-    setIsPublishing(false)
-    console.log("🔄 Publish complete - change detection re-enabled")
+    console.log("🔄 Publish complete - change detection running normally")
   }
 
   return {
