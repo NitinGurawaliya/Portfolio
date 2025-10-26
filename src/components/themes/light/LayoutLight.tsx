@@ -146,456 +146,300 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
       }}
     >
       {/* Light Background */}
-      <div className="fixed inset-0 z-0 bg-gradient-to-br from-gray-50 to-white"></div>
+      <div className="fixed inset-0 z-0 bg-[#fafafa]"></div>
 
-      {/* Hero Section - Centered Layout */}
-      <motion.section 
-        className="relative z-10 pt-6 md:pt-8 lg:pt-10 pb-2 md:pb-3 lg:pb-4"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 1 }}
-        aria-label="Profile introduction"
-      >
-        <div className="mx-auto px-2 sm:px-4 md:px-6 lg:px-8 max-w-6xl">
-          <div className="text-left space-y-2 sm:space-y-3 lg:space-y-4">
-            {/* Profile Picture */}
-            <motion.div
-              className="flex justify-start"
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
+      {/* Page container: 2-col on md+, single on mobile */}
+      <div className="relative z-10 mx-auto px-3 sm:px-4 md:px-6 lg:px-8 max-w-[1200px] py-4 md:py-6 lg:py-8">
+        <div className="grid grid-cols-1 md:grid-cols-[320px_1fr] gap-4 md:gap-6 lg:gap-8">
+          {/* Left column - profile card and skills/actions */}
+          <div className="space-y-4 md:space-y-6">
+            {/* Profile Card */}
+            <motion.section 
+              className="rounded-2xl bg-white border border-gray-200 shadow-sm"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              aria-label="Profile introduction"
             >
-              <Avatar className="w-16 h-16 xs:w-20 xs:h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 lg:w-32 lg:h-32 xl:w-36 xl:h-36 border-2 sm:border-4 border-cyan-400/30 bg-white shadow-lg sm:shadow-2xl">
-                <AvatarImage 
-                  src={portfolio.profilePic} 
-                  className="object-cover" 
-                  alt={`${portfolio.displayName}'s profile picture`}
-                />
-                <AvatarFallback className="bg-gradient-to-br from-gray-100 to-gray-200 text-gray-800 text-3xl lg:text-4xl font-bold">
-                  {portfolio.displayName?.charAt(0) || "U"}
-                </AvatarFallback>
-              </Avatar>
-            </motion.div>
+              <div className="p-4 sm:p-5">
+                <div className="flex items-start gap-3">
+                  <Avatar className="w-16 h-16 sm:w-20 sm:h-20 border-2 border-gray-200">
+                    <AvatarImage 
+                      src={portfolio.profilePic} 
+                      className="object-cover" 
+                      alt={`${portfolio.displayName}'s profile picture`}
+                    />
+                    <AvatarFallback className="bg-gray-100 text-gray-800 text-2xl font-bold">
+                      {portfolio.displayName?.charAt(0) || "U"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1">
+                    <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">{portfolio.displayName}</h1>
+                    {portfolio.jobTitle && (
+                      <p className="text-sm sm:text-base text-gray-600 mt-0.5">{portfolio.jobTitle}</p>
+                    )}
+                    <p className="text-sm text-gray-600 mt-2">{displayedBio}</p>
+                    <div className="mt-3 inline-flex items-center gap-2 text-xs text-gray-500">
+                      <Eye className="h-3 w-3" />
+                      <span>{viewsCount} views</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.section>
 
-            {/* Name */}
-            <motion.h1 
-              className="text-lg xs:text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold text-gray-800"
-              initial={{ y: 30, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.8, delay: 0.4 }}
-            >
-              {portfolio.displayName}
-            </motion.h1>
-
-            {/* Job Title */}
-            {portfolio.jobTitle && (
-              <motion.p 
-                className="text-sm xs:text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl text-purple-600 font-semibold"
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 0.8, delay: 0.5 }}
+            {/* Socials - compact buttons */}
+            {portfolio.socials && portfolio.socials.length > 0 && (
+              <motion.section 
+                className="rounded-2xl bg-white border border-gray-200 shadow-sm"
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                viewport={{ once: true }}
+                aria-label="Social media links"
               >
-                {portfolio.jobTitle}
-              </motion.p>
+                <div className="p-3 sm:p-4">
+                  <div className="flex flex-wrap gap-2">
+                    {portfolio.socials
+                      .filter(social => social.username && social.username.trim())
+                      .map((social, index) => {
+                        const Icon = getSocialIcon(social.platform)
+                        return (
+                          <motion.button
+                            key={social.id}
+                            onClick={() => window.open(social.url, '_blank')}
+                            className="px-2.5 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-800 hover:bg-gray-50 hover:border-gray-300 transition shadow-sm"
+                            whileHover={{ scale: 1.05, y: -2 }}
+                            whileTap={{ scale: 0.95 }}
+                            initial={{ opacity: 0, y: 6 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.3, delay: index * 0.03 }}
+                            viewport={{ once: true }}
+                            aria-label={`Visit ${social.platform} profile`}
+                          >
+                            <Icon className="h-4 w-4" />
+                          </motion.button>
+                        )
+                      })}
+                  </div>
+                </div>
+              </motion.section>
             )}
 
-            {/* Bio */}
-              <motion.p 
-                className="text-xs xs:text-sm sm:text-base md:text-lg lg:text-xl text-gray-600 leading-relaxed max-w-xs xs:max-w-sm sm:max-w-md md:max-w-lg lg:max-w-2xl xl:max-w-3xl"
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.8, delay: 0.6 }}
-            >
-              {displayedBio}
-              {!isTypingComplete && (
-                <motion.span
-                  className="inline-block w-0.5 h-5 bg-purple-600 ml-1"
-                  animate={{ opacity: [1, 0, 1] }}
-                  transition={{ duration: 0.8, repeat: Infinity }}
-                />
-              )}
-            </motion.p>
-
-            {/* Views Counter */}
-            <motion.div
-              className="flex items-center gap-2 text-xs xs:text-sm text-gray-500"
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.8, delay: 0.7 }}
-            >
-              <Eye className="h-3 w-3 xs:h-4 xs:w-4" />
-              <span>{viewsCount} views</span>
-            </motion.div>
-
-          </div>
-        </div>
-      </motion.section>
-
-      {/* Social Icons Section - Above Skills */}
-      {portfolio.socials && portfolio.socials.length > 0 && (
-        <motion.section 
-          className="relative z-10 py-2 md:py-3"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          viewport={{ once: true }}
-          aria-label="Social media links"
-        >
-          <div className="mx-auto px-2 sm:px-4 md:px-6 lg:px-8 max-w-screen-xl">
-            <div className="flex justify-start gap-2 xs:gap-3 sm:gap-4 md:gap-6 flex-wrap">
-              {portfolio.socials
-                .filter(social => social.username && social.username.trim())
-                .map((social, index) => {
-                  const Icon = getSocialIcon(social.platform)
-                  
-                  const platformStyles = {
-                    github: { 
-                      bg: 'bg-white', 
-                      border: 'border-gray-200', 
-                      text: 'text-gray-800', 
-                      hover: 'hover:bg-gray-50 hover:text-gray-900 hover:border-gray-300',
-                      shadow: 'hover:shadow-md'
-                    },
-                    email: { 
-                      bg: 'bg-white', 
-                      border: 'border-gray-200', 
-                      text: 'text-gray-800', 
-                      hover: 'hover:bg-gray-50 hover:text-gray-900 hover:border-gray-300',
-                      shadow: 'hover:shadow-md'
-                    },
-                    twitter: { 
-                      bg: 'bg-white', 
-                      border: 'border-gray-200', 
-                      text: 'text-gray-800', 
-                      hover: 'hover:bg-gray-50 hover:text-gray-900 hover:border-gray-300',
-                      shadow: 'hover:shadow-md'
-                    },
-                    x: { 
-                      bg: 'bg-white', 
-                      border: 'border-gray-200', 
-                      text: 'text-gray-800', 
-                      hover: 'hover:bg-gray-50 hover:text-gray-900 hover:border-gray-300',
-                      shadow: 'hover:shadow-xl hover:shadow-gray-700/40'
-                    },
-                    instagram: { 
-                      bg: 'bg-white', 
-                      border: 'border-gray-200', 
-                      text: 'text-gray-800', 
-                      hover: 'hover:bg-gray-50 hover:text-gray-900 hover:border-gray-300',
-                      shadow: 'hover:shadow-xl hover:shadow-purple-500/40'
-                    },
-                    linkedin: { 
-                      bg: 'bg-white', 
-                      border: 'border-gray-200', 
-                      text: 'text-gray-800', 
-                      hover: 'hover:bg-gray-50 hover:text-gray-900 hover:border-gray-300',
-                      shadow: 'hover:shadow-xl hover:shadow-blue-600/40'
-                    },
-                    facebook: { 
-                      bg: 'bg-white', 
-                      border: 'border-gray-200', 
-                      text: 'text-gray-800', 
-                      hover: 'hover:bg-gray-50 hover:text-gray-900 hover:border-gray-300',
-                      shadow: 'hover:shadow-xl hover:shadow-blue-500/40'
-                    },
-                    youtube: { 
-                      bg: 'bg-white', 
-                      border: 'border-gray-200', 
-                      text: 'text-gray-800', 
-                      hover: 'hover:bg-gray-50 hover:text-gray-900 hover:border-gray-300',
-                      shadow: 'hover:shadow-xl hover:shadow-red-500/40'
-                    },
-                    stackoverflow: { 
-                      bg: 'bg-white', 
-                      border: 'border-gray-200', 
-                      text: 'text-gray-800', 
-                      hover: 'hover:bg-gray-50 hover:text-gray-900 hover:border-gray-300',
-                      shadow: 'hover:shadow-xl hover:shadow-orange-500/40'
-                    },
-                    reddit: { 
-                      bg: 'bg-white', 
-                      border: 'border-gray-200', 
-                      text: 'text-gray-800', 
-                      hover: 'hover:bg-orange-600/90 hover:text-white hover:border-orange-300/70',
-                      shadow: 'hover:shadow-xl hover:shadow-orange-400/40'
-                    }
-                  }
-                  
-                  const style = platformStyles[social.platform as keyof typeof platformStyles] || platformStyles.github
-                  const rotations = [5, -5, 3, -3, 7, -7, 4, -4]
-                  const rotation = rotations[index % rotations.length]
-                  
-                  return (
-                    <motion.button
-                      key={social.id}
-                      onClick={() => window.open(social.url, '_blank')}
-                      className={`p-2 xs:p-3 sm:p-4 rounded-lg ${style.bg} border ${style.border} ${style.text} ${style.hover} ${style.shadow} transition-all duration-300 shadow-sm`}
-                      whileHover={{ scale: 1.1, y: -3, rotate: rotation }}
-                      whileTap={{ scale: 0.95 }}
-                      initial={{ opacity: 0, y: 20 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.5, delay: index * 0.1 }}
-                      viewport={{ once: true }}
-                      aria-label={`Visit ${social.platform} profile`}
-                    >
-                      <Icon className="h-4 w-4 xs:h-5 xs:w-5 sm:h-6 sm:w-6 md:h-7 md:w-7" />
-                    </motion.button>
-                  )
-                })}
-            </div>
-          </div>
-        </motion.section>
-      )}
-
-      {/* Skills Section - Auto Scrolling */}
-      {portfolio.skills && portfolio.skills.length > 0 && (
-        <motion.section 
-          className="relative z-10 py-2 md:py-3"
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          viewport={{ once: true }}
-          aria-label="Technical skills"
-        >
-          <div className="mx-auto px-2 sm:px-4 md:px-6 lg:px-8 max-w-screen-xl">
-            <motion.h2 
-              className="text-sm xs:text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl font-bold mb-2 xs:mb-3 sm:mb-4 md:mb-6 text-gray-900 text-left"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              viewport={{ once: true }}
-            >
-              Skills I've Learned
-            </motion.h2>
-            
-            {/* Manual Scroll Skills Grid */}
-            <div className="overflow-x-auto scrollbar-hide scroll-smooth" style={{ scrollBehavior: 'smooth' }}>
-              <div className="flex gap-2 xs:gap-3 sm:gap-4 py-1 xs:py-2 min-w-max">
-                {portfolio.skills.map((skill, index) => (
-                  <motion.div
-                    key={skill.id}
-                    className="group relative flex-shrink-0"
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: index * 0.05 }}
-                    viewport={{ once: true }}
-                    whileHover={{ scale: 1.05, y: -2 }}
-                    whileTap={{ scale: 0.95 }}
-                    aria-label={`${skill.name} skill`}
-                  >
-                    <div className="bg-black text-white px-2 xs:px-3 sm:px-4 py-1 xs:py-1.5 sm:py-2 rounded-md xs:rounded-lg font-medium text-xs xs:text-sm hover:bg-gray-800 transition-all duration-300 cursor-pointer border border-gray-800 hover:border-gray-700 whitespace-nowrap">
-                      {skill.name}
+            {/* Skills - horizontal scroll chips */}
+            {portfolio.skills && portfolio.skills.length > 0 && (
+              <motion.section 
+                className="rounded-2xl bg-white border border-gray-200 shadow-sm"
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                viewport={{ once: true }}
+                aria-label="Technical skills"
+              >
+                <div className="p-3 sm:p-4">
+                  <h2 className="text-sm font-semibold text-gray-900 mb-2">Skills</h2>
+                  <div className="overflow-x-auto scrollbar-hide">
+                    <div className="flex gap-2 min-w-max">
+                      {portfolio.skills.map((skill, index) => (
+                        <motion.div
+                          key={skill.id}
+                          className="px-2.5 py-1.5 rounded-md bg-black text-white text-xs whitespace-nowrap border border-gray-900"
+                          initial={{ opacity: 0, y: 6 }}
+                          whileInView={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.3, delay: index * 0.03 }}
+                          viewport={{ once: true }}
+                        >
+                          {skill.name}
+                        </motion.div>
+                      ))}
                     </div>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
+                  </div>
+                </div>
+              </motion.section>
+            )}
           </div>
-        </motion.section>
-      )}
 
-      {/* Projects Section */}
-      {portfolio.repositories && portfolio.repositories.filter(repo => repo.isVisible).length > 0 && (
-        <motion.section 
-          className="relative z-10 py-3 md:py-4 lg:py-5"
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          viewport={{ once: true }}
-          aria-label="Projects showcase"
-        >
-          <div className="mx-auto px-2 sm:px-4 md:px-6 lg:px-8 max-w-screen-xl">
-            <motion.h2 
-              className="text-sm xs:text-base sm:text-lg md:text-xl lg:text-2xl font-bold mb-2 xs:mb-3 sm:mb-4 md:mb-6 text-gray-900 text-left"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              viewport={{ once: true }}
-            >
-              Projects I've Made
-            </motion.h2>
-            <div className="grid grid-cols-1 gap-2 xs:gap-3 sm:gap-4 md:gap-6 max-w-4xl mx-auto px-2 xs:px-4">
-              {portfolio.repositories
-                .filter(repo => repo.isVisible)
-                .map((repo, index) => (
-                <motion.article
-                  key={repo.id}
-                  className="group relative cursor-pointer w-full"
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                  viewport={{ once: true }}
-                  whileHover={{ y: -2 }}
-                  onClick={() => {
-                    // Track project click using PortfolioRepository ID
-                    // repo.id is now the PortfolioRepository ID
-                    const portfolioRepoId = repo.id
-                    console.log(`🔍 DEBUG: Light theme - Project click data:`, {
-                      portfolioId: portfolio.id,
-                      projectId: portfolioRepoId,
-                      projectName: repo.customName || repo.repository.name,
-                      projectIdType: typeof portfolioRepoId,
-                      portfolioIdType: typeof portfolio.id,
-                      repoId: repo.id,
-                      repoRepositoryId: repo.repository.id
-                    })
-                    trackProjectClick(portfolio.id, portfolioRepoId, repo.customName || repo.repository.name)
-                    
-                    // Update views count
-                    setViewsCount(prev => prev + 1)
-                    
-                    // Update project views count
-                    setProjectViews(prev => ({
-                      ...prev,
-                      [portfolioRepoId]: (prev[portfolioRepoId] || 0) + 1
-                    }))
-                    
-                    if (repo.deployedUrl) {
-                      window.open(repo.deployedUrl, '_blank')
-                    } else {
-                      const githubUrl = repo.repository.githubUrl || repo.repository.htmlUrl
-                      window.open(githubUrl, '_blank')
-                    }
-                  }}
-                  role="button"
-                  tabIndex={0}
-                  aria-label={`View ${repo.repository.name} project`}
-                >
-                  <div className="relative bg-gray-100 rounded-lg p-2 xs:p-3 sm:p-4 md:p-6 hover:bg-gray-200 transition-all duration-300 border border-gray-200 w-full">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex-1 min-w-0">
-                        {/* Project Icon at the top */}
-                        <div className="mb-2">
-                          <ProjectIcon
-                            favicon={repo.repository.favicon}
-                            logo={repo.repository.logo}
-                            title={repo.customName || repo.repository.name}
-                            size="md"
-                          />
-                        </div>
-                        
-                        {/* Project Name */}
-                        <h3 className="text-sm xs:text-base sm:text-lg md:text-xl font-bold text-gray-800 break-words mb-1 xs:mb-2">
-                          {repo.customName || repo.repository.name}
-                        </h3>
-                        <div 
-                          className="text-xs xs:text-sm sm:text-base text-gray-600 leading-relaxed break-words prose prose-sm max-w-none"
-                          dangerouslySetInnerHTML={{
-                            __html: repo.customDescription || repo.repository.description || "No description available for this project."
-                          }}
-                        />
-                      </div>
-                      <motion.button
-                        onClick={(e) => {
-                        e.stopPropagation()
-                        // Track project click (GitHub button) using PortfolioRepository ID
-                        trackProjectClick(portfolio.id, repo.id, repo.customName || repo.repository.name)
-                          // Update views count
+          {/* Right column - projects and github */}
+          <div className="space-y-4 md:space-y-6">
+            {/* Projects Section */}
+            {portfolio.repositories && portfolio.repositories.filter(repo => repo.isVisible).length > 0 && (
+              <motion.section 
+                className="rounded-2xl"
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                viewport={{ once: true }}
+                aria-label="Projects showcase"
+              >
+                <div className="">
+                  <h2 className="text-base sm:text-lg md:text-xl font-semibold text-gray-900 mb-2">Projects</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+                    {portfolio.repositories
+                      .filter(repo => repo.isVisible)
+                      .map((repo, index) => (
+                      <motion.article
+                        key={repo.id}
+                        className="group relative cursor-pointer w-full"
+                        initial={{ opacity: 0, y: 10 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3, delay: index * 0.05 }}
+                        viewport={{ once: true }}
+                        whileHover={{ y: -2 }}
+                        onClick={() => {
+                          const portfolioRepoId = repo.id
+                          trackProjectClick(portfolio.id, portfolioRepoId, repo.customName || repo.repository.name)
+                          // Update counters
                           setViewsCount(prev => prev + 1)
-                          // Update project views count
                           setProjectViews(prev => ({
                             ...prev,
-                            [repo.id]: (prev[repo.id] || 0) + 1
+                            [portfolioRepoId]: (prev[portfolioRepoId] || 0) + 1
                           }))
-                          const githubUrl = repo.repository.githubUrl || repo.repository.htmlUrl
-                          window.open(githubUrl, '_blank')
-                        }}
-                        className="flex-shrink-0 p-1.5 rounded-md bg-transparent text-gray-500 hover:bg-gray-300 hover:text-gray-700 transition-all duration-300 ml-2"
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                        aria-label={`View ${repo.repository.name} on GitHub`}
-                      >
-                        <SiGithub className="h-3 w-3 xs:h-4 xs:w-4" />
-                      </motion.button>
-                    </div>
-                    
-                    {/* Languages and Views */}
-                    <div className="flex items-center justify-between flex-wrap gap-2 mt-auto">
-                      {/* Languages badges */}
-                      <div className="flex items-center flex-wrap gap-2">
-                        {(() => {
-                          // Parse languages from JSON string
-                          let languages: string[] = []
-                          if (repo.repository.languages) {
-                            try {
-                              languages = JSON.parse(repo.repository.languages)
-                            } catch (e) {
-                              // Fallback to single language
-                              if (repo.repository.language) {
-                                languages = [repo.repository.language]
-                              }
-                            }
-                          } else if (repo.repository.language) {
-                            languages = [repo.repository.language]
+                          if (repo.deployedUrl) {
+                            window.open(repo.deployedUrl, '_blank')
+                          } else {
+                            const githubUrl = repo.repository.githubUrl || repo.repository.htmlUrl
+                            window.open(githubUrl, '_blank')
                           }
-                          
-                          return languages
-                            .filter(lang => lang.toLowerCase() !== 'web') // Filter out "Web" tag
-                            .map((lang, idx) => (
-                              <span key={idx} className="text-gray-700 text-xs sm:text-sm font-medium px-2 py-1 bg-gray-200 rounded border border-gray-300">
-                                {lang}
-                              </span>
-                            ))
-                        })()}
-                      </div>
-                      
-                      {/* Project Views */}
-                      <div className="flex items-center gap-1 text-xs text-gray-500">
-                        <Eye className="h-3 w-3" />
-                        <span>{projectViews[repo.repository.githubId] || 0} views</span>
-                      </div>
-                    </div>
+                        }}
+                        role="button"
+                        tabIndex={0}
+                        aria-label={`View ${repo.repository.name} project`}
+                      >
+                        <div className="relative bg-white rounded-2xl p-3 sm:p-4 border border-gray-200 hover:shadow-md transition-all duration-300 w-full">
+                          <div className="flex items-start justify-between mb-2">
+                            <div className="flex-1 min-w-0">
+                              {/* Project Icon */}
+                              <div className="mb-2">
+                                <ProjectIcon
+                                  favicon={repo.repository.favicon}
+                                  logo={repo.repository.logo}
+                                  title={repo.customName || repo.repository.name}
+                                  size="md"
+                                />
+                              </div>
+                              <h3 className="text-sm sm:text-base md:text-lg font-semibold text-gray-900 break-words mb-1">
+                                {repo.customName || repo.repository.name}
+                              </h3>
+                              <div 
+                                className="text-xs sm:text-sm text-gray-600 leading-relaxed break-words prose prose-sm max-w-none"
+                                dangerouslySetInnerHTML={{
+                                  __html: repo.customDescription || repo.repository.description || "No description available for this project."
+                                }}
+                              />
+                            </div>
+                            <motion.button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                trackProjectClick(portfolio.id, repo.id, repo.customName || repo.repository.name)
+                                setViewsCount(prev => prev + 1)
+                                setProjectViews(prev => ({
+                                  ...prev,
+                                  [repo.id]: (prev[repo.id] || 0) + 1
+                                }))
+                                const githubUrl = repo.repository.githubUrl || repo.repository.htmlUrl
+                                window.open(githubUrl, '_blank')
+                              }}
+                              className="flex-shrink-0 p-1.5 rounded-md bg-white text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-all duration-300 ml-2 border border-gray-200"
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.9 }}
+                              aria-label={`View ${repo.repository.name} on GitHub`}
+                            >
+                              <SiGithub className="h-4 w-4" />
+                            </motion.button>
+                          </div>
 
+                          {/* Languages and Views */}
+                          <div className="flex items-center justify-between flex-wrap gap-2 mt-auto">
+                            {/* Languages badges */}
+                            <div className="flex items-center flex-wrap gap-2">
+                              {(() => {
+                                let languages: string[] = []
+                                if (repo.repository.languages) {
+                                  try {
+                                    languages = JSON.parse(repo.repository.languages)
+                                  } catch (e) {
+                                    if (repo.repository.language) {
+                                      languages = [repo.repository.language]
+                                    }
+                                  }
+                                } else if (repo.repository.language) {
+                                  languages = [repo.repository.language]
+                                }
+                                return languages
+                                  .filter(lang => lang.toLowerCase() !== 'web')
+                                  .map((lang, idx) => (
+                                    <span key={idx} className="text-gray-700 text-xs font-medium px-2 py-1 bg-gray-100 rounded border border-gray-300">
+                                      {lang}
+                                    </span>
+                                  ))
+                              })()}
+                            </div>
+                            {/* Project Views */}
+                            <div className="flex items-center gap-1 text-xs text-gray-500">
+                              <Eye className="h-3 w-3" />
+                              <span>{projectViews[repo.repository.githubId] || 0} views</span>
+                            </div>
+                          </div>
+                        </div>
+                      </motion.article>
+                    ))}
                   </div>
-                </motion.article>
-              ))}
-            </div>
-            
+                </div>
+              </motion.section>
+            )}
+
+            {/* GitHub Activity Section */}
+            {portfolio.user?.githubUsername ? (
+              <GitHubActivity 
+                username={portfolio.user.githubUsername} 
+                theme="light" 
+              />
+            ) : (
+              <div className="py-6 text-center">
+                <p className="text-gray-500">GitHub username not available</p>
+              </div>
+            )}
           </div>
-        </motion.section>
-      )}
-
-
-      {/* GitHub Activity Section */}
-      {portfolio.user?.githubUsername ? (
-        <GitHubActivity 
-          username={portfolio.user.githubUsername} 
-          theme="light" 
-        />
-      ) : (
-        <div className="py-8 text-center">
-          <p className="text-gray-500">GitHub username not available</p>
         </div>
-      )}
+      </div>
+
+      {/* Socials/Skills moved into left column cards above */}
+
+      {/* Skills moved into left column */}
+
+      {/* Projects moved into right column with white cards and 2-col grid */}
+
+
+      {/* GitHub Activity rendered in right column */}
 
 
       {/* Footer */}
       <motion.footer 
-        className="relative z-10 py-3 lg:py-4"
+        className="relative z-10 py-4"
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
         transition={{ duration: 0.8 }}
         viewport={{ once: true }}
         aria-label="Footer"
       >
-        <div className="mx-auto px-6 lg:px-8 max-w-4xl">
+        <div className="mx-auto px-6 lg:px-8 max-w-[1200px]">
           <div className="flex justify-center">
             <motion.a
               href="/"
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-gray-800 rounded-lg px-6 py-3 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer border border-gray-700"
+              className="bg-black text-white rounded-lg px-6 py-3 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer border border-gray-900"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
               viewport={{ once: true }}
-              whileHover={{ scale: 1.05, y: -2 }}
-              whileTap={{ scale: 0.95 }}
+              whileHover={{ scale: 1.02, y: -1 }}
+              whileTap={{ scale: 0.98 }}
               aria-label="Visit DevFolio homepage"
             >
               <p className="text-sm font-medium">
-                <span className="text-gray-300">Powered by </span>
-                <span className="text-blue-400 font-semibold">DevFolio</span>
+                <span className="text-gray-200">Powered by </span>
+                <span className="text-white font-semibold">DevFolio</span>
               </p>
             </motion.a>
           </div>
