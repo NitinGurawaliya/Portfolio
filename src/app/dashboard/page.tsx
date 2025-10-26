@@ -129,6 +129,7 @@ export default function DashboardPage() {
             portfolioData={portfolio.portfolioData}
             onUpdate={handlers.handleUpdatePortfolioData}
             usernameAvailability={handlers.usernameAvailability}
+            isInitialLoad={portfolio.isInitialLoad}
           />
         )
       case "repos":

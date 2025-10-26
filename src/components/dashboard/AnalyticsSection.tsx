@@ -360,26 +360,7 @@ export function AnalyticsSection({ portfolioId, analyticsData }: AnalyticsSectio
         </div>
       )}
 
-      {/* Project Views Chart - All Projects Comparison */}
-      <motion.div variants={itemVariants}>
-        <Card className="bg-white border border-gray-300 shadow-sm rounded-lg">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-xl font-bold text-gray-900 flex items-center gap-3">
-              <div className="p-2 bg-blue-50 rounded-lg">
-                <BarChart3 className="h-6 w-6 text-blue-600" />
-              </div>
-              Project Views Comparison (Last 7 Days)
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-6">
-            <ProjectViewsChart 
-              portfolioId={portfolioId}
-              days={7}
-              className=""
-            />
-          </CardContent>
-        </Card>
-      </motion.div>
+
 
 
       </motion.div>

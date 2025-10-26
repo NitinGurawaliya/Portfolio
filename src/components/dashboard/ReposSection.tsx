@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -153,6 +153,7 @@ export function ReposSection({
   
   // Track initialization to prevent triggering changes during initial load
   const [isInitialized, setIsInitialized] = useState(false)
+  const hasInitializedFromProps = useRef(false)
   
   // Use parent's repoOrder or initialize locally
   const [localRepoOrder, setLocalRepoOrder] = useState<number[]>(initialRepoOrder || [])
@@ -252,6 +253,7 @@ export function ReposSection({
   useEffect(() => {
     if (initialRepoOrder && initialRepoOrder.length > 0) {
       setLocalRepoOrder(initialRepoOrder)
+      hasInitializedFromProps.current = true
     }
   }, [initialRepoOrder])
 
@@ -259,14 +261,21 @@ export function ReposSection({
     // Only update repo order after initialization to prevent triggering change detection during initial load
     if (!isInitialized) return
     
+    // Don't call parent callback if we just initialized from props
+    // This prevents triggering change detection during initial sync
+    const shouldSyncToParent = !hasInitializedFromProps.current
+    
     // Initialize or update order when selected repos change
     if (selectedRepos.length > 0) {
       setLocalRepoOrder(prev => {
         // If empty, initialize with selected repos
         if (prev.length === 0) {
           const newOrder = selectedRepos
-          // Use setTimeout to avoid setState during render
-          setTimeout(() => onUpdateRepoOrder(newOrder), 0)
+          // Only sync to parent if not initializing from props
+          if (shouldSyncToParent) {
+            // Use setTimeout to avoid setState during render
+            setTimeout(() => onUpdateRepoOrder(newOrder), 0)
+          }
           return newOrder
         }
         // If new repos added, add them to the end
@@ -274,15 +283,27 @@ export function ReposSection({
         const removedRepos = prev.filter(id => !selectedRepos.includes(id))
         // Remove repos that were unselected and add new ones
         const newOrder = [...prev.filter(id => !removedRepos.includes(id)), ...newRepos]
-        // Use setTimeout to avoid setState during render
-        setTimeout(() => onUpdateRepoOrder(newOrder), 0)
+        // Only sync to parent if not initializing from props
+        if (shouldSyncToParent) {
+          // Use setTimeout to avoid setState during render
+          setTimeout(() => onUpdateRepoOrder(newOrder), 0)
+        }
         return newOrder
       })
     } else {
       setLocalRepoOrder([])
-      // Use setTimeout to avoid setState during render
-      setTimeout(() => onUpdateRepoOrder([]), 0)
+      // Only sync to parent if not initializing from props
+      if (shouldSyncToParent) {
+        // Use setTimeout to avoid setState during render
+        setTimeout(() => onUpdateRepoOrder([]), 0)
+      }
     }
+    
+    // Mark that we're done initializing from props
+    if (hasInitializedFromProps.current) {
+      hasInitializedFromProps.current = false
+    }
+    
     console.log("ReposSection - Selected repos:", selectedRepos)
     console.log("ReposSection - Deployed URLs:", deployedUrls)
     console.log("ReposSection - Selected repositories:", selectedRepositories.map(r => ({ id: r.id, name: r.name })))
@@ -812,10 +833,27 @@ export function ReposSection({
                       layoutId={`repo-${repo.id}`}
                     >
                       <Card 
-                        className="bg-white border border-gray-200 hover:border-gray-300 transition-all duration-300 group h-[450px]"
+                        className="bg-white border border-gray-200 hover:border-gray-300 transition-all duration-300 group h-[450px] relative"
                       >
                         <CardContent className="p-0 h-full">
                           <div className="flex flex-col h-full px-3 relative">
+
+                            {/* Delete Button - Appears on hover */}
+                            <motion.div
+                              className="absolute top-2 left-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                              initial={{ opacity: 0 }}
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.9 }}
+                            >
+                              <Button
+                                onClick={() => handleRemoveRepo(repo.id)}
+                                variant="destructive"
+                                size="sm"
+                                className="h-7 w-7 p-0 rounded-full shadow-md hover:shadow-lg"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </motion.div>
 
                             {/* Project Icon at the top */}
                             <div className="mb-2">

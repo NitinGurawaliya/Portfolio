@@ -10,6 +10,13 @@ import {
 } from "@/lib/portfolio-utils"
 import { loadPortfolioData } from "@/lib/services/portfolio-service"
 
+// Extend Window interface for change tracking
+declare global {
+  interface Window {
+    _lastChangeTrackingEnabled?: number
+  }
+}
+
 // Analytics data load करने का function
 const loadAnalyticsData = async (portfolioId: number) => {
   try {
@@ -109,9 +116,27 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
       return
     }
     
-    if (!originalData) {
-      console.log("📊 Skipping change detection - no original data")
+    if (!originalData || isLoadingPortfolio) {
+      console.log("📊 Skipping change detection - no original data or still loading")
       setHasUnsavedChanges(false)
+      return
+    }
+    
+    // Skip if change detection was just enabled (within 1000ms / 1 second)
+    // This prevents false positives from child components initializing
+    const skipIfRecentlyEnabled = () => {
+      const now = Date.now()
+      if (!window._lastChangeTrackingEnabled) {
+        if (typeof window !== 'undefined') {
+          window._lastChangeTrackingEnabled = now
+        }
+        return false
+      }
+      return (now - window._lastChangeTrackingEnabled) < 1000
+    }
+    
+    if (skipIfRecentlyEnabled()) {
+      console.log("📊 Skipping change detection - recently enabled (child components still initializing)")
       return
     }
     
@@ -164,23 +189,17 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
       repoOrder: originalData.repoOrder || []
     }))
     
-         const hasChanges = JSON.stringify(cleanCurrentData) !== JSON.stringify(cleanOriginalData)
+    const hasChanges = JSON.stringify(cleanCurrentData) !== JSON.stringify(cleanOriginalData)
      
-     // Only update hasUnsavedChanges if we're not in initial load
-     if (isInitialLoad) {
-       console.log("📊 Skipping change detection - initial load in progress")
-       return
-     }
+    console.log("📊 Change detection:", { 
+      hasChanges, 
+      isInitialLoad, 
+      originalDataExists: !!originalData 
+    })
      
-     console.log("📊 Change detection:", { 
-       hasChanges, 
-       isInitialLoad, 
-       originalDataExists: !!originalData 
-     })
-     
-     // Update hasUnsavedChanges based on detection
-     console.log("📊 Setting hasUnsavedChanges to:", hasChanges)
-     setHasUnsavedChanges(hasChanges)
+    // Update hasUnsavedChanges based on detection
+    console.log("📊 Setting hasUnsavedChanges to:", hasChanges)
+    setHasUnsavedChanges(hasChanges)
   }, [portfolioData, selectedRepos, skills, socials, deployedUrls, customNames, customDescriptions, githubUrls, importedProjects, selectedTheme, repoOrder, originalData, isInitialLoad])
 
   // Load existing portfolio data
@@ -350,10 +369,19 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
         console.log("✅ Initial load completed, enabling change tracking...")
         
         // Delay enabling change detection to ensure originalData is set
-        setTimeout(() => {
-          setIsInitialLoad(false)
-          console.log("✅ Change tracking enabled")
-        }, 0)
+        // Use multiple frames to ensure all state updates have completed
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            setTimeout(() => {
+              setIsInitialLoad(false)
+              // Mark the timestamp when change tracking is enabled
+              if (typeof window !== 'undefined') {
+                window._lastChangeTrackingEnabled = Date.now()
+              }
+              console.log("✅ Change tracking enabled")
+            }, 100)
+          })
+        })
       } else {
         // No existing portfolio
         const currentPortfolioData = initialData || portfolioData
@@ -384,12 +412,18 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
          setOriginalData(initialDataToSet)
          setIsLoadingPortfolio(false)
          
-         // Delay enabling change detection to ensure originalData is set
-         setTimeout(() => {
-           setIsInitialLoad(false)
-         }, 0)
-       }
-     } catch (error) {
+        // Delay enabling change detection to ensure originalData is set
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            setIsInitialLoad(false)
+            // Mark the timestamp when change tracking is enabled
+            if (typeof window !== 'undefined') {
+              window._lastChangeTrackingEnabled = Date.now()
+            }
+          }, 50)
+        })
+      }
+    } catch (error) {
        console.error("❌ Error loading existing portfolio data:", error)
        // Fallback
        const currentPortfolioData = initialData || portfolioData
@@ -420,12 +454,18 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
        setOriginalData(fallbackData)
        setIsLoadingPortfolio(false)
        
-       // Delay enabling change detection to ensure originalData is set
-       setTimeout(() => {
-         setIsInitialLoad(false)
-       }, 0)
-     }
-   }
+      // Delay enabling change detection to ensure originalData is set
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          setIsInitialLoad(false)
+          // Mark the timestamp when change tracking is enabled
+          if (typeof window !== 'undefined') {
+            window._lastChangeTrackingEnabled = Date.now()
+          }
+        }, 50)
+      })
+    }
+  }
 
   // Reset after publish
   const resetAfterPublish = () => {

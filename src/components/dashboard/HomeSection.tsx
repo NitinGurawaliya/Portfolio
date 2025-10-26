@@ -28,9 +28,10 @@ interface HomeSectionProps {
     isAvailable: boolean | null
     message: string
   }
+  isInitialLoad?: boolean
 }
 
-export function HomeSection({ user, portfolioData, onUpdate, usernameAvailability }: HomeSectionProps) {
+export function HomeSection({ user, portfolioData, onUpdate, usernameAvailability, isInitialLoad = false }: HomeSectionProps) {
   const [formData, setFormData] = useState({
     displayName: "",
     jobTitle: "",
@@ -84,9 +85,9 @@ export function HomeSection({ user, portfolioData, onUpdate, usernameAvailabilit
 
   // Additional effect to handle portfolioData updates after initialization
   // Only update if portfolioData has changed and we've been initialized
-  // Skip the first update after initialization to prevent triggering change detection
+  // Skip if still in initial load to prevent triggering change detection
   useEffect(() => {
-    if (portfolioData && Object.keys(portfolioData).length > 0 && isInitialized && hasInitialized) {
+    if (portfolioData && Object.keys(portfolioData).length > 0 && isInitialized && hasInitialized && !isInitialLoad) {
       console.log("🔍 Portfolio data updated after initialization, updating formData:", portfolioData)
       setFormData(prev => ({
         ...prev,
@@ -97,7 +98,7 @@ export function HomeSection({ user, portfolioData, onUpdate, usernameAvailabilit
         customUsername: portfolioData.customUsername || prev.customUsername
       }))
     }
-  }, [portfolioData?.displayName, portfolioData?.jobTitle, portfolioData?.bio, portfolioData?.profilePic, portfolioData?.customUsername, isInitialized, hasInitialized])
+  }, [portfolioData?.displayName, portfolioData?.jobTitle, portfolioData?.bio, portfolioData?.profilePic, portfolioData?.customUsername, isInitialized, hasInitialized, isInitialLoad])
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => {
