@@ -849,7 +849,12 @@ export function ReposSection({
                             <div className="absolute top-2 right-2 text-right">
                               <div className="text-xs font-bold text-gray-600">Times visited</div>
                               <div className="text-lg font-bold text-black">
-                                {analytics?.detailed?.projects?.find((p: any) => p.projectId === repo.id)?.clickCount || 0}
+                                {(() => {
+                                  // repo.id is the GitHub ID based on formatImportedProjects
+                                  const githubId = repo.id;
+                                  const projectData = analytics?.detailed?.projects?.find((p: any) => p.projectId == githubId);
+                                  return projectData?.clickCount || 0;
+                                })()}
                               </div>
                             </div>
 
