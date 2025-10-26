@@ -422,19 +422,19 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
                   viewport={{ once: true }}
                   whileHover={{ y: -2 }}
                   onClick={() => {
-                    // Track project click
-                    // Use GitHub repository ID for analytics
-                    const githubRepoId = repo.repository.id
+                    // Track project click using PortfolioRepository ID
+                    // repo.id is now the PortfolioRepository ID
+                    const portfolioRepoId = repo.id
                     console.log(`🔍 DEBUG: Light theme - Project click data:`, {
                       portfolioId: portfolio.id,
-                      projectId: githubRepoId,
+                      projectId: portfolioRepoId,
                       projectName: repo.customName || repo.repository.name,
-                      projectIdType: typeof githubRepoId,
+                      projectIdType: typeof portfolioRepoId,
                       portfolioIdType: typeof portfolio.id,
                       repoId: repo.id,
                       repoRepositoryId: repo.repository.id
                     })
-                    trackProjectClick(portfolio.id, githubRepoId, repo.customName || repo.repository.name)
+                    trackProjectClick(portfolio.id, portfolioRepoId, repo.customName || repo.repository.name)
                     
                     // Update views count
                     setViewsCount(prev => prev + 1)
@@ -442,7 +442,7 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
                     // Update project views count
                     setProjectViews(prev => ({
                       ...prev,
-                      [githubRepoId]: (prev[githubRepoId] || 0) + 1
+                      [portfolioRepoId]: (prev[portfolioRepoId] || 0) + 1
                     }))
                     
                     if (repo.deployedUrl) {
@@ -482,15 +482,15 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
                       </div>
                       <motion.button
                         onClick={(e) => {
-                          e.stopPropagation()
-                          // Track project click (GitHub button)
-                          trackProjectClick(portfolio.id, repo.repository.id, repo.customName || repo.repository.name)
+                        e.stopPropagation()
+                        // Track project click (GitHub button) using PortfolioRepository ID
+                        trackProjectClick(portfolio.id, repo.id, repo.customName || repo.repository.name)
                           // Update views count
                           setViewsCount(prev => prev + 1)
                           // Update project views count
                           setProjectViews(prev => ({
                             ...prev,
-                            [repo.repository.id]: (prev[repo.repository.id] || 0) + 1
+                            [repo.id]: (prev[repo.id] || 0) + 1
                           }))
                           const githubUrl = repo.repository.githubUrl || repo.repository.htmlUrl
                           window.open(githubUrl, '_blank')

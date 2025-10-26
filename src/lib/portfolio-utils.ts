@@ -193,7 +193,7 @@ export const buildLivePortfolio = (
     : selected
 
   const repositories = sortedRepos.map(repo => ({
-    id: repo.id, // This is the database repository ID
+    id: repo.portfolioRepositoryId || repo.id, // Use PortfolioRepository ID if available, fallback to GitHub ID
     deployedUrl: deployedUrls[repo.id] || repo.homepage || "",
     isVisible: true,
     customName: customNames[repo.id] || null,
