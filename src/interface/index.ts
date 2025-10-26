@@ -32,6 +32,7 @@ export interface User {
 export interface Repository {
   id: number
   githubId?: number // GitHub repository ID
+  portfolioRepositoryId?: number // PortfolioRepository ID for analytics
   name: string
   fullName: string
   description: string
