@@ -82,7 +82,7 @@ export default function DashboardPage() {
     try {
       const allRepositories = [...(user?.repositories || []), ...portfolio.importedProjects]
       
-      await publishPortfolio({
+      const result = await publishPortfolio({
         portfolioData: portfolio.portfolioData,
         selectedRepos: portfolio.selectedRepos,
         skills: portfolio.skills,
@@ -97,6 +97,21 @@ export default function DashboardPage() {
         userId: user?.id || 0,
         userData: user
       })
+
+      console.log('📊 Publish result:', result)
+
+      // Reload portfolio data to get updated portfolio ID and new projects
+      if (result.portfolio && result.portfolio.id) {
+        console.log('🔄 Reloading portfolio data after publish...')
+        
+        // Reload all portfolio data to get updated project list with portfolioRepositoryId
+        await portfolio.loadExistingData(user?.githubUsername || result.portfolio.customUsername || '', {
+          ...portfolio.portfolioData,
+          id: result.portfolio.id
+        })
+        
+        console.log('✅ Portfolio data reloaded with ID:', result.portfolio.id)
+      }
 
       // Reset after publish
       portfolio.resetAfterPublish()

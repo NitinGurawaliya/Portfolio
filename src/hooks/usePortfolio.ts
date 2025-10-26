@@ -344,63 +344,61 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
           setSkills(formattedSkills)
         }
 
-        // Set original data after loading
-        setTimeout(async () => {
-          const currentSelectedTheme = portfolio.selectedTheme || 'light'
-          setSelectedTheme(currentSelectedTheme)
-          
-          const originalDataToSet = normalizeData(createOrderedData({
-            id: portfolio.id, // Add portfolio ID
-            portfolioData: {
-              displayName: portfolio.displayName || "",
-              jobTitle: portfolio.jobTitle || "",
-              bio: portfolio.bio || "",
-              profilePic: portfolio.profilePic || "",
-              customUsername: portfolio.customUsername || user?.githubUsername || "",
-            },
-            selectedRepos: portfolio.repositories ? portfolio.repositories.map((repo: any) => parseInt(repo.repository.githubId)).sort() : [],
-            skills: portfolio.skills ? portfolio.skills.map((skill: any) => ({
-              id: skill.id.toString(),
-              name: skill.name,
-              category: skill.category
-            })).sort((a: Skill, b: Skill) => a.id.localeCompare(b.id)) : [],
-            socials: portfolio.socials ? portfolio.socials.map((social: any) => ({
-              id: social.id,
-              platform: social.platform,
-              username: social.username,
-              url: social.url,
-              isPinned: social.isPinned
-            })).sort((a: Social, b: Social) => a.id - b.id) : [],
-            deployedUrls: mapPortfolioRepositories(portfolio.repositories || []).urls,
-            customNames: mapPortfolioRepositories(portfolio.repositories || []).names,
-            customDescriptions: mapPortfolioRepositories(portfolio.repositories || []).descriptions,
-            githubUrls: mapPortfolioRepositories(portfolio.repositories || []).githubUrls,
-            selectedTheme: currentSelectedTheme,
-            importedProjects: formatImportedProjects(portfolio.repositories || []).sort((a, b) => a.id - b.id),
-            repoOrder: portfolio.repositories ? portfolio.repositories.map((repo: any) => parseInt(repo.repository.githubId)) : []
-          }))
-          
-          console.log("💾 Setting original data from existing portfolio")
-          console.log("🔍 Portfolio ID in originalData:", originalDataToSet.id)
-          console.log("🔍 Portfolio object:", portfolio)
-          console.log("🔍 Portfolio ID from API:", portfolio.id)
-          console.log("🔍 Original data before normalize:", { id: portfolio.id })
-          setOriginalData(originalDataToSet)
-          
-          // Load analytics data along with portfolio data
-          if (portfolio.id) {
-            console.log("📊 Loading analytics data for portfolio ID:", portfolio.id)
-            const analyticsData = await loadAnalyticsData(portfolio.id)
-            if (analyticsData) {
-              setAnalytics(analyticsData)
-              console.log("✅ Analytics data loaded:", analyticsData)
-            }
+        // Set original data after loading (await this properly)
+        const currentSelectedTheme = portfolio.selectedTheme || 'light'
+        setSelectedTheme(currentSelectedTheme)
+        
+        const originalDataToSet = normalizeData(createOrderedData({
+          id: portfolio.id, // Add portfolio ID
+          portfolioData: {
+            displayName: portfolio.displayName || "",
+            jobTitle: portfolio.jobTitle || "",
+            bio: portfolio.bio || "",
+            profilePic: portfolio.profilePic || "",
+            customUsername: portfolio.customUsername || user?.githubUsername || "",
+          },
+          selectedRepos: portfolio.repositories ? portfolio.repositories.map((repo: any) => parseInt(repo.repository.githubId)).sort() : [],
+          skills: portfolio.skills ? portfolio.skills.map((skill: any) => ({
+            id: skill.id.toString(),
+            name: skill.name,
+            category: skill.category
+          })).sort((a: Skill, b: Skill) => a.id.localeCompare(b.id)) : [],
+          socials: portfolio.socials ? portfolio.socials.map((social: any) => ({
+            id: social.id,
+            platform: social.platform,
+            username: social.username,
+            url: social.url,
+            isPinned: social.isPinned
+          })).sort((a: Social, b: Social) => a.id - b.id) : [],
+          deployedUrls: mapPortfolioRepositories(portfolio.repositories || []).urls,
+          customNames: mapPortfolioRepositories(portfolio.repositories || []).names,
+          customDescriptions: mapPortfolioRepositories(portfolio.repositories || []).descriptions,
+          githubUrls: mapPortfolioRepositories(portfolio.repositories || []).githubUrls,
+          selectedTheme: currentSelectedTheme,
+          importedProjects: formatImportedProjects(portfolio.repositories || []).sort((a, b) => a.id - b.id),
+          repoOrder: portfolio.repositories ? portfolio.repositories.map((repo: any) => parseInt(repo.repository.githubId)) : []
+        }))
+        
+        console.log("💾 Setting original data from existing portfolio")
+        console.log("🔍 Portfolio ID in originalData:", originalDataToSet.id)
+        console.log("🔍 Portfolio object:", portfolio)
+        console.log("🔍 Portfolio ID from API:", portfolio.id)
+        console.log("🔍 Original data before normalize:", { id: portfolio.id })
+        setOriginalData(originalDataToSet)
+        
+        // Load analytics data along with portfolio data
+        if (portfolio.id) {
+          console.log("📊 Loading analytics data for portfolio ID:", portfolio.id)
+          const analyticsData = await loadAnalyticsData(portfolio.id)
+          if (analyticsData) {
+            setAnalytics(analyticsData)
+            console.log("✅ Analytics data loaded:", analyticsData)
           }
-          
-          setIsInitialLoad(false)
-          setIsLoadingPortfolio(false)
-          console.log("✅ Initial load completed, change tracking enabled")
-        }, 200)
+        }
+        
+        setIsInitialLoad(false)
+        setIsLoadingPortfolio(false)
+        console.log("✅ Initial load completed, change tracking enabled")
       } else {
         // No existing portfolio
         setTimeout(() => {

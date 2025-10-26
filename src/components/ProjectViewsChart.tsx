@@ -123,6 +123,7 @@ export function ProjectViewsChart({
                 axisLine={false}
                 tickLine={false}
                 tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
+                tickFormatter={(value) => Math.round(value).toString()}
               />
               <Tooltip 
                 content={({ active, payload, label }) => {
