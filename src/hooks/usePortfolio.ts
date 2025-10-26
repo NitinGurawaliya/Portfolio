@@ -343,11 +343,17 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
           }
         }
         
-        // Set both originalData and isInitialLoad in the same render cycle
+        // Set originalData first, then enable change detection after a brief delay
+        // This ensures originalData is fully set before change detection starts
         setOriginalData(originalDataToSet)
-        setIsInitialLoad(false)
         setIsLoadingPortfolio(false)
-        console.log("✅ Initial load completed, change tracking enabled")
+        console.log("✅ Initial load completed, enabling change tracking...")
+        
+        // Delay enabling change detection to ensure originalData is set
+        setTimeout(() => {
+          setIsInitialLoad(false)
+          console.log("✅ Change tracking enabled")
+        }, 0)
       } else {
         // No existing portfolio
         const currentPortfolioData = initialData || portfolioData
@@ -374,10 +380,14 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
                      repoOrder: [...repoOrder]
          }))
          
-         // Set both originalData and isInitialLoad in the same render cycle
+         // Set originalData first, then enable change detection after a brief delay
          setOriginalData(initialDataToSet)
-         setIsInitialLoad(false)
          setIsLoadingPortfolio(false)
+         
+         // Delay enabling change detection to ensure originalData is set
+         setTimeout(() => {
+           setIsInitialLoad(false)
+         }, 0)
        }
      } catch (error) {
        console.error("❌ Error loading existing portfolio data:", error)
@@ -406,10 +416,14 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
          repoOrder: [...repoOrder]
        }))
        
-       // Set both originalData and isInitialLoad in the same render cycle
+       // Set originalData first, then enable change detection after a brief delay
        setOriginalData(fallbackData)
-       setIsInitialLoad(false)
        setIsLoadingPortfolio(false)
+       
+       // Delay enabling change detection to ensure originalData is set
+       setTimeout(() => {
+         setIsInitialLoad(false)
+       }, 0)
      }
    }
 

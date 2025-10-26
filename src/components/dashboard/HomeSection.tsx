@@ -51,11 +51,12 @@ export function HomeSection({ user, portfolioData, onUpdate, usernameAvailabilit
   // Update form data when portfolioData changes (from saved data) or user changes
   // Only initialize once when the component mounts or when portfolioData is first loaded
   const [isInitialized, setIsInitialized] = useState(false)
+  const [hasInitialized, setHasInitialized] = useState(false) // Track if we've done the initial setup
   
   useEffect(() => {
-    console.log("🔍 HomeSection useEffect:", { portfolioData, user, isInitialized })
+    console.log("🔍 HomeSection useEffect:", { portfolioData, user, isInitialized, hasInitialized })
     
-    if (portfolioData && Object.keys(portfolioData).length > 0) {
+    if (portfolioData && Object.keys(portfolioData).length > 0 && !hasInitialized) {
       console.log("🔍 Setting formData from portfolioData:", portfolioData)
       setFormData({
         displayName: portfolioData.displayName || user?.name || "",
@@ -65,7 +66,8 @@ export function HomeSection({ user, portfolioData, onUpdate, usernameAvailabilit
         customUsername: portfolioData.customUsername || "", // Don't fallback to GitHub username if portfolio exists
       })
       setIsInitialized(true)
-    } else if (user && !portfolioData && !isInitialized) {
+      setHasInitialized(true) // Mark that we've done initial setup
+    } else if (user && !portfolioData && !hasInitialized) {
       console.log("🔍 Setting formData from user (no portfolio):", user)
       setFormData({
         displayName: user?.name || "",
@@ -75,15 +77,17 @@ export function HomeSection({ user, portfolioData, onUpdate, usernameAvailabilit
         customUsername: user?.githubUsername || "",
       })
       setIsInitialized(true)
+      setHasInitialized(true) // Mark that we've done initial setup
     }
-  }, [user, portfolioData, isInitialized])
+  }, [user, portfolioData, hasInitialized])
 
 
   // Additional effect to handle portfolioData updates after initialization
   // Only update if portfolioData has changed and we've been initialized
+  // Skip the first update after initialization to prevent triggering change detection
   useEffect(() => {
-    if (portfolioData && Object.keys(portfolioData).length > 0 && isInitialized) {
-      console.log("🔍 Portfolio data updated, updating formData:", portfolioData)
+    if (portfolioData && Object.keys(portfolioData).length > 0 && isInitialized && hasInitialized) {
+      console.log("🔍 Portfolio data updated after initialization, updating formData:", portfolioData)
       setFormData(prev => ({
         ...prev,
         displayName: portfolioData.displayName || prev.displayName,
@@ -93,7 +97,7 @@ export function HomeSection({ user, portfolioData, onUpdate, usernameAvailabilit
         customUsername: portfolioData.customUsername || prev.customUsername
       }))
     }
-  }, [portfolioData?.displayName, portfolioData?.jobTitle, portfolioData?.bio, portfolioData?.profilePic, portfolioData?.customUsername, isInitialized])
+  }, [portfolioData?.displayName, portfolioData?.jobTitle, portfolioData?.bio, portfolioData?.profilePic, portfolioData?.customUsername, isInitialized, hasInitialized])
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => {

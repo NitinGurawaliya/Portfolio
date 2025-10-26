@@ -102,6 +102,71 @@ export function ProjectViewsChart({
     '#06b6d4', // cyan
   ]
 
+  // If className is empty, return just the chart content (for embedding in another Card)
+  if (className === "") {
+    return (
+      <div className="w-full">
+        <div className="h-64 w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={chartData}>
+              <XAxis 
+                dataKey="day" 
+                axisLine={false}
+                tickLine={false}
+                tick={{ fontSize: 12, fill: '#6b7280', fontWeight: 500 }}
+              />
+              <YAxis 
+                axisLine={false}
+                tickLine={false}
+                tick={{ fontSize: 12, fill: '#6b7280' }}
+                tickFormatter={(value) => Math.round(value).toString()}
+              />
+              <Tooltip 
+                content={({ active, payload, label }) => {
+                  if (active && payload && payload.length) {
+                    return (
+                      <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-lg">
+                        <p className="text-sm font-semibold text-gray-900 mb-1">{label}</p>
+                        {payload.map((entry, index) => (
+                          <p key={index} className="text-xs text-gray-600" style={{ color: entry.color }}>
+                            {entry.name}: <span className="font-bold">{entry.value}</span> views
+                          </p>
+                        ))}
+                      </div>
+                    )
+                  }
+                  return null
+                }}
+              />
+              <Legend 
+                wrapperStyle={{ paddingTop: '20px' }}
+                iconType="line"
+                formatter={(value) => <span className="text-sm text-gray-600">{value}</span>}
+              />
+              {Array.from(projectNames).map((projectName, index) => (
+                <Line
+                  key={projectName}
+                  type="monotone"
+                  dataKey={projectName}
+                  stroke={colors[index % colors.length]}
+                  strokeWidth={2.5}
+                  dot={{ r: 3 }}
+                  activeDot={{ r: 5 }}
+                />
+              ))}
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+        {totalViews > 0 && (
+          <div className="mt-4 text-center">
+            <span className="text-sm text-gray-500">Total views across all projects: </span>
+            <span className="text-sm font-bold text-gray-900">{totalViews}</span>
+          </div>
+        )}
+      </div>
+    )
+  }
+
   return (
     <Card className={`w-full ${className}`}>
       <CardHeader className="pb-2">
