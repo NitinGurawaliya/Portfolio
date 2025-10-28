@@ -27,7 +27,12 @@ export async function POST(req: NextRequest) {
       rawReferrer,
       testReferrer,
       actualRefererHeader: req.headers.get("referer"),
-      userAgent: userAgent.substring(0, 50)
+      userAgent: userAgent.substring(0, 50),
+      allHeaders: {
+        origin: req.headers.get("origin"),
+        referer: req.headers.get("referer"),
+        referrer: req.headers.get("referrer"),
+      }
     })
     
     // Check for social media crawlers and bots that might indicate social traffic

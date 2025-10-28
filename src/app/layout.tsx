@@ -25,6 +25,9 @@ export const metadata: Metadata = {
   creator: "DevFolio",
   publisher: "DevFolio",
   metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"),
+  other: {
+    "referrer": "origin-when-cross-origin"
+  },
   openGraph: {
     type: "website",
     locale: "en_US",
@@ -82,7 +85,8 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-      <script src="https://www.watchdog.mom/track.js" data-site="851a4075-b123-470a-a7ab-e57f268adaae"></script>
+        <meta name="referrer" content="origin-when-cross-origin" />
+        <script src="https://www.watchdog.mom/track.js" data-site="851a4075-b123-470a-a7ab-e57f268adaae"></script>
         <link rel="icon" href="/favicon-d.svg" type="image/svg+xml" />
         <link rel="shortcut icon" href="/favicon-d.svg" type="image/svg+xml" />
         <link rel="apple-touch-icon" href="/icon-192.png" />

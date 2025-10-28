@@ -202,6 +202,21 @@ export function normalizeReferrer(referrer: string, socialInfo?: { source: strin
       return socialInfo.source
     }
     
+    // Handle self-referrals (when referrer is the portfolio itself)
+    // This happens when social platforms strip the referrer
+    if (hostname.includes('devfolio.cc') || hostname.includes('localhost')) {
+      // Check if there's a social platform indicator in the URL path
+      const path = url.pathname.toLowerCase()
+      
+      // If coming from / route or same path, it's likely a self-referral
+      if (path.length < 10) {
+        return 'Direct'
+      }
+      
+      // Otherwise might be a redirect, keep as domain
+      return 'Direct'
+    }
+    
     // Handle shortened links and redirect domains
     if (hostname.includes('t.co') || hostname.includes('twitter.com') || hostname.includes('x.com')) {
       return 'Twitter'
