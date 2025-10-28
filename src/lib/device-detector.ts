@@ -217,6 +217,31 @@ export function normalizeReferrer(referrer: string, socialInfo?: { source: strin
       return 'Direct'
     }
     
+    // Handle mobile app referrers
+    if (referrer.includes('android-app://com.linkedin.android') || referrer.includes('ios-app://com.linkedin.LinkedIn')) {
+      return 'LinkedIn'
+    }
+    
+    if (referrer.includes('android-app://com.twitter.android') || referrer.includes('ios-app://com.atebits.Tweetie2')) {
+      return 'Twitter'
+    }
+    
+    if (referrer.includes('android-app://com.facebook.katana') || referrer.includes('ios-app://com.facebook.Facebook')) {
+      return 'Facebook'
+    }
+    
+    if (referrer.includes('android-app://com.whatsapp') || referrer.includes('ios-app://net.whatsapp.WhatsApp')) {
+      return 'WhatsApp'
+    }
+    
+    if (referrer.includes('android-app://com.instagram.android') || referrer.includes('ios-app://com.burbn.instagram')) {
+      return 'Instagram'
+    }
+    
+    if (referrer.includes('android-app://com.github.android') || referrer.includes('ios-app://com.github.ios')) {
+      return 'GitHub'
+    }
+    
     // Handle shortened links and redirect domains
     if (hostname.includes('t.co') || hostname.includes('twitter.com') || hostname.includes('x.com')) {
       return 'Twitter'
@@ -232,6 +257,10 @@ export function normalizeReferrer(referrer: string, socialInfo?: { source: strin
     
     if (hostname.includes('instagram.com')) {
       return 'Instagram'
+    }
+    
+    if (hostname.includes('whatsapp.com') || hostname.includes('wa.me')) {
+      return 'WhatsApp'
     }
     
     // Check for UTM parameters
