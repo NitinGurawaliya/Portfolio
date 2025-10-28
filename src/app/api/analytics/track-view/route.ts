@@ -22,11 +22,21 @@ export async function POST(req: NextRequest) {
     // Use testReferrer if provided (for testing), otherwise use actual referer header
     const rawReferrer = testReferrer || req.headers.get("referer") || "direct"
     
+    // Debug: Log for production debugging
+    console.log('🔍 Production Referrer Debug:', {
+      rawReferrer,
+      testReferrer,
+      actualRefererHeader: req.headers.get("referer"),
+      userAgent: userAgent.substring(0, 50)
+    })
+    
     // Check for social media crawlers and bots that might indicate social traffic
     const isSocialTraffic = detectSocialSource(userAgent, rawReferrer)
     
     // Normalize referrer to show actual platform
     const referrer = normalizeReferrer(rawReferrer, isSocialTraffic)
+    
+    console.log('🔍 Production Final:', { rawReferrer, referrer, socialSource: isSocialTraffic })
     
     // Detect device and browser (pass headers for accurate detection)
     const device = detectDevice(userAgent)
