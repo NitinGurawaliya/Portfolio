@@ -144,3 +144,71 @@ export function detectBrowser(userAgent: string, headers?: Headers): string {
   return 'Chrome' // Default to Chrome as most common
 }
 
+/**
+ * Normalize referrer to show actual source platform
+ * Handles cases like Twitter t.co links, LinkedIn lnkd.in links, etc.
+ */
+export function normalizeReferrer(referrer: string): string {
+  if (!referrer || referrer === 'direct' || referrer === 'null') {
+    return 'Direct'
+  }
+  
+  try {
+    const url = new URL(referrer)
+    const hostname = url.hostname.toLowerCase()
+    
+    // Handle shortened links and redirect domains
+    if (hostname.includes('t.co') || hostname.includes('twitter.com') || hostname.includes('x.com')) {
+      return 'Twitter'
+    }
+    
+    if (hostname.includes('linkedin.com') || hostname.includes('lnkd.in')) {
+      return 'LinkedIn'
+    }
+    
+    if (hostname.includes('facebook.com') || hostname.includes('fb.com')) {
+      return 'Facebook'
+    }
+    
+    if (hostname.includes('instagram.com')) {
+      return 'Instagram'
+    }
+    
+    if (hostname.includes('reddit.com')) {
+      return 'Reddit'
+    }
+    
+    if (hostname.includes('github.com')) {
+      return 'GitHub'
+    }
+    
+    if (hostname.includes('dev.to') || hostname.includes('devto')) {
+      return 'Dev.to'
+    }
+    
+    if (hostname.includes('medium.com')) {
+      return 'Medium'
+    }
+    
+    if (hostname.includes('youtube.com') || hostname.includes('youtu.be')) {
+      return 'YouTube'
+    }
+    
+    if (hostname.includes('stackoverflow.com') || hostname.includes('stackexchange.com')) {
+      return 'StackOverflow'
+    }
+    
+    // Check for UTM parameters
+    const utmSource = url.searchParams.get('utm_source')
+    if (utmSource) {
+      return utmSource.charAt(0).toUpperCase() + utmSource.slice(1)
+    }
+    
+    // Return clean domain name
+    return hostname.replace('www.', '')
+  } catch (error) {
+    // If URL parsing fails, return as is
+    return referrer
+  }
+}
+

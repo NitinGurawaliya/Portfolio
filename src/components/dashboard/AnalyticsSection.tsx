@@ -361,6 +361,16 @@ export function AnalyticsSection({ portfolioId, analyticsData }: AnalyticsSectio
                 </div>
                 {(() => {
                   const device = analytics?.topDevices?.[0]?.device?.toLowerCase() || ''
+                  
+                  // Handle unknown devices
+                  if (device === 'unknown' || !device) {
+                    return (
+                      <div className="border border-gray-200 rounded p-1.5">
+                        <Circle className="h-5 w-5 text-gray-400" />
+                      </div>
+                    )
+                  }
+                  
                   const IconComponent = device.includes('iphone') ? Smartphone :
                     device.includes('ipad') || device.includes('tablet') || device.includes('android tablet') ? Tablet :
                     device.includes('android') || device.includes('mobile') ? Smartphone :
@@ -389,14 +399,25 @@ export function AnalyticsSection({ portfolioId, analyticsData }: AnalyticsSectio
                     </p>
                   )}
                 </div>
-                {analytics?.topBrowsers?.[0]?.browser ? 
-                  <div className="border border-gray-200 rounded p-1.5">
-                    {getBrowserIcon(analytics.topBrowsers[0].browser, "h-5 w-5")}
-                  </div> : 
-                  <div className="border border-gray-200 rounded p-1.5">
-                    <Globe className="h-5 w-5 text-black" />
-                  </div>
-                }
+                {(() => {
+                  const browserValue = analytics?.topBrowsers?.[0]?.browser || ''
+                  const browser = browserValue.toLowerCase()
+                  
+                  // Handle unknown browsers
+                  if (browser === 'unknown' || !browser) {
+                    return (
+                      <div className="border border-gray-200 rounded p-1.5">
+                        <Circle className="h-5 w-5 text-gray-400" />
+                      </div>
+                    )
+                  }
+                  
+                  return (
+                    <div className="border border-gray-200 rounded p-1.5">
+                      {getBrowserIcon(browserValue, "h-5 w-5")}
+                    </div>
+                  )
+                })()}
               </div>
             </CardContent>
           </Card>

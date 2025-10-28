@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { detectDevice, detectBrowser } from "@/lib/device-detector"
+import { detectDevice, detectBrowser, normalizeReferrer } from "@/lib/device-detector"
 
 export async function POST(req: NextRequest) {
   try {
@@ -18,7 +18,10 @@ export async function POST(req: NextRequest) {
                      req.headers.get("x-real-ip") || 
                      "unknown"
     const userAgent = req.headers.get("user-agent") || "unknown"
-    const referrer = req.headers.get("referer") || "direct"
+    const rawReferrer = req.headers.get("referer") || "direct"
+    
+    // Normalize referrer to show actual platform
+    const referrer = normalizeReferrer(rawReferrer)
     
     // Detect device and browser (pass headers for accurate detection)
     const device = detectDevice(userAgent)
