@@ -127,10 +127,14 @@ model PortfolioView {
   ipAddress   String?
   userAgent   String?
   referrer    String?
+  device      String?
+  browser     String?
 
   @@index([portfolioId])
   @@index([userId])
   @@index([viewedAt])
+  @@index([device])
+  @@index([browser])
 }
 
 model PortfolioAnalytics {

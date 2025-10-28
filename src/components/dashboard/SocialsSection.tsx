@@ -261,11 +261,8 @@ export function SocialsSection({
           <CardHeader className="pb-2">
             <CardTitle className="text-lg text-black flex items-center font-bold">
               <Users className="h-4 w-4 mr-2" />
-              Social Media Accounts
+              Socials
             </CardTitle>
-            <p className="text-gray-600 mt-1 font-medium text-sm">
-              Add your social media accounts and pin them to display on your portfolio
-            </p>
           </CardHeader>
         </Card>
       </motion.div>

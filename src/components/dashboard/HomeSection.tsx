@@ -153,25 +153,12 @@ export function HomeSection({ user, portfolioData, onUpdate, usernameAvailabilit
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
       >
-        <Card className="bg-white   transition-all duration-300">
-          <CardHeader>
+        <Card className="bg-transparent shadow-none border-none">
+          <CardHeader className="pb-0">
             <CardTitle className="text-lg text-black flex items-center font-bold">
-              <motion.div
-                animate={{ scale: [1, 1.2, 1] }}
-                transition={{ duration: 2, repeat: Infinity }}
-              >
-                👋
-              </motion.div>
-              <span className="ml-2">Welcome to Your Portfolio</span>
+              <User className="h-4 w-4 mr-2" />
+              Bio
             </CardTitle>
-            <motion.p 
-              className="text-gray-600 mt-1 font-medium text-sm"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.2 }}
-            >
-              We're excited to see you back! Let's customize your portfolio
-            </motion.p>
           </CardHeader>
         </Card>
       </motion.div>
@@ -182,11 +169,8 @@ export function HomeSection({ user, portfolioData, onUpdate, usernameAvailabilit
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.1 }}
       >
-        <Card className="bg-white   transition-all duration-300">
-          <CardHeader>
-            <CardTitle className="text-lg text-black font-bold">Profile Details</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        <Card className="bg-white shadow-none border-none">
+          <CardContent className="pt-4 space-y-4">
           {/* Profile Picture */}
           <div className="flex items-center space-x-4">
             <Avatar className="w-16 h-16">

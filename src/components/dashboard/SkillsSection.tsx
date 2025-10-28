@@ -335,21 +335,13 @@ export function SkillsSection({ skills, onAddSkill, onRemoveSkill }: SkillsSecti
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
       >
-        <Card className="bg-white   transition-all duration-300">
+        <Card className="bg-white shadow-none border-none">
         <CardHeader className="pb-2">
             <CardTitle className="text-lg text-black font-bold flex items-center">
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-              >
-                <Wrench className="h-5 w-5 mr-2" />
-              </motion.div>
-            Skills & Technologies
+              <Wrench className="h-4 w-4 mr-2" />
+              Skills & Technologies
           </CardTitle>
-            <div className="flex items-center justify-between">
-              <p className="text-gray-600 font-medium text-sm">
-                Search and add your technical skills to showcase your expertise
-              </p>
+            <div className="flex items-center justify-end">
               {!showCustomSkillInput && (
                 <Button
                   onClick={() => setShowCustomSkillInput(true)}
@@ -451,7 +443,7 @@ export function SkillsSection({ skills, onAddSkill, onRemoveSkill }: SkillsSecti
                   >
                     <div className="p-4">
                       <div 
-                        className="grid grid-cols-8 md:grid-cols-10 lg:grid-cols-12 gap-3 max-h-64 overflow-y-auto scrollbar-hide"
+                        className="grid grid-cols-10 md:grid-cols-12 lg:grid-cols-14 gap-2 max-h-64 overflow-y-auto scrollbar-hide"
                         onMouseMove={handleMouseMove}
                       >
                         {filteredSkills.slice(0, 60).map((skill, index) => {
@@ -472,14 +464,14 @@ export function SkillsSection({ skills, onAddSkill, onRemoveSkill }: SkillsSecti
                                 disabled={isAdded}
                                 onMouseEnter={() => setHoveredSkill(skill.name)}
                                 onMouseLeave={() => setHoveredSkill(null)}
-                                className={`h-12 w-12 p-0 rounded-lg border-2 transition-all duration-200 ${
+                                className={`h-10 w-10 p-0 rounded-lg border-2 transition-all duration-200 ${
                                   isAdded
                                     ? "bg-gray-100 border-gray-200 cursor-not-allowed opacity-50"
                                     : "bg-gray-50 border-gray-200 hover:bg-white hover:shadow-md hover:scale-105"
                                 }`}
                               >
                                 <IconComponent 
-                                  className="w-6 h-6" 
+                                  className="w-5 h-5" 
                                   style={{ color: isAdded ? '#9CA3AF' : skill.color }}
                                 />
                               </Button>
@@ -529,7 +521,7 @@ export function SkillsSection({ skills, onAddSkill, onRemoveSkill }: SkillsSecti
               </CardHeader>
               <CardContent className="pt-2">
               <div 
-                className="grid grid-cols-8 sm:grid-cols-10 md:grid-cols-12 lg:grid-cols-15 gap-2"
+                className="grid grid-cols-10 sm:grid-cols-12 md:grid-cols-14 lg:grid-cols-16 gap-2"
                 onMouseMove={handleMouseMove}
               >
                 {skills.map((skill, index) => {
@@ -545,21 +537,21 @@ export function SkillsSection({ skills, onAddSkill, onRemoveSkill }: SkillsSecti
                       className="relative group"
                     >
                       <div 
-                        className="relative h-14 w-14 bg-gray-50 rounded-lg flex items-center justify-center hover:bg-white hover:shadow-md transition-all duration-200"
+                        className="relative h-10 w-10 bg-gray-50 rounded-lg flex items-center justify-center hover:bg-white hover:shadow-md transition-all duration-200"
                         onMouseEnter={() => setHoveredSkill(skill.name)}
                         onMouseLeave={() => setHoveredSkill(null)}
                       >
                         <IconComponent 
-                          className="w-7 h-7" 
+                          className="w-5 h-5" 
                           style={{ color: skillData?.color || '#000000' }}
                         />
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => onRemoveSkill(skill.id)}
-                          className="absolute -top-2 -right-2 h-6 w-6 p-0 bg-red-500 hover:bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10"
+                          className="absolute -top-1 -right-1 h-5 w-5 p-0 bg-red-500 hover:bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10"
                       >
-                        <X className="h-4 w-4" />
+                        <X className="h-3 w-3" />
                       </Button>
                 </div>
                     </motion.div>

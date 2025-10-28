@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card"
 import { PortfolioPreview } from "./PortfolioPreview"
 import { motion, AnimatePresence } from "framer-motion"
 import { 
-  Home, 
+  User,
   Code, 
   Wrench, 
   Users, 
@@ -52,7 +52,7 @@ export function DashboardLayout({
   const [isPreviewOpen, setIsPreviewOpen] = useState(false)
 
   const sidebarItems = [
-    { id: "home", label: "Home", icon: Home },
+    { id: "home", label: "Bio", icon: User },
     { id: "repos", label: "Repos", icon: Code },
     { id: "skills", label: "Skills", icon: Wrench },
     { id: "socials", label: "Socials", icon: Users },
@@ -88,7 +88,7 @@ export function DashboardLayout({
       {/* Main Content - Using Flex Layout */}
         {/* Left Sidebar */}
         <motion.div 
-          className="w-12 bg-gray-50 flex flex-col items-center py-4 overflow-hidden relative z-40 flex-shrink-0"
+          className="w-12 bg-gray-50 flex flex-col items-center py-4 overflow-visible relative z-40 flex-shrink-0"
           variants={itemVariants}
           initial="hidden"
           animate="visible"
@@ -122,24 +122,16 @@ export function DashboardLayout({
                   ease: "easeOut"
                 }}
               >
-                <motion.div
-                  whileHover={{ 
-                    scale: 1.1,
-                    y: -2
-                  }}
-                  whileTap={{ scale: 0.95 }}
-                  transition={{ duration: 0.2 }}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onSectionChange(item.id)}
+                  className={`h-8 w-8 p-0 relative z-50 cursor-pointer transition-colors ${
+                    isActive 
+                      ? "bg-black text-white" 
+                      : "text-gray-400 hover:text-black hover:bg-gray-100"
+                  }`}
                 >
-                  <Button
-                    variant={isActive ? "default" : "ghost"}
-                    size="sm"
-                    onClick={() => onSectionChange(item.id)}
-                    className={`h-8 w-8 p-0 relative z-50 cursor-pointer ${
-                      isActive 
-                        ? "bg-black text-white " 
-                        : "text-gray-600 hover:text-orange-600 hover:bg-orange-50 hover:shadow-md"
-                    }`}
-                  >
                     <Icon className="h-3 w-3" />
                     {isActive && (
                       <motion.div
@@ -161,18 +153,13 @@ export function DashboardLayout({
                         />
                       </motion.div>
                     )}
-                  </Button>
-                </motion.div>
+                </Button>
                 
-                {/* Tooltip - repositioned and clamped to viewport */}
-                <motion.div
-                  className="absolute left-14 top-1/2 -translate-y-1/2 bg-black/95 text-white px-2 py-0.5 rounded-md text-[10px] font-medium whitespace-nowrap z-50 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-150 shadow-md max-w-[200px] truncate"
-                  initial={{ x: -6, opacity: 0 }}
-                  whileHover={{ x: 0, opacity: 1 }}
-                >
+                {/* Tooltip */}
+                <div className="absolute left-14 top-1/2 -translate-y-1/2 bg-black text-white px-2 py-0.5 rounded-md text-[10px] font-medium whitespace-nowrap z-50 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-150 shadow-md">
                   {item.label}
-                  <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1 w-0 h-0 border-t-3 border-b-3 border-r-3 border-transparent border-r-black/95" />
-                </motion.div>
+                  <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1 w-0 h-0 border-l-0 border-r-[4px] border-t-[3px] border-b-[3px] border-transparent border-r-black" />
+                </div>
               </motion.div>
             )
           })}
@@ -189,33 +176,20 @@ export function DashboardLayout({
               ease: "easeOut"
             }}
           >
-            <motion.div
-              whileHover={{ 
-                scale: 1.1,
-                y: -2
-              }}
-              whileTap={{ scale: 0.95 }}
-              transition={{ duration: 0.2 }}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleLogout}
+              className="h-8 w-8 p-0 relative z-50 cursor-pointer text-gray-400 hover:text-red-600 hover:bg-gray-100 transition-colors"
             >
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleLogout}
-                className="h-8 w-8 p-0 relative z-50 cursor-pointer text-red-600 hover:text-red-700 hover:bg-red-50 hover:shadow-md"
-              >
-                <LogOut className="h-3 w-3" />
-              </Button>
-            </motion.div>
+              <LogOut className="h-3 w-3" />
+            </Button>
             
             {/* Tooltip */}
-            <motion.div
-              className="absolute left-14 top-1/2 -translate-y-1/2 bg-red-600 text-white px-2 py-0.5 rounded-md text-[10px] font-medium whitespace-nowrap z-50 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-150 shadow-md"
-              initial={{ x: -6, opacity: 0 }}
-              whileHover={{ x: 0, opacity: 1 }}
-            >
+            <div className="absolute left-14 top-1/2 -translate-y-1/2 bg-black text-white px-2 py-0.5 rounded-md text-[10px] font-medium whitespace-nowrap z-50 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-150 shadow-md">
               Logout
-              <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1 w-0 h-0 border-t-3 border-b-3 border-r-3 border-transparent border-r-red-600" />
-            </motion.div>
+              <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1 w-0 h-0 border-l-0 border-r-[4px] border-t-[3px] border-b-[3px] border-transparent border-r-black" />
+            </div>
           </motion.div>
         </motion.div>
 
@@ -229,38 +203,25 @@ export function DashboardLayout({
             initial="hidden"
             animate="visible"
           >
-            {/* Left - Empty space for balance */}
-            <div className="flex items-center space-x-2">
+            {/* Left - Title */}
+            <div className="flex items-center">
+              <h2 className="text-lg font-semibold text-black">Dashboard</h2>
             </div>
 
-            {/* Center - Portfolio URL Component */}
-            <motion.div
-              whileHover={{ scale: 1.01 }}
-              whileTap={{ scale: 0.99 }}
-              className="relative z-10"
-            >
-              <div
+            {/* Right - Action Buttons */}
+            <div className="flex items-center space-x-2">
+              <Button
                 onClick={() => {
                   const currentDomain = window.location.origin
                   const username = livePortfolio?.customUsername || portfolioData?.customUsername || user?.githubUsername || 'username'
                   window.open(`${currentDomain}/${username}`, '_blank')
                 }}
-                className="flex items-center bg-white border border-gray-300 rounded-lg px-3 py-2 cursor-pointer hover:bg-gray-50 hover:border-gray-400 hover:shadow-md transition-all duration-200 min-w-[220px]"
+                className="bg-gray-100 text-gray-700 hover:bg-gray-200 px-4 py-2 rounded-lg text-sm font-medium transition-colors border border-gray-200"
               >
-                <div className="flex items-center">
-                  <span className="text-gray-600 text-sm font-medium">
-                    {typeof window !== 'undefined' ? window.location.host : 'localhost:3000'}/
-                  </span>
-                  <span className="text-blue-600 text-sm font-semibold">
-                    {livePortfolio?.customUsername || portfolioData?.customUsername || user?.githubUsername || 'username'}
-                  </span>
-                </div>
-                <ExternalLink className="h-4 w-4 text-gray-400 ml-2" />
-              </div>
-            </motion.div>
+                Visit Profile
+                <ExternalLink className="h-4 w-4 ml-2" />
+              </Button>
 
-            {/* Right - Preview and Publish Buttons */}
-            <div className="flex items-center space-x-2">
               <Button
                 onClick={() => setIsPreviewOpen(!isPreviewOpen)}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${

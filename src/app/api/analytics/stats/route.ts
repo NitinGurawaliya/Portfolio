@@ -81,10 +81,59 @@ export async function GET(req: NextRequest) {
     const activeDays = dailyData.filter(d => d.count > 0).length
     console.log(`✅ Analytics: Generated heatmap data for portfolio ${portfolioId} - ${activeDays} active days`)
     
+    // Get additional analytics data
+    const allViews = await prisma.portfolioView.findMany({
+      where: { portfolioId: parseInt(portfolioId) },
+      select: {
+        referrer: true,
+        device: true,
+        browser: true,
+        ipAddress: true
+      }
+    })
+    
+    // Count unique visitors (by IP)
+    const uniqueIPs = new Set(allViews.map(v => v.ipAddress).filter(Boolean))
+    
+    // Top referrers
+    const referrerCounts: Record<string, number> = {}
+    allViews.forEach(view => {
+      const ref = view.referrer || 'Direct'
+      referrerCounts[ref] = (referrerCounts[ref] || 0) + 1
+    })
+    const topReferrers = Object.entries(referrerCounts)
+      .map(([referrer, count]) => ({ referrer, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10)
+    
+    // Top devices
+    const deviceCounts: Record<string, number> = {}
+    allViews.forEach(view => {
+      const device = view.device || 'Unknown'
+      deviceCounts[device] = (deviceCounts[device] || 0) + 1
+    })
+    const topDevices = Object.entries(deviceCounts)
+      .map(([device, count]) => ({ device, count }))
+      .sort((a, b) => b.count - a.count)
+    
+    // Top browsers
+    const browserCounts: Record<string, number> = {}
+    allViews.forEach(view => {
+      const browser = view.browser || 'Unknown'
+      browserCounts[browser] = (browserCounts[browser] || 0) + 1
+    })
+    const topBrowsers = Object.entries(browserCounts)
+      .map(([browser, count]) => ({ browser, count }))
+      .sort((a, b) => b.count - a.count)
+    
     return NextResponse.json({
       totalViews: analytics?.totalViews || 0,
       lastViewedAt: analytics?.lastViewedAt,
-      dailyData
+      dailyData,
+      uniqueVisitors: uniqueIPs.size,
+      topReferrers,
+      topDevices,
+      topBrowsers
     })
     
   } catch (error) {

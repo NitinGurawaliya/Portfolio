@@ -587,29 +587,11 @@ export function ReposSection({
     >
       {/* Header */}
       <motion.div variants={itemVariants}>
-        <Card className="bg-white   transition-all duration-300">
+        <Card className="bg-white shadow-none border-none">
           <CardHeader className="pb-2">
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.4 }}
-            >
-              <CardTitle className="text-lg text-black flex items-center justify-between font-bold">
-                <div className="flex items-center">
-                  <motion.div
-                    whileHover={{ rotate: 360 }}
-                    transition={{ duration: 0.6 }}
-                  >
-                    <Code2 className="h-5 w-5 mr-2" />
-                  </motion.div>
-                  Projects
-                  <motion.div
-                    className="ml-2"
-                    animate={{ scale: [1, 1.2, 1] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                  >
-                  </motion.div>
-                </div>
+            <CardTitle className="text-lg text-black flex items-center font-bold">
+              <Code2 className="h-4 w-4 mr-2" />
+              Projects
                 
                 {/* Input Section integrated with title */}
                 <div className="flex items-center gap-2">
@@ -765,17 +747,8 @@ export function ReposSection({
                   </div>
                 </DropdownMenuContent>
               </DropdownMenu>
-                </div>
-              </CardTitle>
-              <motion.p 
-                className="text-gray-600 mt-1 font-medium text-sm"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.2 }}
-              >
-                Showcase your best work by importing repositories from GitHub
-              </motion.p>
-            </motion.div>
+            </div>
+          </CardTitle>
           </CardHeader>
         </Card>
       </motion.div>

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
+import { detectDevice, detectBrowser } from "@/lib/device-detector"
 
 export async function POST(req: NextRequest) {
   try {
@@ -19,6 +20,10 @@ export async function POST(req: NextRequest) {
     const userAgent = req.headers.get("user-agent") || "unknown"
     const referrer = req.headers.get("referer") || "direct"
     
+    // Detect device and browser (pass headers for accurate detection)
+    const device = detectDevice(userAgent)
+    const browser = detectBrowser(userAgent, req.headers)
+    
     console.log(`📊 Analytics: Tracking view for portfolio ${portfolioId}${userId ? ` by user ${userId}` : ' (anonymous)'}`)
     
     // Create view record
@@ -28,7 +33,9 @@ export async function POST(req: NextRequest) {
         userId: userId || 0, // Use 0 for anonymous users
         ipAddress,
         userAgent,
-        referrer
+        referrer,
+        device,
+        browser
       }
     })
     
