@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Test Referrer</title>
+</head>
+<body>
+  <h1>Test Social Media Referrers</h1>
+  <p>Portfolio ID: <input type="number" id="portfolioId" value="1" /></p>
+  
+  <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px;">
+    <button onclick="testReferrer('https://www.linkedin.com/feed/', 'LinkedIn')">Test LinkedIn</button>
+    <button onclick="testReferrer('https://t.co/xxxxx', 'Twitter')">Test Twitter</button>
+    <button onclick="testReferrer('https://www.facebook.com/', 'Facebook')">Test Facebook</button>
+    <button onclick="testReferrer('https://www.instagram.com/', 'Instagram')">Test Instagram</button>
+    <button onclick="testReferrer('https://github.com/', 'GitHub')">Test GitHub</button>
+    <button onclick="testReferrer('https://www.reddit.com/', 'Reddit')">Test Reddit</button>
+    <button onclick="testReferrer('https://www.youtube.com/', 'YouTube')">Test YouTube</button>
+    <button onclick="testReferrer('direct', 'Direct')">Test Direct</button>
+  </div>
+  
+  <div id="result" style="margin-top: 20px; padding: 10px; background: #f0f0f0; border-radius: 5px;">
+    Results will appear here...
+  </div>
+
+  <script>
+    async function testReferrer(referrerUrl, platformName) {
+      const portfolioId = document.getElementById('portfolioId').value;
+      const resultDiv = document.getElementById('result');
+      
+      resultDiv.innerHTML = `Testing ${platformName}...`;
+      
+      try {
+        // Set referrer in body because browser doesn't allow custom referer header
+        const response = await fetch('/api/analytics/track-view', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            portfolioId: parseInt(portfolioId),
+            userId: null,
+            testReferrer: referrerUrl  // Send test referrer in body
+          })
+        });
+        
+        const data = await response.json();
+        resultDiv.innerHTML = `<strong>${platformName}:</strong> ${JSON.stringify(data, null, 2)}`;
+      } catch (error) {
+        resultDiv.innerHTML = `<strong>Error:</strong> ${error.message}`;
+      }
+    }
+  </script>
+</body>
+</html>
+

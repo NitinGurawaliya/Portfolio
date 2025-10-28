@@ -4,7 +4,7 @@ import { detectDevice, detectBrowser, normalizeReferrer, detectSocialSource } fr
 
 export async function POST(req: NextRequest) {
   try {
-    const { portfolioId, userId } = await req.json()
+    const { portfolioId, userId, testReferrer } = await req.json()
     
     if (!portfolioId) {
       return NextResponse.json(
@@ -18,7 +18,9 @@ export async function POST(req: NextRequest) {
                      req.headers.get("x-real-ip") || 
                      "unknown"
     const userAgent = req.headers.get("user-agent") || "unknown"
-    const rawReferrer = req.headers.get("referer") || "direct"
+    
+    // Use testReferrer if provided (for testing), otherwise use actual referer header
+    const rawReferrer = testReferrer || req.headers.get("referer") || "direct"
     
     // Check for social media crawlers and bots that might indicate social traffic
     const isSocialTraffic = detectSocialSource(userAgent, rawReferrer)
