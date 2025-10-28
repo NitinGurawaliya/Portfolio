@@ -145,10 +145,50 @@ export function detectBrowser(userAgent: string, headers?: Headers): string {
 }
 
 /**
+ * Detect if traffic might be from social media based on user agent and referrer
+ */
+export function detectSocialSource(userAgent: string, referrer: string): { source: string | null, confidence: 'high' | 'medium' } {
+  const agent = userAgent.toLowerCase()
+  const ref = referrer.toLowerCase()
+  
+  // High confidence: Direct social media referrers
+  if (ref.includes('t.co') || ref.includes('twitter.com') || ref.includes('x.com')) {
+    return { source: 'Twitter', confidence: 'high' }
+  }
+  
+  if (ref.includes('linkedin.com') || ref.includes('lnkd.in')) {
+    return { source: 'LinkedIn', confidence: 'high' }
+  }
+  
+  if (ref.includes('facebook.com') || ref.includes('fb.com')) {
+    return { source: 'Facebook', confidence: 'high' }
+  }
+  
+  if (ref.includes('instagram.com')) {
+    return { source: 'Instagram', confidence: 'high' }
+  }
+  
+  // Medium confidence: Check user agent for social media bots/crawlers
+  if (agent.includes('twitterbot')) {
+    return { source: 'Twitter', confidence: 'medium' }
+  }
+  
+  if (agent.includes('linkedinbot')) {
+    return { source: 'LinkedIn', confidence: 'medium' }
+  }
+  
+  if (agent.includes('facebookexternalhit')) {
+    return { source: 'Facebook', confidence: 'medium' }
+  }
+  
+  return { source: null, confidence: 'high' }
+}
+
+/**
  * Normalize referrer to show actual source platform
  * Handles cases like Twitter t.co links, LinkedIn lnkd.in links, etc.
  */
-export function normalizeReferrer(referrer: string): string {
+export function normalizeReferrer(referrer: string, socialInfo?: { source: string | null, confidence: 'high' | 'medium' }): string {
   if (!referrer || referrer === 'direct' || referrer === 'null') {
     return 'Direct'
   }
@@ -156,6 +196,11 @@ export function normalizeReferrer(referrer: string): string {
   try {
     const url = new URL(referrer)
     const hostname = url.hostname.toLowerCase()
+    
+    // Use detected social source if available (highest priority)
+    if (socialInfo?.source && socialInfo.confidence === 'high') {
+      return socialInfo.source
+    }
     
     // Handle shortened links and redirect domains
     if (hostname.includes('t.co') || hostname.includes('twitter.com') || hostname.includes('x.com')) {
@@ -172,6 +217,16 @@ export function normalizeReferrer(referrer: string): string {
     
     if (hostname.includes('instagram.com')) {
       return 'Instagram'
+    }
+    
+    // Check for UTM parameters
+    const utmSource = url.searchParams.get('utm_source')
+    if (utmSource) {
+      // Capitalize first letter of each word
+      return utmSource
+        .split(/[-_\s]+/)
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(' ')
     }
     
     if (hostname.includes('reddit.com')) {
@@ -196,12 +251,6 @@ export function normalizeReferrer(referrer: string): string {
     
     if (hostname.includes('stackoverflow.com') || hostname.includes('stackexchange.com')) {
       return 'StackOverflow'
-    }
-    
-    // Check for UTM parameters
-    const utmSource = url.searchParams.get('utm_source')
-    if (utmSource) {
-      return utmSource.charAt(0).toUpperCase() + utmSource.slice(1)
     }
     
     // Return clean domain name

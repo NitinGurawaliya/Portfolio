@@ -838,36 +838,18 @@ export function ReposSection({
                               />
                             </div>
                             
-                            {/* Project Name - Limited */}
+                            {/* Project Name - Display only */}
                             <div className="mb-2">
-                              <motion.div
-                                whileHover={{ scale: 1.01 }}
-                                transition={{ duration: 0.2 }}
-                              >
-                                <Input
-                                  value={customName}
-                                  onChange={(e) => handleInlineEdit(repo.id, 'name', e.target.value)}
-                                  className="text-sm font-bold border-0 bg-transparent p-0 focus:bg-gray-50 focus:border-2 border-gray-300 focus:p-1 transition-all duration-300 text-black placeholder:text-gray-400 truncate"
-                                  placeholder="Project name"
-                                  maxLength={20}
-                                />
-                              </motion.div>
+                              <h3 className="text-sm font-bold text-black truncate">
+                                {customName}
+                              </h3>
                             </div>
 
-                            {/* Project Description - Limited */}
-                            <div className="mb-1 flex-1">
-                              <motion.div
-                                whileHover={{ scale: 1.01 }}
-                                transition={{ duration: 0.2 }}
-                              >
-                                <Input
-                                  value={customDescription}
-                                  onChange={(e) => handleInlineEdit(repo.id, 'description', e.target.value)}
-                                  className="text-xs text-gray-600 border-0 bg-transparent p-0 focus:bg-gray-50 focus:border-2 border-gray-300 focus:p-1 transition-all duration-300 placeholder:text-gray-400 line-clamp-2"
-                                  placeholder="Project description"
-                                  maxLength={60}
-                                />
-                              </motion.div>
+                            {/* Project Description - Display only */}
+                            <div className="mb-1">
+                              <p className="text-xs text-gray-600 line-clamp-2">
+                                {customDescription}
+                              </p>
                             </div>
 
                             {/* Analytics - Times Visited */}

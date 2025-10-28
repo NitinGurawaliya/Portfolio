@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { detectDevice, detectBrowser, normalizeReferrer } from "@/lib/device-detector"
+import { detectDevice, detectBrowser, normalizeReferrer, detectSocialSource } from "@/lib/device-detector"
 
 export async function POST(req: NextRequest) {
   try {
@@ -20,8 +20,11 @@ export async function POST(req: NextRequest) {
     const userAgent = req.headers.get("user-agent") || "unknown"
     const rawReferrer = req.headers.get("referer") || "direct"
     
+    // Check for social media crawlers and bots that might indicate social traffic
+    const isSocialTraffic = detectSocialSource(userAgent, rawReferrer)
+    
     // Normalize referrer to show actual platform
-    const referrer = normalizeReferrer(rawReferrer)
+    const referrer = normalizeReferrer(rawReferrer, isSocialTraffic)
     
     // Detect device and browser (pass headers for accurate detection)
     const device = detectDevice(userAgent)
