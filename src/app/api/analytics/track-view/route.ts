@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { detectDevice, detectBrowser, normalizeReferrer, detectSocialSource } from "@/lib/device-detector"
+import { analyticsEvents } from "@/lib/analytics-events"
 
 export async function POST(req: NextRequest) {
   try {
@@ -81,6 +82,15 @@ export async function POST(req: NextRequest) {
     })
     
     console.log(`📈 Analytics: Updated view count for portfolio ${portfolioId} - Total views: ${analyticsResult.totalViews}`)
+    
+    // Emit real-time event for dashboard updates
+    analyticsEvents.emit(portfolioId, 'view', {
+      totalViews: analyticsResult.totalViews,
+      referrer,
+      device,
+      browser,
+      timestamp: new Date()
+    })
     
     return NextResponse.json({ success: true })
     

@@ -96,8 +96,120 @@ export function AnalyticsSection({ portfolioId, analyticsData }: AnalyticsSectio
   const [hoveredDay, setHoveredDay] = useState<{date: string, count: number, x: number, top: number, dayData: DayAnalytics | null} | null>(null)
   const [loadingDayData, setLoadingDayData] = useState(false)
   const heatmapRef = useRef<HTMLDivElement>(null)
+  const eventSourceRef = useRef<EventSource | null>(null)
 
+  // Set up real-time analytics updates via SSE
+  useEffect(() => {
+    if (!portfolioId || portfolioId <= 0) return
 
+    console.log("🔌 Connecting to real-time analytics stream for portfolio:", portfolioId)
+    
+    // Connect to SSE stream
+    const eventSource = new EventSource(`/api/analytics/realtime?portfolioId=${portfolioId}`)
+    eventSourceRef.current = eventSource
+
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data)
+        
+        if (data.type === 'connected') {
+          console.log("✅ Connected to real-time analytics stream")
+          return
+        }
+
+        // Handle analytics events
+        if (data.event === 'view') {
+          console.log("📊 Real-time view update:", data.data)
+          
+          // Update analytics state with new data
+          setAnalytics(prev => {
+            if (!prev) return prev
+            
+            // Increment total views
+            const newTotalViews = data.data.totalViews
+            
+            // Update top referrers
+            let newTopReferrers = [...(prev.topReferrers || [])]
+            const referrerIndex = newTopReferrers.findIndex(r => r.referrer === data.data.referrer)
+            if (referrerIndex >= 0) {
+              newTopReferrers[referrerIndex].count++
+            } else {
+              newTopReferrers.push({ referrer: data.data.referrer, count: 1 })
+            }
+            newTopReferrers.sort((a, b) => b.count - a.count)
+            
+            // Update top devices
+            let newTopDevices = [...(prev.topDevices || [])]
+            const deviceIndex = newTopDevices.findIndex(d => d.device === data.data.device)
+            if (deviceIndex >= 0) {
+              newTopDevices[deviceIndex].count++
+            } else {
+              newTopDevices.push({ device: data.data.device, count: 1 })
+            }
+            newTopDevices.sort((a, b) => b.count - a.count)
+            
+            // Update top browsers
+            let newTopBrowsers = [...(prev.topBrowsers || [])]
+            const browserIndex = newTopBrowsers.findIndex(b => b.browser === data.data.browser)
+            if (browserIndex >= 0) {
+              newTopBrowsers[browserIndex].count++
+            } else {
+              newTopBrowsers.push({ browser: data.data.browser, count: 1 })
+            }
+            newTopBrowsers.sort((a, b) => b.count - a.count)
+            
+            // Update today's count in dailyData
+            const today = new Date().toISOString().split('T')[0]
+            const newDailyData = [...(prev.dailyData || [])]
+            const todayIndex = newDailyData.findIndex(d => d.date === today)
+            if (todayIndex >= 0) {
+              newDailyData[todayIndex].count++
+            } else {
+              // Add new day if it doesn't exist
+              newDailyData.push({ date: today, count: 1 })
+              // Keep only last 365 days
+              if (newDailyData.length > 365) {
+                newDailyData.shift()
+              }
+            }
+            
+            return {
+              ...prev,
+              totalViews: newTotalViews,
+              topReferrers: newTopReferrers,
+              topDevices: newTopDevices,
+              topBrowsers: newTopBrowsers,
+              dailyData: newDailyData
+            }
+          })
+          
+          // Show notification animation on the stats cards
+          const statsCard = document.querySelector('[data-stat="total-views"]')
+          if (statsCard) {
+            statsCard.classList.add('animate-pulse')
+            setTimeout(() => {
+              statsCard.classList.remove('animate-pulse')
+            }, 1000)
+          }
+        }
+      } catch (error) {
+        console.error("Error parsing SSE message:", error)
+      }
+    }
+
+    eventSource.onerror = (error) => {
+      console.error("❌ SSE connection error:", error)
+      if (eventSource.readyState === EventSource.CLOSED) {
+        console.log("🔌 SSE connection closed")
+      }
+    }
+
+    // Cleanup on unmount
+    return () => {
+      console.log("🔌 Disconnecting from real-time analytics stream")
+      eventSource.close()
+    }
+  }, [portfolioId])
 
   useEffect(() => {
     if (analyticsData) {
@@ -319,7 +431,7 @@ export function AnalyticsSection({ portfolioId, analyticsData }: AnalyticsSectio
       {/* Stats Cards */}
       <div className="grid grid-cols-4 gap-3 -mt-1">
         <motion.div variants={itemVariants}>
-          <Card className="bg-white shadow-sm border border-gray-200 rounded-lg h-28">
+          <Card data-stat="total-views" className="bg-white shadow-sm border border-gray-200 rounded-lg h-28 transition-all duration-300">
             <CardContent className="p-4 h-full">
               <p className="text-xs text-gray-500 mb-2">Total Visits</p>
               <div className="flex items-end justify-between">
