@@ -36,12 +36,18 @@ export default function PublicPortfolioPage() {
   // Track portfolio view
   useEffect(() => {
     if (portfolio?.id) {
+      // Capture referrer on client side immediately (before any navigation)
+      const clientReferrer = typeof window !== 'undefined' ? document.referrer : 'direct'
+      
+      console.log('📊 Client-side referrer capture:', clientReferrer)
+      
       fetch('/api/analytics/track-view', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           portfolioId: portfolio.id,
-          userId: null // We don't have user ID in public portfolio view
+          userId: null, // We don't have user ID in public portfolio view
+          clientReferrer // Send client-side captured referrer
         })
       }).catch(err => console.error('Failed to track view:', err))
     }

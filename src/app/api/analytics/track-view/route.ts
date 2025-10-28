@@ -4,7 +4,7 @@ import { detectDevice, detectBrowser, normalizeReferrer, detectSocialSource } fr
 
 export async function POST(req: NextRequest) {
   try {
-    const { portfolioId, userId, testReferrer } = await req.json()
+    const { portfolioId, userId, testReferrer, clientReferrer } = await req.json()
     
     if (!portfolioId) {
       return NextResponse.json(
@@ -19,14 +19,16 @@ export async function POST(req: NextRequest) {
                      "unknown"
     const userAgent = req.headers.get("user-agent") || "unknown"
     
-    // Use testReferrer if provided (for testing), otherwise use actual referer header
-    const rawReferrer = testReferrer || req.headers.get("referer") || "direct"
+    // Priority: testReferrer > clientReferrer > server header referrer
+    // Client-side capture is most reliable for social platforms
+    const rawReferrer = testReferrer || clientReferrer || req.headers.get("referer") || "direct"
     
     // Debug: Log for production debugging
     console.log('🔍 Production Referrer Debug:', {
       rawReferrer,
       testReferrer,
-      actualRefererHeader: req.headers.get("referer"),
+      clientReferrer,
+      serverRefererHeader: req.headers.get("referer"),
       userAgent: userAgent.substring(0, 50),
       allHeaders: {
         origin: req.headers.get("origin"),
