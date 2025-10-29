@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Line, LineChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts'
+import { Line, LineChart, ResponsiveContainer, XAxis, YAxis, Tooltip, ReferenceLine } from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 interface IndividualProjectChartProps {
@@ -34,6 +34,8 @@ export function IndividualProjectChart({
   className = "",
   size = 'sm'
 }: IndividualProjectChartProps) {
+  // Use a fixed Y-axis max so charts are comparable across cards
+  const FIXED_Y_MAX = 10
   const [chartData, setChartData] = useState<any[]>([])
   const [totalViews, setTotalViews] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -201,12 +203,12 @@ export function IndividualProjectChart({
         {/* Percentage Badge */}
         {percentageChange !== null && (
           <div className="mb-1 flex justify-end">
-            <div className={`text-xs px-2 py-1 rounded ${
+            <div className={`text-xs px-1 ${
               percentageChange > 0 
-                ? 'bg-green-100 text-green-700' 
+                ? 'text-green-700' 
                 : percentageChange < 0 
-                ? 'bg-red-100 text-red-700' 
-                : 'bg-gray-100 text-gray-700'
+                ? 'text-red-700' 
+                : 'text-gray-700'
             }`}>
               {percentageChange > 0 ? '↗' : percentageChange < 0 ? '↘' : '↔'} 
               {Math.abs(percentageChange).toFixed(1)}% 
@@ -216,22 +218,27 @@ export function IndividualProjectChart({
         )}
         
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={projectData} margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
+          <LineChart data={projectData} margin={{ top: 8, right: 10, left: 10, bottom: 8 }}>
             <XAxis 
               dataKey="day" 
-              axisLine={false}
+              axisLine={true}
               tickLine={false}
-              tick={{ fontSize: 9, fill: '#6b7280', fontWeight: 500 }}
+              mirror={false}
+              tick={{ fontSize: 9, fill: '#6b7280', fontWeight: 500, dy: 2 }}
+              tickMargin={0}
+              height={16}
               interval="preserveStartEnd"
             />
+            <ReferenceLine y={0} stroke="#E5E7EB" strokeWidth={1} />
             <YAxis 
               axisLine={false}
               tickLine={false}
               tick={{ fontSize: 10, fill: '#6b7280' }}
-              domain={[0, 'dataMax + 0.5']}
+              domain={[0, FIXED_Y_MAX]}
               width={30}
               tickCount={5}
               tickFormatter={(value) => Math.round(value).toString()}
+              padding={{ top: 0, bottom: 0 }}
             />
             <Tooltip 
               content={({ active, payload, label }) => {

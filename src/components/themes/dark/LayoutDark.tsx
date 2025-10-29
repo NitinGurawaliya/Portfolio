@@ -304,6 +304,17 @@ export default function LayoutDark({ theme, portfolio }: LayoutDarkProps) {
                   aria-label={`View ${repo.repository.name} project`}
                 >
                   <div className="relative bg-transparent border border-orange-500/30 rounded-lg p-4 sm:p-6 hover:border-orange-500/50 transition-all duration-300 h-full flex flex-col w-full">
+                    {/* OG image preview for public card only */}
+                    {repo.repository.logo && (/^https?:/i.test(repo.repository.logo) || /^data:image\//i.test(repo.repository.logo)) && (
+                      <div className="mb-4 -mt-1 overflow-hidden rounded-md">
+                        <img
+                          src={repo.repository.logo}
+                          alt={(repo.customName || repo.repository.name) + ' preview'}
+                          className={`w-full aspect-[16/9] ${/^data:image\//i.test(repo.repository.logo) ? 'object-cover object-top' : 'object-cover'}`}
+                          loading="lazy"
+                        />
+                      </div>
+                    )}
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1 mr-4 min-w-0">
                         {/* Project Icon at the top */}

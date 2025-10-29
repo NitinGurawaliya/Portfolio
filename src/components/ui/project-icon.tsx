@@ -32,12 +32,16 @@ export function ProjectIcon({
   }
 
   return (
-    <div className={cn(sizeClasses[size], "rounded-md border border-gray-200 bg-white overflow-hidden", className)}>
+    <div className={cn(
+      sizeClasses[size],
+      "rounded-full bg-white overflow-hidden ring-1 ring-black/5 shadow-sm",
+      className
+    )}>
       {imageSrc ? (
         <img 
           src={imageSrc} 
           alt={`${title} icon`}
-          className="w-full h-full object-contain"
+          className="w-full h-full object-contain p-0.5"
           style={{
             imageRendering: 'crisp-edges'
           }}

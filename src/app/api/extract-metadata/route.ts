@@ -180,6 +180,7 @@ export async function POST(req: NextRequest) {
       
       favicon: null as string | null,
       logo: null as string | null,
+      ogImage: null as string | null,
       
       type: 
         $('meta[property="og:type"]').attr('content') ||
@@ -194,6 +195,22 @@ export async function POST(req: NextRequest) {
         $('meta[property="article:author"]').attr('content') ||
         '',
     }
+
+    // Extract OpenGraph/Twitter image (preview image)
+    try {
+      const baseUrl = new URL(url).origin
+      const ogCandidates = [
+        $('meta[property="og:image"]').attr('content'),
+        $('meta[name="twitter:image"]').attr('content'),
+        $('meta[name="twitter:image:src"]').attr('content')
+      ].filter(Boolean) as string[]
+      if (ogCandidates.length > 0) {
+        const first = ogCandidates[0]!
+        const full = first.startsWith('http') ? first : new URL(first, baseUrl).href
+        metadata.ogImage = full
+        metadata.logo = full // use as large preview image for public card
+      }
+    } catch {}
 
     // Extract and validate favicon - uses whatever the site has in their browser tab
     try {

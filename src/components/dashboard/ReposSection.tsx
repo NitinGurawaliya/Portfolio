@@ -30,16 +30,18 @@ import {
   ChevronUp,
   ChevronDown as ChevronDownIcon,
   GripVertical,
+  MoreVertical,
   BarChart3
 } from "lucide-react"
 import { IndividualProjectChart } from "@/components/IndividualProjectChart"
+import { AddProjectModal } from "./AddProjectModal"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-
+import { EditProjectModal as EditModal } from "./EditProjectModal"
 interface Repository {
   id: number
   portfolioRepositoryId?: number // PortfolioRepository ID for analytics
@@ -150,6 +152,32 @@ export function ReposSection({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [projectUrl, setProjectUrl] = useState("")
   const [isImportingUrl, setIsImportingUrl] = useState(false)
+  const [isAddProjectOpen, setIsAddProjectOpen] = useState(false)
+  const [isEditOpen, setIsEditOpen] = useState(false)
+  const [editInitial, setEditInitial] = useState<{ id: number; url: string; name: string; description: string; logo?: string | null } | null>(null)
+  const [logoOverrides, setLogoOverrides] = useState<Record<number, string>>({})
+  const [showOgTip, setShowOgTip] = useState(false)
+  
+
+  // Keyboard shortcut to open modal (Ctrl/Cmd + K)
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === 'k')) {
+        e.preventDefault()
+        setIsAddProjectOpen(true)
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [])
+
+  // One-time tip about images
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const key = 'devfolio-og-tip-dismissed'
+    const dismissed = localStorage.getItem(key)
+    if (!dismissed) setShowOgTip(true)
+  }, [])
   
   // Track initialization to prevent triggering changes during initial load
   const [isInitialized, setIsInitialized] = useState(false)
@@ -580,174 +608,30 @@ export function ReposSection({
 
   return (
     <motion.div 
-      className="space-y-4"
+      className="space-y-2 px-6 md:px-10"
       initial="hidden"
       animate="visible"
       variants={containerVariants}
     >
-      {/* Header */}
-      <motion.div variants={itemVariants}>
-        <Card className="bg-white shadow-none border-none">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg text-black flex items-center font-bold">
-              <Code2 className="h-4 w-4 mr-2" />
-              Projects
-                
-                {/* Input Section integrated with title */}
-                <div className="flex items-center gap-2">
-                  {/* Simple Input Box */}
-                  <motion.div 
-                    className="relative"
-                    whileFocus={{ scale: 1.01 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <LinkIcon className="absolute left-2 top-1/2 transform -translate-y-1/2 h-3 w-3 text-gray-400" />
-                    <Input
-                      placeholder="Project URL"
-                      value={projectUrl}
-                      onChange={(e) => setProjectUrl(e.target.value)}
-                      className="pl-7 pr-8 bg-white border border-gray-300 text-black font-medium h-8 text-xs focus:border-gray-400 transition-all duration-300 w-48"
-                      onKeyDown={(e) => e.key === 'Enter' && projectUrl.trim() && handleUrlImport()}
-                    />
-                    {/* Inline Add Button */}
-                    {projectUrl.trim() && (
-                      <motion.div
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.8 }}
-                        transition={{ duration: 0.2 }}
-                        className="absolute right-1 top-1/2 transform -translate-y-1/2"
-                      >
-                        <Button
-                          onClick={handleUrlImport}
-                          disabled={isImportingUrl}
-                          className="h-6 w-6 p-0 bg-black text-white hover:bg-gray-800 transition-all duration-300 rounded"
-                        >
-                          {isImportingUrl ? (
-                            <Loader2 className="h-2 w-2 animate-spin" />
-                          ) : (
-                            <Plus className="h-2 w-2" />
-                          )}
-                        </Button>
-                      </motion.div>
-                    )}
-                  </motion.div>
+      {/* Info tip */}
+      {showOgTip && (
+        <div className="-mt-4 md:-mt-6 mb-2 rounded-lg bg-orange-50 border border-orange-200 px-3 py-2 text-[12px] text-orange-700 flex items-center justify-between">
+          <span>New: You can add cover images to your projects. Use the “⋯” Edit menu on each card.</span>
+          <button className="text-orange-600 hover:underline" onClick={() => { setShowOgTip(false); if (typeof window!=='undefined') localStorage.setItem('devfolio-og-tip-dismissed','1') }}>Dismiss</button>
+        </div>
+      )}
 
-                  {/* GitHub Dropdown */}
-                  <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
-                    <DropdownMenuTrigger asChild>
-                      <motion.div
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        className="relative z-50"
-                      >
-                        <Button className="bg-black text-white rounded-lg hover:bg-gray-800 flex items-center space-x-1 font-medium h-8 text-xs transition-all duration-300 px-2">
-                          <Github className="h-3 w-3" />
-                          <motion.div
-                            animate={{ rotate: isDropdownOpen ? 180 : 0 }}
-                            transition={{ duration: 0.3 }}
-                          >
-                            <ChevronDown className="h-3 w-3" />
-                          </motion.div>
-                        </Button>
-                      </motion.div>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-96 bg-white shadow-2xl z-[60]">
-                  <motion.div 
-                    className="p-4 border-b border-gray-200"
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                  >
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                      <Input
-                        placeholder="Search repositories..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10 bg-gray-50  text-black font-medium h-9 text-sm focus:bg-white"
-                      />
-                    </div>
-                  </motion.div>
-                  <div className="max-h-80 overflow-y-auto scrollbar-hide">
-                    {filteredRepos.length === 0 ? (
-                      <motion.div 
-                        className="p-6 text-gray-500 text-center"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                      >
-                        <Code2 className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-                        <p className="font-medium">
-                          {searchTerm ? "No repositories found" : "All repositories imported"}
-                        </p>
-                      </motion.div>
-                    ) : (
-                      filteredRepos.map((repo, index) => (
-                        <motion.div
-                          key={repo.id}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: index * 0.05 }}
-                        >
-                          <DropdownMenuItem
-                            onClick={() => handleImportRepo(repo)}
-                            className="p-3 hover:bg-gray-50 cursor-pointer   transition-all duration-300"
-                          >
-                            <div className="flex items-center gap-3 w-full">
-                              <motion.div>
-                                <Github className="h-5 w-5 text-black" />
-                              </motion.div>
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center space-x-2">
-                                  <span className="text-black font-medium truncate text-sm">
-                                    {repo.name}
-                                  </span>
-                                  {repo.isPrivate && (
-                                    <Badge variant="secondary" className="bg-black text-white text-[10px] font-medium">
-                                      Private
-                                    </Badge>
-                                  )}
-                                </div>
-                                {repo.description && (
-                                  <p className="text-gray-600 text-xs truncate mt-0.5 font-medium">
-                                    {repo.description}
-                                  </p>
-                                )}
-                                <div className="flex items-center space-x-3 mt-1.5">
-                                  {repo.language && (
-                                    <div className="flex items-center">
-                                      <div className={`w-2 h-2 rounded-full ${getLanguageColor(repo.language)} mr-1.5`}></div>
-                                      <span className="text-gray-600 text-[10px] font-medium">{repo.language}</span>
-                                    </div>
-                                  )}
-                                  {repo.stargazersCount >= 10 && (
-                                    <div className="flex items-center text-gray-600 text-[10px] font-medium">
-                                      <Star className="h-2.5 w-2.5 mr-1" />
-                                      {repo.stargazersCount}
-                                    </div>
-                                  )}
-                                  {repo.forksCount >= 10 && (
-                                    <div className="flex items-center text-gray-600 text-[10px] font-medium">
-                                      <GitFork className="h-2.5 w-2.5 mr-1" />
-                                      {repo.forksCount}
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                              <motion.div
-                                whileHover={{ x: 5 }}
-                                transition={{ duration: 0.2 }}
-                              >
-                                <ArrowRight className="h-4 w-4 text-black" />
-                              </motion.div>
-                            </div>
-                          </DropdownMenuItem>
-                        </motion.div>
-                      ))
-                    )}
-                  </div>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+      {/* Header */}
+      <motion.div variants={itemVariants} className="-mt-6 md:-mt-8">
+        <Card className="bg-white shadow-none border-none">
+          <CardHeader className="py-0">
+            <CardTitle className="text-xl md:text-2xl text-black flex items-center font-bold">
+              Projects
+              <div className="ml-auto">
+                <Button onClick={() => setIsAddProjectOpen(true)} className="bg-black text-white hover:bg-gray-800 h-8 px-3 text-xs">
+                  + Add Project (Ctrl+K)
+                </Button>
+              </div>
           </CardTitle>
           </CardHeader>
         </Card>
@@ -785,7 +669,7 @@ export function ReposSection({
               </motion.div>
             </motion.div> */}
             
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-3 gap-3 md:gap-4">
               <AnimatePresence mode="popLayout">
                 {selectedRepositories.map((repo, index) => {
                   const isEditing = editingRepo === repo.id
@@ -806,7 +690,7 @@ export function ReposSection({
                       layoutId={`repo-${repo.id}`}
                     >
                       <Card 
-                        className="bg-white border border-gray-200 hover:border-gray-300 transition-all duration-300 group h-[450px] relative"
+                        className="bg-white border border-gray-200 hover:border-gray-300 transition-all duration-300 group h-[300px] relative"
                       >
                         <CardContent className="p-0 h-full">
                           <div className="flex flex-col h-full px-3 relative">
@@ -828,58 +712,63 @@ export function ReposSection({
                               </Button>
                             </motion.div>
 
-                            {/* Project Icon at the top */}
-                            <div className="mb-2">
-                              <ProjectIcon
-                                favicon={repo.repository.favicon}
-                                logo={repo.repository.logo}
-                                title={customName || repo.name}
-                                size="md"
-                              />
-                            </div>
-                            
-                            {/* Project Name - Display only */}
-                            <div className="mb-2">
-                              <h3 className="text-sm font-bold text-black truncate">
-                                {customName}
-                              </h3>
-                            </div>
-
-                            {/* Project Description - Display only */}
-                            <div className="mb-1">
-                              <p className="text-xs text-gray-600 line-clamp-2">
-                                {customDescription}
-                              </p>
-                            </div>
-
-                            {/* Analytics - Times Visited */}
-                            <div className="absolute top-2 right-2 text-right">
-                              <div className="text-xs font-bold text-gray-600">Times visited</div>
-                              <div className="text-lg font-bold text-black">
-                                {(() => {
-                                  // Use PortfolioRepository ID for matching analytics
-                                  const portfolioRepoId = repo.portfolioRepositoryId;
-                                  const projectData = analytics?.detailed?.projects?.find((p: any) => p.projectId == portfolioRepoId);
-                                  if (!portfolioRepoId) {
-                                    console.warn(`⚠️ No portfolioRepositoryId for repo ${repo.name} (GitHub ID: ${repo.id})`);
-                                  }
-                                  if (portfolioRepoId && analytics?.detailed?.projects) {
-                                    console.log(`🔍 Looking for portfolioRepoId ${portfolioRepoId} in analytics, found:`, projectData);
-                                  }
-                                  return projectData?.clickCount || 0;
-                                })()}
+                            {/* Header row: favicon left, title + description stacked; right: times visited + menu */}
+                            <div className="mb-2 flex items-start justify-between gap-3">
+                              <div className="flex items-start gap-3 md:gap-4 min-w-0">
+                                <ProjectIcon
+                                  favicon={repo.repository.favicon}
+                                  logo={logoOverrides[repo.id] ?? repo.repository.logo}
+                                  title={customName || repo.name}
+                                  size="lg"
+                                  className="flex-shrink-0"
+                                />
+                                <div className="min-w-0">
+                                  <h3 className="text-[15px] md:text-base font-semibold text-gray-900 truncate">
+                                    {customName}
+                                  </h3>
+                                  <p className="text-[12px] text-gray-500 truncate">
+                                    {customDescription}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="flex items-start gap-2 flex-shrink-0">
+                                <div className="text-right leading-tight">
+                                  <div className="text-[11px] text-gray-500">Times visited</div>
+                                  <div className="text-sm font-bold text-black">
+                                    {(() => {
+                                      const portfolioRepoId = repo.portfolioRepositoryId;
+                                      const projectData = analytics?.detailed?.projects?.find((p: any) => p.projectId == portfolioRepoId);
+                                      return projectData?.clickCount || 0;
+                                    })()}
+                                  </div>
+                                </div>
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <button className="h-6 w-6 grid place-items-center rounded-md hover:bg-gray-100">
+                                      <MoreVertical className="h-4 w-4 text-gray-600" />
+                                    </button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent className="w-36">
+                                    <DropdownMenuItem onClick={() => {
+                                      const url = deployedUrls[repo.id] || repo.htmlUrl
+                                      setEditInitial({ id: repo.id, url: url || '', name: customName || repo.name, description: customDescription || repo.description, logo: logoOverrides[repo.id] ?? repo.repository.logo })
+                                      setIsEditOpen(true)
+                                    }}>Edit Project</DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => handleRemoveRepo(repo.id)}>Remove</DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
                               </div>
                             </div>
 
                             {/* Project Views Chart */}
                             {portfolioId ? (
                               <div className="mt-1 flex-1 flex flex-col">
-                                <div className="flex-1 bg-gray-50 border border-gray-200 rounded overflow-hidden">
+                              <div className="flex-1 overflow-hidden">
                                   <IndividualProjectChart 
                                     portfolioId={portfolioId}
                                     projectId={repo.portfolioRepositoryId || repo.id}
                                     projectName={customName || repo.name}
-                                    size="lg"
+                                    size="sm"
                                     className="h-full w-full"
                                   />
                                 </div>
@@ -956,6 +845,28 @@ export function ReposSection({
             </CardContent>
           </Card>
         </motion.div>
+      )}
+      <AddProjectModal
+        open={isAddProjectOpen}
+        onOpenChange={setIsAddProjectOpen}
+        repositories={repositories}
+        onAddImportedProject={(p) => onAddImportedProject?.(p as any)}
+      />
+      {editInitial && (
+        <EditModal
+          open={isEditOpen}
+          onOpenChange={setIsEditOpen}
+          initial={editInitial}
+          onSave={(payload: { id: number; url: string; name: string; description: string; logo?: string | null }) => {
+            // Update local fields; persist on Publish
+            setDeployedUrls(prev => ({ ...prev, [payload.id]: payload.url }))
+            setCustomNames(prev => ({ ...prev, [payload.id]: payload.name }))
+            setCustomDescriptions(prev => ({ ...prev, [payload.id]: payload.description }))
+            if (payload.logo) {
+              setLogoOverrides(prev => ({ ...prev, [payload.id]: payload.logo! }))
+            }
+          }}
+        />
       )}
     </motion.div>
   )

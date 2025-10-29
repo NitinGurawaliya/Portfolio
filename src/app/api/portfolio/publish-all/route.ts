@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
     devLog("🚀 Starting publish-all request...")
     
     const body = await req.json()
-    devLog("📦 Request body received:", JSON.stringify(body, null, 2))
+    devLog("📦 Request body received:",   JSON.stringify(body, null, 2))
     
     const { 
       portfolioData, 
@@ -117,56 +117,61 @@ export async function POST(req: NextRequest) {
               // Get GitHub URL for this repo (for imported projects)
               const githubUrl = githubUrls?.[repo.id] || repo.htmlUrl
               
+              const repoUpdateData: any = {
+                name: repo.name,
+                fullName: repo.fullName || repo.name,
+                description: repo.description || "",
+                htmlUrl: repo.htmlUrl,
+                cloneUrl: repo.cloneUrl || repo.htmlUrl,
+                githubUrl: githubUrl,
+                language: repo.language || "",
+                languages: repo.languages ? JSON.stringify(repo.languages) : null,
+                stargazersCount: repo.stargazersCount || 0,
+                forksCount: repo.forksCount || 0,
+                size: repo.size || 0,
+                isPrivate: repo.isPrivate || false,
+                isFork: repo.isFork || false,
+                isImported: repo.isImported || false,
+                favicon: repo.favicon || null,
+                logo: repo.logo || null,
+                siteName: repo.siteName || null,
+                keywords: repo.keywords || null,
+                author: repo.author || null,
+                updatedAt: new Date(),
+                pushedAt: repo.pushedAt ? new Date(repo.pushedAt) : null,
+              }
+
+              const repoCreateData: any = {
+                githubId: BigInt(repo.id),
+                userId: user.id,
+                name: repo.name,
+                fullName: repo.fullName || repo.name,
+                description: repo.description || "",
+                htmlUrl: repo.htmlUrl,
+                cloneUrl: repo.cloneUrl || repo.htmlUrl,
+                githubUrl: githubUrl,
+                language: repo.language || "",
+                languages: repo.languages ? JSON.stringify(repo.languages) : null,
+                stargazersCount: repo.stargazersCount || 0,
+                forksCount: repo.forksCount || 0,
+                size: repo.size || 0,
+                isPrivate: repo.isPrivate || false,
+                isFork: repo.isFork || false,
+                isImported: repo.isImported || false,
+                favicon: repo.favicon || null,
+                logo: repo.logo || null,
+                siteName: repo.siteName || null,
+                keywords: repo.keywords || null,
+                author: repo.author || null,
+                createdAt: new Date(repo.createdAt),
+                updatedAt: new Date(),
+                pushedAt: repo.pushedAt ? new Date(repo.pushedAt) : null,
+              }
+
               await prisma.repository.upsert({
                 where: { githubId: BigInt(repo.id) },
-                update: {
-                  name: repo.name,  // Keep original GitHub name
-                  fullName: repo.fullName,
-                  description: repo.description || "",  // Keep original GitHub description
-                  htmlUrl: repo.htmlUrl,
-                  cloneUrl: repo.cloneUrl || repo.htmlUrl,
-                  githubUrl: githubUrl,
-                  language: repo.language || "",
-                  languages: repo.languages ? JSON.stringify(repo.languages) : null,
-                  stargazersCount: repo.stargazersCount || 0,
-                  forksCount: repo.forksCount || 0,
-                  size: repo.size || 0,
-                  isPrivate: repo.isPrivate || false,
-                  isFork: repo.isFork || false,
-                  isImported: repo.isImported || false,
-                  favicon: repo.favicon || null,
-                  siteName: repo.siteName || null,
-                  keywords: repo.keywords || null,
-                  author: repo.author || null,
-                  createdAt: new Date(repo.createdAt),
-                  updatedAt: new Date(),
-                  pushedAt: repo.pushedAt ? new Date(repo.pushedAt) : null,
-                },
-                create: {
-                  githubId: BigInt(repo.id),
-                  name: repo.name,  // Keep original GitHub name
-                  fullName: repo.fullName,
-                  description: repo.description || "",  // Keep original GitHub description
-                  htmlUrl: repo.htmlUrl,
-                  cloneUrl: repo.cloneUrl || repo.htmlUrl,
-                  githubUrl: githubUrl,
-                  language: repo.language || "",
-                  languages: repo.languages ? JSON.stringify(repo.languages) : null,
-                  stargazersCount: repo.stargazersCount || 0,
-                  forksCount: repo.forksCount || 0,
-                  size: repo.size || 0,
-                  isPrivate: repo.isPrivate || false,
-                  isFork: repo.isFork || false,
-                  isImported: repo.isImported || false,
-                  favicon: repo.favicon || null,
-                  siteName: repo.siteName || null,
-                  keywords: repo.keywords || null,
-                  author: repo.author || null,
-                  createdAt: new Date(repo.createdAt),
-                  updatedAt: new Date(),
-                  pushedAt: repo.pushedAt ? new Date(repo.pushedAt) : null,
-                  userId: user.id,
-                },
+                update: repoUpdateData,
+                create: repoCreateData,
               })
             } catch (repoError) {
               console.error(`Error upserting repository ${repo.name}:`, repoError)
@@ -206,28 +211,32 @@ export async function POST(req: NextRequest) {
 
       // Upsert portfolio (create or update) - ALL data at once
       devLog("💾 Creating/updating portfolio...")
+      const portfolioUpdateData: any = {
+        displayName: portfolioData.displayName,
+        jobTitle: portfolioData.jobTitle,
+        bio: portfolioData.bio,
+        profilePic: portfolioData.profilePic,
+        customUsername: portfolioData.customUsername,
+        selectedTheme: selectedTheme || 'light',
+        isPublished: true,
+        updatedAt: new Date(),
+      }
+
+      const portfolioCreateData: any = {
+        userId: user.id,
+        displayName: portfolioData.displayName,
+        jobTitle: portfolioData.jobTitle,
+        bio: portfolioData.bio,
+        profilePic: portfolioData.profilePic,
+        customUsername: portfolioData.customUsername,
+        selectedTheme: selectedTheme || 'light',
+        isPublished: true,
+      }
+
       const portfolio = await tx.portfolio.upsert({
         where: { userId: user.id },
-        update: {
-          displayName: portfolioData.displayName,
-          jobTitle: portfolioData.jobTitle,
-          bio: portfolioData.bio,
-          profilePic: portfolioData.profilePic,
-          customUsername: portfolioData.customUsername,
-          selectedTheme: selectedTheme || 'light',
-          isPublished: true,
-          updatedAt: new Date(),
-        },
-        create: {
-          userId: user.id,
-          displayName: portfolioData.displayName,
-          jobTitle: portfolioData.jobTitle,
-          bio: portfolioData.bio,
-          profilePic: portfolioData.profilePic,
-          customUsername: portfolioData.customUsername,
-          selectedTheme: selectedTheme || 'light',
-          isPublished: true,
-        },
+        update: portfolioUpdateData,
+        create: portfolioCreateData,
       })
 
       // Delete existing skills and socials
@@ -331,15 +340,17 @@ export async function POST(req: NextRequest) {
           
           if (existing) {
             // Update existing record to preserve analytics ID
+            const portfolioRepoUpdate: any = {
+              deployedUrl: repoData.deployedUrl,
+              customName: repoData.customName as string | null,
+              customDescription: repoData.customDescription as string | null,
+              displayOrder: repoData.displayOrder as number,
+              isVisible: repoData.isVisible as boolean,
+            }
+
             await tx.portfolioRepository.update({
               where: { id: existing.id },
-              data: {
-                deployedUrl: repoData.deployedUrl,
-                customName: repoData.customName,
-                customDescription: repoData.customDescription,
-                displayOrder: repoData.displayOrder,
-                isVisible: repoData.isVisible
-              }
+              data: portfolioRepoUpdate
             })
             devLog(`✅ Updated existing portfolio repo ${existing.id}`)
           } else {

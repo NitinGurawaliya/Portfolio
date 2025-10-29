@@ -53,10 +53,10 @@ export async function GET(request: NextRequest) {
               backgroundImage: `
                 linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
                 linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-                radial-gradient(circle at 20% 30%, rgba(249, 115, 22, 0.08) 0%, transparent 50%),
-                radial-gradient(circle at 80% 70%, rgba(249, 115, 22, 0.06) 0%, transparent 50%)
+                radial-gradient(circle at 30% 40%, rgba(249, 115, 22, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 70% 60%, rgba(249, 115, 22, 0.06) 0%, transparent 50%)
               `,
-              backgroundSize: '40px 40px, 40px 40px, 100% 100%, 100% 100%',
+              backgroundSize: '50px 50px, 50px 50px, 100% 100%, 100% 100%',
             }}
           />
 

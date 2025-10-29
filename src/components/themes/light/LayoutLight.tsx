@@ -462,6 +462,18 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
                   aria-label={`View ${repo.repository.name} project`}
                 >
                   <div className="relative bg-gray-100 rounded-lg p-2 xs:p-3 sm:p-4 md:p-6 hover:bg-gray-200 transition-all duration-300 border border-gray-200 w-full">
+                    {/* OG image preview for public card only */}
+                    {repo.repository.logo && (/^https?:/i.test(repo.repository.logo) || /^data:image\//i.test(repo.repository.logo)) && (
+                      <div className="mb-2 -mt-1 overflow-hidden rounded-md">
+                        <img
+                          src={repo.repository.logo}
+                          alt={(repo.customName || repo.repository.name) + ' preview'}
+                          className={`w-full aspect-[16/9] ${/^data:image\//i.test(repo.repository.logo) ? 'object-cover object-top' : 'object-cover'}`}
+                          loading="lazy"
+                        />
+                      </div>
+                    )}
+                    
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1 min-w-0">
                         {/* Project Icon at the top */}
