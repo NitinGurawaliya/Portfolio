@@ -95,7 +95,8 @@ export default function DashboardPage() {
         repoOrder: portfolio.repoOrder,
         repositories: allRepositories,
         userId: user?.id || 0,
-        userData: user
+        userData: user,
+        logoOverrides: portfolio.logoOverrides
       })
 
       console.log('📊 Publish result:', result)
@@ -177,6 +178,22 @@ export default function DashboardPage() {
             onAddImportedProject={handlers.handleAddImportedProject}
             analytics={portfolio.analytics}
             portfolioId={portfolioId}
+            onUpdateLogo={(repoId: number, logo: string | null) => {
+              portfolio.setLogoOverrides(prev => {
+                if (logo === null) {
+                  // Remove the entry if logo is null
+                  const newState = { ...prev }
+                  delete newState[repoId]
+                  return newState
+                }
+                // Add or update the logo
+                return {
+                  ...prev,
+                  [repoId]: logo
+                }
+              })
+            }}
+            logoOverrides={portfolio.logoOverrides}
           />
         )
       case "skills":

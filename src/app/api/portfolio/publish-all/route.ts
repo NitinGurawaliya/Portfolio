@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma"
 import { devLog } from "@/lib/logger"
 import type { Prisma } from "@prisma/client"
 import { sendEmail } from "@/lib/sendEmail"
+import { invalidateCache, CacheKeys } from "@/lib/cache"
 import { generatePortfolioPublishedEmail } from "@/lib/templates/welcomeEmail"
 
 export async function POST(req: NextRequest) {
@@ -25,11 +26,13 @@ export async function POST(req: NextRequest) {
       repoOrder,
       repositories,
       userId,
-      userData 
+      userData,
+      logoOverrides 
     } = body
 
     devLog("👤 User ID:", userId)
     devLog("📊 Portfolio data:", portfolioData)
+    devLog("📸 Logo overrides received:", logoOverrides)
 
     // Validate required fields
     if (!userId) {
@@ -117,6 +120,17 @@ export async function POST(req: NextRequest) {
               // Get GitHub URL for this repo (for imported projects)
               const githubUrl = githubUrls?.[repo.id] || repo.htmlUrl
               
+              // Check if there's a logo override for this repo
+              const logoOverride = logoOverrides?.[repo.id]
+              const finalLogo = logoOverride || repo.logo || null
+              
+              devLog(`📊 Repository ${repo.name} (ID: ${repo.id}):`, {
+                hasOverride: !!logoOverride,
+                overrideValue: logoOverride,
+                originalLogo: repo.logo,
+                finalLogo
+              })
+              
               const repoUpdateData: any = {
                 name: repo.name,
                 fullName: repo.fullName || repo.name,
@@ -133,7 +147,7 @@ export async function POST(req: NextRequest) {
                 isFork: repo.isFork || false,
                 isImported: repo.isImported || false,
                 favicon: repo.favicon || null,
-                logo: repo.logo || null,
+                logo: finalLogo,
                 siteName: repo.siteName || null,
                 keywords: repo.keywords || null,
                 author: repo.author || null,
@@ -159,7 +173,7 @@ export async function POST(req: NextRequest) {
                 isFork: repo.isFork || false,
                 isImported: repo.isImported || false,
                 favicon: repo.favicon || null,
-                logo: repo.logo || null,
+                logo: finalLogo,
                 siteName: repo.siteName || null,
                 keywords: repo.keywords || null,
                 author: repo.author || null,
@@ -382,6 +396,19 @@ export async function POST(req: NextRequest) {
       maxWait: 10000, // 10 seconds
       timeout: 20000, // 20 seconds
     })
+
+    // Invalidate cached portfolio responses so public page reflects updates immediately
+    try {
+      const usernamesToInvalidate = new Set<string>()
+      if (user.githubUsername) usernamesToInvalidate.add(CacheKeys.portfolio(user.githubUsername))
+      if (portfolioData?.customUsername) usernamesToInvalidate.add(CacheKeys.portfolio(portfolioData.customUsername))
+      if ((result as any)?.customUsername) usernamesToInvalidate.add(CacheKeys.portfolio((result as any).customUsername))
+      for (const key of usernamesToInvalidate) {
+        invalidateCache(key)
+      }
+    } catch (e) {
+      console.warn("Cache invalidation failed", e)
+    }
 
     // Send email on every publish (non-blocking)
     devLog("📧 Portfolio published! Email:", userEmail, "| isPlaceholder:", userEmail.includes('@placeholder.com'))

@@ -61,6 +61,7 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
   const [githubUrls, setGithubUrls] = useState<Record<number, string>>({})
   const [selectedTheme, setSelectedTheme] = useState<string>('light')
   const [repoOrder, setRepoOrder] = useState<number[]>([])
+  const [logoOverrides, setLogoOverrides] = useState<Record<number, string>>({})
   
   const [originalData, setOriginalData] = useState<PortfolioState | null>(null)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
@@ -516,6 +517,7 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
     githubUrls,
     selectedTheme,
     repoOrder,
+    logoOverrides,
     hasUnsavedChanges,
     isInitialLoad,
     isLoadingPortfolio,
@@ -535,6 +537,7 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
     setGithubUrls,
     setSelectedTheme,
     setRepoOrder,
+    setLogoOverrides,
     
     // Methods
     loadExistingData,

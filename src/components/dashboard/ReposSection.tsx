@@ -121,6 +121,8 @@ interface ReposSectionProps {
   onAddImportedProject?: (project: Repository) => void
   analytics?: any
   portfolioId?: number
+  onUpdateLogo?: (repoId: number, logo: string | null) => void
+  logoOverrides?: Record<number, string>
 }
 
 export function ReposSection({ 
@@ -139,7 +141,9 @@ export function ReposSection({
   onUpdateRepoOrder,
   onAddImportedProject,
   analytics,
-  portfolioId
+  portfolioId,
+  onUpdateLogo,
+  logoOverrides: initialLogoOverrides
 }: ReposSectionProps) {
   const [searchTerm, setSearchTerm] = useState("")
   const [deployedUrls, setDeployedUrls] = useState<Record<number, string>>(initialDeployedUrls || {})
@@ -155,9 +159,12 @@ export function ReposSection({
   const [isAddProjectOpen, setIsAddProjectOpen] = useState(false)
   const [isEditOpen, setIsEditOpen] = useState(false)
   const [editInitial, setEditInitial] = useState<{ id: number; url: string; name: string; description: string; logo?: string | null } | null>(null)
-  const [logoOverrides, setLogoOverrides] = useState<Record<number, string>>({})
-  const [showOgTip, setShowOgTip] = useState(false)
+  const [logoOverrides, setLogoOverrides] = useState<Record<number, string>>(initialLogoOverrides || {})
   
+  // Sync logoOverrides from parent
+  useEffect(() => {
+    setLogoOverrides(initialLogoOverrides || {})
+  }, [initialLogoOverrides])
 
   // Keyboard shortcut to open modal (Ctrl/Cmd + K)
   useEffect(() => {
@@ -171,13 +178,7 @@ export function ReposSection({
     return () => window.removeEventListener('keydown', handler)
   }, [])
 
-  // One-time tip about images
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    const key = 'devfolio-og-tip-dismissed'
-    const dismissed = localStorage.getItem(key)
-    if (!dismissed) setShowOgTip(true)
-  }, [])
+  // (Tip banner removed)
   
   // Track initialization to prevent triggering changes during initial load
   const [isInitialized, setIsInitialized] = useState(false)
@@ -613,13 +614,7 @@ export function ReposSection({
       animate="visible"
       variants={containerVariants}
     >
-      {/* Info tip */}
-      {showOgTip && (
-        <div className="-mt-4 md:-mt-6 mb-2 rounded-lg bg-orange-50 border border-orange-200 px-3 py-2 text-[12px] text-orange-700 flex items-center justify-between">
-          <span>New: You can add cover images to your projects. Use the “⋯” Edit menu on each card.</span>
-          <button className="text-orange-600 hover:underline" onClick={() => { setShowOgTip(false); if (typeof window!=='undefined') localStorage.setItem('devfolio-og-tip-dismissed','1') }}>Dismiss</button>
-        </div>
-      )}
+      {/* Tip banner removed */}
 
       {/* Header */}
       <motion.div variants={itemVariants} className="-mt-6 md:-mt-8">
@@ -767,7 +762,7 @@ export function ReposSection({
                                   <IndividualProjectChart 
                                     portfolioId={portfolioId}
                                     projectId={repo.portfolioRepositoryId || repo.id}
-                                    projectName={customName || repo.name}
+                                    projectName={repo.repository.name}
                                     size="sm"
                                     className="h-full w-full"
                                   />
@@ -858,12 +853,32 @@ export function ReposSection({
           onOpenChange={setIsEditOpen}
           initial={editInitial}
           onSave={(payload: { id: number; url: string; name: string; description: string; logo?: string | null }) => {
+            // payload.id is the GitHub ID
+            console.log('🔄 EditProjectModal save called:', { 
+              id: payload.id, 
+              url: payload.url, 
+              name: payload.name, 
+              hasLogo: !!payload.logo,
+              logoLength: payload.logo?.length 
+            })
+            
             // Update local fields; persist on Publish
             setDeployedUrls(prev => ({ ...prev, [payload.id]: payload.url }))
             setCustomNames(prev => ({ ...prev, [payload.id]: payload.name }))
             setCustomDescriptions(prev => ({ ...prev, [payload.id]: payload.description }))
+            // Bubble up to parent so dirty-state/publish gets enabled
+            onUpdateDeployedUrl(payload.id, payload.url)
+            onUpdateCustomName(payload.id, payload.name)
+            onUpdateCustomDescription(payload.id, payload.description)
+            // Update logo override in local state
             if (payload.logo) {
               setLogoOverrides(prev => ({ ...prev, [payload.id]: payload.logo! }))
+              console.log('✅ Logo override set in local state for ID:', payload.id)
+            }
+            // Also bubble up to parent to track in portfolio state
+            if (onUpdateLogo) {
+              onUpdateLogo(payload.id, payload.logo || null)
+              console.log('✅ Logo override sent to parent for ID:', payload.id)
             }
           }}
         />

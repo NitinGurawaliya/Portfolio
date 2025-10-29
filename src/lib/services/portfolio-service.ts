@@ -17,6 +17,7 @@ export const publishPortfolio = async (data: {
   repositories: Repository[]
   userId: number
   userData: User | null
+  logoOverrides?: Record<number, string>
 }) => {
   const response = await fetch("/api/portfolio/publish-all", {
     method: "POST",
