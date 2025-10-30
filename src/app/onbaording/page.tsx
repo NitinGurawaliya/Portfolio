@@ -11,16 +11,31 @@ export default function OnboardingPage() {
   const [submitting, setSubmitting] = useState(false);
   // कोई भी redirectOnAuthFailure Option pass मत करो (default: false)
   const { user, session, loading } = useSession();
+  // flag: क्या url में onboarding-auth-success है?
+  const [isOnboardingCallback, setIsOnboardingCallback] = useState<boolean>(false);
 
   useEffect(() => {
-    // अगर user already portfolio बना चुका - (authenticated, repositories[] present) - सीधा डैशबोर्ड भेज दो
-    if (!loading && user && user.id && user.repositories && user.repositories.length > 0) {
-      router.replace("/dashboard");
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      setIsOnboardingCallback(!!params.get("onboarding-auth-success"));
+      console.log("[Onboarding] onboarding-auth-success query:", params.get("onboarding-auth-success"));
     }
-  }, [user, loading, router]);
+  }, []);
+
+  useEffect(() => {
+    console.log("[Onboarding] useEffect:", { loading, user, isOnboardingCallback });
+    // अगर user पुराना है और ये onboarding callback नहीं है, तबही डैशबोर्ड भेजो
+    if (!loading && user && user.id && user.repositories && user.repositories.length > 0 && !isOnboardingCallback) {
+      console.log("[Onboarding] Redirecting to dashboard because user is old and not from onboarding callback");
+      router.replace("/dashboard");
+    } else {
+      console.log("[Onboarding] Staying on onboarding. Cond:", { loading, user, isOnboardingCallback });
+    }
+  }, [user, loading, router, isOnboardingCallback]);
 
   // अब अगर user null भी हो तो onboarding modal चलता रहेगा
   const handleComplete = async (data: any) => {
+    console.log("[Onboarding] handleComplete payload:", { data, user });
     if (!user || !user.id) {
       toast({
         title: "Login Required",
@@ -40,31 +55,35 @@ export default function OnboardingPage() {
         customUsername: data.username,
       };
       const mappedSkills = data.skills.map((name: string) => ({ name, category: "custom" }));
+      const selectedRepos = data.projects?.map((p: any) => p.id).filter(Boolean) || [];
       const payload = {
         portfolioData,
         skills: mappedSkills,
-        selectedRepos: [],
+        selectedRepos, // --- This is mandatory for publish-all repository-portfolio mapping ---
         socials: [],
         deployedUrls: {},
         customNames: {},
         customDescriptions: {},
         githubUrls: {},
         selectedTheme: "light",
-        repoOrder: [],
+        repoOrder: selectedRepos, // keep order same as selectedRepos
         repositories: data.projects,
         userId: user.id,
         userData: user,
         logoOverrides: {},
       };
+      console.log("[Onboarding] publish-all payload:", payload);
       const res = await fetch("/api/portfolio/publish-all", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
       const json = await res.json();
+      console.log("[Onboarding] publish-all result:", json);
       if (json.success) {
-        toast({ title: "पोर्टफोलियो बन गया!", description: "आपका devfolio लाइव है!", variant: "default" });
-        router.push(`/${data.username}`);
+        toast({ title: "Portfolio created!", description: "You are being redirected to dashboard!", variant: "default" });
+        console.log("[Onboarding] Redirecting after onboarding to dashboard");
+        router.push("/dashboard");
       } else {
         throw new Error(json.error || "Server error");
       }

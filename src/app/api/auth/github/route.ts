@@ -6,41 +6,43 @@ import { sendEmail } from "@/lib/sendEmail"
 import { generateWelcomeEmail } from "@/lib/templates/welcomeEmail"
 
 export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url)
-  const code = searchParams.get("code")
-  const returnedState = searchParams.get("state")
-  
-  if (!code) {
-    // Redirect to GitHub OAuth
-    const requestUrl = new URL(req.url)
-    const baseUrl = `${requestUrl.protocol}//${requestUrl.host}`
-    
-    const githubAuthUrl = new URL("https://github.com/login/oauth/authorize")
-    githubAuthUrl.searchParams.set("client_id", process.env.GITHUB_CLIENT_ID!)
-    githubAuthUrl.searchParams.set("redirect_uri", `${baseUrl}/api/auth/github`)
-    githubAuthUrl.searchParams.set("scope", "read:user user:email public_repo")
-    // Generate CSRF state and store in httpOnly cookie
-    const state = randomBytes(16).toString("hex")
-    githubAuthUrl.searchParams.set("state", state)
+  const requestUrl = new URL(req.url);
+  const { searchParams } = requestUrl;
+  const code = searchParams.get("code");
+  const returnedState = searchParams.get("state");
 
-    const response = NextResponse.redirect(githubAuthUrl.toString())
+  if (!code) {
+    // --- OAUTH INIT: encode context in state param!
+    const baseUrl = `${requestUrl.protocol}//${requestUrl.host}`;
+    const githubAuthUrl = new URL("https://github.com/login/oauth/authorize");
+    githubAuthUrl.searchParams.set("client_id", process.env.GITHUB_CLIENT_ID!);
+    githubAuthUrl.searchParams.set("redirect_uri", `${baseUrl}/api/auth/github`);
+    githubAuthUrl.searchParams.set("scope", "read:user user:email public_repo");
+    // If onboarding requested, mark state, else identify as login
+    const onboardingFlag = searchParams.get("onboarding") === "1";
+    const randomPart = randomBytes(8).toString("hex");
+    const state = onboardingFlag ? `onboarding-${randomPart}` : `login-${randomPart}`;
+    githubAuthUrl.searchParams.set("state", state);
+    devLog("[GITHUB AUTH] Initiating OAuth | onboarding:", onboardingFlag, "| oauth state:", state);
+    // CSRF protection as before
+    const response = NextResponse.redirect(githubAuthUrl.toString());
     response.cookies.set("oauth_state", state, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       path: "/api/auth/github",
       maxAge: 10 * 60,
-    })
-    return response
+    });
+    return response;
   }
-  
+
   try {
-    // Validate state parameter to prevent CSRF
-    const stateCookie = req.cookies.get("oauth_state")?.value
+    // --- CALLBACK: recover context from state only
+    const stateCookie = req.cookies.get("oauth_state")?.value;
+    devLog("[GITHUB AUTH] Callback state param:", returnedState, "| cookie:", stateCookie);
     if (!returnedState || !stateCookie || returnedState !== stateCookie) {
-      const requestUrl = new URL(req.url)
-      const baseUrl = `${requestUrl.protocol}//${requestUrl.host}`
-      return NextResponse.redirect(`${baseUrl}/auth?error=state_mismatch`)
+      const baseUrl = `${requestUrl.protocol}//${requestUrl.host}`;
+      return NextResponse.redirect(`${baseUrl}/auth?error=state_mismatch`);
     }
     // Exchange code for access token
     const tokenResponse = await fetch("https://github.com/login/oauth/access_token", {
@@ -59,9 +61,8 @@ export async function GET(req: NextRequest) {
     const tokenData = await tokenResponse.json()
     
     if (tokenData.error) {
-      const requestUrl = new URL(req.url)
-      const baseUrl = `${requestUrl.protocol}//${requestUrl.host}`
-      return NextResponse.redirect(`${baseUrl}/auth?error=access_denied`)
+      const baseUrl = `${requestUrl.protocol}//${requestUrl.host}`;
+      return NextResponse.redirect(`${baseUrl}/auth?error=access_denied`);
     }
     
     // Get user data from GitHub
@@ -217,10 +218,15 @@ export async function GET(req: NextRequest) {
     devLog("Setting session cookie for user:", userData.login)
     
     // Get the current request URL to determine the correct base URL
-    const requestUrl = new URL(req.url)
-    const baseUrl = `${requestUrl.protocol}//${requestUrl.host}`
+    const baseUrl = `${requestUrl.protocol}//${requestUrl.host}`;
+    const isOnboarding = returnedState.startsWith("onboarding-");
+    devLog("[GITHUB AUTH] isOnboarding via state:", isOnboarding, "| state:", returnedState);
+    const redirectUrl = isOnboarding
+      ? `${baseUrl}/onbaording?onboarding-auth-success=1`
+      : `${baseUrl}/dashboard`;
+    devLog("[GITHUB AUTH] Will redirect to:", redirectUrl);
     
-    const response = NextResponse.redirect(`${baseUrl}/dashboard`)
+    const response = NextResponse.redirect(redirectUrl)
     // Clear state cookie
     response.cookies.set("oauth_state", "", { path: "/api/auth/github", maxAge: 0 })
     response.cookies.set("github-session", JSON.stringify(sessionData), {
@@ -234,9 +240,7 @@ export async function GET(req: NextRequest) {
     return response
     
   } catch (error) {
-    console.error("GitHub OAuth error:", error)
-    const requestUrl = new URL(req.url)
-    const baseUrl = `${requestUrl.protocol}//${requestUrl.host}`
-    return NextResponse.redirect(`${baseUrl}/auth?error=server_error`)
+    const baseUrl = `${requestUrl.protocol}//${requestUrl.host}`;
+    return NextResponse.redirect(`${baseUrl}/auth?error=server_error`);
   }
 }

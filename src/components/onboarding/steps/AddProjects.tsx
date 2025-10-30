@@ -6,10 +6,28 @@ import { X, Plus, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 interface Project {
-  url: string;
-  title: string;
+  id: number;
+  name: string;
+  fullName?: string;
   description: string;
-  favicon: string;
+  htmlUrl: string;
+  homepage?: string;
+  language: string;
+  stargazersCount?: number;
+  forksCount?: number;
+  isPrivate?: boolean;
+  isFork?: boolean;
+  size?: number;
+  createdAt: string;
+  updatedAt: string;
+  pushedAt: string;
+  isImported?: boolean;
+  favicon?: string;
+  logo?: string;
+  siteName?: string;
+  keywords?: string;
+  author?: string;
+  url: string; // keep original url for UI display
 }
 
 interface AddProjectsProps {
@@ -26,20 +44,37 @@ export const AddProjects = ({ projects: initialProjects, onNext, onBack }: AddPr
   const fetchMetadata = async (url: string) => {
     setLoading(true);
     try {
-      // असली API कॉल:
       const response = await fetch("/api/extract-metadata", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url }),
       });
       const data = await response.json();
-      if (!data.success || !data.metadata) throw new Error("No metadata found");
-      const meta = data.metadata;
+      if (!data.success || !data.projectData) throw new Error("No metadata found");
+      const pd = data.projectData;
       const project: Project = {
-        url: meta.url || url,
-        title: meta.title || url,
-        description: meta.description || "",
-        favicon: meta.favicon || "/favicon.ico",
+        id: pd.id,
+        name: pd.name || (data.metadata?.title || url),
+        fullName: pd.fullName,
+        description: pd.description || "",
+        htmlUrl: pd.htmlUrl || url,
+        homepage: pd.homepage || url,
+        language: pd.language || "",
+        stargazersCount: pd.stargazersCount || 0,
+        forksCount: pd.forksCount || 0,
+        isPrivate: pd.isPrivate || false,
+        isFork: pd.isFork || false,
+        size: pd.size || 0,
+        createdAt: pd.createdAt || new Date().toISOString(),
+        updatedAt: pd.updatedAt || new Date().toISOString(),
+        pushedAt: pd.pushedAt || new Date().toISOString(),
+        isImported: true,
+        favicon: pd.favicon || data.metadata?.favicon || "/favicon.ico",
+        logo: pd.logo,
+        siteName: pd.siteName,
+        keywords: pd.keywords,
+        author: pd.author,
+        url: pd.htmlUrl || url,
       };
       setProjects([...projects, project]);
       setCurrentUrl("");
@@ -136,7 +171,7 @@ export const AddProjects = ({ projects: initialProjects, onNext, onBack }: AddPr
             <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
               {projects.map((project, index) => (
                 <div
-                  key={index}
+                  key={project.id}
                   className="flex items-start gap-3 p-3 border border-border rounded-lg bg-gradient-to-br from-secondary/50 to-secondary/30 hover:border-accent/50 transition-all duration-300 group animate-slide-up"
                 >
                   <img
@@ -148,7 +183,7 @@ export const AddProjects = ({ projects: initialProjects, onNext, onBack }: AddPr
                     }}
                   />
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm truncate group-hover:text-accent transition-colors">{project.title}</p>
+                    <p className="font-medium text-sm truncate group-hover:text-accent transition-colors">{project.name}</p>
                     <p className="text-xs text-muted-foreground truncate">{project.url}</p>
                   </div>
                   <Button

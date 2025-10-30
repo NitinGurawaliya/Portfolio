@@ -226,7 +226,7 @@ export function HomeSection({ user, portfolioData, onUpdate, usernameAvailabilit
               <div className="relative">
               <Input
                 id="customUsername"
-                value={formData.customUsername}
+                value={portfolioData?.customUsername || user?.githubUsername || ""}
                 onChange={(e) => handleUsernameChange(e.target.value)}
                 className="bg-gray-50 text-black font-medium text-sm focus:bg-white pr-10 placeholder:text-gray-400"
                 placeholder="Your portfolio username"

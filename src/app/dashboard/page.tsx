@@ -62,6 +62,19 @@ export default function DashboardPage() {
     }
   }, [user])
 
+  // DashboardPage में useEffect डालो:
+  useEffect(() => {
+    // onboarding से redirect आया है तो resetAfterPublish
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("just-onboarded")) {
+        portfolio.resetAfterPublish();
+        params.delete("just-onboarded");
+        window.history.replaceState(null, "", window.location.pathname);
+      }
+    }
+  }, []);
+
   // Publish handler
   const handlePublishAll = async () => {
     if (isPublishing) return

@@ -6,29 +6,32 @@ import { AddSkills } from "@/components/onboarding/steps/AddSkills";
 import { SharePortfolio } from "@/components/onboarding/steps/SharePortofolio";
 import { Github } from "lucide-react";
 
-// एक नया कम्पोनेंट - Github Auth Step
-const GithubAuthStep = ({ onSuccess, onBack }) => {
-  // लॉगिन प्रोसेस ट्रैक करने के लिए URL क्वेरी स्टेट
+// GithubAuthStep definition, props typing ठीक करो
+type GithubAuthStepProps = {
+  onSuccess: () => void;
+  onBack: () => void;
+};
+
+// GithubAuthStep
+const GithubAuthStep = ({ onSuccess, onBack }: GithubAuthStepProps) => {
   useEffect(() => {
-    // Github oauth callback आने पे session देखो और ऑनसक्सेस करो
     const params = new URLSearchParams(window.location.search);
     if (params.get("onboarding-auth-success")) {
       onSuccess();
     }
   }, [onSuccess]);
 
-  // Auth redirect में दिखाने वाला UI
   return (
     <div className="flex flex-col items-center justify-center space-y-8 ">
-      <h2 className="text-2xl font-bold mb-4">GitHub से लॉगिन करें</h2>
+      <h2 className="text-2xl font-bold mb-4">Sign in with GitHub</h2>
       <a
-        href={`/api/auth/github?onboarding-redirect=1`}
+        href={`/api/auth/github?onboarding=1`}
         className="bg-gradient-to-r from-purple-600 to-blue-600 text-white font-medium py-3 px-6 rounded-xl hover:from-purple-700 hover:to-blue-700 flex items-center text-lg"
       >
-        <Github className="mr-3 h-6 w-6" /> Github से लॉगिन करें
+        <Github className="mr-3 h-6 w-6" /> Continue with GitHub
       </a>
       <button className="mt-8 text-gray-500 underline" onClick={onBack}>
-        वापिस जाएं
+        Back
       </button>
     </div>
   );
@@ -36,12 +39,7 @@ const GithubAuthStep = ({ onSuccess, onBack }) => {
 
 interface OnboardingData {
   username: string;
-  projects: Array<{
-    url: string;
-    title: string;
-    description: string;
-    favicon: string;
-  }>;
+  projects: any[];
   skills: string[];
 }
 interface OnboardingModalProps {
@@ -49,24 +47,29 @@ interface OnboardingModalProps {
   onComplete: (data: OnboardingData) => void;
 }
 export const OnboardingModal = ({ open, onComplete }: OnboardingModalProps) => {
-  // तीनों state में एक नया: isAuthenticated
   const [step, setStep] = useState(1);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  // Fix: projects initial value should be [] or always contain id
   const [data, setData] = useState<OnboardingData>({
     username: "",
-    projects: [],
+    projects: [], // always Project[] type
     skills: [],
   });
 
-  // Login के बाद step अपडेट करें
   useEffect(() => {
-    // OAuth redirect के बाद (window.location) क्वेरी से मिआता है
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
       if (params.get("onboarding-auth-success")) {
+        let restored = data.username;
+        try {
+          if (!restored) restored = localStorage.getItem("onboardingUsername") || "";
+        } catch {}
+        if (restored && restored !== data.username) {
+          setData(prev => ({ ...prev, username: restored }));
+        }
+        try { localStorage.removeItem("onboardingUsername"); } catch {}
         setIsAuthenticated(true);
-        setStep(3); // सीधे projects पर
-        // Query string साफ कर दो UX के लिए
+        setStep(3); // Resume directly to AddProjects step
         params.delete("onboarding-auth-success");
         const cleanUrl = window.location.pathname;
         window.history.replaceState(null, "", cleanUrl);
@@ -87,7 +90,6 @@ export const OnboardingModal = ({ open, onComplete }: OnboardingModalProps) => {
     setStep((prev) => (prev > 1 ? prev - 1 : 1));
   };
 
-  // Component rendering per step
   return (
     <Dialog open={open}>
       <DialogContent className="max-w-lg p-0 gap-0 border-border shadow-2xl overflow-hidden">
@@ -107,6 +109,7 @@ export const OnboardingModal = ({ open, onComplete }: OnboardingModalProps) => {
               username={data.username}
               onNext={(username) => {
                 updateData({ username });
+                try { localStorage.setItem("onboardingUsername", username); } catch {}
                 setStep(2);
               }}
             />

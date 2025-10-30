@@ -14,23 +14,20 @@ export const ClaimPage = ({ username: initialUsername, onNext }: ClaimPageProps)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!username.trim()) {
+    const trimmed = username.trim();
+    if (!trimmed) {
       setError("Username is required");
       return;
     }
-
-    if (username.length < 3) {
+    if (trimmed.length < 3) {
       setError("Username must be at least 3 characters");
       return;
     }
-
-    if (!/^[a-zA-Z0-9_-]+$/.test(username)) {
+    if (!/^[a-zA-Z0-9_-]+$/.test(trimmed)) {
       setError("Username can only contain letters, numbers, hyphens, and underscores");
       return;
     }
-
-    onNext(username);
+    onNext(trimmed);
   };
 
   return (
