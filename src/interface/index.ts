@@ -113,6 +113,7 @@ export interface Portfolio {
     skills: Skill[]
     socials: Social[]
     repositories: PortfolioRepository[]
+    experiences?: any[]
     user: {
       githubUsername: string
       location: string

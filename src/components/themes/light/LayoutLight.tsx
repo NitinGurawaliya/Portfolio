@@ -31,6 +31,7 @@ interface PortfolioData {
   skills: any[]
   socials: any[]
   repositories: any[]
+  experiences?: any[]
   user: {
     githubUsername: string
     location: string

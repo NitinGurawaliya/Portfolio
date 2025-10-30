@@ -23,15 +23,13 @@ EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 CREATE INDEX IF NOT EXISTS "Experience_portfolioId_idx" ON "Experience"("portfolioId");
 
 -- Trigger to keep updatedAt fresh
-DO $$ BEGIN
-  CREATE OR REPLACE FUNCTION set_experience_updated_at()
-  RETURNS TRIGGER AS $$
-  BEGIN
-    NEW."updatedAt" = NOW();
-    RETURN NEW;
-  END;
-  $$ LANGUAGE plpgsql;
-EXCEPTION WHEN duplicate_function THEN NULL; END $$;
+CREATE OR REPLACE FUNCTION set_experience_updated_at()
+RETURNS TRIGGER AS $func$
+BEGIN
+  NEW."updatedAt" = NOW();
+  RETURN NEW;
+END;
+$func$ LANGUAGE plpgsql;
 
 DO $$ BEGIN
   CREATE TRIGGER experience_set_updated_at
