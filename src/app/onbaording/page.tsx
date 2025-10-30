@@ -81,9 +81,10 @@ export default function OnboardingPage() {
       const json = await res.json();
       console.log("[Onboarding] publish-all result:", json);
       if (json.success) {
-        toast({ title: "Portfolio created!", description: "You are being redirected to dashboard!", variant: "default" });
-        console.log("[Onboarding] Redirecting after onboarding to dashboard");
-        router.push("/dashboard");
+        toast({ title: "Portfolio published!", description: "Your portfolio is live.", variant: "default" });
+        console.log("[Onboarding] Publish complete. Staying on Share step");
+        setSubmitting(false);
+        // Do not redirect here; Share step has a button to go to dashboard
       } else {
         throw new Error(json.error || "Server error");
       }

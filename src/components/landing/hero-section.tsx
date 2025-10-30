@@ -1,7 +1,22 @@
+"use client";
+
 import { Button } from "@/components/ui/button"
 import { ArrowRight, Github, Play } from "lucide-react"
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 export function HeroSection() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const router = useRouter();
+  useEffect(() => {
+    fetch("/api/session", { cache: "no-store" }).then(async (res) => {
+      if (res.ok) {
+        const data = await res.json();
+        if (data.session) setIsLoggedIn(true);
+      }
+    });
+  }, []);
+
   return (
     <section className="relative overflow-hidden py-8 lg:py-28">
       <div className="absolute inset-0 grid-bg opacity-30" />
@@ -41,6 +56,16 @@ export function HeroSection() {
           </div>
 
           <div className="mt-8 sm:mt-12 text-xs sm:text-sm text-muted-foreground">Used by devs who actually ship stuff</div>
+
+          <div className="flex flex-col items-center">
+            <div className="mt-3">
+              {isLoggedIn ? (
+                <span className="text-blue-600 text-sm underline cursor-pointer" onClick={() => router.push("/dashboard")}>Already logged in? Go to dashboard</span>
+              ) : (
+                <span className="text-blue-500 text-sm underline cursor-pointer" onClick={() => router.push("/auth")}>Already have an account? Login</span>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </section>

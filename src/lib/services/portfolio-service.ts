@@ -62,7 +62,7 @@ export const loadPortfolioData = async (username: string) => {
 /**
  * Username availability check करता है
  */
-export const checkUsernameAvailability = async (username: string, currentUsername?: string, githubUsername?: string) => {
+export const checkUsernameAvailability = async (username: string, currentUsername?: string, githubUsername?: string, currentUserId?: number) => {
   if (!username.trim()) {
     return {
       isChecking: false,
@@ -70,12 +70,12 @@ export const checkUsernameAvailability = async (username: string, currentUsernam
       message: ""
     }
   }
-  
+
   // Check if the username is the current user's username (case insensitive)
   const trimmedNewUsername = username.trim().toLowerCase()
   const trimmedCurrentUsername = currentUsername?.trim().toLowerCase()
   const trimmedGithubUsername = githubUsername?.trim().toLowerCase()
-  
+
   if ((trimmedCurrentUsername && trimmedNewUsername === trimmedCurrentUsername) || 
       (trimmedGithubUsername && trimmedNewUsername === trimmedGithubUsername)) {
     return {
@@ -84,28 +84,27 @@ export const checkUsernameAvailability = async (username: string, currentUsernam
       message: "This is your current username"
     }
   }
-  
+
   try {
-    const response = await fetch(`/api/portfolio/publish?username=${encodeURIComponent(username)}`)
-    
-    if (response.ok) {
-      return {
-        isChecking: false,
-        isAvailable: false,
-        message: "Username already taken"
-      }
-    } else if (response.status === 404) {
-      return {
-        isChecking: false,
-        isAvailable: true,
-        message: "Username available"
-      }
-    } else {
+    const res = await fetch("/api/portfolio/check-username", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, currentUserId })
+    })
+    const data = await res.json()
+
+    if (!res.ok) {
       return {
         isChecking: false,
         isAvailable: null,
-        message: "Error checking availability"
+        message: data?.message || data?.error || "Error checking availability"
       }
+    }
+
+    return {
+      isChecking: false,
+      isAvailable: !!data.available,
+      message: data.message || (data.available ? "Username available" : "Username already taken")
     }
   } catch (error) {
     return {

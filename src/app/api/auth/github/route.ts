@@ -221,11 +221,47 @@ export async function GET(req: NextRequest) {
     const baseUrl = `${requestUrl.protocol}//${requestUrl.host}`;
     const isOnboarding = returnedState.startsWith("onboarding-");
     devLog("[GITHUB AUTH] isOnboarding via state:", isOnboarding, "| state:", returnedState);
-    const redirectUrl = isOnboarding
-      ? `${baseUrl}/onbaording?onboarding-auth-success=1`
-      : `${baseUrl}/dashboard`;
+
+    // Decide redirect based on flow and whether user already has a published portfolio
+    let redirectUrl: string
+    if (isOnboarding) {
+      // Even if onboarding was requested, if user already has a published portfolio, skip onboarding
+      try {
+        const existingPortfolio = await prisma.portfolio.findFirst({
+          where: { userId: userData.id.toString(), isPublished: true },
+          select: { id: true }
+        })
+        if (existingPortfolio) {
+          devLog("[GITHUB AUTH] Onboarding flag present but user already has portfolio. Redirecting to dashboard.")
+          redirectUrl = `${baseUrl}/dashboard`
+        } else {
+          redirectUrl = `${baseUrl}/onbaording?onboarding-auth-success=1`
+        }
+      } catch (e) {
+        devLog("[GITHUB AUTH] Portfolio check failed (onboarding branch), defaulting to onboarding", e)
+        redirectUrl = `${baseUrl}/onbaording?onboarding-auth-success=1`
+      }
+    } else {
+      // Check if user already has a published portfolio
+      try {
+        const existingPortfolio = await prisma.portfolio.findFirst({
+          where: { userId: userData.id.toString(), isPublished: true },
+          select: { id: true }
+        })
+        if (existingPortfolio) {
+          devLog("[GITHUB AUTH] Existing published portfolio found. Redirecting to dashboard.")
+          redirectUrl = `${baseUrl}/dashboard`
+        } else {
+          devLog("[GITHUB AUTH] No published portfolio found. Redirecting to onboarding.")
+          redirectUrl = `${baseUrl}/onbaording`
+        }
+      } catch (e) {
+        devLog("[GITHUB AUTH] Portfolio check failed, defaulting to onboarding", e)
+        redirectUrl = `${baseUrl}/onbaording`
+      }
+    }
     devLog("[GITHUB AUTH] Will redirect to:", redirectUrl);
-    
+
     const response = NextResponse.redirect(redirectUrl)
     // Clear state cookie
     response.cookies.set("oauth_state", "", { path: "/api/auth/github", maxAge: 0 })
@@ -235,8 +271,8 @@ export async function GET(req: NextRequest) {
       sameSite: "lax",
       maxAge: 24 * 60 * 60, // 24 hours
     })
-    
-    devLog("Redirecting to dashboard at:", `${baseUrl}/dashboard`)
+
+    devLog("Redirecting to:", redirectUrl)
     return response
     
   } catch (error) {

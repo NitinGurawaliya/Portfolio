@@ -91,7 +91,8 @@ export const usePortfolioHandlers = (
     const result = await checkUsernameAvailability(
       username,
       originalData?.portfolioData?.customUsername,
-      user?.githubUsername
+      user?.githubUsername,
+      user?.id
     )
     
     setUsernameAvailability(result)

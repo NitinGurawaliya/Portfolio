@@ -21,7 +21,7 @@ export const metadata: Metadata = {
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-background">
-      <SessionRedirect />
+      {/* <SessionRedirect />  -- REMOVE AUTO-REDIRECT! */}
       <Header />
       <main>
         <HeroSection />

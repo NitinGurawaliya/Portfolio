@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Check, Twitter, Linkedin, Facebook, Link as LinkIcon } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
@@ -10,7 +10,20 @@ interface SharePortfolioProps {
 
 export const SharePortfolio = ({ username, onComplete }: SharePortfolioProps) => {
   const [copied, setCopied] = useState(false);
+  const [publishedOnce, setPublishedOnce] = useState(false);
   const portfolioUrl = `https://portfolio.dev/${username}`;
+
+  // Auto-publish when this step mounts
+  useEffect(() => {
+    if (!publishedOnce) {
+      setPublishedOnce(true);
+      try {
+        onComplete();
+      } catch (e) {
+        // no-op; toast inside publisher will show error if any
+      }
+    }
+  }, [publishedOnce, onComplete]);
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(portfolioUrl);
@@ -108,7 +121,7 @@ export const SharePortfolio = ({ username, onComplete }: SharePortfolioProps) =>
 
       <Button 
         variant="default" 
-        onClick={onComplete} 
+        onClick={() => { window.location.assign("/dashboard") }} 
         className="w-full shadow-lg hover:shadow-xl hover:shadow-accent/30 transition-all duration-300 hover:scale-[1.02] font-medium" 
         size="lg"
       >
