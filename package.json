@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && (prisma migrate deploy || true) && node scripts/validate-database-schema.js && next build",
+    "vercel-build": "prisma generate && node scripts/validate-database-schema.js && next build",
     "start": "next start",
     "lint": "eslint",
     "postinstall": "prisma generate",
