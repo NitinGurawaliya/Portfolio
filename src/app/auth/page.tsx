@@ -10,16 +10,21 @@ export default function AuthPage() {
   const [isChecking, setIsChecking] = useState(true)
 
   useEffect(() => {
-    // Fast session detection
+    // Session detection और New/Old user redirect logic
     const checkSession = async () => {
       try {
-        const response = await fetch("/api/session", { cache: "no-store" })
+        const response = await fetch("/api/session", { cache: "no-store" });
         if (response.ok) {
-          const data = await response.json()
+          const data = await response.json();
           if (data.session) {
-            // User is already logged in, redirect to dashboard
-            router.push("/dashboard")
-            return
+            // अगर पुराना यूज़र है — repositories या customUsername या किसी और पोर्टफोलियो state से चेक करो
+            if (data.session.repositories && data.session.repositories.length > 0) {
+              router.push("/dashboard");
+              return;
+            }
+            // वरना New User माना, Onboarding flow
+            router.push("/onbaording");
+            return;
           }
         }
       } catch (error) {
@@ -28,7 +33,6 @@ export default function AuthPage() {
         setIsChecking(false)
       }
     }
-
     checkSession()
   }, [router])
 

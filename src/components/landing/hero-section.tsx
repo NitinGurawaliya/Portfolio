@@ -21,10 +21,15 @@ export function HeroSection() {
           
           <div className="flex flex-col gap-3 sm:gap-4 sm:flex-row sm:justify-center">
             <Button size="lg" className="text-sm sm:text-base w-full sm:w-auto" asChild>
+              <a href="/onbaording">
+                Claim your page
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </a>
+            </Button>
+            <Button variant="outline" size="lg" className="text-base bg-transparent" asChild>
               <a href="/auth">
                 <Github className="mr-2 h-4 w-4" />
                 Let's Do This
-                <ArrowRight className="ml-2 h-4 w-4" />
               </a>
             </Button>
             {/* <Button variant="outline" size="lg" className="text-base bg-transparent" asChild>
