@@ -34,17 +34,17 @@ export function HeroSection() {
             </span>
           </h1>
           
-          <div className="flex flex-col gap-3 sm:gap-4 sm:flex-row sm:justify-center">
-            <Button size="lg" className="text-sm sm:text-base w-full sm:w-auto" asChild>
+          <div className="flex flex-row flex-wrap gap-3 sm:gap-4 justify-center">
+            <Button size="lg" className="text-sm sm:text-base w-[220px]" asChild>
               <a href="/onbaording">
                 Claim your page
                 <ArrowRight className="ml-2 h-4 w-4" />
               </a>
             </Button>
-            <Button variant="outline" size="lg" className="text-base bg-transparent" asChild>
-              <a href="/auth">
-                <Github className="mr-2 h-4 w-4" />
-                Let's Do This
+            <Button variant="outline" size="lg" className="text-base bg-transparent w-[220px]" asChild>
+              <a href="https://devfolio.cc/Nitin" target="_blank" rel="noopener noreferrer">
+                <Play className="mr-2 h-4 w-4" />
+                See Demo Portfolio
               </a>
             </Button>
             {/* <Button variant="outline" size="lg" className="text-base bg-transparent" asChild>
@@ -55,10 +55,8 @@ export function HeroSection() {
             </Button> */}
           </div>
 
-          <div className="mt-8 sm:mt-12 text-xs sm:text-sm text-muted-foreground">Used by devs who actually ship stuff</div>
-
-          <div className="flex flex-col items-center">
-            <div className="mt-3">
+          <div className="flex flex-col items-center mt-2">
+            <div>
               {isLoggedIn ? (
                 <span className="text-blue-600 text-sm underline cursor-pointer" onClick={() => router.push("/dashboard")}>Already logged in? Go to dashboard</span>
               ) : (
@@ -66,6 +64,8 @@ export function HeroSection() {
               )}
             </div>
           </div>
+
+          <div className="mt-8 sm:mt-12 text-xs sm:text-sm text-muted-foreground">Used by devs who actually ship stuff</div>
         </div>
       </div>
     </section>
