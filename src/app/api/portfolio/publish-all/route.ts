@@ -27,7 +27,8 @@ export async function POST(req: NextRequest) {
       repositories,
       userId,
       userData,
-      logoOverrides 
+      logoOverrides,
+      experiences
     } = body
 
     devLog("👤 User ID:", userId)
@@ -286,6 +287,24 @@ export async function POST(req: NextRequest) {
             portfolioId: portfolio.id,
           }))
         })
+      }
+
+      // Replace experiences (delete all and recreate from payload)
+      if (Array.isArray(experiences)) {
+        await tx.experience.deleteMany({ where: { portfolioId: portfolio.id } })
+        if (experiences.length > 0) {
+          await tx.experience.createMany({
+            data: experiences.map((exp: any) => ({
+              portfolioId: portfolio.id,
+              companyName: exp.companyName,
+              companyUrl: exp.companyUrl || null,
+              faviconUrl: exp.faviconUrl || null,
+              role: exp.role || null,
+              duration: exp.duration || null,
+              description: exp.description || null,
+            }))
+          })
+        }
       }
 
       // Add selected repositories

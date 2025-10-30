@@ -75,6 +75,7 @@ model Portfolio {
   repositories   PortfolioRepository[]
   skills         Skill[]
   socials        Social[]
+  experiences    Experience[]
 }
 
 model Skill {
@@ -224,4 +225,20 @@ model DailyProjectViews {
   @@index([projectId])
   @@index([date])
   @@index([portfolioId, projectId]) // Composite index for faster lookups
+}
+
+model Experience {
+  id           Int       @id @default(autoincrement())
+  portfolioId  Int
+  companyName  String
+  companyUrl   String?
+  faviconUrl   String?
+  role         String? // SDE, SDE2, etc.
+  duration     String? // e.g., May 2023 - May 2024
+  description  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  portfolio    Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+
+  @@index([portfolioId])
 }

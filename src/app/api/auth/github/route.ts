@@ -227,10 +227,11 @@ export async function GET(req: NextRequest) {
     if (isOnboarding) {
       // Even if onboarding was requested, if user already has a published portfolio, skip onboarding
       try {
-        const existingPortfolio = await prisma.portfolio.findFirst({
-          where: { userId: userData.id.toString(), isPublished: true },
+        const dbUser = await prisma.user.findUnique({ where: { githubId: userData.id.toString() }, select: { id: true } })
+        const existingPortfolio = dbUser ? await prisma.portfolio.findFirst({
+          where: { userId: dbUser.id, isPublished: true },
           select: { id: true }
-        })
+        }) : null
         if (existingPortfolio) {
           devLog("[GITHUB AUTH] Onboarding flag present but user already has portfolio. Redirecting to dashboard.")
           redirectUrl = `${baseUrl}/dashboard`
@@ -244,10 +245,11 @@ export async function GET(req: NextRequest) {
     } else {
       // Check if user already has a published portfolio
       try {
-        const existingPortfolio = await prisma.portfolio.findFirst({
-          where: { userId: userData.id.toString(), isPublished: true },
+        const dbUser = await prisma.user.findUnique({ where: { githubId: userData.id.toString() }, select: { id: true } })
+        const existingPortfolio = dbUser ? await prisma.portfolio.findFirst({
+          where: { userId: dbUser.id, isPublished: true },
           select: { id: true }
-        })
+        }) : null
         if (existingPortfolio) {
           devLog("[GITHUB AUTH] Existing published portfolio found. Redirecting to dashboard.")
           redirectUrl = `${baseUrl}/dashboard`

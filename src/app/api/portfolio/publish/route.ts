@@ -255,6 +255,9 @@ export async function GET(req: NextRequest) {
         user: true,
         skills: true,
         socials: true,
+        experiences: {
+          orderBy: { createdAt: 'desc' }
+        },
         repositories: {
           select: {
             id: true,

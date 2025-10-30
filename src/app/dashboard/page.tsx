@@ -100,6 +100,7 @@ export default function DashboardPage() {
         selectedRepos: portfolio.selectedRepos,
         skills: portfolio.skills,
         socials: portfolio.socials,
+        experiences: portfolio.experiences,
         deployedUrls: portfolio.deployedUrls,
         customNames: portfolio.customNames,
         customDescriptions: portfolio.customDescriptions,
@@ -144,6 +145,8 @@ export default function DashboardPage() {
             onUpdate={handlers.handleUpdatePortfolioData}
             usernameAvailability={handlers.usernameAvailability}
             isInitialLoad={portfolio.isInitialLoad}
+            experiences={portfolio.experiences}
+            onExperiencesChange={portfolio.setExperiences}
           />
         )
       case "repos":

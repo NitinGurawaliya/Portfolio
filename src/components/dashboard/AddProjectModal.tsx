@@ -216,6 +216,7 @@ export function AddProjectModal({ open, onOpenChange, repositories, onAddImporte
                   <span className="px-3 py-1.5 border rounded-md hover:bg-gray-50">Upload image</span>
                 </label>
               </div>
+              
             </div>
           </div>
 

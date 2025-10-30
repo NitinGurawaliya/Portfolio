@@ -18,6 +18,8 @@ import {
   Loader2
 } from "lucide-react"
 import { debounce } from "lodash"
+import { AddExperienceModal } from "./AddExperienceModal"
+import { EditExperienceModal } from "./EditExperienceModal"
 
 interface HomeSectionProps {
   user: any
@@ -29,9 +31,11 @@ interface HomeSectionProps {
     message: string
   }
   isInitialLoad?: boolean
+  experiences?: any[]
+  onExperiencesChange?: (exps: any[]) => void
 }
 
-export function HomeSection({ user, portfolioData, onUpdate, usernameAvailability, isInitialLoad = false }: HomeSectionProps) {
+export function HomeSection({ user, portfolioData, onUpdate, usernameAvailability, isInitialLoad = false, experiences: experiencesProp = [], onExperiencesChange }: HomeSectionProps) {
   const [formData, setFormData] = useState({
     displayName: "",
     jobTitle: "",
@@ -40,6 +44,21 @@ export function HomeSection({ user, portfolioData, onUpdate, usernameAvailabilit
     customUsername: "",
   })
   const fileInputRef = useState<HTMLInputElement | null>(null)[0]
+  const [isAddExpOpen, setIsAddExpOpen] = useState(false)
+  const [experiences, setExperiences] = useState<any[]>(experiencesProp)
+  const [editingExp, setEditingExp] = useState<any | null>(null)
+
+  // Ctrl+K to open Add Experience
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K')) {
+        e.preventDefault()
+        setIsAddExpOpen(true)
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [])
 
   // Animation variants
   const itemVariants = {
@@ -140,25 +159,45 @@ export function HomeSection({ user, portfolioData, onUpdate, usernameAvailabilit
     handleInputChange("customUsername", value)
   }
 
+  useEffect(() => {
+    setExperiences(experiencesProp || [])
+  }, [experiencesProp])
+
+  const handleExperienceAdded = (exp: any) => {
+    const withId = { id: exp.id || Date.now(), ...exp }
+    const next = [withId, ...experiences]
+    setExperiences(next)
+    onExperiencesChange?.(next)
+  }
+  const handleExperienceSaved = (exp: any) => {
+    const next = experiences.map(e => (e.id === exp.id ? exp : e))
+    setExperiences(next)
+    onExperiencesChange?.(next)
+  }
+
   return (
     <motion.div 
-      className="space-y-4"
+      className="space-y-2 px-6 md:px-10"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
     >
       {/* Welcome Section */}
       <motion.div
+        className="-mt-6 md:-mt-8"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
       >
         <Card className="bg-transparent shadow-none border-none">
-          <CardHeader className="pb-0">
-            <CardTitle className="text-lg text-black flex items-center font-bold">
-              <User className="h-4 w-4 mr-2" />
-              Bio
-            </CardTitle>
+          <CardHeader className="py-0">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-xl md:text-2xl text-black flex items-center font-bold">
+                <User className="h-4 w-4 mr-2" />
+                Bio
+              </CardTitle>
+              <Button onClick={() => setIsAddExpOpen(true)} className="bg-black text-white hover:bg-gray-800 h-8 px-3 text-xs rounded-lg">Add Experience</Button>
+            </div>
           </CardHeader>
         </Card>
       </motion.div>
@@ -170,47 +209,10 @@ export function HomeSection({ user, portfolioData, onUpdate, usernameAvailabilit
         transition={{ duration: 0.4, delay: 0.1 }}
       >
         <Card className="bg-white shadow-none border-none">
-          <CardContent className="pt-4 space-y-4">
-          {/* Profile Picture */}
-          <div className="flex items-center space-x-4">
-            <Avatar className="w-16 h-16">
-              <AvatarImage src={formData.profilePic} />
-              <AvatarFallback className="bg-black text-white">
-                {formData.displayName?.charAt(0) || "U"}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <input
-                type="file"
-                ref={(el) => {
-                  if (el) {
-                    const inputRef = el
-                    inputRef.setAttribute('accept', 'image/jpeg,image/jpg,image/png,image/gif')
-                  }
-                }}
-                onChange={handlePhotoChange}
-                accept="image/jpeg,image/jpg,image/png,image/gif"
-                className="hidden"
-                id="photo-upload"
-              />
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="mb-2 text-black hover:bg-black hover:text-white font-medium text-xs"
-                onClick={() => document.getElementById('photo-upload')?.click()}
-                type="button"
-              >
-                <Upload className="h-3 w-3 mr-1.5" />
-                Change Photo
-              </Button>
-              <p className="text-xs text-gray-400">
-                JPG, PNG or GIF. Max size 2MB.
-              </p>
-            </div>
-          </div>
+          <CardContent className="py-1 space-y-2">
 
           {/* Basic Info */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 px-2">
             <div className="space-y-1.5">
               <Label htmlFor="displayName" className="text-black font-medium text-sm">Display Name</Label>
               <Input
@@ -257,7 +259,7 @@ export function HomeSection({ user, portfolioData, onUpdate, usernameAvailabilit
           </div>
 
           {/* Job Title and Bio Side by Side */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 px-2">
             <div className="space-y-1.5">
               <Label htmlFor="jobTitle" className="text-black font-medium text-sm">Job Title</Label>
               <Input
@@ -269,15 +271,15 @@ export function HomeSection({ user, portfolioData, onUpdate, usernameAvailabilit
                 maxLength={50}
               />
             </div>
-            <div className="space-y-1.5">
+            <div className="space-y-0.5">
               <Label htmlFor="bio" className="text-black font-medium text-sm">Bio</Label>
               <Textarea
                 id="bio"
                 value={formData.bio}
                 onChange={(e) => handleInputChange("bio", e.target.value)}
-                className="bg-gray-50 text-black font-medium text-sm focus:bg-white placeholder:text-gray-400"
+                className="bg-gray-50 text-black font-medium text-base focus:bg-white placeholder:text-gray-400 px-3 py-1.5 leading-snug"
                 placeholder="Tell us about yourself..."
-                rows={3}
+                rows={2}
                 maxLength={150}
               />
             </div>
@@ -286,6 +288,66 @@ export function HomeSection({ user, portfolioData, onUpdate, usernameAvailabilit
       </Card>
       </motion.div>
 
+      {/* Experiences Section */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.15 }}
+      >
+        <Card className="bg-white shadow-none border-none max-w-2xl">
+          <CardContent className="pt-4 space-y-4">
+            <div className="text-base font-semibold text-black">Work Experience</div>
+            <div className="space-y-3">
+              {experiences.map(exp => (
+                <div key={exp.id} className="border rounded-lg p-4 flex items-start gap-3">
+                  {exp.faviconUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={exp.faviconUrl} alt={exp.companyName} className="h-6 w-6 mt-0.5" />
+                  ) : (
+                    <div className="h-6 w-6 rounded bg-gray-200 mt-0.5" />
+                  )}
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between">
+                      <div className="font-semibold text-sm text-black">
+                        {exp.companyName}
+                        {exp.role ? <span className="text-gray-500 font-normal"> • {exp.role}</span> : null}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button variant="secondary" className="h-8 rounded-lg text-xs" onClick={() => setEditingExp(exp)}>Edit</Button>
+                      </div>
+                    </div>
+                    {exp.duration ? (
+                      <div className="text-[11px] text-gray-500 mt-0.5">{exp.duration}</div>
+                    ) : null}
+                    {exp.description ? (
+                      <div className="text-xs text-gray-600 mt-1 whitespace-pre-line">{exp.description}</div>
+                    ) : null}
+                  </div>
+                </div>
+              ))}
+              {experiences.length === 0 && (
+                <div className="text-xs text-gray-500">No experiences added yet.</div>
+              )}
+            </div>
+
+            <AddExperienceModal
+              open={isAddExpOpen}
+              onOpenChange={setIsAddExpOpen}
+              userId={((user as any)?.githubId?.toString?.() || (user as any)?.githubUsername) as string}
+              onAdded={handleExperienceAdded}
+            />
+            {editingExp && (
+              <EditExperienceModal
+                open={!!editingExp}
+                onOpenChange={(o) => !o && setEditingExp(null)}
+                userId={((user as any)?.githubId?.toString?.() || (user as any)?.githubUsername) as string}
+                initial={editingExp}
+                onSave={handleExperienceSaved}
+              />
+            )}
+          </CardContent>
+        </Card>
+      </motion.div>
 
     </motion.div>
   )

@@ -18,6 +18,14 @@ export const publishPortfolio = async (data: {
   userId: number
   userData: User | null
   logoOverrides?: Record<number, string>
+  experiences?: Array<{
+    companyName: string
+    companyUrl?: string | null
+    faviconUrl?: string | null
+    role?: string | null
+    duration?: string | null
+    description?: string | null
+  }>
 }) => {
   const response = await fetch("/api/portfolio/publish-all", {
     method: "POST",

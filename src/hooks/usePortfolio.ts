@@ -62,6 +62,7 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
   const [selectedTheme, setSelectedTheme] = useState<string>('light')
   const [repoOrder, setRepoOrder] = useState<number[]>([])
   const [logoOverrides, setLogoOverrides] = useState<Record<number, string>>({})
+  const [experiences, setExperiences] = useState<any[]>([])
   
   const [originalData, setOriginalData] = useState<PortfolioState | null>(null)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
@@ -83,6 +84,7 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
       selectedRepos: data.selectedRepos,
       skills: data.skills,
       socials: data.socials,
+      experiences: data.experiences,
       deployedUrls: data.deployedUrls,
       customNames: data.customNames,
       customDescriptions: data.customDescriptions,
@@ -148,13 +150,14 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
       selectedRepos: [...selectedRepos].sort(),
       skills: [...skills].sort((a, b) => a.id.localeCompare(b.id)),
       socials: [...socials].sort((a, b) => a.id - b.id),
+      experiences: experiences.map(e => ({ ...e })),
       deployedUrls,
       customNames,
       customDescriptions,
       githubUrls,
       importedProjects: normalizedImportedProjects.sort((a, b) => a.id - b.id),
       selectedTheme,
-      repoOrder: [...repoOrder]
+      repoOrder: [...repoOrder],
     })
     
     const cleanCurrentData = normalizeData(createOrderedData({
@@ -162,13 +165,14 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
       selectedRepos: [...(currentData.selectedRepos || [])].sort(),
       skills: [...(currentData.skills || [])].sort((a, b) => a.id.localeCompare(b.id)),
       socials: [...(currentData.socials || [])].sort((a, b) => a.id - b.id),
+      experiences: currentData.experiences || [],
       deployedUrls: currentData.deployedUrls,
       customNames: currentData.customNames,
       customDescriptions: currentData.customDescriptions,
       githubUrls: currentData.githubUrls,
       importedProjects: [...(currentData.importedProjects || [])].sort((a, b) => a.id - b.id),
       selectedTheme: currentData.selectedTheme || 'light',
-      repoOrder: currentData.repoOrder || []
+      repoOrder: currentData.repoOrder || [],
     }))
     
     const normalizedOriginalImportedProjects = (originalData.importedProjects || []).map(project => ({
@@ -181,13 +185,14 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
       selectedRepos: [...(originalData.selectedRepos || [])].sort(),
       skills: [...(originalData.skills || [])].sort((a, b) => a.id.localeCompare(b.id)),
       socials: [...(originalData.socials || [])].sort((a, b) => a.id - b.id),
+      experiences: (originalData as any).experiences || [],
       deployedUrls: originalData.deployedUrls,
       customNames: originalData.customNames,
       customDescriptions: originalData.customDescriptions,
       githubUrls: originalData.githubUrls,
       importedProjects: normalizedOriginalImportedProjects.sort((a, b) => a.id - b.id),
       selectedTheme: originalData.selectedTheme || 'light',
-      repoOrder: originalData.repoOrder || []
+      repoOrder: originalData.repoOrder || [],
     }))
     
     const hasChanges = JSON.stringify(cleanCurrentData) !== JSON.stringify(cleanOriginalData)
@@ -201,7 +206,7 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
     // Update hasUnsavedChanges based on detection
     console.log("📊 Setting hasUnsavedChanges to:", hasChanges)
     setHasUnsavedChanges(hasChanges)
-  }, [portfolioData, selectedRepos, skills, socials, deployedUrls, customNames, customDescriptions, githubUrls, importedProjects, selectedTheme, repoOrder, originalData, isInitialLoad])
+  }, [portfolioData, selectedRepos, skills, socials, deployedUrls, customNames, customDescriptions, githubUrls, importedProjects, selectedTheme, repoOrder, experiences, originalData, isInitialLoad])
 
   // Load existing portfolio data
   const loadExistingData = async (username: string, initialData?: any) => {
@@ -257,6 +262,11 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
           customUsername: portfolio.customUsername || user?.githubUsername || "",
           id: portfolio.id // Add portfolio ID
         })
+        
+        // NEW: set experiences from API
+        if ((portfolio as any).experiences) {
+          setExperiences((portfolio as any).experiences)
+        }
         
         console.log("🔍 Set portfolio data:", {
           displayName: portfolio.displayName || "",
@@ -344,7 +354,9 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
           githubUrls: mapPortfolioRepositories(portfolio.repositories || []).githubUrls,
           selectedTheme: currentSelectedTheme,
           importedProjects: formatImportedProjects(portfolio.repositories || []).sort((a, b) => a.id - b.id),
-          repoOrder: portfolio.repositories ? portfolio.repositories.map((repo: any) => parseInt(repo.repository.githubId)) : []
+          repoOrder: portfolio.repositories ? portfolio.repositories.map((repo: any) => parseInt(repo.repository.githubId)) : [],
+          // NEW: include experiences in original
+          experiences: (portfolio as any).experiences || []
         }))
         
         console.log("💾 Setting original data from existing portfolio")
@@ -406,7 +418,9 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
           githubUrls: { ...githubUrls },
           selectedTheme: currentTheme,
           importedProjects: [...importedProjects].sort((a, b) => a.id - b.id),
-                     repoOrder: [...repoOrder]
+          repoOrder: [...repoOrder],
+          // NEW: no portfolio yet → empty experiences
+          experiences: []
          }))
          
          // Set originalData first, then enable change detection after a brief delay
@@ -448,7 +462,9 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
          githubUrls: { ...githubUrls },
          selectedTheme: currentTheme,
          importedProjects: [...importedProjects].sort((a, b) => a.id - b.id),
-         repoOrder: [...repoOrder]
+         repoOrder: [...repoOrder],
+         // NEW: fallback → empty experiences
+         experiences: []
        }))
        
        // Set originalData first, then enable change detection after a brief delay
@@ -484,13 +500,14 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
       selectedRepos: [...selectedRepos].sort(),
       skills: [...skills].sort((a, b) => a.id.localeCompare(b.id)),
       socials: [...socials].sort((a, b) => a.id - b.id),
+      experiences: experiences.map(e => ({ ...e })),
       deployedUrls: { ...deployedUrls },
       customNames: { ...customNames },
       customDescriptions: { ...customDescriptions },
       githubUrls: { ...githubUrls },
       selectedTheme,
       importedProjects: normalizedImportedProjects.sort((a, b) => a.id - b.id),
-      repoOrder: [...repoOrder]
+      repoOrder: [...repoOrder],
     }))
     
     console.log("🔄 Setting new original data (normalized):", newOriginalData)
@@ -538,10 +555,12 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
     setSelectedTheme,
     setRepoOrder,
     setLogoOverrides,
+    setExperiences,
     
     // Methods
     loadExistingData,
     resetAfterPublish,
+    experiences,
   }
 }
 

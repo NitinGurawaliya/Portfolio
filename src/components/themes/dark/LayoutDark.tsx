@@ -246,6 +246,63 @@ export default function LayoutDark({ theme, portfolio }: LayoutDarkProps) {
       </motion.section>
 
       {/* Projects Section */}
+      {portfolio.experiences && portfolio.experiences.length > 0 && (
+        <motion.section 
+          className="relative z-10 py-6 md:py-8 lg:py-10"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          viewport={{ once: true }}
+          aria-label="Work experience"
+        >
+          <div className="mx-auto px-4 sm:px-6 lg:px-8 max-w-screen-xl">
+            <motion.h2 
+              className="text-xl md:text-2xl lg:text-3xl font-bold mb-6 md:mb-8 text-white text-center"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              viewport={{ once: true }}
+            >
+              Work Experience
+            </motion.h2>
+            <div className="relative max-w-3xl mx-auto">
+              <div className="absolute left-4 top-0 bottom-0 w-px bg-orange-500/20" />
+              <div className="space-y-5">
+                {portfolio.experiences.map((exp: any, idx: number) => (
+                  <motion.div key={idx} className="relative pl-10"
+                    initial={{ opacity: 0, y: 15 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: idx * 0.05 }}
+                    viewport={{ once: true }}
+                  >
+                    <div className="absolute left-3 top-1.5 h-2.5 w-2.5 rounded-full bg-orange-400 shadow-[0_0_0_4px_rgba(249,115,22,0.15)]" />
+                    <div className="border border-orange-500/30 rounded-lg p-4 bg-transparent">
+                      <div className="flex items-start gap-3">
+                        {exp.faviconUrl ? (
+                          <img src={exp.faviconUrl} alt={exp.companyName} className="h-5 w-5 mt-0.5" />
+                        ) : (
+                          <div className="h-5 w-5 mt-0.5 rounded bg-gray-700" />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="text-white font-semibold text-sm break-words">
+                            {exp.companyName}
+                            {exp.role ? <span className="text-gray-400 font-normal"> • {exp.role}</span> : null}
+                            {exp.duration ? <span className="text-gray-400 font-normal"> • {exp.duration}</span> : null}
+                          </div>
+                          {exp.description && (
+                            <div className="text-gray-300 text-xs mt-1 whitespace-pre-line">{exp.description}</div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </motion.section>
+      )}
+
       {portfolio.repositories && portfolio.repositories.filter(repo => repo.isVisible).length > 0 && (
         <motion.section 
           className="relative z-10 py-6 md:py-8 lg:py-10"
@@ -337,6 +394,7 @@ export default function LayoutDark({ theme, portfolio }: LayoutDarkProps) {
                             __html: repo.customDescription || repo.repository.description || "No description available for this project."
                           }}
                         />
+                        
                       </div>
                       <motion.button
                         onClick={(e) => {
