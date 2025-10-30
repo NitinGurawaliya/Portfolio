@@ -211,6 +211,32 @@ export function HomeSection({ user, portfolioData, onUpdate, usernameAvailabilit
         <Card className="bg-white shadow-none border-none">
           <CardContent className="py-1 space-y-2">
 
+          {/* Profile Photo Preview */}
+          <div className="px-2 py-2">
+            <div className="flex items-center gap-3">
+              <Avatar className="h-12 w-12">
+                <AvatarImage src={formData.profilePic} alt={formData.displayName || 'Profile'} />
+                <AvatarFallback>{(formData.displayName || 'U').charAt(0)}</AvatarFallback>
+              </Avatar>
+              <div>
+                <Button
+                  type="button"
+                  className="h-8 px-3 text-xs bg-white border border-gray-300 text-black hover:bg-gray-50 rounded-lg"
+                  onClick={() => document.getElementById('profilePicInput')?.click()}
+                >
+                  Change Photo
+                </Button>
+                <input
+                  id="profilePicInput"
+                  type="file"
+                  accept="image/jpeg,image/png,image/gif"
+                  className="hidden"
+                  onChange={handlePhotoChange}
+                />
+              </div>
+            </div>
+          </div>
+
           {/* Basic Info */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2 px-2">
             <div className="space-y-1.5">
