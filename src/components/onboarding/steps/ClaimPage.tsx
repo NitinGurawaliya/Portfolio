@@ -16,6 +16,12 @@ export const ClaimPage = ({ username: initialUsername, onNext }: ClaimPageProps)
   const [isChecking, setIsChecking] = useState(false);
   const [isAvailable, setIsAvailable] = useState<boolean | null>(null);
   const [availMsg, setAvailMsg] = useState("");
+  const baseDisplay = (
+    process.env.NEXT_PUBLIC_BASE_URL ||
+    (typeof window !== "undefined" ? window.location.origin : "http://localhost:3000")
+  )
+    .replace(/^https?:\/\//, "")
+    .replace(/\/$/, "");
 
   // --- Debounced Username Availability Checker ---
   useEffect(() => {
@@ -91,7 +97,7 @@ export const ClaimPage = ({ username: initialUsername, onNext }: ClaimPageProps)
       </div>
       <div className="space-y-3">
         <div className="flex items-center gap-2 group relative">
-          <span className="text-muted-foreground text-sm font-medium whitespace-nowrap">portfolio.dev/</span>
+          <span className="text-muted-foreground text-sm font-medium whitespace-nowrap">{baseDisplay}/</span>
           <Input
             id="username"
             value={username}

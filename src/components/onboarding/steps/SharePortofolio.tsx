@@ -11,7 +11,10 @@ interface SharePortfolioProps {
 export const SharePortfolio = ({ username, onComplete }: SharePortfolioProps) => {
   const [copied, setCopied] = useState(false);
   const [publishedOnce, setPublishedOnce] = useState(false);
-  const portfolioUrl = `https://portfolio.dev/${username}`;
+  const baseUrl =
+    process.env.NEXT_PUBLIC_BASE_URL ||
+    (typeof window !== "undefined" ? window.location.origin : "http://localhost:3000");
+  const portfolioUrl = `${baseUrl}/${username}`;
 
   // Auto-publish when this step mounts
   useEffect(() => {
