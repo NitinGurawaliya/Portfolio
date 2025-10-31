@@ -19,8 +19,10 @@ interface ThemeSelectorProps {
 }
 
 // Background color options
+// NOTE: Keep 'Default' as pure white instead of null to avoid falling back
+// to dark gradient backgrounds in dark theme layouts.
 const BACKGROUND_COLORS = [
-  { name: 'Default', value: null, preview: 'linear-gradient(to bottom right, #ffffff, #f0f0f0)' },
+  { name: 'Default', value: '#ffffff', preview: 'linear-gradient(to bottom right, #ffffff, #f0f0f0)' },
   { name: 'Sky Blue', value: '#dbeafe', preview: 'linear-gradient(to bottom right, #dbeafe, #bfdbfe)' },
   { name: 'Mint Green', value: '#d1fae5', preview: 'linear-gradient(to bottom right, #d1fae5, #a7f3d0)' },
   { name: 'Peach', value: '#fed7aa', preview: 'linear-gradient(to bottom right, #fed7aa, #fdba74)' },

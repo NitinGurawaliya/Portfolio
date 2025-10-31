@@ -172,13 +172,32 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
   }, [bioIndex, portfolio.bio])
 
   // Get background customization
-  const backgroundStyle = portfolio.backgroundColor 
-    ? { backgroundColor: portfolio.backgroundColor }
-    : {}
-  
-  const patternStyle = portfolio.backgroundPattern 
-    ? getPatternStyle(portfolio.backgroundPattern)
-    : {}
+  // Properly handle background style - ensure no conflicts
+  const getBackgroundStyle = () => {
+    const baseStyle: React.CSSProperties = {}
+    
+    // Safely handle backgroundColor - check for null, undefined, or empty string
+    const bgColor = portfolio.backgroundColor || null
+    
+    // If backgroundColor is set (not null/undefined/empty), use it; otherwise use default gradient
+    if (bgColor && typeof bgColor === 'string' && bgColor.trim() !== '') {
+      baseStyle.backgroundColor = bgColor
+    } else {
+      baseStyle.background = 'linear-gradient(to bottom right, #f9fafb, #ffffff)'
+    }
+    
+    // Apply pattern if exists (safely handle null/undefined)
+    const patternStyle = (portfolio.backgroundPattern && 
+                          typeof portfolio.backgroundPattern === 'string' && 
+                          portfolio.backgroundPattern.trim() !== '')
+      ? getPatternStyle(portfolio.backgroundPattern)
+      : {}
+    
+    return {
+      ...baseStyle,
+      ...patternStyle
+    }
+  }
 
   return (
     <div 
@@ -191,11 +210,7 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
       {/* Customizable Background */}
       <div 
         className="fixed inset-0 z-0"
-        style={{
-          ...backgroundStyle,
-          ...(!portfolio.backgroundColor && { background: 'linear-gradient(to bottom right, #f9fafb, #ffffff)' }),
-          ...patternStyle
-        }}
+        style={getBackgroundStyle()}
       />
 
       {/* Hero Section - Centered Layout */}

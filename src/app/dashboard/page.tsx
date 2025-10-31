@@ -136,6 +136,22 @@ export default function DashboardPage() {
     }
   }
 
+  // Keyboard shortcut: Ctrl/Cmd + S → Publish
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      const isSaveCombo = (e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')
+      if (!isSaveCombo) return
+
+      e.preventDefault()
+      if (!isPublishing) {
+        handlePublishAll()
+      }
+    }
+
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [isPublishing, portfolio, user])
+
   // Render active section
   const renderActiveSection = () => {
     switch (activeSection) {

@@ -246,7 +246,12 @@ export function DashboardLayout({
                 {isPublishing ? (
                   <DevFolioInlineLoader />
                 ) : hasUnsavedChanges ? (
-                  "Publish 🔥"
+                  <span className="inline-flex items-center gap-2">
+                    <span>Publish 🔥</span>
+                    <span className="hidden md:inline text-[11px] px-1.5 py-0.5 rounded bg-white/15 border border-white/20">
+                      Ctrl+S
+                    </span>
+                  </span>
                 ) : (
                   "No Changes"
                 )}
