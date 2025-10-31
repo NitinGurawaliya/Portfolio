@@ -1,7 +1,7 @@
 import { motion } from "framer-motion"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ProjectIcon } from "@/components/ui/project-icon"
-import { Building, Eye } from "lucide-react"
+import { Building } from "lucide-react"
 import { SiGithub, SiX, SiLinkedin, SiInstagram, SiFacebook, SiYoutube, SiGmail, SiStackoverflow, SiReddit } from "react-icons/si"
 import { Globe } from "lucide-react"
 import { SkillIcon } from "@/lib/skill-icons"
@@ -69,25 +69,25 @@ const getPatternStyle = (pattern: string | null) => {
   switch (pattern) {
     case 'dots':
       return {
-        backgroundImage: 'radial-gradient(circle, rgba(0,0,0,0.12) 1px, transparent 1px)',
+        backgroundImage: 'radial-gradient(circle, rgba(0,0,0,0.05) 1px, transparent 1px)',
         backgroundSize: '20px 20px'
       }
     case 'grid':
       return {
-        backgroundImage: 'linear-gradient(rgba(0,0,0,0.12) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.12) 1px, transparent 1px)',
+        backgroundImage: 'linear-gradient(rgba(0,0,0,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.05) 1px, transparent 1px)',
         backgroundSize: '20px 20px'
       }
     case 'cross':
       return {
-        backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,0,0,0.08) 10px, rgba(0,0,0,0.08) 20px)'
+        backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,0,0,0.03) 10px, rgba(0,0,0,0.03) 20px)'
       }
     case 'waves':
       return {
-        backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.06) 2px, rgba(0,0,0,0.06) 4px)'
+        backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.02) 2px, rgba(0,0,0,0.02) 4px)'
       }
     case 'stars':
       return {
-        backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(0,0,0,0.15) 1px, transparent 0)',
+        backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(0,0,0,0.06) 1px, transparent 0)',
         backgroundSize: '30px 30px'
       }
     default:
@@ -99,59 +99,6 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
   const [displayedBio, setDisplayedBio] = useState('')
   const [bioIndex, setBioIndex] = useState(0)
   const [isTypingComplete, setIsTypingComplete] = useState(false)
-  const [viewsCount, setViewsCount] = useState(0)
-  const [projectViews, setProjectViews] = useState<{[key: number]: number}>({})
-
-  // Fetch views count
-  useEffect(() => {
-    const fetchViews = async () => {
-      try {
-        const response = await fetch(`/api/analytics/stats?portfolioId=${portfolio.id}`)
-        if (response.ok) {
-          const data = await response.json()
-          setViewsCount(data.totalViews || 0)
-        }
-      } catch (error) {
-        console.error('Failed to fetch views:', error)
-      }
-    }
-    
-    if (portfolio.id) {
-      fetchViews()
-    }
-  }, [portfolio.id])
-
-  // Fetch project views
-  useEffect(() => {
-    const fetchProjectViews = async () => {
-      try {
-        const response = await fetch(`/api/analytics/detailed?portfolioId=${portfolio.id}`)
-        if (response.ok) {
-          const data = await response.json()
-          if (data.projects) {
-            const views: {[key: number]: number} = {}
-            data.projects.forEach((project: any) => {
-              // Use PortfolioRepository ID or GitHub ID for matching
-              const projectId = project.projectId
-              const githubId = project.githubId
-              const clickCount = project.clickCount || 0
-              
-              // Store by both PortfolioRepository ID and GitHub ID for compatibility
-              if (projectId) views[projectId] = clickCount
-              if (githubId) views[githubId] = clickCount
-            })
-            setProjectViews(views)
-          }
-        }
-      } catch (error) {
-        console.error('Failed to fetch project views:', error)
-      }
-    }
-    
-    if (portfolio.id) {
-      fetchProjectViews()
-    }
-  }, [portfolio.id])
 
   // Typing animation effect for bio
   useEffect(() => {
@@ -213,101 +160,81 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
         style={getBackgroundStyle()}
       />
 
-      {/* Hero Section - Centered Layout */}
-      <motion.section 
-        className="relative z-10 pt-6 md:pt-8 lg:pt-10 pb-2 md:pb-3 lg:pb-4"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 1 }}
-        aria-label="Profile introduction"
-      >
-        <div className="mx-auto px-2 sm:px-4 md:px-6 lg:px-8 max-w-6xl">
-          <div className="text-left space-y-2 sm:space-y-3 lg:space-y-4">
-            {/* Profile Picture */}
-            <motion.div
-              className="flex justify-start"
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-            >
-              <Avatar className="w-16 h-16 xs:w-20 xs:h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 lg:w-32 lg:h-32 xl:w-36 xl:h-36 border-2 sm:border-4 border-cyan-400/30 bg-white shadow-lg sm:shadow-2xl">
-                <AvatarImage 
-                  src={portfolio.profilePic} 
-                  className="object-cover" 
-                  alt={`${portfolio.displayName}'s profile picture`}
-                />
-                <AvatarFallback className="bg-gradient-to-br from-gray-100 to-gray-200 text-gray-800 text-3xl lg:text-4xl font-bold">
-                  {portfolio.displayName?.charAt(0) || "U"}
-                </AvatarFallback>
-              </Avatar>
-            </motion.div>
+      {/* Main Container - Two Column Layout on Large Screens */}
+      <div className="relative z-10 pt-6 md:pt-8 lg:pt-10 pb-2 md:pb-3 lg:pb-4">
+        <div className="mx-auto px-2 sm:px-4 md:px-6 lg:px-8 max-w-screen-xl">
+          {/* Two Column Grid - Left: User Info, Right: Projects */}
+          <div className="lg:grid lg:grid-cols-12 lg:gap-8 xl:gap-12">
+            
+            {/* LEFT COLUMN - User Info & Skills (1/3 width on large screens) */}
+            <div className="lg:col-span-4 xl:col-span-4 space-y-6 lg:pr-4">
+              
+              {/* Profile Picture */}
+              <motion.div
+                className="flex justify-start mb-4"
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.8, delay: 0.2 }}
+              >
+                <Avatar className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 border-2 border-cyan-400/30 bg-white shadow-lg">
+                  <AvatarImage 
+                    src={portfolio.profilePic} 
+                    className="object-cover" 
+                    alt={`${portfolio.displayName}'s profile picture`}
+                  />
+                  <AvatarFallback className="bg-gradient-to-br from-gray-100 to-gray-200 text-gray-800 text-3xl lg:text-4xl font-bold">
+                    {portfolio.displayName?.charAt(0) || "U"}
+                  </AvatarFallback>
+                </Avatar>
+              </motion.div>
 
-            {/* Name */}
-            <motion.h1 
-              className="text-lg xs:text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold text-gray-800"
-              initial={{ y: 30, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.8, delay: 0.4 }}
-            >
-              {portfolio.displayName}
-            </motion.h1>
+              {/* Name & Handle */}
+              <motion.div 
+                className="text-left space-y-1"
+                initial={{ y: 30, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ duration: 0.8, delay: 0.4 }}
+              >
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800">
+                  {portfolio.displayName}
+                </h1>
+                {portfolio.jobTitle && (
+                  <p className="text-sm sm:text-base md:text-lg text-purple-600 font-semibold">
+                    {portfolio.jobTitle}
+                  </p>
+                )}
+                <p className="text-xs sm:text-sm text-purple-500">
+                  @{portfolio.user?.githubUsername || 'user'}
+                </p>
+              </motion.div>
 
-            {/* Job Title */}
-            {portfolio.jobTitle && (
+              {/* Bio */}
               <motion.p 
-                className="text-sm xs:text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl text-purple-600 font-semibold"
+                className="text-xs sm:text-sm md:text-base text-gray-600 leading-relaxed text-left"
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 0.8, delay: 0.5 }}
+                transition={{ duration: 0.8, delay: 0.6 }}
               >
-                {portfolio.jobTitle}
+                {displayedBio}
+                {!isTypingComplete && (
+                  <motion.span
+                    className="inline-block w-0.5 h-5 bg-purple-600 ml-1"
+                    animate={{ opacity: [1, 0, 1] }}
+                    transition={{ duration: 0.8, repeat: Infinity }}
+                  />
+                )}
               </motion.p>
-            )}
 
-            {/* Bio */}
-              <motion.p 
-                className="text-xs xs:text-sm sm:text-base md:text-lg lg:text-xl text-gray-600 leading-relaxed max-w-xs xs:max-w-sm sm:max-w-md md:max-w-lg lg:max-w-2xl xl:max-w-3xl"
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.8, delay: 0.6 }}
-            >
-              {displayedBio}
-              {!isTypingComplete && (
-                <motion.span
-                  className="inline-block w-0.5 h-5 bg-purple-600 ml-1"
-                  animate={{ opacity: [1, 0, 1] }}
-                  transition={{ duration: 0.8, repeat: Infinity }}
-                />
-              )}
-            </motion.p>
-
-            {/* Views Counter */}
-            <motion.div
-              className="flex items-center gap-2 text-xs xs:text-sm text-gray-500"
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.8, delay: 0.7 }}
-            >
-              <Eye className="h-3 w-3 xs:h-4 xs:w-4" />
-              <span>{viewsCount} views</span>
-            </motion.div>
-
-          </div>
-        </div>
-      </motion.section>
-
-      {/* Social Icons Section - Above Skills */}
-      {portfolio.socials && portfolio.socials.length > 0 && (
-        <motion.section 
-          className="relative z-10 py-2 md:py-3"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          viewport={{ once: true }}
-          aria-label="Social media links"
-        >
-          <div className="mx-auto px-2 sm:px-4 md:px-6 lg:px-8 max-w-screen-xl">
-            <div className="flex justify-start gap-2 xs:gap-3 sm:gap-4 md:gap-6 flex-wrap">
+              {/* Social Icons */}
+              {portfolio.socials && portfolio.socials.length > 0 && (
+                <motion.div 
+                  className="flex gap-2 justify-start flex-wrap"
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8 }}
+                  viewport={{ once: true }}
+                  aria-label="Social media links"
+                >
               {portfolio.socials
                 .filter(social => social.username && social.username.trim())
                 .map((social, index) => {
@@ -394,150 +321,136 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
                     <motion.button
                       key={social.id}
                       onClick={() => window.open(social.url, '_blank')}
-                      className={`p-2 xs:p-3 sm:p-4 rounded-lg ${style.bg} border ${style.border} ${style.text} ${style.hover} ${style.shadow} transition-all duration-300 shadow-sm`}
-                      whileHover={{ scale: 1.1, y: -3, rotate: rotation }}
+                      className={`p-2 rounded-lg ${style.bg} border ${style.border} ${style.text} ${style.hover} ${style.shadow} transition-all duration-300 shadow-sm`}
+                      whileHover={{ scale: 1.05, y: -2 }}
                       whileTap={{ scale: 0.95 }}
-                      initial={{ opacity: 0, y: 20 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.5, delay: index * 0.1 }}
-                      viewport={{ once: true }}
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.3, delay: index * 0.1 }}
                       aria-label={`Visit ${social.platform} profile`}
                     >
-                      <Icon className="h-4 w-4 xs:h-5 xs:w-5 sm:h-6 sm:w-6 md:h-7 md:w-7" />
+                      <Icon className="h-4 w-4" />
                     </motion.button>
                   )
                 })}
-            </div>
-          </div>
-        </motion.section>
-      )}
+                </motion.div>
+              )}
 
-      {/* Skills Section - Auto Scrolling */}
-      {portfolio.skills && portfolio.skills.length > 0 && (
-        <motion.section 
-          className="relative z-10 py-2 md:py-3"
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          viewport={{ once: true }}
-          aria-label="Technical skills"
-        >
-          <div className="mx-auto px-2 sm:px-4 md:px-6 lg:px-8 max-w-screen-xl">
-            <motion.h2 
-              className="text-sm xs:text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl font-bold mb-2 xs:mb-3 sm:mb-4 md:mb-6 text-gray-900 text-left"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              viewport={{ once: true }}
-            >
-              Skills I've Learned
-            </motion.h2>
-            
-            {/* Manual Scroll Skills Grid */}
-            <div className="overflow-x-auto scrollbar-hide scroll-smooth" style={{ scrollBehavior: 'smooth' }}>
-              <div className="flex gap-2 xs:gap-3 sm:gap-4 py-1 xs:py-2 min-w-max">
-                {portfolio.skills.map((skill, index) => (
-                  <motion.div
-                    key={skill.id}
-                    className="group relative flex-shrink-0"
+              {/* Skills Section */}
+              {portfolio.skills && portfolio.skills.length > 0 && (
+                <motion.section 
+                  className="pt-4"
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8 }}
+                  viewport={{ once: true }}
+                  aria-label="Technical skills"
+                >
+                  <h2 className="text-base sm:text-lg font-bold mb-3 text-gray-900 text-left">
+                    Skills
+                  </h2>
+                  <div className="flex flex-wrap gap-2 justify-start">
+                    {portfolio.skills.map((skill, index) => (
+                      <motion.div
+                        key={skill.id}
+                        className="group relative"
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        whileInView={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.3, delay: index * 0.05 }}
+                        viewport={{ once: true }}
+                        whileHover={{ scale: 1.05, y: -2 }}
+                        whileTap={{ scale: 0.95 }}
+                        aria-label={`${skill.name} skill`}
+                      >
+                        <div className="bg-black text-white px-2.5 py-1 rounded-md font-medium text-xs hover:bg-gray-800 transition-all duration-300 cursor-pointer border border-gray-800 hover:border-gray-700 whitespace-nowrap">
+                          {skill.name}
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                </motion.section>
+              )}
+
+              {/* Work Experience Section */}
+              {portfolio.experiences && portfolio.experiences.length > 0 && (
+                <motion.section 
+                  className="pt-4"
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8 }}
+                  viewport={{ once: true }}
+                  aria-label="Work experience"
+                >
+                  <motion.h2 
+                    className="text-base sm:text-lg font-bold mb-3 text-gray-900 text-left"
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: index * 0.05 }}
-                    viewport={{ once: true }}
-                    whileHover={{ scale: 1.05, y: -2 }}
-                    whileTap={{ scale: 0.95 }}
-                    aria-label={`${skill.name} skill`}
-                  >
-                    <div className="bg-black text-white px-2 xs:px-3 sm:px-4 py-1 xs:py-1.5 sm:py-2 rounded-md xs:rounded-lg font-medium text-xs xs:text-sm hover:bg-gray-800 transition-all duration-300 cursor-pointer border border-gray-800 hover:border-gray-700 whitespace-nowrap">
-                      {skill.name}
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </motion.section>
-      )}
-
-      {/* Work Experience Section */}
-      {portfolio.experiences && portfolio.experiences.length > 0 && (
-        <motion.section 
-          className="relative z-10 py-3 md:py-4 lg:py-5"
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          viewport={{ once: true }}
-          aria-label="Work experience"
-        >
-          <div className="mx-auto px-2 sm:px-4 md:px-6 lg:px-8 max-w-screen-xl">
-            <motion.h2 
-              className="text-sm xs:text-base sm:text-lg md:text-xl lg:text-2xl font-bold mb-2 xs:mb-3 sm:mb-4 md:mb-6 text-gray-900 text-left"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              viewport={{ once: true }}
-            >
-              Work Experience
-            </motion.h2>
-            <div className="relative max-w-3xl">
-              <div className="absolute left-4 top-0 bottom-0 w-px bg-gray-300" />
-              <div className="space-y-4">
-                {portfolio.experiences.map((exp: any, idx: number) => (
-                  <motion.div key={idx} className="relative pl-10"
-                    initial={{ opacity: 0, y: 10 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, delay: idx * 0.05 }}
+                    transition={{ duration: 0.6, delay: 0.2 }}
                     viewport={{ once: true }}
                   >
-                    <div className="absolute left-3 top-1.5 h-2.5 w-2.5 rounded-full bg-gray-700" />
-                    <div className="border border-gray-200 rounded-lg p-3 bg-transparent">
-                      <div className="flex items-start gap-3">
-                        {exp.faviconUrl ? (
-                          <img src={exp.faviconUrl} alt={exp.companyName} className="h-5 w-5 mt-0.5" />
-                        ) : (
-                          <div className="h-5 w-5 mt-0.5 rounded bg-gray-300" />
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <div className="text-gray-900 font-semibold text-sm break-words">
-                            {exp.companyName}
-                            {exp.role ? <span className="text-gray-500 font-normal"> • {exp.role}</span> : null}
-                            {exp.duration ? <span className="text-gray-500 font-normal"> • {exp.duration}</span> : null}
+                    Work Experience
+                  </motion.h2>
+                  <div className="relative">
+                    <div className="absolute left-3 top-0 bottom-0 w-px bg-gray-300" />
+                    <div className="space-y-3">
+                      {portfolio.experiences.map((exp: any, idx: number) => (
+                        <motion.div key={idx} className="relative pl-8"
+                          initial={{ opacity: 0, y: 10 }}
+                          whileInView={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.4, delay: idx * 0.05 }}
+                          viewport={{ once: true }}
+                        >
+                          <div className="absolute left-2 top-1.5 h-2 w-2 rounded-full bg-gray-700" />
+                          <div className="border border-gray-200 rounded-lg p-2.5 bg-transparent">
+                            <div className="flex items-start gap-2">
+                              {exp.faviconUrl ? (
+                                <img src={exp.faviconUrl} alt={exp.companyName} className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                              ) : (
+                                <div className="h-4 w-4 mt-0.5 rounded bg-gray-300 flex-shrink-0" />
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <div className="text-gray-900 font-semibold text-xs break-words">
+                                  {exp.companyName}
+                                  {exp.role ? <span className="text-gray-500 font-normal"> • {exp.role}</span> : null}
+                                  {exp.duration ? <span className="text-gray-500 font-normal"> • {exp.duration}</span> : null}
+                                </div>
+                                {exp.description && (
+                                  <div className="text-gray-700 text-xs mt-1 whitespace-pre-line leading-relaxed">{exp.description}</div>
+                                )}
+                              </div>
+                            </div>
                           </div>
-                          {exp.description && (
-                            <div className="text-gray-700 text-xs mt-1 whitespace-pre-line">{exp.description}</div>
-                          )}
-                        </div>
-                      </div>
+                        </motion.div>
+                      ))}
                     </div>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </motion.section>
-      )}
+                  </div>
+                </motion.section>
+              )}
 
-      {/* Projects Section */}
-      {portfolio.repositories && portfolio.repositories.filter(repo => repo.isVisible).length > 0 && (
-        <motion.section 
-          className="relative z-10 py-3 md:py-4 lg:py-5"
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          viewport={{ once: true }}
-          aria-label="Projects showcase"
-        >
-          <div className="mx-auto px-2 sm:px-4 md:px-6 lg:px-8 max-w-screen-xl">
-            <motion.h2 
-              className="text-sm xs:text-base sm:text-lg md:text-xl lg:text-2xl font-bold mb-2 xs:mb-3 sm:mb-4 md:mb-6 text-gray-900 text-left"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              viewport={{ once: true }}
-            >
-              Projects I've Made
-            </motion.h2>
-            <div className="grid grid-cols-1 gap-2 xs:gap-3 sm:gap-4 md:gap-6 max-w-4xl mx-auto px-2 xs:px-4">
+            </div>
+
+            {/* RIGHT COLUMN - Projects & GitHub Activity (2/3 width on large screens) */}
+            <div className="lg:col-span-8 xl:col-span-8 space-y-8">
+
+              {/* Projects Section */}
+              {portfolio.repositories && portfolio.repositories.filter(repo => repo.isVisible).length > 0 && (
+                <motion.section 
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8 }}
+                  viewport={{ once: true }}
+                  aria-label="Projects showcase"
+                >
+                  <motion.h2 
+                    className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold mb-4 sm:mb-6 text-gray-900"
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, delay: 0.2 }}
+                    viewport={{ once: true }}
+                  >
+                    Projects I've Made
+                  </motion.h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
               {portfolio.repositories
                 .filter(repo => repo.isVisible)
                 .map((repo, index) => (
@@ -563,15 +476,6 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
                       repoRepositoryId: repo.repository.id
                     })
                     trackProjectClick(portfolio.id, portfolioRepoId, repo.customName || repo.repository.name)
-                    
-                    // Update views count
-                    setViewsCount(prev => prev + 1)
-                    
-                    // Update project views count
-                    setProjectViews(prev => ({
-                      ...prev,
-                      [portfolioRepoId]: (prev[portfolioRepoId] || 0) + 1
-                    }))
                     
                     if (repo.deployedUrl) {
                       window.open(repo.deployedUrl, '_blank')
@@ -626,13 +530,6 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
                         e.stopPropagation()
                         // Track project click (GitHub button) using PortfolioRepository ID
                         trackProjectClick(portfolio.id, repo.id, repo.customName || repo.repository.name)
-                          // Update views count
-                          setViewsCount(prev => prev + 1)
-                          // Update project views count
-                          setProjectViews(prev => ({
-                            ...prev,
-                            [repo.id]: (prev[repo.id] || 0) + 1
-                          }))
                           const githubUrl = repo.repository.githubUrl || repo.repository.htmlUrl
                           window.open(githubUrl, '_blank')
                         }}
@@ -645,64 +542,53 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
                       </motion.button>
                     </div>
                     
-                    {/* Languages and Views */}
-                    <div className="flex items-center justify-between flex-wrap gap-2 mt-auto">
-                      {/* Languages badges */}
-                      <div className="flex items-center flex-wrap gap-2">
-                        {(() => {
-                          // Parse languages from JSON string
-                          let languages: string[] = []
-                          if (repo.repository.languages) {
-                            try {
-                              languages = JSON.parse(repo.repository.languages)
-                            } catch (e) {
-                              // Fallback to single language
-                              if (repo.repository.language) {
-                                languages = [repo.repository.language]
-                              }
+                    {/* Languages */}
+                    <div className="flex items-center flex-wrap gap-2 mt-auto">
+                      {(() => {
+                        // Parse languages from JSON string
+                        let languages: string[] = []
+                        if (repo.repository.languages) {
+                          try {
+                            languages = JSON.parse(repo.repository.languages)
+                          } catch (e) {
+                            // Fallback to single language
+                            if (repo.repository.language) {
+                              languages = [repo.repository.language]
                             }
-                          } else if (repo.repository.language) {
-                            languages = [repo.repository.language]
                           }
-                          
-                          return languages
-                            .filter(lang => lang.toLowerCase() !== 'web') // Filter out "Web" tag
-                            .map((lang, idx) => (
-                              <span key={idx} className="text-gray-700 text-xs sm:text-sm font-medium px-2 py-1 bg-gray-200 rounded border border-gray-300">
-                                {lang}
-                              </span>
-                            ))
-                        })()}
-                      </div>
-                      
-                      {/* Project Views */}
-                      <div className="flex items-center gap-1 text-xs text-gray-500">
-                        <Eye className="h-3 w-3" />
-                        <span>{projectViews[repo.repository.githubId] || 0} views</span>
-                      </div>
+                        } else if (repo.repository.language) {
+                          languages = [repo.repository.language]
+                        }
+                        
+                        return languages
+                          .filter(lang => lang.toLowerCase() !== 'web') // Filter out "Web" tag
+                          .map((lang, idx) => (
+                            <span key={idx} className="text-gray-700 text-xs sm:text-sm font-medium px-2 py-1 bg-gray-200 rounded border border-gray-300">
+                              {lang}
+                            </span>
+                          ))
+                      })()}
                     </div>
 
                   </div>
                 </motion.article>
               ))}
+                  </div>
+                </motion.section>
+              )}
+
+              {/* GitHub Activity Section */}
+              {portfolio.user?.githubUsername && (
+                <GitHubActivity 
+                  username={portfolio.user.githubUsername} 
+                  theme="light" 
+                />
+              )}
+
             </div>
-            
           </div>
-        </motion.section>
-      )}
-
-
-      {/* GitHub Activity Section */}
-      {portfolio.user?.githubUsername ? (
-        <GitHubActivity 
-          username={portfolio.user.githubUsername} 
-          theme="light" 
-        />
-      ) : (
-        <div className="py-8 text-center">
-          <p className="text-gray-500">GitHub username not available</p>
         </div>
-      )}
+      </div>
 
 
       {/* Footer */}
