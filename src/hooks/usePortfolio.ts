@@ -65,11 +65,13 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
   const [repoOrder, setRepoOrder] = useState<number[]>([])
   const [logoOverrides, setLogoOverrides] = useState<Record<number, string>>({})
   const [experiences, setExperiences] = useState<any[]>([])
+  const [cvUrl, setCvUrl] = useState<string | null>(null)
   
   const [originalData, setOriginalData] = useState<PortfolioState | null>(null)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const [isInitialLoad, setIsInitialLoad] = useState(true)
   const [isLoadingPortfolio, setIsLoadingPortfolio] = useState(true)
+  const [isPublishComplete, setIsPublishComplete] = useState(false)
   
   // Analytics state
   const [analytics, setAnalytics] = useState<{
@@ -205,20 +207,49 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
       backgroundColor: (originalData as any).backgroundColor || null,
       backgroundPattern: (originalData as any).backgroundPattern || null,
       repoOrder: originalData.repoOrder || [],
+      cvUrl: cvUrl || null,
     }))
     
-    const hasChanges = JSON.stringify(cleanCurrentData) !== JSON.stringify(cleanOriginalData)
+    // Add cvUrl to original data comparison
+    const originalCvUrl = (originalData as any)?.cvUrl || null
+    const cleanOriginalDataWithCv = { ...cleanOriginalData, cvUrl: originalCvUrl }
+    const cleanCurrentDataWithCv = { ...cleanCurrentData, cvUrl: cvUrl || null }
+    
+    const hasChanges = JSON.stringify(cleanCurrentDataWithCv) !== JSON.stringify(cleanOriginalDataWithCv)
      
     console.log("📊 Change detection:", { 
       hasChanges, 
       isInitialLoad, 
+      isPublishComplete,
       originalDataExists: !!originalData 
     })
      
-    // Update hasUnsavedChanges based on detection
+    // Don't set changes during initial load
+    if (isInitialLoad) {
+      console.log("📊 Skipping change detection - isInitialLoad")
+      setHasUnsavedChanges(false)
+      return
+    }
+    
+    // If publish is complete but changes are detected, reset the flag (user made a new change)
+    if (isPublishComplete && hasChanges) {
+      console.log("📊 Changes detected after publish - resetting isPublishComplete flag")
+      setIsPublishComplete(false)
+      setHasUnsavedChanges(true)
+      return
+    }
+    
+    // If publish is complete and no changes, keep button disabled
+    if (isPublishComplete && !hasChanges) {
+      console.log("📊 Skipping change detection - publish complete with no changes")
+      setHasUnsavedChanges(false)
+      return
+    }
+    
+    // Normal change detection
     console.log("📊 Setting hasUnsavedChanges to:", hasChanges)
     setHasUnsavedChanges(hasChanges)
-  }, [portfolioData, selectedRepos, skills, socials, deployedUrls, customNames, customDescriptions, githubUrls, importedProjects, selectedTheme, backgroundColor, backgroundPattern, repoOrder, experiences, originalData, isInitialLoad])
+  }, [portfolioData, selectedRepos, skills, socials, deployedUrls, customNames, customDescriptions, githubUrls, importedProjects, selectedTheme, backgroundColor, backgroundPattern, repoOrder, experiences, cvUrl, originalData, isInitialLoad, isPublishComplete])
 
   // Load existing portfolio data
   const loadExistingData = async (username: string, initialData?: any) => {
@@ -346,6 +377,11 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
           setBackgroundPattern((portfolio as any).backgroundPattern)
         }
         
+        // Set CV URL
+        if ((portfolio as any).cvUrl !== undefined) {
+          setCvUrl((portfolio as any).cvUrl)
+        }
+        
         const originalDataToSet = normalizeData(createOrderedData({
           id: portfolio.id, // Add portfolio ID
           portfolioData: {
@@ -375,6 +411,7 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
           selectedTheme: currentSelectedTheme,
           backgroundColor: (portfolio as any).backgroundColor || null,
           backgroundPattern: (portfolio as any).backgroundPattern || null,
+          cvUrl: (portfolio as any).cvUrl || null,
           importedProjects: formatImportedProjects(portfolio.repositories || []).sort((a, b) => a.id - b.id),
           repoOrder: portfolio.repositories ? portfolio.repositories.map((repo: any) => parseInt(repo.repository.githubId)) : [],
           // NEW: include experiences in original
@@ -540,13 +577,23 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
     
     console.log("🔄 Setting new original data (normalized):", newOriginalData)
     
+    // Set publish complete flag to prevent change detection from running
+    setIsPublishComplete(true)
+    
     // Immediately set hasUnsavedChanges to false to disable publish button
     setHasUnsavedChanges(false)
     
-    // Update originalData - this will trigger change detection which will see no changes
+    // Update originalData - this will trigger change detection, but it will be skipped due to isPublishComplete flag
     setOriginalData(newOriginalData)
     
-    console.log("🔄 Publish complete - publish button disabled")
+    console.log("🔄 Publish complete - publish button disabled, isPublishComplete set to true")
+    
+    // Reset isPublishComplete flag after a short delay to allow change detection to run for future changes
+    // The flag will also be reset when new changes are detected
+    setTimeout(() => {
+      console.log("🔄 Resetting isPublishComplete flag - ready for new changes")
+      setIsPublishComplete(false)
+    }, 500)
   }
 
   return {
@@ -571,6 +618,7 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
     livePortfolio,
     originalData,
     analytics,
+    cvUrl,
     
     // Setters
     setPortfolioData,
@@ -588,6 +636,7 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
     setRepoOrder,
     setLogoOverrides,
     setExperiences,
+    setCvUrl,
     
     // Methods
     loadExistingData,

@@ -30,7 +30,8 @@ export async function POST(req: NextRequest) {
       logoOverrides,
       experiences,
       backgroundColor,
-      backgroundPattern
+      backgroundPattern,
+      cvUrl
     } = body
 
     devLog("👤 User ID:", userId)
@@ -237,6 +238,7 @@ export async function POST(req: NextRequest) {
         selectedTheme: selectedTheme || 'light',
         backgroundColor: backgroundColor || null,
         backgroundPattern: backgroundPattern || null,
+        cvUrl: cvUrl || null,
         isPublished: true,
         updatedAt: new Date(),
       }
@@ -251,6 +253,7 @@ export async function POST(req: NextRequest) {
         selectedTheme: selectedTheme || 'light',
         backgroundColor: backgroundColor || null,
         backgroundPattern: backgroundPattern || null,
+        cvUrl: cvUrl || null,
         isPublished: true,
       }
 

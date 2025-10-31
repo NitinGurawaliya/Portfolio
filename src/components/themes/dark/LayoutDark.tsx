@@ -1,7 +1,7 @@
 import { motion } from "framer-motion"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ProjectIcon } from "@/components/ui/project-icon"
-import { Building } from "lucide-react"
+import { Building, Download } from "lucide-react"
 import { SiGithub, SiX, SiLinkedin, SiInstagram, SiFacebook, SiYoutube, SiGmail, SiStackoverflow, SiReddit } from "react-icons/si"
 import { Globe } from "lucide-react"
 import { SkillIcon } from "@/lib/skill-icons"
@@ -34,6 +34,7 @@ interface PortfolioData {
   experiences?: any[]
   backgroundColor?: string | null
   backgroundPattern?: string | null
+  cvUrl?: string | null
   user: {
     githubUsername: string
     location: string
@@ -224,6 +225,29 @@ export default function LayoutDark({ theme, portfolio }: LayoutDarkProps) {
                   />
                 )}
               </motion.p>
+
+              {/* Download CV Button */}
+              {portfolio.cvUrl && (
+                <motion.div
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ duration: 0.8, delay: 0.7 }}
+                >
+                  <motion.button
+                    onClick={() => {
+                      window.open(portfolio.cvUrl!, '_blank')
+                    }}
+                    className="w-full flex items-center justify-between bg-white/10 border border-gray-700 rounded-lg px-4 py-2.5 hover:bg-white/20 transition-all duration-200 text-left backdrop-blur-sm"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <span className="text-sm font-medium text-white">Download CV</span>
+                    <div className="bg-white/20 rounded-md p-1.5">
+                      <Download className="h-4 w-4 text-white" />
+                    </div>
+                  </motion.button>
+                </motion.div>
+              )}
 
               {/* Location & Company Info */}
               <motion.div 

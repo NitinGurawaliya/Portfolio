@@ -28,6 +28,7 @@ export const publishPortfolio = async (data: {
     duration?: string | null
     description?: string | null
   }>
+  cvUrl?: string | null
 }) => {
   const response = await fetch("/api/portfolio/publish-all", {
     method: "POST",

@@ -112,7 +112,8 @@ export default function DashboardPage() {
         userData: user,
         logoOverrides: portfolio.logoOverrides,
         backgroundColor: portfolio.backgroundColor,
-        backgroundPattern: portfolio.backgroundPattern
+        backgroundPattern: portfolio.backgroundPattern,
+        cvUrl: portfolio.cvUrl
       })
 
       console.log('📊 Publish result:', result)
@@ -165,6 +166,8 @@ export default function DashboardPage() {
             isInitialLoad={portfolio.isInitialLoad}
             experiences={portfolio.experiences}
             onExperiencesChange={portfolio.setExperiences}
+            cvUrl={portfolio.cvUrl}
+            setCvUrl={portfolio.setCvUrl}
           />
         )
       case "repos":
