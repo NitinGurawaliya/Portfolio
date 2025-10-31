@@ -181,16 +181,20 @@ export const fetchGitHubData = async () => {
 }
 
 /**
- * Session data fetch करता है
+ * Session data fetch करता है - with secure validation
  */
 export const fetchSession = async () => {
   const res = await fetch("/api/session", { cache: "no-store" })
   
   if (!res.ok) {
-    throw new Error("No session")
+    throw new Error("No session or session invalid")
   }
   
   const data = await res.json()
-  return data.session
+  // Return session only if it's verified
+  if (data.success && data.session) {
+    return data.session
+  }
+  throw new Error("Session validation failed")
 }
 

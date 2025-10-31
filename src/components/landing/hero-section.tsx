@@ -7,14 +7,36 @@ import { useRouter } from "next/navigation";
 
 export function HeroSection() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isChecking, setIsChecking] = useState(true);
   const router = useRouter();
+  
   useEffect(() => {
-    fetch("/api/session", { cache: "no-store" }).then(async (res) => {
-      if (res.ok) {
-        const data = await res.json();
-        if (data.session) setIsLoggedIn(true);
+    const checkSession = async () => {
+      setIsChecking(true);
+      try {
+        const res = await fetch("/api/session", { cache: "no-store" });
+        if (res.ok) {
+          const data = await res.json();
+          // Only set logged in if session is verified and valid
+          if (data.success && data.session) {
+            setIsLoggedIn(true);
+          } else {
+            setIsLoggedIn(false);
+          }
+        } else {
+          // Session invalid or expired
+          setIsLoggedIn(false);
+        }
+      } catch (error) {
+        // Network error or other issue - be conservative
+        console.error("Session check failed:", error);
+        setIsLoggedIn(false);
+      } finally {
+        setIsChecking(false);
       }
-    });
+    };
+    
+    checkSession();
   }, []);
 
   return (
@@ -57,11 +79,11 @@ export function HeroSection() {
 
           <div className="flex flex-col items-center mt-2">
             <div>
-              {isLoggedIn ? (
+              {!isChecking && isLoggedIn ? (
                 <span className="text-blue-600 text-sm underline cursor-pointer" onClick={() => router.push("/dashboard")}>Already logged in? Go to dashboard</span>
-              ) : (
+              ) : !isChecking ? (
                 <span className="text-blue-500 text-sm underline cursor-pointer" onClick={() => router.push("/auth")}>Already have an account? Login</span>
-              )}
+              ) : null}
             </div>
           </div>
 

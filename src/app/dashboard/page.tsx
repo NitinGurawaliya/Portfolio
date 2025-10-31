@@ -22,8 +22,8 @@ export default function DashboardPage() {
   const [activeSection, setActiveSection] = useState("home")
   const [isPublishing, setIsPublishing] = useState(false)
   
-  // Session hook
-  const { user, loading } = useSession()
+  // Session hook - redirect to auth if session is invalid
+  const { user, loading } = useSession({ redirectOnAuthFailure: true })
   
   // Portfolio hook
   const portfolio = usePortfolio(user)

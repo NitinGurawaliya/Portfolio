@@ -201,6 +201,8 @@ export async function GET(req: NextRequest) {
     }
     
     // Store user data in a simple session (you can improve this later)
+    // Increase session lifespan to 30 days
+    const sessionLifespanDays = 30
     const sessionData = {
       user: {
         id: userData.id.toString(),
@@ -211,7 +213,7 @@ export async function GET(req: NextRequest) {
       },
       // Keep token server-side only
       accessToken: tokenData.access_token,
-      expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      expires: new Date(Date.now() + sessionLifespanDays * 24 * 60 * 60 * 1000).toISOString(),
     }
     
     // Create a simple session cookie
@@ -271,7 +273,7 @@ export async function GET(req: NextRequest) {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 24 * 60 * 60, // 24 hours
+      maxAge: sessionLifespanDays * 24 * 60 * 60, // 30 days
     })
 
     devLog("Redirecting to:", redirectUrl)

@@ -190,27 +190,24 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
 
               {/* Name & Handle */}
               <motion.div 
-                className="text-left space-y-1"
+                className="text-left"
                 initial={{ y: 30, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.8, delay: 0.4 }}
               >
-                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800">
+                <h1 className="text-xl sm:text-2xl md:text-2xl lg:text-xl font-bold text-gray-800">
                   {portfolio.displayName}
                 </h1>
                 {portfolio.jobTitle && (
-                  <p className="text-sm sm:text-base md:text-lg text-purple-600 font-semibold">
+                  <p className="text-sm sm:text-base md:text-base lg:text-sm text-purple-600 font-semibold mt-0.5">
                     {portfolio.jobTitle}
                   </p>
                 )}
-                <p className="text-xs sm:text-sm text-purple-500">
-                  @{portfolio.user?.githubUsername || 'user'}
-                </p>
               </motion.div>
 
               {/* Bio */}
               <motion.p 
-                className="text-xs sm:text-sm md:text-base text-gray-600 leading-relaxed text-left"
+                className="text-xs sm:text-sm md:text-base text-gray-600 leading-relaxed text-left mt-1"
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.8, delay: 0.6 }}
@@ -346,14 +343,21 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
                   viewport={{ once: true }}
                   aria-label="Technical skills"
                 >
-                  <h2 className="text-base sm:text-lg font-bold mb-3 text-gray-900 text-left">
+                  <h2 className="text-base font-bold mb-3 text-gray-900 text-left">
                     Skills
                   </h2>
-                  <div className="flex flex-wrap gap-2 justify-start">
+                  <div 
+                    className="flex gap-2 justify-start overflow-x-auto pb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]" 
+                    style={{ 
+                      scrollbarWidth: 'none',
+                      msOverflowStyle: 'none',
+                      WebkitOverflowScrolling: 'touch'
+                    }}
+                  >
                     {portfolio.skills.map((skill, index) => (
                       <motion.div
                         key={skill.id}
-                        className="group relative"
+                        className="group relative flex-shrink-0"
                         initial={{ opacity: 0, scale: 0.8 }}
                         whileInView={{ opacity: 1, scale: 1 }}
                         transition={{ duration: 0.3, delay: index * 0.05 }}
@@ -382,7 +386,7 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
                   aria-label="Work experience"
                 >
                   <motion.h2 
-                    className="text-base sm:text-lg font-bold mb-3 text-gray-900 text-left"
+                    className="text-base font-bold mb-3 text-gray-900 text-left"
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6, delay: 0.2 }}
@@ -430,7 +434,7 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
             </div>
 
             {/* RIGHT COLUMN - Projects & GitHub Activity (2/3 width on large screens) */}
-            <div className="lg:col-span-8 xl:col-span-8 space-y-8">
+            <div className="lg:col-span-8 xl:col-span-8 space-y-8 lg:space-y-10">
 
               {/* Projects Section */}
               {portfolio.repositories && portfolio.repositories.filter(repo => repo.isVisible).length > 0 && (
@@ -440,9 +444,10 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
                   transition={{ duration: 0.8 }}
                   viewport={{ once: true }}
                   aria-label="Projects showcase"
+                  className="mt-6 lg:mt-8"
                 >
                   <motion.h2 
-                    className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold mb-4 sm:mb-6 text-gray-900"
+                    className="text-base font-bold mb-4 sm:mb-6 text-gray-900"
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6, delay: 0.2 }}
@@ -488,7 +493,7 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
                   tabIndex={0}
                   aria-label={`View ${repo.repository.name} project`}
                 >
-                  <div className="relative bg-transparent rounded-lg p-2 xs:p-3 sm:p-4 md:p-6 hover:bg-gray-200/20 transition-all duration-300 border border-gray-200 w-full">
+                  <div className="relative bg-transparent rounded-lg p-2 xs:p-3 sm:p-4 md:p-6 lg:p-4 hover:bg-gray-200/20 transition-all duration-300 border border-gray-200 w-full">
                     {/* OG image preview for public card only */}
                     {repo.repository.logo && (/^https?:/i.test(repo.repository.logo) || /^data:image\//i.test(repo.repository.logo)) && (
                       <div className="mb-2 -mt-1 overflow-hidden rounded-md">
@@ -514,11 +519,11 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
                         </div>
                         
                         {/* Project Name */}
-                        <h3 className="text-sm xs:text-base sm:text-lg md:text-xl font-bold text-gray-800 break-words mb-1 xs:mb-2">
+                        <h3 className="text-sm xs:text-base sm:text-lg md:text-lg lg:text-base font-bold text-gray-800 break-words mb-1 xs:mb-2">
                           {repo.customName || repo.repository.name}
                         </h3>
                         <div 
-                          className="text-xs xs:text-sm sm:text-base text-gray-600 leading-relaxed break-words prose prose-sm max-w-none"
+                          className="text-xs xs:text-sm sm:text-base lg:text-sm text-gray-600 leading-relaxed break-words prose prose-sm max-w-none"
                           dangerouslySetInnerHTML={{
                             __html: repo.customDescription || repo.repository.description || "No description available for this project."
                           }}

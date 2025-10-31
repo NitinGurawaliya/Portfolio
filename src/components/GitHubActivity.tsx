@@ -206,7 +206,7 @@ export function GitHubActivity({ username, theme }: GitHubActivityProps) {
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          <h2 className={`text-2xl md:text-3xl font-bold mb-4 text-left ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+          <h2 className={`text-base font-bold mb-4 text-left ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
             GitHub Activity
           </h2>
           <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
