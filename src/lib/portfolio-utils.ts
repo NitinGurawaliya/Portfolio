@@ -160,7 +160,9 @@ export const buildLivePortfolio = (
   selectedTheme: string,
   customNames: Record<number, string>,
   customDescriptions: Record<number, string>,
-  repoOrder: number[]
+  repoOrder: number[],
+  backgroundColor?: string | null,
+  backgroundPattern?: string | null
 ) => {
   if (!user) return null
 
@@ -228,6 +230,8 @@ export const buildLivePortfolio = (
     profilePic: portfolioData.profilePic,
     customUsername: portfolioData.customUsername,
     selectedTheme: selectedTheme,
+    backgroundColor: backgroundColor || null,
+    backgroundPattern: backgroundPattern || null,
     skills: skillsForPreview,
     socials: socials,
     repositories,

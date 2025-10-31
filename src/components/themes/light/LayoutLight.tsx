@@ -32,6 +32,8 @@ interface PortfolioData {
   socials: any[]
   repositories: any[]
   experiences?: any[]
+  backgroundColor?: string | null
+  backgroundPattern?: string | null
   user: {
     githubUsername: string
     location: string
@@ -59,6 +61,38 @@ const getSocialIcon = (platform: string) => {
     reddit: SiReddit,
   }
   return icons[platform] || Globe
+}
+
+const getPatternStyle = (pattern: string | null) => {
+  if (!pattern) return {}
+  
+  switch (pattern) {
+    case 'dots':
+      return {
+        backgroundImage: 'radial-gradient(circle, rgba(0,0,0,0.12) 1px, transparent 1px)',
+        backgroundSize: '20px 20px'
+      }
+    case 'grid':
+      return {
+        backgroundImage: 'linear-gradient(rgba(0,0,0,0.12) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.12) 1px, transparent 1px)',
+        backgroundSize: '20px 20px'
+      }
+    case 'cross':
+      return {
+        backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,0,0,0.08) 10px, rgba(0,0,0,0.08) 20px)'
+      }
+    case 'waves':
+      return {
+        backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.06) 2px, rgba(0,0,0,0.06) 4px)'
+      }
+    case 'stars':
+      return {
+        backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(0,0,0,0.15) 1px, transparent 0)',
+        backgroundSize: '30px 30px'
+      }
+    default:
+      return {}
+  }
 }
 
 export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
@@ -137,17 +171,32 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
     }
   }, [bioIndex, portfolio.bio])
 
+  // Get background customization
+  const backgroundStyle = portfolio.backgroundColor 
+    ? { backgroundColor: portfolio.backgroundColor }
+    : {}
+  
+  const patternStyle = portfolio.backgroundPattern 
+    ? getPatternStyle(portfolio.backgroundPattern)
+    : {}
+
   return (
     <div 
-      className="min-h-screen scroll-smooth"
+      className="min-h-screen scroll-smooth relative"
       style={{ 
-        background: theme.colors.background,
         color: theme.colors.text,
         scrollBehavior: 'smooth'
       }}
     >
-      {/* Light Background */}
-      <div className="fixed inset-0 z-0 bg-gradient-to-br from-gray-50 to-white"></div>
+      {/* Customizable Background */}
+      <div 
+        className="fixed inset-0 z-0"
+        style={{
+          ...backgroundStyle,
+          ...(!portfolio.backgroundColor && { background: 'linear-gradient(to bottom right, #f9fafb, #ffffff)' }),
+          ...patternStyle
+        }}
+      />
 
       {/* Hero Section - Centered Layout */}
       <motion.section 
@@ -426,7 +475,7 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
                     viewport={{ once: true }}
                   >
                     <div className="absolute left-3 top-1.5 h-2.5 w-2.5 rounded-full bg-gray-700" />
-                    <div className="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                    <div className="border border-gray-200 rounded-lg p-3 bg-transparent">
                       <div className="flex items-start gap-3">
                         {exp.faviconUrl ? (
                           <img src={exp.faviconUrl} alt={exp.companyName} className="h-5 w-5 mt-0.5" />
@@ -520,7 +569,7 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
                   tabIndex={0}
                   aria-label={`View ${repo.repository.name} project`}
                 >
-                  <div className="relative bg-gray-100 rounded-lg p-2 xs:p-3 sm:p-4 md:p-6 hover:bg-gray-200 transition-all duration-300 border border-gray-200 w-full">
+                  <div className="relative bg-transparent rounded-lg p-2 xs:p-3 sm:p-4 md:p-6 hover:bg-gray-200/20 transition-all duration-300 border border-gray-200 w-full">
                     {/* OG image preview for public card only */}
                     {repo.repository.logo && (/^https?:/i.test(repo.repository.logo) || /^data:image\//i.test(repo.repository.logo)) && (
                       <div className="mb-2 -mt-1 overflow-hidden rounded-md">

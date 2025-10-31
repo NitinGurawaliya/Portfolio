@@ -110,7 +110,9 @@ export default function DashboardPage() {
         repositories: allRepositories,
         userId: user?.id || 0,
         userData: user,
-        logoOverrides: portfolio.logoOverrides
+        logoOverrides: portfolio.logoOverrides,
+        backgroundColor: portfolio.backgroundColor,
+        backgroundPattern: portfolio.backgroundPattern
       })
 
       console.log('📊 Publish result:', result)
@@ -254,6 +256,11 @@ export default function DashboardPage() {
             currentTheme={portfolio.selectedTheme as any}
             userId={user?.id || 0}
             onThemeChange={handlers.handleThemeChange}
+            portfolioId={portfolio.originalData?.id || portfolio.portfolioData.id}
+            backgroundColor={portfolio.backgroundColor}
+            backgroundPattern={portfolio.backgroundPattern}
+            setBackgroundColor={portfolio.setBackgroundColor}
+            setBackgroundPattern={portfolio.setBackgroundPattern}
           />
         )
       default:

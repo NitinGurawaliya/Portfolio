@@ -18,6 +18,8 @@ export const publishPortfolio = async (data: {
   userId: number
   userData: User | null
   logoOverrides?: Record<number, string>
+  backgroundColor?: string | null
+  backgroundPattern?: string | null
   experiences?: Array<{
     companyName: string
     companyUrl?: string | null

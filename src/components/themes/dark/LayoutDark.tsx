@@ -32,6 +32,8 @@ interface PortfolioData {
   socials: any[]
   repositories: any[]
   experiences?: any[]
+  backgroundColor?: string | null
+  backgroundPattern?: string | null
   user: {
     githubUsername: string
     location: string
@@ -61,6 +63,38 @@ const getSocialIcon = (platform: string) => {
   return icons[platform] || Globe
 }
 
+const getPatternStyle = (pattern: string | null) => {
+  if (!pattern) return {}
+  
+  switch (pattern) {
+    case 'dots':
+      return {
+        backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.15) 1px, transparent 1px)',
+        backgroundSize: '20px 20px'
+      }
+    case 'grid':
+      return {
+        backgroundImage: 'linear-gradient(rgba(255,255,255,0.15) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.15) 1px, transparent 1px)',
+        backgroundSize: '20px 20px'
+      }
+    case 'cross':
+      return {
+        backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.08) 10px, rgba(255,255,255,0.08) 20px)'
+      }
+    case 'waves':
+      return {
+        backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.06) 2px, rgba(255,255,255,0.06) 4px)'
+      }
+    case 'stars':
+      return {
+        backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(255,255,255,0.2) 1px, transparent 0)',
+        backgroundSize: '30px 30px'
+      }
+    default:
+      return {}
+  }
+}
+
 export default function LayoutDark({ theme, portfolio }: LayoutDarkProps) {
   const [displayedBio, setDisplayedBio] = useState('')
   const [bioIndex, setBioIndex] = useState(0)
@@ -84,16 +118,31 @@ export default function LayoutDark({ theme, portfolio }: LayoutDarkProps) {
     }
   }, [bioIndex, portfolio.bio])
 
+  // Get background customization
+  const backgroundStyle = portfolio.backgroundColor 
+    ? { backgroundColor: portfolio.backgroundColor }
+    : {}
+  
+  const patternStyle = portfolio.backgroundPattern 
+    ? getPatternStyle(portfolio.backgroundPattern)
+    : {}
+
   return (
     <div 
-      className="min-h-screen"
+      className="min-h-screen relative"
       style={{ 
-        background: theme.colors.background,
         color: theme.colors.text 
       }}
     >
-      {/* Dark Background Gradient */}
-      <div className="fixed inset-0 z-0 bg-gradient-to-br from-gray-900 to-black"></div>
+      {/* Customizable Background */}
+      <div 
+        className="fixed inset-0 z-0"
+        style={{
+          ...backgroundStyle,
+          ...(!portfolio.backgroundColor && { background: 'linear-gradient(to bottom right, #111827, #000000)' }),
+          ...patternStyle
+        }}
+      />
 
       {/* Hero Section */}
       <motion.section 

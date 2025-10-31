@@ -71,6 +71,8 @@ model Portfolio {
   jobTitle       String?
   selectedTheme  String                @default("dark")
   themeConfig    Json?
+  backgroundColor String?              // Background color customization
+  backgroundPattern String?            // Background pattern option
   user           User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   repositories   PortfolioRepository[]
   skills         Skill[]

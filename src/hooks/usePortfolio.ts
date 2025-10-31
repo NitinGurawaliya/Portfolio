@@ -60,6 +60,8 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
   const [customDescriptions, setCustomDescriptions] = useState<Record<number, string>>({})
   const [githubUrls, setGithubUrls] = useState<Record<number, string>>({})
   const [selectedTheme, setSelectedTheme] = useState<string>('light')
+  const [backgroundColor, setBackgroundColor] = useState<string | null>(null)
+  const [backgroundPattern, setBackgroundPattern] = useState<string | null>(null)
   const [repoOrder, setRepoOrder] = useState<number[]>([])
   const [logoOverrides, setLogoOverrides] = useState<Record<number, string>>({})
   const [experiences, setExperiences] = useState<any[]>([])
@@ -90,6 +92,8 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
       customDescriptions: data.customDescriptions,
       githubUrls: data.githubUrls,
       selectedTheme: data.selectedTheme,
+      backgroundColor: data.backgroundColor,
+      backgroundPattern: data.backgroundPattern,
       importedProjects: data.importedProjects,
       repoOrder: data.repoOrder
     }
@@ -107,8 +111,10 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
     selectedTheme,
     customNames,
     customDescriptions,
-    repoOrder
-  ), [user, portfolioData, skills, socials, selectedRepos, deployedUrls, importedProjects, selectedTheme, customNames, customDescriptions, repoOrder])
+    repoOrder,
+    backgroundColor,
+    backgroundPattern
+  ), [user, portfolioData, skills, socials, selectedRepos, deployedUrls, importedProjects, selectedTheme, customNames, customDescriptions, repoOrder, backgroundColor, backgroundPattern])
 
   // Track changes
   useEffect(() => {
@@ -157,6 +163,8 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
       githubUrls,
       importedProjects: normalizedImportedProjects.sort((a, b) => a.id - b.id),
       selectedTheme,
+      backgroundColor,
+      backgroundPattern,
       repoOrder: [...repoOrder],
     })
     
@@ -172,6 +180,8 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
       githubUrls: currentData.githubUrls,
       importedProjects: [...(currentData.importedProjects || [])].sort((a, b) => a.id - b.id),
       selectedTheme: currentData.selectedTheme || 'light',
+      backgroundColor: currentData.backgroundColor || null,
+      backgroundPattern: currentData.backgroundPattern || null,
       repoOrder: currentData.repoOrder || [],
     }))
     
@@ -192,6 +202,8 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
       githubUrls: originalData.githubUrls,
       importedProjects: normalizedOriginalImportedProjects.sort((a, b) => a.id - b.id),
       selectedTheme: originalData.selectedTheme || 'light',
+      backgroundColor: (originalData as any).backgroundColor || null,
+      backgroundPattern: (originalData as any).backgroundPattern || null,
       repoOrder: originalData.repoOrder || [],
     }))
     
@@ -206,7 +218,7 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
     // Update hasUnsavedChanges based on detection
     console.log("📊 Setting hasUnsavedChanges to:", hasChanges)
     setHasUnsavedChanges(hasChanges)
-  }, [portfolioData, selectedRepos, skills, socials, deployedUrls, customNames, customDescriptions, githubUrls, importedProjects, selectedTheme, repoOrder, experiences, originalData, isInitialLoad])
+  }, [portfolioData, selectedRepos, skills, socials, deployedUrls, customNames, customDescriptions, githubUrls, importedProjects, selectedTheme, backgroundColor, backgroundPattern, repoOrder, experiences, originalData, isInitialLoad])
 
   // Load existing portfolio data
   const loadExistingData = async (username: string, initialData?: any) => {
@@ -326,6 +338,14 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
         const currentSelectedTheme = portfolio.selectedTheme || 'light'
         setSelectedTheme(currentSelectedTheme)
         
+        // Set background customization
+        if ((portfolio as any).backgroundColor !== undefined) {
+          setBackgroundColor((portfolio as any).backgroundColor)
+        }
+        if ((portfolio as any).backgroundPattern !== undefined) {
+          setBackgroundPattern((portfolio as any).backgroundPattern)
+        }
+        
         const originalDataToSet = normalizeData(createOrderedData({
           id: portfolio.id, // Add portfolio ID
           portfolioData: {
@@ -353,6 +373,8 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
           customDescriptions: mapPortfolioRepositories(portfolio.repositories || []).descriptions,
           githubUrls: mapPortfolioRepositories(portfolio.repositories || []).githubUrls,
           selectedTheme: currentSelectedTheme,
+          backgroundColor: (portfolio as any).backgroundColor || null,
+          backgroundPattern: (portfolio as any).backgroundPattern || null,
           importedProjects: formatImportedProjects(portfolio.repositories || []).sort((a, b) => a.id - b.id),
           repoOrder: portfolio.repositories ? portfolio.repositories.map((repo: any) => parseInt(repo.repository.githubId)) : [],
           // NEW: include experiences in original
@@ -417,6 +439,8 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
           customDescriptions: { ...customDescriptions },
           githubUrls: { ...githubUrls },
           selectedTheme: currentTheme,
+          backgroundColor: backgroundColor || null,
+          backgroundPattern: backgroundPattern || null,
           importedProjects: [...importedProjects].sort((a, b) => a.id - b.id),
           repoOrder: [...repoOrder],
           // NEW: no portfolio yet → empty experiences
@@ -461,6 +485,8 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
          customDescriptions: { ...customDescriptions },
          githubUrls: { ...githubUrls },
          selectedTheme: currentTheme,
+         backgroundColor: backgroundColor || null,
+         backgroundPattern: backgroundPattern || null,
          importedProjects: [...importedProjects].sort((a, b) => a.id - b.id),
          repoOrder: [...repoOrder],
          // NEW: fallback → empty experiences
@@ -506,6 +532,8 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
       customDescriptions: { ...customDescriptions },
       githubUrls: { ...githubUrls },
       selectedTheme,
+      backgroundColor,
+      backgroundPattern,
       importedProjects: normalizedImportedProjects.sort((a, b) => a.id - b.id),
       repoOrder: [...repoOrder],
     }))
@@ -533,6 +561,8 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
     customDescriptions,
     githubUrls,
     selectedTheme,
+    backgroundColor,
+    backgroundPattern,
     repoOrder,
     logoOverrides,
     hasUnsavedChanges,
@@ -553,6 +583,8 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
     setCustomDescriptions,
     setGithubUrls,
     setSelectedTheme,
+    setBackgroundColor,
+    setBackgroundPattern,
     setRepoOrder,
     setLogoOverrides,
     setExperiences,

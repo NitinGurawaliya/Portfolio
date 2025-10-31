@@ -221,7 +221,7 @@ export function GitHubActivity({ username, theme }: GitHubActivityProps) {
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
         >
-          <div className={`rounded-lg p-4 ${theme === 'dark' ? 'bg-gray-800/50' : 'bg-white'} border ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
+          <div className={`rounded-lg p-4 ${theme === 'dark' ? 'bg-gray-800/50' : 'bg-transparent'} border ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
             {/* Header */}
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
@@ -297,7 +297,7 @@ export function GitHubActivity({ username, theme }: GitHubActivityProps) {
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}
           >
-            <div className={`rounded-lg p-4 ${theme === 'dark' ? 'bg-gray-800/50' : 'bg-white'} border ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
+            <div className={`rounded-lg p-4 ${theme === 'dark' ? 'bg-gray-800/50' : 'bg-transparent'} border ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
               {/* Header */}
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
@@ -323,7 +323,7 @@ export function GitHubActivity({ username, theme }: GitHubActivityProps) {
                     className={`group block rounded-lg p-3 sm:p-4 border transition-all duration-200 hover:shadow-md min-h-[120px] sm:min-h-[140px] flex flex-col ${
                       theme === 'dark' 
                         ? 'bg-gray-800/30 border-gray-700 hover:border-gray-600' 
-                        : 'bg-gray-50 border-gray-200 hover:border-gray-300'
+                        : 'bg-transparent border-gray-200 hover:border-gray-300'
                     }`}
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
@@ -379,7 +379,7 @@ export function GitHubActivity({ username, theme }: GitHubActivityProps) {
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}
           >
-            <div className={`rounded-lg p-4 ${theme === 'dark' ? 'bg-gray-800/50' : 'bg-white'} border ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
+            <div className={`rounded-lg p-4 ${theme === 'dark' ? 'bg-gray-800/50' : 'bg-transparent'} border ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
               <div className="text-center py-8">
                 <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
                   No repositories found. Make sure your GitHub username is correct and you have public repositories.

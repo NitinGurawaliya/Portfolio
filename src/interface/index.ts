@@ -110,6 +110,8 @@ export interface Portfolio {
     bio: string
     profilePic: string
     selectedTheme?: string
+    backgroundColor?: string | null
+    backgroundPattern?: string | null
     skills: Skill[]
     socials: Social[]
     repositories: PortfolioRepository[]

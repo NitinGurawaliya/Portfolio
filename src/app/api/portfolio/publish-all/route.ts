@@ -28,7 +28,9 @@ export async function POST(req: NextRequest) {
       userId,
       userData,
       logoOverrides,
-      experiences
+      experiences,
+      backgroundColor,
+      backgroundPattern
     } = body
 
     devLog("👤 User ID:", userId)
@@ -233,6 +235,8 @@ export async function POST(req: NextRequest) {
         profilePic: portfolioData.profilePic,
         customUsername: portfolioData.customUsername,
         selectedTheme: selectedTheme || 'light',
+        backgroundColor: backgroundColor || null,
+        backgroundPattern: backgroundPattern || null,
         isPublished: true,
         updatedAt: new Date(),
       }
@@ -245,6 +249,8 @@ export async function POST(req: NextRequest) {
         profilePic: portfolioData.profilePic,
         customUsername: portfolioData.customUsername,
         selectedTheme: selectedTheme || 'light',
+        backgroundColor: backgroundColor || null,
+        backgroundPattern: backgroundPattern || null,
         isPublished: true,
       }
 
