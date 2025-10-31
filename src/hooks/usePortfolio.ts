@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useRef } from "react"
 import { User, Skill, Social, Repository, PortfolioState, PortfolioData } from "@/interface"
 import { devLog } from "@/lib/logger"
 import {
@@ -72,6 +72,7 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
   const [isInitialLoad, setIsInitialLoad] = useState(true)
   const [isLoadingPortfolio, setIsLoadingPortfolio] = useState(true)
   const [isPublishComplete, setIsPublishComplete] = useState(false)
+  const publishCompleteTimestamp = useRef<number | null>(null)
   
   // Analytics state
   const [analytics, setAnalytics] = useState<{
@@ -231,17 +232,28 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
       return
     }
     
-    // If publish is complete but changes are detected, reset the flag (user made a new change)
-    if (isPublishComplete && hasChanges) {
-      console.log("📊 Changes detected after publish - resetting isPublishComplete flag")
-      setIsPublishComplete(false)
-      setHasUnsavedChanges(true)
-      return
-    }
-    
-    // If publish is complete and no changes, keep button disabled
-    if (isPublishComplete && !hasChanges) {
-      console.log("📊 Skipping change detection - publish complete with no changes")
+    // If publish is complete, handle carefully
+    if (isPublishComplete) {
+      // Check if enough time has passed since publish (ignore immediate false positives)
+      const timeSincePublish = publishCompleteTimestamp.current 
+        ? Date.now() - publishCompleteTimestamp.current 
+        : Infinity
+      
+      // If changes detected and enough time has passed (2 seconds), user made a real change
+      if (hasChanges && timeSincePublish > 2000) {
+        console.log("📊 Real changes detected after publish - resetting isPublishComplete flag")
+        setIsPublishComplete(false)
+        publishCompleteTimestamp.current = null
+        setHasUnsavedChanges(true)
+        return
+      }
+      
+      // If no changes or changes detected too soon after publish, keep button disabled
+      if (!hasChanges) {
+        console.log("📊 Skipping change detection - publish complete with no changes")
+      } else {
+        console.log("📊 Ignoring changes detected too soon after publish (likely false positive)")
+      }
       setHasUnsavedChanges(false)
       return
     }
@@ -577,8 +589,9 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
     
     console.log("🔄 Setting new original data (normalized):", newOriginalData)
     
-    // Set publish complete flag to prevent change detection from running
+    // Set publish complete flag and timestamp to prevent change detection from running
     setIsPublishComplete(true)
+    publishCompleteTimestamp.current = Date.now()
     
     // Immediately set hasUnsavedChanges to false to disable publish button
     setHasUnsavedChanges(false)
@@ -588,12 +601,9 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
     
     console.log("🔄 Publish complete - publish button disabled, isPublishComplete set to true")
     
-    // Reset isPublishComplete flag after a short delay to allow change detection to run for future changes
-    // The flag will also be reset when new changes are detected
-    setTimeout(() => {
-      console.log("🔄 Resetting isPublishComplete flag - ready for new changes")
-      setIsPublishComplete(false)
-    }, 500)
+    // Note: isPublishComplete will remain true until:
+    // 1. User makes a real change (detected after 2 second grace period)
+    // 2. This prevents false positives from normalization differences
   }
 
   return {
