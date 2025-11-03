@@ -21,15 +21,16 @@ interface ThemeSelectorProps {
 // Background color options
 // NOTE: Keep 'Default' as pure white instead of null to avoid falling back
 // to dark gradient backgrounds in dark theme layouts.
+// Light and subtle colors - visible but not overpowering
 const BACKGROUND_COLORS = [
-  { name: 'Default', value: '#ffffff', preview: 'linear-gradient(to bottom right, #ffffff, #f0f0f0)' },
-  { name: 'Sky Blue', value: '#dbeafe', preview: 'linear-gradient(to bottom right, #dbeafe, #bfdbfe)' },
-  { name: 'Mint Green', value: '#d1fae5', preview: 'linear-gradient(to bottom right, #d1fae5, #a7f3d0)' },
-  { name: 'Peach', value: '#fed7aa', preview: 'linear-gradient(to bottom right, #fed7aa, #fdba74)' },
-  { name: 'Lavender', value: '#e9d5ff', preview: 'linear-gradient(to bottom right, #e9d5ff, #d8b4fe)' },
-  { name: 'Rose Pink', value: '#fce7f3', preview: 'linear-gradient(to bottom right, #fce7f3, #fbcfe8)' },
-  { name: 'Canary Yellow', value: '#fef3c7', preview: 'linear-gradient(to bottom right, #fef3c7, #fde68a)' },
-  { name: 'Soft Cyan', value: '#cffafe', preview: 'linear-gradient(to bottom right, #cffafe, #a5f3fc)' },
+  { name: 'Default', value: '#ffffff', preview: 'linear-gradient(to bottom right, #ffffff, #f8f8f8)' },
+  { name: 'Sky Blue', value: '#eff6ff', preview: 'linear-gradient(to bottom right, #eff6ff, #dbeafe)' },
+  { name: 'Mint Green', value: '#ecfdf5', preview: 'linear-gradient(to bottom right, #ecfdf5, #d1fae5)' },
+  { name: 'Peach', value: '#fff7ed', preview: 'linear-gradient(to bottom right, #fff7ed, #fed7aa)' },
+  { name: 'Lavender', value: '#f5f3ff', preview: 'linear-gradient(to bottom right, #f5f3ff, #e9d5ff)' },
+  { name: 'Rose Pink', value: '#fdf2f8', preview: 'linear-gradient(to bottom right, #fdf2f8, #fce7f3)' },
+  { name: 'Canary Yellow', value: '#fffbeb', preview: 'linear-gradient(to bottom right, #fffbeb, #fef3c7)' },
+  { name: 'Soft Cyan', value: '#ecfeff', preview: 'linear-gradient(to bottom right, #ecfeff, #cffafe)' },
 ]
 
 // Background pattern options
@@ -131,29 +132,29 @@ export default function ThemeSelector({
   const getPatternStyle = (pattern: string | null) => {
     if (!pattern) return {}
     
-    // Use darker patterns for white background visibility
+    // Subtle patterns - light opacity for gentle visual texture
     switch (pattern) {
       case 'dots':
         return {
-          backgroundImage: 'radial-gradient(circle, rgba(0,0,0,0.15) 1px, transparent 1px)',
+          backgroundImage: 'radial-gradient(circle, rgba(0,0,0,0.06) 1px, transparent 1px)',
           backgroundSize: '20px 20px'
         }
       case 'grid':
         return {
-          backgroundImage: 'linear-gradient(rgba(0,0,0,0.15) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.15) 1px, transparent 1px)',
+          backgroundImage: 'linear-gradient(rgba(0,0,0,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.06) 1px, transparent 1px)',
           backgroundSize: '20px 20px'
         }
       case 'cross':
         return {
-          backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,0,0,0.08) 10px, rgba(0,0,0,0.08) 20px)'
+          backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,0,0,0.04) 10px, rgba(0,0,0,0.04) 20px)'
         }
       case 'waves':
         return {
-          backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.06) 2px, rgba(0,0,0,0.06) 4px)'
+          backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px)'
         }
       case 'stars':
         return {
-          backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(0,0,0,0.2) 1px, transparent 0)',
+          backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(0,0,0,0.08) 1px, transparent 0)',
           backgroundSize: '30px 30px'
         }
       default:

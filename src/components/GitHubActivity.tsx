@@ -55,7 +55,7 @@ function ContributionSquare({ day, theme, getContributionColor, delay }: Contrib
   return (
     <>
       <motion.div
-        className="w-2 h-2 sm:w-3 sm:h-3 rounded-sm cursor-pointer relative"
+        className="w-2 h-2 sm:w-2.5 sm:h-2.5 lg:w-2 lg:h-2 rounded-sm cursor-pointer relative"
         style={{ backgroundColor: getContributionColor(day.level, day.count) }}
         initial={{ opacity: 0, scale: 0 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -233,22 +233,22 @@ export function GitHubActivity({ username, theme }: GitHubActivityProps) {
             </div>
             
             {/* Contribution Graph - Mobile Responsive */}
-            <div className="overflow-x-auto scrollbar-hide scroll-smooth" style={{ scrollBehavior: 'smooth' }}>
-              <div className="flex gap-0.5 sm:gap-1 min-w-max">
+            <div className="overflow-x-auto lg:overflow-x-visible scrollbar-hide scroll-smooth" style={{ scrollBehavior: 'smooth' }}>
+              <div className="flex gap-0.5 sm:gap-1 lg:gap-0.5 min-w-max lg:min-w-0 lg:w-full">
                 {/* Days of week labels */}
-                <div className="flex flex-col gap-0.5 sm:gap-1 mr-1 sm:mr-2">
-                  <div className="h-2 sm:h-3"></div>
+                <div className="flex flex-col gap-0.5 sm:gap-1 lg:gap-0.5 mr-1 sm:mr-2 lg:mr-1">
+                  <div className="h-2 sm:h-2.5 lg:h-2"></div>
                   {['Mon', '', 'Wed', '', 'Fri', '', 'Sun'].map((day, index) => (
-                    <div key={index} className={`h-2 sm:h-3 flex items-center text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                    <div key={index} className={`h-2 sm:h-2.5 lg:h-2 flex items-center text-[10px] sm:text-xs lg:text-[10px] ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
                       {day}
                     </div>
                   ))}
                 </div>
                 
                 {/* Contribution grid */}
-                <div className="flex gap-0.5 sm:gap-1">
+                <div className="flex gap-0.5 sm:gap-1 lg:gap-0.5">
                   {weeks.map((week, weekIndex) => (
-                    <div key={weekIndex} className="flex flex-col gap-0.5 sm:gap-1">
+                    <div key={weekIndex} className="flex flex-col gap-0.5 sm:gap-1 lg:gap-0.5">
                       {week.map((day, dayIndex) => (
                         <ContributionSquare
                           key={`${weekIndex}-${dayIndex}`}
@@ -264,9 +264,9 @@ export function GitHubActivity({ username, theme }: GitHubActivityProps) {
               </div>
               
               {/* Month labels - Mobile Responsive */}
-              <div className="flex gap-0.5 sm:gap-1 ml-6 sm:ml-8 mt-1 sm:mt-2">
+              <div className="flex gap-0.5 sm:gap-1 lg:gap-0.5 ml-6 sm:ml-8 lg:ml-5 mt-1 sm:mt-2 lg:mt-1">
                 {['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'].map((month, index) => (
-                  <div key={index} className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} w-2 sm:w-3 text-center`}>
+                  <div key={index} className={`text-[10px] sm:text-xs lg:text-[10px] ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} w-2 sm:w-2.5 lg:w-2 text-center`}>
                     {index % 2 === 0 ? month : ''}
                   </div>
                 ))}
@@ -274,18 +274,18 @@ export function GitHubActivity({ username, theme }: GitHubActivityProps) {
             </div>
 
             {/* Legend - Mobile Responsive */}
-            <div className="flex items-center justify-end mt-2 sm:mt-4 text-xs">
-              <span className={`mr-1 sm:mr-2 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>Less</span>
-              <div className="flex gap-0.5 sm:gap-1">
+            <div className="flex items-center justify-end mt-2 sm:mt-4 lg:mt-2 text-[10px] sm:text-xs lg:text-[10px]">
+              <span className={`mr-1 sm:mr-2 lg:mr-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>Less</span>
+              <div className="flex gap-0.5 sm:gap-1 lg:gap-0.5">
                 {[0, 1, 2, 3, 4].map(level => (
                   <div
                     key={level}
-                    className="w-2 h-2 sm:w-3 sm:h-3 rounded-sm"
+                    className="w-2 h-2 sm:w-2.5 sm:h-2.5 lg:w-2 lg:h-2 rounded-sm"
                     style={{ backgroundColor: getContributionColor(level, level === 0 ? 0 : level * 2) }}
                   />
                 ))}
               </div>
-              <span className={`ml-1 sm:ml-2 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>More</span>
+              <span className={`ml-1 sm:ml-2 lg:ml-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>More</span>
             </div>
           </div>
         </motion.div>
@@ -313,7 +313,7 @@ export function GitHubActivity({ username, theme }: GitHubActivityProps) {
               </div>
               
               {/* Repository Grid - Mobile Responsive */}
-              <div className={`grid gap-3 sm:gap-4 ${theme === 'dark' ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3' : 'grid-cols-1'}`}>
+              <div className={`grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3`}>
                 {pinnedRepos.map((repo, index) => (
                   <motion.a
                     key={repo.id}
