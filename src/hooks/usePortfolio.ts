@@ -9,6 +9,7 @@ import {
   buildLivePortfolio
 } from "@/lib/portfolio-utils"
 import { loadPortfolioData } from "@/lib/services/portfolio-service"
+import { loadBasicPortfolioData, loadSectionsData } from "@/lib/services/portfolio-service-optimized"
 
 // Extend Window interface for change tracking
 declare global {
@@ -282,8 +283,88 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
     setIsLoadingPortfolio(true)
     
     try {
-      // Try to load portfolio with the provided username
-      let portfolio = await loadPortfolioData(username)
+      // OPTIMIZATION: Load basic data first for instant home section display
+      // Then load sections in parallel in background
+      const [basicData, sectionsData] = await Promise.all([
+        loadBasicPortfolioData().catch(() => null),
+        loadSectionsData().catch(() => null)
+      ])
+      
+      // If basic data exists, use it immediately
+      if (basicData) {
+        console.log("✅ Basic portfolio data loaded:", basicData.id)
+        
+        // Update portfolio data immediately for instant UI
+        setPortfolioData({
+          displayName: basicData.displayName || "",
+          jobTitle: basicData.jobTitle || "",
+          bio: basicData.bio || "",
+          profilePic: basicData.profilePic || "",
+          customUsername: basicData.customUsername || user?.githubUsername || "",
+          id: basicData.id
+        })
+        
+        // Set experiences if available
+        if (basicData.experiences) {
+          setExperiences(basicData.experiences)
+        }
+        
+        // Set CV URL if available
+        if (basicData.cvUrl !== undefined) {
+          setCvUrl(basicData.cvUrl)
+        }
+      }
+      
+      // If sections data exists, update sections
+      if (sectionsData) {
+        console.log("✅ Sections data loaded")
+        
+        if (sectionsData.skills) {
+          setSkills(sectionsData.skills.map((skill: any) => ({
+            id: skill.id.toString(),
+            name: skill.name,
+            category: skill.category || ""
+          })))
+        }
+        
+        if (sectionsData.socials) {
+          setSocials(sectionsData.socials.map((social: any) => ({
+            id: social.id,
+            platform: social.platform,
+            username: social.username,
+            url: social.url,
+            isPinned: social.isPinned
+          })))
+        }
+        
+        if (sectionsData.repositories) {
+          const { urls, names, descriptions, githubUrls: gUrls } = mapPortfolioRepositories(sectionsData.repositories)
+          
+          setDeployedUrls(urls)
+          setCustomNames(names)
+          setCustomDescriptions(descriptions)
+          setGithubUrls(gUrls)
+          
+          const imported = formatImportedProjects(sectionsData.repositories)
+          setImportedProjects(imported)
+          
+          const githubIds = sectionsData.repositories.map((repo: any) => 
+            parseInt(repo.repository.githubId)
+          )
+          setSelectedRepos(githubIds)
+          
+          const loadedRepoOrder = sectionsData.repositories.map((repo: any) => 
+            parseInt(repo.repository.githubId)
+          )
+          setRepoOrder(loadedRepoOrder)
+        }
+      }
+      
+      // Fallback: Try to load full portfolio if basic/sections APIs failed
+      let portfolio = null
+      if (!basicData && !sectionsData) {
+        portfolio = await loadPortfolioData(username)
+      }
       
       if (portfolio) {
         console.log("✅ Portfolio found with username:", username)
@@ -461,6 +542,7 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
         // This ensures originalData is fully set before change detection starts
         setOriginalData(originalDataToSet)
         setIsLoadingPortfolio(false)
+        isLoadingRef.current = false
         console.log("✅ Initial load completed, enabling change tracking...")
         
         // Delay enabling change detection to ensure originalData is set
@@ -474,6 +556,68 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
                 window._lastChangeTrackingEnabled = Date.now()
               }
               console.log("✅ Change tracking enabled")
+            }, 100)
+          })
+        })
+      } else if (basicData || sectionsData) {
+        // Optimized API path - set original data from split APIs
+        const currentTheme = selectedTheme || 'light'
+        const originalDataToSet = normalizeData(createOrderedData({
+          id: basicData?.id || 0,
+          portfolioData: {
+            displayName: basicData?.displayName || "",
+            jobTitle: basicData?.jobTitle || "",
+            bio: basicData?.bio || "",
+            profilePic: basicData?.profilePic || "",
+            customUsername: basicData?.customUsername || user?.githubUsername || "",
+          },
+          selectedRepos: sectionsData?.repositories ? sectionsData.repositories.map((repo: any) => parseInt(repo.repository.githubId)).sort() : [],
+          skills: sectionsData?.skills ? sectionsData.skills.map((skill: any) => ({
+            id: skill.id.toString(),
+            name: skill.name,
+            category: skill.category || ""
+          })).sort((a: Skill, b: Skill) => a.id.localeCompare(b.id)) : [],
+          socials: sectionsData?.socials ? sectionsData.socials.map((social: any) => ({
+            id: social.id,
+            platform: social.platform,
+            username: social.username,
+            url: social.url,
+            isPinned: social.isPinned
+          })).sort((a: Social, b: Social) => a.id - b.id) : [],
+          deployedUrls: sectionsData?.repositories ? mapPortfolioRepositories(sectionsData.repositories).urls : {},
+          customNames: sectionsData?.repositories ? mapPortfolioRepositories(sectionsData.repositories).names : {},
+          customDescriptions: sectionsData?.repositories ? mapPortfolioRepositories(sectionsData.repositories).descriptions : {},
+          githubUrls: sectionsData?.repositories ? mapPortfolioRepositories(sectionsData.repositories).githubUrls : {},
+          selectedTheme: currentTheme,
+          backgroundColor: backgroundColor || null,
+          backgroundPattern: backgroundPattern || null,
+          cvUrl: basicData?.cvUrl || null,
+          importedProjects: sectionsData?.repositories ? formatImportedProjects(sectionsData.repositories).sort((a, b) => a.id - b.id) : [],
+          repoOrder: sectionsData?.repositories ? sectionsData.repositories.map((repo: any) => parseInt(repo.repository.githubId)) : [],
+          experiences: basicData?.experiences || []
+        }))
+        
+        setOriginalData(originalDataToSet)
+        setIsLoadingPortfolio(false)
+        isLoadingRef.current = false
+        
+        // Load analytics if we have portfolio ID
+        if (basicData?.id) {
+          loadAnalyticsData(basicData.id).then(analyticsData => {
+            if (analyticsData) {
+              setAnalytics(analyticsData)
+            }
+          }).catch(() => {})
+        }
+        
+        // Enable change tracking
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            setTimeout(() => {
+              setIsInitialLoad(false)
+              if (typeof window !== 'undefined') {
+                window._lastChangeTrackingEnabled = Date.now()
+              }
             }, 100)
           })
         })

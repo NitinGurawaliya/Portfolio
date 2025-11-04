@@ -26,6 +26,9 @@ model User {
   websiteUrl      String?
   portfolio       Portfolio?
   repositories    Repository[]
+
+  // Index for fast portfolio lookup by githubUsername
+  @@index([githubUsername])
 }
 
 model Repository {
@@ -79,6 +82,11 @@ model Portfolio {
   skills         Skill[]
   socials        Social[]
   experiences    Experience[]
+
+  // Indexes for fast public portfolio lookups
+  @@index([customUsername])
+  @@index([isPublished])
+  @@index([customUsername, isPublished]) // Composite index for common query pattern
 }
 
 model Skill {

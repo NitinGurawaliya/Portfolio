@@ -55,7 +55,8 @@ export default function PublicPortfolioPage() {
 
   const fetchPortfolio = async () => {
     try {
-      const response = await fetch(`/api/portfolio/publish?username=${username}`)
+      // Use optimized public portfolio API
+      const response = await fetch(`/api/portfolio/public?username=${username}`)
       const result = await response.json()
 
       if (response.ok) {
