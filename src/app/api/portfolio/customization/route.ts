@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { invalidateCache, CacheKeys } from '@/lib/cache'
 
 export async function GET(request: NextRequest) {
   try {
@@ -60,8 +61,38 @@ export async function PATCH(request: NextRequest) {
         backgroundColor: backgroundColor || null,
         backgroundPattern: backgroundPattern || null,
         updatedAt: new Date()
+      },
+      select: {
+        id: true,
+        customUsername: true,
+        backgroundColor: true,
+        backgroundPattern: true,
+        user: {
+          select: {
+            githubUsername: true
+          }
+        }
       }
     })
+
+    // Invalidate cache for public portfolio pages
+    // This ensures background customization changes show up immediately on public pages
+    const usernamesToInvalidate: string[] = []
+    if (portfolio.customUsername) {
+      usernamesToInvalidate.push(`public_${portfolio.customUsername}`)
+      usernamesToInvalidate.push(CacheKeys.portfolio(portfolio.customUsername))
+    }
+    if (portfolio.user?.githubUsername) {
+      usernamesToInvalidate.push(`public_${portfolio.user.githubUsername}`)
+      usernamesToInvalidate.push(CacheKeys.portfolio(portfolio.user.githubUsername))
+    }
+    
+    // Invalidate all related cache keys
+    for (const username of usernamesToInvalidate) {
+      invalidateCache(username)
+    }
+
+    console.log(`✅ Background customization updated and cache invalidated for:`, usernamesToInvalidate)
 
     return NextResponse.json({
       success: true,

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { invalidateCache, CacheKeys } from '@/lib/cache'
 
 // Define themes directly in API route to avoid client component imports
 const THEMES = {
@@ -67,7 +68,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Update or create portfolio with the new theme
-    await prisma.portfolio.upsert({
+    const updatedPortfolio = await prisma.portfolio.upsert({
       where: { userId: user.id },
       update: {
         selectedTheme: theme as ThemeKey,
@@ -81,8 +82,36 @@ export async function PATCH(request: NextRequest) {
         customUsername: user.githubUsername || '',
         selectedTheme: theme as ThemeKey,
         isPublished: false
+      },
+      select: {
+        id: true,
+        customUsername: true,
+        user: {
+          select: {
+            githubUsername: true
+          }
+        }
       }
     })
+
+    // Invalidate cache for public portfolio pages
+    // This ensures theme changes show up immediately on public pages
+    const usernamesToInvalidate: string[] = []
+    if (updatedPortfolio.customUsername) {
+      usernamesToInvalidate.push(`public_${updatedPortfolio.customUsername}`)
+      usernamesToInvalidate.push(CacheKeys.portfolio(updatedPortfolio.customUsername))
+    }
+    if (updatedPortfolio.user?.githubUsername) {
+      usernamesToInvalidate.push(`public_${updatedPortfolio.user.githubUsername}`)
+      usernamesToInvalidate.push(CacheKeys.portfolio(updatedPortfolio.user.githubUsername))
+    }
+    
+    // Invalidate all related cache keys
+    for (const username of usernamesToInvalidate) {
+      invalidateCache(username)
+    }
+
+    console.log(`✅ Theme updated and cache invalidated for:`, usernamesToInvalidate)
 
     return NextResponse.json({
       success: true,

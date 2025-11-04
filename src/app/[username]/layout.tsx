@@ -23,8 +23,9 @@ export async function generateMetadata({
 
   try {
     // Fetch portfolio data to generate metadata
+    // Use public API for metadata generation (no authentication required)
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"
-    const response = await fetch(`${baseUrl}/api/portfolio/publish?username=${username}`, {
+    const response = await fetch(`${baseUrl}/api/portfolio/public?username=${username}`, {
       cache: 'no-store' // Always fetch fresh data for metadata
     })
 
