@@ -218,73 +218,48 @@ export async function POST(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   try {
-    // SECURITY FIX: Verify session and get logged-in user
-    const sessionCookie = req.cookies.get("github-session")?.value
-    if (!sessionCookie) {
-      return NextResponse.json(
-        { error: "Not authenticated" },
-        { status: 401 }
-      )
-    }
-
-    let session
-    try {
-      session = JSON.parse(sessionCookie)
-    } catch (error) {
-      return NextResponse.json(
-        { error: "Invalid session" },
-        { status: 401 }
-      )
-    }
-
-    // Get logged-in user's GitHub ID from session
-    const loggedInUserId = session.user?.id
-    if (!loggedInUserId) {
-      return NextResponse.json(
-        { error: "Session does not contain user information" },
-        { status: 401 }
-      )
-    }
-
-    // Get user from database using GitHub ID
-    const loggedInUser = await prisma.user.findUnique({
-      where: { githubId: loggedInUserId.toString() }
-    })
-
-    if (!loggedInUser) {
-      return NextResponse.json(
-        { error: "User not found in database" },
-        { status: 404 }
-      )
-    }
-
-    // SECURITY: Only fetch portfolio for the logged-in user
-    // Ignore username/userId from query params for security
     const { searchParams } = new URL(req.url)
-    const username = searchParams.get("username") // Only used for cache key, not for query
+    const username = searchParams.get("username")
     
-    // Check cache first
-    const cacheKey = username ? CacheKeys.portfolio(username) : CacheKeys.portfolio(`user_${loggedInUser.id}`)
-    const cachedData = getCachedData(cacheKey)
+    // Check for session (optional - for dashboard access)
+    const sessionCookie = req.cookies.get("github-session")?.value
+    let loggedInUser = null
     
-    if (cachedData) {
-      // Verify cached data belongs to logged-in user
-      if (cachedData && typeof cachedData === 'object' && 'portfolio' in cachedData) {
-        const cachedPortfolio = cachedData as { portfolio?: { user?: { id: number } } }
-        if (cachedPortfolio.portfolio?.user?.id === loggedInUser.id) {
-          return NextResponse.json(cachedData)
+    if (sessionCookie) {
+      try {
+        const session = JSON.parse(sessionCookie)
+        const loggedInUserId = session.user?.id
+        
+        if (loggedInUserId) {
+          loggedInUser = await prisma.user.findUnique({
+            where: { githubId: loggedInUserId.toString() }
+          })
         }
+      } catch (error) {
+        // Invalid session, continue as public access
+        console.log("Invalid session, treating as public access")
       }
-      // If cache doesn't match, invalidate and continue
-      invalidateCache(cacheKey)
     }
 
-    // SECURITY: Only fetch portfolio for logged-in user by userId
-    // Allow both published and unpublished portfolios for dashboard access
-    const portfolio = await prisma.portfolio.findFirst({
-      where: {
-        userId: loggedInUser.id
-      },
+    // PUBLIC ACCESS: If username is provided and no valid session, fetch published portfolio
+    if (username && !loggedInUser) {
+      // Public portfolio view - only published portfolios
+      const cacheKey = CacheKeys.portfolio(username)
+      const cachedData = getCachedData(cacheKey)
+      
+      if (cachedData) {
+        return NextResponse.json(cachedData)
+      }
+
+      // Find portfolio by customUsername (must be published)
+      const portfolio = await prisma.portfolio.findFirst({
+        where: {
+          OR: [
+            { customUsername: username },
+            { user: { githubUsername: username } }
+          ],
+          isPublished: true // Only published portfolios for public access
+        },
       include: {
         user: true,
         skills: true,
@@ -336,27 +311,134 @@ export async function GET(req: NextRequest) {
     })
 
 
-    if (!portfolio) {
-      return NextResponse.json(
-        { error: "Portfolio not found. Please save at least one section in the dashboard first." },
-        { status: 404 }
-      )
+      if (!portfolio) {
+        return NextResponse.json(
+          { error: "Portfolio not found" },
+          { status: 404 }
+        )
+      }
+
+      // Convert BigInt values to strings for JSON serialization
+      const serializedPortfolio = JSON.parse(JSON.stringify(portfolio, (key, value) =>
+        typeof value === 'bigint' ? value.toString() : value
+      ))
+
+      const responseData = {
+        success: true,
+        portfolio: serializedPortfolio
+      }
+
+      // Cache the response
+      setCachedData(cacheKey, responseData, CacheTTL.PORTFOLIO)
+
+      return NextResponse.json(responseData)
     }
 
-    // Convert BigInt values to strings for JSON serialization
-    const serializedPortfolio = JSON.parse(JSON.stringify(portfolio, (key, value) =>
-      typeof value === 'bigint' ? value.toString() : value
-    ))
+    // DASHBOARD ACCESS: If logged in, fetch their own portfolio (published or unpublished)
+    // SECURITY: Always ignore username query param for dashboard access - only use logged-in user's ID
+    if (loggedInUser) {
+      // SECURITY: Use logged-in user's ID for cache key, ignore username from query params
+      // This prevents any potential cache poisoning attacks
+      const cacheKey = CacheKeys.portfolio(`user_${loggedInUser.id}`)
+      const cachedData = getCachedData(cacheKey)
+      
+      if (cachedData) {
+        // SECURITY: Verify cached data belongs to logged-in user
+        if (cachedData && typeof cachedData === 'object' && 'portfolio' in cachedData) {
+          const cachedPortfolio = cachedData as { portfolio?: { user?: { id: number } } }
+          if (cachedPortfolio.portfolio?.user?.id === loggedInUser.id) {
+            return NextResponse.json(cachedData)
+          }
+        }
+        // If cache doesn't match, invalidate and continue
+        invalidateCache(cacheKey)
+      }
 
-    const responseData = {
-      success: true,
-      portfolio: serializedPortfolio
+      // SECURITY: Fetch portfolio ONLY for logged-in user by userId
+      // IGNORE username query param completely - it cannot be used to access other users' data
+      // Allow both published and unpublished portfolios for dashboard access
+      const portfolio = await prisma.portfolio.findFirst({
+        where: {
+          userId: loggedInUser.id // SECURITY: Only use logged-in user's ID from session
+        },
+        include: {
+          user: true,
+          skills: true,
+          socials: true,
+          experiences: {
+            orderBy: { createdAt: 'desc' }
+          },
+          repositories: {
+            select: {
+              id: true,
+              deployedUrl: true,
+              customName: true,
+              customDescription: true,
+              displayOrder: true,
+              isVisible: true,
+              repository: {
+                select: {
+                  id: true,
+                  githubId: true,
+                  name: true,
+                  fullName: true,
+                  description: true,
+                  htmlUrl: true,
+                  githubUrl: true,
+                  language: true,
+                  languages: true,
+                  stargazersCount: true,
+                  forksCount: true,
+                  size: true,
+                  isPrivate: true,
+                  isFork: true,
+                  isImported: true,
+                  favicon: true,
+                  logo: true,
+                  siteName: true,
+                  keywords: true,
+                  author: true,
+                  createdAt: true,
+                  updatedAt: true,
+                  pushedAt: true
+                }
+              }
+            },
+            orderBy: {
+              displayOrder: 'asc'
+            }
+          }
+        }
+      })
+
+      if (!portfolio) {
+        return NextResponse.json(
+          { error: "Portfolio not found. Please save at least one section in the dashboard first." },
+          { status: 404 }
+        )
+      }
+
+      // Convert BigInt values to strings for JSON serialization
+      const serializedPortfolio = JSON.parse(JSON.stringify(portfolio, (key, value) =>
+        typeof value === 'bigint' ? value.toString() : value
+      ))
+
+      const responseData = {
+        success: true,
+        portfolio: serializedPortfolio
+      }
+
+      // Cache the response
+      setCachedData(cacheKey, responseData, CacheTTL.PORTFOLIO)
+
+      return NextResponse.json(responseData)
     }
 
-    // Cache the response
-    setCachedData(cacheKey, responseData, CacheTTL.PORTFOLIO)
-
-    return NextResponse.json(responseData)
+    // No username and no session - invalid request
+    return NextResponse.json(
+      { error: "Portfolio not found" },
+      { status: 404 }
+    )
 
   } catch (error) {
     console.error("Error fetching portfolio:", error)
