@@ -12,6 +12,7 @@ import {
   ChevronDown,
   Plus
 } from "lucide-react"
+import { Skeleton } from "@/components/ui/skeleton"
 import {
   // Frontend & Web Technologies
   SiReact, SiVuedotjs, SiAngular, SiNextdotjs, SiNuxtdotjs, SiSvelte,
@@ -73,6 +74,7 @@ interface SkillsSectionProps {
   skills: Skill[]
   onAddSkill: (skill: Omit<Skill, 'id'>) => void
   onRemoveSkill: (skillId: string) => void
+  isLoading?: boolean
 }
 
 // Comprehensive skills database with real technology icons
@@ -259,7 +261,7 @@ const otherSkills = [
   "Smart Contracts",
 ]
 
-export function SkillsSection({ skills, onAddSkill, onRemoveSkill }: SkillsSectionProps) {
+export function SkillsSection({ skills, onAddSkill, onRemoveSkill, isLoading = false }: SkillsSectionProps) {
   const [searchTerm, setSearchTerm] = useState("")
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
@@ -563,8 +565,27 @@ export function SkillsSection({ skills, onAddSkill, onRemoveSkill }: SkillsSecti
         </motion.div>
       )}
 
+      {/* Loading Skeleton */}
+      {isLoading && skills.length === 0 && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3 }}
+        >
+          <Card className="bg-white">
+            <CardContent className="pt-6">
+              <div className="grid grid-cols-10 sm:grid-cols-12 md:grid-cols-14 lg:grid-cols-16 gap-2">
+                {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                  <Skeleton key={i} className="h-10 w-10 rounded-lg" />
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
+
       {/* Empty State */}
-      {skills.length === 0 && (
+      {!isLoading && skills.length === 0 && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

@@ -24,6 +24,7 @@ import {
 import { debounce } from "lodash"
 import { AddExperienceModal } from "./AddExperienceModal"
 import { EditExperienceModal } from "./EditExperienceModal"
+import { Skeleton } from "@/components/ui/skeleton"
 
 interface HomeSectionProps {
   user: any
@@ -35,13 +36,14 @@ interface HomeSectionProps {
     message: string
   }
   isInitialLoad?: boolean
+  isLoading?: boolean
   experiences?: any[]
   onExperiencesChange?: (exps: any[]) => void
   cvUrl?: string | null
   setCvUrl?: (url: string | null) => void
 }
 
-export function HomeSection({ user, portfolioData, onUpdate, usernameAvailability, isInitialLoad = false, experiences: experiencesProp = [], onExperiencesChange, cvUrl: cvUrlProp, setCvUrl: setCvUrlProp }: HomeSectionProps) {
+export function HomeSection({ user, portfolioData, onUpdate, usernameAvailability, isInitialLoad = false, isLoading = false, experiences: experiencesProp = [], onExperiencesChange, cvUrl: cvUrlProp, setCvUrl: setCvUrlProp }: HomeSectionProps) {
   const [formData, setFormData] = useState({
     displayName: "",
     jobTitle: "",
@@ -114,28 +116,32 @@ export function HomeSection({ user, portfolioData, onUpdate, usernameAvailabilit
   useEffect(() => {
     console.log("🔍 HomeSection useEffect:", { portfolioData, user, isInitialized, hasInitialized })
     
-    if (portfolioData && Object.keys(portfolioData).length > 0 && !hasInitialized) {
-      console.log("🔍 Setting formData from portfolioData:", portfolioData)
-      setFormData({
-        displayName: portfolioData.displayName || user?.name || "",
-        jobTitle: portfolioData.jobTitle || "",
-        bio: portfolioData.bio || user?.bio || "",
-        profilePic: portfolioData.profilePic || user?.avatarUrl || "",
-        customUsername: portfolioData.customUsername || "", // Don't fallback to GitHub username if portfolio exists
-      })
-      setIsInitialized(true)
-      setHasInitialized(true) // Mark that we've done initial setup
-    } else if (user && !portfolioData && !hasInitialized) {
-      console.log("🔍 Setting formData from user (no portfolio):", user)
-      setFormData({
-        displayName: user?.name || "",
-        jobTitle: "",
-        bio: user?.bio || "",
-        profilePic: user?.avatarUrl || "",
-        customUsername: user?.githubUsername || "",
-      })
-      setIsInitialized(true)
-      setHasInitialized(true) // Mark that we've done initial setup
+    // Don't initialize if already done
+    if (hasInitialized) {
+      return
+    }
+    
+    // If user exists, initialize immediately with user data (for instant display)
+    if (user) {
+      const displayName = portfolioData?.displayName || user.name || user.githubUsername || ""
+      const bio = portfolioData?.bio || user.bio || ""
+      const profilePic = portfolioData?.profilePic || user.avatarUrl || ""
+      const jobTitle = portfolioData?.jobTitle || ""
+      const customUsername = portfolioData?.customUsername || user.githubUsername || ""
+      
+      // Only initialize if we have at least displayName or user data
+      if (displayName || user.name || user.githubUsername) {
+        console.log("🔍 Setting formData (instant display):", { displayName, bio, profilePic, jobTitle, customUsername })
+        setFormData({
+          displayName,
+          jobTitle,
+          bio,
+          profilePic,
+          customUsername,
+        })
+        setIsInitialized(true)
+        setHasInitialized(true) // Mark that we've done initial setup
+      }
     }
   }, [user, portfolioData, hasInitialized])
 
@@ -213,19 +219,73 @@ export function HomeSection({ user, portfolioData, onUpdate, usernameAvailabilit
     onExperiencesChange?.(next)
   }
 
+  // Show skeleton while loading OR when no data exists yet (no user data and no portfolio data)
+  const hasNoData = !formData.displayName && !user?.name && (!portfolioData || Object.keys(portfolioData).length === 0)
+  const shouldShowSkeleton = isLoading || (hasNoData && !isInitialized)
+  
+  if (shouldShowSkeleton) {
+    return (
+      <div className="space-y-2 px-6 md:px-10">
+        {/* Header Skeleton */}
+        <div className="-mt-6 md:-mt-8">
+          <Skeleton className="h-8 w-32 mb-4" />
+        </div>
+        
+        {/* Profile Card Skeleton */}
+        <Card className="bg-white shadow-none border-none">
+          <CardContent className="py-1 space-y-4">
+            <div className="flex gap-4">
+              <Skeleton className="h-24 w-24 rounded-full flex-shrink-0" />
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-6 w-48" />
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-3/4" />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-20 w-full" />
+            </div>
+          </CardContent>
+        </Card>
+        
+        {/* Experience Section Skeleton */}
+        <Card className="bg-white shadow-none border-none">
+          <CardContent className="pt-4 space-y-4">
+            <Skeleton className="h-6 w-40" />
+            <div className="space-y-3">
+              {[1, 2].map((i) => (
+                <div key={i} className="flex gap-3">
+                  <Skeleton className="h-12 w-12 rounded" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-4 w-48" />
+                    <Skeleton className="h-3 w-full" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
   return (
     <motion.div 
       className="space-y-2 px-6 md:px-10"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ duration: 0.3 }}
+      transition={{ duration: 0.2 }}
     >
       {/* Welcome Section */}
       <motion.div
         className="-mt-6 md:-mt-8"
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
+        transition={{ duration: 0.2 }}
       >
         <Card className="bg-transparent shadow-none border-none">
           <CardHeader className="py-0">
@@ -241,9 +301,9 @@ export function HomeSection({ user, portfolioData, onUpdate, usernameAvailabilit
 
       {/* Profile Section with Two-Column Layout */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.1 }}
+        transition={{ duration: 0.2 }}
       >
         <Card className="bg-white shadow-none border-none">
           <CardContent className="py-1 space-y-2">

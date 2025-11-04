@@ -25,6 +25,7 @@ import {
   Phone
 } from "lucide-react"
 import { SiStackoverflow, SiReddit } from "react-icons/si"
+import { Skeleton } from "@/components/ui/skeleton"
 
 interface Social {
   id?: number
@@ -40,6 +41,7 @@ interface SocialsSectionProps {
   onRemoveSocial: (socialId: number) => void
   onTogglePin: (socialId: number) => void
   onUpdateSocial: (socialId: number, updates: Partial<Social>) => void
+  isLoading?: boolean
 }
 
 // Platform configurations with authentic brand styling
@@ -172,7 +174,8 @@ export function SocialsSection({
   onAddSocial, 
   onRemoveSocial, 
   onTogglePin, 
-  onUpdateSocial 
+  onUpdateSocial,
+  isLoading = false
 }: SocialsSectionProps) {
   // Create state for all platform usernames
   const [platformUsernames, setPlatformUsernames] = useState<Record<string, string>>({})
@@ -275,8 +278,23 @@ export function SocialsSection({
       >
         <Card className="bg-white transition-all duration-300">
           <CardContent className="pt-2">
-            <div className="grid grid-cols-2 gap-4">
-              {platformConfigs.map((platform, index) => {
+            {/* Loading Skeleton */}
+            {isLoading && socials.length === 0 && (
+              <div className="grid grid-cols-2 gap-4">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <div key={i} className="flex items-center space-x-3">
+                    <Skeleton className="h-12 w-12 rounded-xl" />
+                    <Skeleton className="flex-1 h-12 rounded-xl" />
+                    <Skeleton className="h-10 w-10 rounded-xl" />
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            {/* Actual Inputs */}
+            {(!isLoading || socials.length > 0) && (
+              <div className="grid grid-cols-2 gap-4">
+                {platformConfigs.map((platform, index) => {
               const Icon = platform.icon
               const username = platformUsernames[platform.id] || ""
               const isPinned = platformPinned[platform.id] || false
@@ -381,7 +399,8 @@ export function SocialsSection({
                 </motion.div>
               )
             })}
-            </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       </motion.div>

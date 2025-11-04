@@ -58,7 +58,7 @@ export function HeroSection() {
           
           <div className="flex flex-row flex-wrap gap-3 sm:gap-4 justify-center">
             <Button size="lg" className="text-sm sm:text-base w-[220px]" asChild>
-              <a href="/onbaording">
+              <a href="/auth">
                 Claim your page
                 <ArrowRight className="ml-2 h-4 w-4" />
               </a>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo, useRef } from "react"
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout"
 import { HomeSection } from "@/components/dashboard/HomeSection"
 import { ReposSection } from "@/components/dashboard/ReposSection"
@@ -45,22 +45,31 @@ export default function DashboardPage() {
     user  // Pass user for GitHub username comparison
   )
 
-  // Load existing portfolio data when user is loaded
+  // Load existing portfolio data immediately when user is available
+  // Initialize with user data right away for instant UI - ensure home page loads with data
+  // Use ref to track if we've already loaded to prevent infinite loops
+  const hasLoadedRef = useRef(false)
+  
   useEffect(() => {
-    if (user) {
+    if (user && !hasLoadedRef.current) {
+      hasLoadedRef.current = true // Mark as loaded to prevent re-running
+      
       const initialData = {
-        displayName: user.name || user.githubUsername,
+        displayName: user.name || user.githubUsername || "",
         jobTitle: "",
         bio: user.bio || "",
-        profilePic: user.avatarUrl,
+        profilePic: user.avatarUrl || "",
         customUsername: "", // Don't set GitHub username as default, let loadExistingData handle it
       }
       
+      // Set initial data immediately for instant UI - home page will show this data right away
       portfolio.setPortfolioData(initialData)
-      // Try to load with GitHub username (will search both custom and GitHub usernames)
+      
+      // Load existing portfolio data in background (non-blocking)
+      // This will update the data once loaded, but home section shows immediately
       portfolio.loadExistingData(user.githubUsername, initialData)
     }
-  }, [user])
+  }, [user]) // Only depend on user, not portfolio object
 
   // DashboardPage में useEffect डालो:
   useEffect(() => {
@@ -153,17 +162,19 @@ export default function DashboardPage() {
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [isPublishing, portfolio, user])
 
-  // Render active section
-  const renderActiveSection = () => {
+  // Render active section - memoized for instant navigation
+  const renderActiveSection = useMemo(() => {
     switch (activeSection) {
       case "home":
+        // Home section shows immediately with user data, updates when portfolio loads
         return (
           <HomeSection 
             user={user} 
             portfolioData={portfolio.portfolioData}
             onUpdate={handlers.handleUpdatePortfolioData}
             usernameAvailability={handlers.usernameAvailability}
-            isInitialLoad={portfolio.isInitialLoad}
+            isInitialLoad={portfolio.isLoadingPortfolio}
+            isLoading={portfolio.isLoadingPortfolio}
             experiences={portfolio.experiences}
             onExperiencesChange={portfolio.setExperiences}
             cvUrl={portfolio.cvUrl}
@@ -231,6 +242,7 @@ export default function DashboardPage() {
               })
             }}
             logoOverrides={portfolio.logoOverrides}
+            isLoading={portfolio.isLoadingPortfolio}
           />
         )
       case "skills":
@@ -239,6 +251,7 @@ export default function DashboardPage() {
             skills={portfolio.skills}
             onAddSkill={handlers.handleAddSkill}
             onRemoveSkill={handlers.handleRemoveSkill}
+            isLoading={portfolio.isLoadingPortfolio}
           />
         )
       case "socials":
@@ -249,23 +262,15 @@ export default function DashboardPage() {
             onRemoveSocial={handlers.handleRemoveSocial}
             onTogglePin={handlers.handleTogglePin}
             onUpdateSocial={handlers.handleUpdateSocial}
+            isLoading={portfolio.isLoadingPortfolio}
           />
         )
       case "analytics":
-        if (portfolio.isLoadingPortfolio) {
-          return <div>Loading portfolio data...</div>
-        }
+        // Analytics section shows immediately, loads data in background
         console.log("🔍 Analytics Section - Portfolio ID:", portfolio.originalData?.id)
-        console.log("🔍 Dashboard Debug:")
-        console.log("📊 selectedRepos:", portfolio.selectedRepos)
-        console.log("📊 selectedRepos length:", portfolio.selectedRepos?.length)
-        console.log("📊 importedProjects:", portfolio.importedProjects)
-        console.log("📊 importedProjects length:", portfolio.importedProjects?.length)
-        console.log("📊 customNames:", portfolio.customNames)
-        console.log("📊 customDescriptions:", portfolio.customDescriptions)
         return (
           <AnalyticsSection 
-            portfolioId={portfolio.originalData?.id || 0}
+            portfolioId={portfolio.originalData?.id || portfolio.portfolioData?.id || 0}
             analyticsData={portfolio.analytics}
           />
         )
@@ -285,31 +290,25 @@ export default function DashboardPage() {
       default:
         return null
     }
-  }
+  }, [activeSection, user, portfolio, handlers])
 
-  if (loading || portfolio.isLoadingPortfolio) {
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <DevFolioLoader size="lg" />
-      </div>
-    )
-  }
-
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-white mb-4">No user data found</p>
-        </div>
-      </div>
-    )
+  // Show dashboard immediately - no loader blocking
+  // If session is invalid, redirect will happen automatically via useSession hook
+  // Use placeholder user if not loaded yet to render UI immediately
+  const displayUser = user || {
+    id: 0,
+    name: "",
+    githubUsername: "",
+    avatarUrl: "",
+    bio: "",
+    repositories: []
   }
 
   return (
     <>
       <Toaster position="top-left" />
       <DashboardLayout 
-        user={user} 
+        user={displayUser} 
         activeSection={activeSection}
         onSectionChange={setActiveSection}
         livePortfolio={portfolio.livePortfolio}
@@ -318,7 +317,7 @@ export default function DashboardPage() {
         onPublish={handlePublishAll}
         isPublishing={isPublishing}
       >
-        {renderActiveSection()}
+        {renderActiveSection}
       </DashboardLayout>
     </>
   )

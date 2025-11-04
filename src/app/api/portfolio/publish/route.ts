@@ -218,39 +218,73 @@ export async function POST(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   try {
-    const { searchParams } = new URL(req.url)
-    const username = searchParams.get("username")
-    const userId = searchParams.get("userId")
-
-    if (!username && !userId) {
+    // SECURITY FIX: Verify session and get logged-in user
+    const sessionCookie = req.cookies.get("github-session")?.value
+    if (!sessionCookie) {
       return NextResponse.json(
-        { error: "Username or User ID is required" },
-        { status: 400 }
+        { error: "Not authenticated" },
+        { status: 401 }
       )
     }
 
+    let session
+    try {
+      session = JSON.parse(sessionCookie)
+    } catch (error) {
+      return NextResponse.json(
+        { error: "Invalid session" },
+        { status: 401 }
+      )
+    }
+
+    // Get logged-in user's GitHub ID from session
+    const loggedInUserId = session.user?.id
+    if (!loggedInUserId) {
+      return NextResponse.json(
+        { error: "Session does not contain user information" },
+        { status: 401 }
+      )
+    }
+
+    // Get user from database using GitHub ID
+    const loggedInUser = await prisma.user.findUnique({
+      where: { githubId: loggedInUserId.toString() }
+    })
+
+    if (!loggedInUser) {
+      return NextResponse.json(
+        { error: "User not found in database" },
+        { status: 404 }
+      )
+    }
+
+    // SECURITY: Only fetch portfolio for the logged-in user
+    // Ignore username/userId from query params for security
+    const { searchParams } = new URL(req.url)
+    const username = searchParams.get("username") // Only used for cache key, not for query
+    
     // Check cache first
-    const cacheKey = username ? CacheKeys.portfolio(username) : CacheKeys.portfolio(`user_${userId}`)
+    const cacheKey = username ? CacheKeys.portfolio(username) : CacheKeys.portfolio(`user_${loggedInUser.id}`)
     const cachedData = getCachedData(cacheKey)
     
     if (cachedData) {
-      return NextResponse.json(cachedData)
+      // Verify cached data belongs to logged-in user
+      if (cachedData && typeof cachedData === 'object' && 'portfolio' in cachedData) {
+        const cachedPortfolio = cachedData as { portfolio?: { user?: { id: number } } }
+        if (cachedPortfolio.portfolio?.user?.id === loggedInUser.id) {
+          return NextResponse.json(cachedData)
+        }
+      }
+      // If cache doesn't match, invalidate and continue
+      invalidateCache(cacheKey)
     }
 
-    let whereClause: any = { isPublished: true }
-
-    if (userId) {
-      whereClause.userId = parseInt(userId)
-    } else if (username) {
-      // Search by custom username first, then fall back to GitHub username
-      whereClause.OR = [
-        { customUsername: username },
-        { user: { githubUsername: username } }
-      ]
-    }
-
+    // SECURITY: Only fetch portfolio for logged-in user by userId
+    // Allow both published and unpublished portfolios for dashboard access
     const portfolio = await prisma.portfolio.findFirst({
-      where: whereClause,
+      where: {
+        userId: loggedInUser.id
+      },
       include: {
         user: true,
         skills: true,

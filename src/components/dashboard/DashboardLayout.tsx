@@ -60,11 +60,31 @@ export function DashboardLayout({
     { id: "theme", label: "Theme", icon: Palette },
   ]
 
-  const handleLogout = () => {
-    // Clear session cookie
-    document.cookie = 'github-session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
-    // Redirect to auth page
-    window.location.href = '/auth'
+  const handleLogout = async () => {
+    try {
+      // Call logout API to clear session cookie server-side
+      const response = await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include'
+      })
+      
+      if (response.ok) {
+        // Also clear client-side cookie (backup)
+        document.cookie = 'github-session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
+        document.cookie = 'github-session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=' + window.location.hostname
+        // Redirect to auth page
+        window.location.href = '/'
+      } else {
+        // Even if API fails, try to clear and redirect
+        document.cookie = 'github-session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
+        window.location.href = '/auth'
+      }
+    } catch (error) {
+      console.error('Logout error:', error)
+      // Fallback: clear cookies and redirect
+      document.cookie = 'github-session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
+      window.location.href = '/auth'
+    }
   }
 
   const containerVariants = {
@@ -86,19 +106,19 @@ export function DashboardLayout({
   return (
     <div className="h-screen w-full bg-white text-black overflow-hidden min-w-[1024px] flex relative">
       {/* Main Content - Using Flex Layout */}
-        {/* Left Sidebar */}
+        {/* Left Sidebar - Instant render */}
         <motion.div 
           className="w-12 bg-gray-50 flex flex-col items-center py-4 overflow-visible relative z-40 flex-shrink-0"
           variants={itemVariants}
-          initial="hidden"
+          initial="visible"
           animate="visible"
         >
           {/* DevFolio Logo */}
           <motion.div
             className="mb-6"
-            initial={{ opacity: 0, scale: 0.8 }}
+            initial={{ opacity: 1, scale: 1 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.4, delay: 0.2 }}
+            transition={{ duration: 0 }}
           >
             <div className="w-8 h-8 bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-sm">D</span>
@@ -114,23 +134,27 @@ export function DashboardLayout({
               <motion.div
                 key={item.id}
                 className="relative group"
-                initial={{ opacity: 0, x: -20 }}
+                initial={{ opacity: 1, x: 0 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ 
-                  duration: 0.4,
-                  delay: index * 0.1,
+                  duration: 0,
+                  delay: 0,
                   ease: "easeOut"
                 }}
               >
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => onSectionChange(item.id)}
-                  className={`h-8 w-8 p-0 relative z-50 cursor-pointer transition-colors ${
+                  onClick={() => {
+                    // Instant navigation - no delays
+                    onSectionChange(item.id)
+                  }}
+                  className={`h-8 w-8 p-0 relative z-50 cursor-pointer transition-colors duration-75 ${
                     isActive 
                       ? "bg-black text-white" 
                       : "text-gray-400 hover:text-black hover:bg-gray-100"
                   }`}
+                  style={{ willChange: 'background-color' }}
                 >
                     <Icon className="h-3 w-3" />
                     {isActive && (
@@ -168,11 +192,11 @@ export function DashboardLayout({
           {/* Logout Button */}
           <motion.div
             className="relative group"
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 1, y: 0 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ 
-              duration: 0.4,
-              delay: 0.5,
+              duration: 0,
+              delay: 0,
               ease: "easeOut"
             }}
           >
@@ -200,7 +224,7 @@ export function DashboardLayout({
           <motion.div 
             className="flex items-center justify-between w-full p-3 bg-white border-b border-gray-100 relative z-50"
             variants={itemVariants}
-            initial="hidden"
+            initial="visible"
             animate="visible"
           >
             {/* Left - Title */}
@@ -259,24 +283,15 @@ export function DashboardLayout({
             </div>
           </motion.div>
 
-          {/* Dashboard Content */}
+          {/* Dashboard Content - Instant navigation */}
           <div className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={activeSection}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ 
-                  duration: 0.2,
-                  ease: "easeOut"
-                }}
-                variants={containerVariants}
-                className="p-4"
-              >
-                {children}
-              </motion.div>
-            </AnimatePresence>
+            <div
+              key={activeSection}
+              className="p-4"
+              style={{ willChange: 'contents' }}
+            >
+              {children}
+            </div>
           </div>
         </div>
 

@@ -70,7 +70,8 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
   const [originalData, setOriginalData] = useState<PortfolioState | null>(null)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const [isInitialLoad, setIsInitialLoad] = useState(true)
-  const [isLoadingPortfolio, setIsLoadingPortfolio] = useState(true)
+  // Start with false so UI shows immediately, set to true only when actually loading
+  const [isLoadingPortfolio, setIsLoadingPortfolio] = useState(false)
   const [isPublishComplete, setIsPublishComplete] = useState(false)
   const publishCompleteTimestamp = useRef<number | null>(null)
   
@@ -263,8 +264,18 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
     setHasUnsavedChanges(hasChanges)
   }, [portfolioData, selectedRepos, skills, socials, deployedUrls, customNames, customDescriptions, githubUrls, importedProjects, selectedTheme, backgroundColor, backgroundPattern, repoOrder, experiences, cvUrl, originalData, isInitialLoad, isPublishComplete])
 
+  // Track if we're currently loading to prevent multiple simultaneous calls
+  const isLoadingRef = useRef(false)
+  
   // Load existing portfolio data
   const loadExistingData = async (username: string, initialData?: any) => {
+    // Prevent multiple simultaneous calls
+    if (isLoadingRef.current) {
+      console.log("⚠️ loadExistingData already in progress, skipping duplicate call")
+      return
+    }
+    
+    isLoadingRef.current = true
     console.log("🚀 loadExistingPortfolioData called with:", { username, initialData })
     console.log("🔍 Trying to load portfolio with username:", username)
     
@@ -499,6 +510,7 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
          // Set originalData first, then enable change detection after a brief delay
          setOriginalData(initialDataToSet)
          setIsLoadingPortfolio(false)
+         isLoadingRef.current = false // Reset loading flag
          
         // Delay enabling change detection to ensure originalData is set
         requestAnimationFrame(() => {
@@ -513,6 +525,7 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
       }
     } catch (error) {
        console.error("❌ Error loading existing portfolio data:", error)
+       isLoadingRef.current = false // Reset loading flag
        // Fallback
        const currentPortfolioData = initialData || portfolioData
        const currentTheme = selectedTheme || 'light'
@@ -545,6 +558,7 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
        // Set originalData first, then enable change detection after a brief delay
        setOriginalData(fallbackData)
        setIsLoadingPortfolio(false)
+       isLoadingRef.current = false // Reset loading flag
        
       // Delay enabling change detection to ensure originalData is set
       requestAnimationFrame(() => {

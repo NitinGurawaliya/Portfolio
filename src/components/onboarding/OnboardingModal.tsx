@@ -25,7 +25,7 @@ const GithubAuthStep = ({ onSuccess, onBack }: GithubAuthStepProps) => {
     <div className="flex flex-col items-center justify-center space-y-8 ">
       <h2 className="text-2xl font-bold mb-4">Sign in with GitHub</h2>
       <a
-        href={`/api/auth/github?onboarding=1`}
+        href={`/api/auth/github`}
         className="bg-gradient-to-r from-purple-600 to-blue-600 text-white font-medium py-3 px-6 rounded-xl hover:from-purple-700 hover:to-blue-700 flex items-center text-lg"
       >
         <Github className="mr-3 h-6 w-6" /> Continue with GitHub

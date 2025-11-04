@@ -401,6 +401,93 @@ export function AnalyticsSection({ portfolioId, analyticsData }: AnalyticsSectio
     )
   }
 
+  // Check if there's no data
+  const hasNoData = !analytics || 
+    (analytics.totalViews === 0 && 
+     (!analytics.dailyData || analytics.dailyData.length === 0 || analytics.dailyData.every(d => d.count === 0)) &&
+     (!analytics.topReferrers || analytics.topReferrers.length === 0) &&
+     (!analytics.topDevices || analytics.topDevices.length === 0) &&
+     (!analytics.topBrowsers || analytics.topBrowsers.length === 0))
+
+  if (hasNoData) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="space-y-4"
+      >
+        {/* Analytics Title */}
+        <Card className="bg-transparent shadow-none border-none py-0">
+          <CardHeader className="pb-0 mb-0 pt-0">
+            <CardTitle className="text-xl text-black font-bold flex items-center">
+              Analytics and Insights
+            </CardTitle>
+          </CardHeader>
+        </Card>
+
+        {/* Creative Empty State */}
+        <Card className="bg-gradient-to-br from-gray-50 to-white border-2 border-dashed border-gray-200 rounded-xl overflow-hidden">
+          <CardContent className="p-12 flex flex-col items-center justify-center text-center space-y-6">
+            {/* Animated Icon */}
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.2, duration: 0.4 }}
+              className="relative"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-orange-400 to-orange-600 rounded-full blur-2xl opacity-20 animate-pulse"></div>
+              <div className="relative bg-gradient-to-br from-orange-100 to-orange-200 p-6 rounded-full">
+                <BarChart3 className="h-16 w-16 text-orange-600" />
+              </div>
+            </motion.div>
+
+            {/* Message */}
+            <div className="space-y-2">
+              <motion.h3
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3, duration: 0.4 }}
+                className="text-2xl font-bold text-gray-800"
+              >
+                No Analytics Data Yet
+              </motion.h3>
+              <motion.p
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4, duration: 0.4 }}
+                className="text-gray-500 max-w-md"
+              >
+                Your portfolio analytics will appear here once people start visiting your portfolio. Share your portfolio link to start tracking visitors!
+              </motion.p>
+            </div>
+
+            {/* Action Tips */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5, duration: 0.4 }}
+              className="flex flex-wrap gap-3 justify-center mt-4"
+            >
+              <div className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg">
+                <Eye className="h-4 w-4 text-gray-600" />
+                <span className="text-sm text-gray-600">Share your portfolio</span>
+              </div>
+              <div className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg">
+                <Users className="h-4 w-4 text-gray-600" />
+                <span className="text-sm text-gray-600">Get visitors</span>
+              </div>
+              <div className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg">
+                <BarChart3 className="h-4 w-4 text-gray-600" />
+                <span className="text-sm text-gray-600">See insights</span>
+              </div>
+            </motion.div>
+          </CardContent>
+        </Card>
+      </motion.div>
+    )
+  }
+
   return (
     <>
       <style jsx>{`

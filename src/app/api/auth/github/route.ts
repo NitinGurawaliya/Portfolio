@@ -18,12 +18,11 @@ export async function GET(req: NextRequest) {
     githubAuthUrl.searchParams.set("client_id", process.env.GITHUB_CLIENT_ID!);
     githubAuthUrl.searchParams.set("redirect_uri", `${baseUrl}/api/auth/github`);
     githubAuthUrl.searchParams.set("scope", "read:user user:email public_repo");
-    // If onboarding requested, mark state, else identify as login
-    const onboardingFlag = searchParams.get("onboarding") === "1";
+    // REMOVED: Onboarding flow - all auth goes to dashboard
     const randomPart = randomBytes(8).toString("hex");
-    const state = onboardingFlag ? `onboarding-${randomPart}` : `login-${randomPart}`;
+    const state = `login-${randomPart}`;
     githubAuthUrl.searchParams.set("state", state);
-    devLog("[GITHUB AUTH] Initiating OAuth | onboarding:", onboardingFlag, "| oauth state:", state);
+    devLog("[GITHUB AUTH] Initiating OAuth | oauth state:", state);
     // CSRF protection as before
     const response = NextResponse.redirect(githubAuthUrl.toString());
     response.cookies.set("oauth_state", state, {
@@ -221,49 +220,11 @@ export async function GET(req: NextRequest) {
     
     // Get the current request URL to determine the correct base URL
     const baseUrl = `${requestUrl.protocol}//${requestUrl.host}`;
-    const isOnboarding = returnedState.startsWith("onboarding-");
-    devLog("[GITHUB AUTH] isOnboarding via state:", isOnboarding, "| state:", returnedState);
-
-    // Decide redirect based on flow and whether user already has a published portfolio
-    let redirectUrl: string
-    if (isOnboarding) {
-      // Even if onboarding was requested, if user already has a published portfolio, skip onboarding
-      try {
-        const dbUser = await prisma.user.findUnique({ where: { githubId: userData.id.toString() }, select: { id: true } })
-        const existingPortfolio = dbUser ? await prisma.portfolio.findFirst({
-          where: { userId: dbUser.id, isPublished: true },
-          select: { id: true }
-        }) : null
-        if (existingPortfolio) {
-          devLog("[GITHUB AUTH] Onboarding flag present but user already has portfolio. Redirecting to dashboard.")
-          redirectUrl = `${baseUrl}/dashboard`
-        } else {
-          redirectUrl = `${baseUrl}/onbaording?onboarding-auth-success=1`
-        }
-      } catch (e) {
-        devLog("[GITHUB AUTH] Portfolio check failed (onboarding branch), defaulting to onboarding", e)
-        redirectUrl = `${baseUrl}/onbaording?onboarding-auth-success=1`
-      }
-    } else {
-      // Check if user already has a published portfolio
-      try {
-        const dbUser = await prisma.user.findUnique({ where: { githubId: userData.id.toString() }, select: { id: true } })
-        const existingPortfolio = dbUser ? await prisma.portfolio.findFirst({
-          where: { userId: dbUser.id, isPublished: true },
-          select: { id: true }
-        }) : null
-        if (existingPortfolio) {
-          devLog("[GITHUB AUTH] Existing published portfolio found. Redirecting to dashboard.")
-          redirectUrl = `${baseUrl}/dashboard`
-        } else {
-          devLog("[GITHUB AUTH] No published portfolio found. Redirecting to onboarding.")
-          redirectUrl = `${baseUrl}/onbaording`
-        }
-      } catch (e) {
-        devLog("[GITHUB AUTH] Portfolio check failed, defaulting to onboarding", e)
-        redirectUrl = `${baseUrl}/onbaording`
-      }
-    }
+    
+    // REMOVED: Onboarding flow - all users go directly to dashboard after auth
+    // Always redirect to dashboard after authentication
+    const redirectUrl = `${baseUrl}/dashboard`
+    devLog("[GITHUB AUTH] Redirecting authenticated user to dashboard")
     devLog("[GITHUB AUTH] Will redirect to:", redirectUrl);
 
     const response = NextResponse.redirect(redirectUrl)

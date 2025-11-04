@@ -42,6 +42,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { EditProjectModal as EditModal } from "./EditProjectModal"
+import { Skeleton } from "@/components/ui/skeleton"
 interface Repository {
   id: number
   portfolioRepositoryId?: number // PortfolioRepository ID for analytics
@@ -123,6 +124,7 @@ interface ReposSectionProps {
   portfolioId?: number
   onUpdateLogo?: (repoId: number, logo: string | null) => void
   logoOverrides?: Record<number, string>
+  isLoading?: boolean
 }
 
 export function ReposSection({ 
@@ -143,7 +145,8 @@ export function ReposSection({
   analytics,
   portfolioId,
   onUpdateLogo,
-  logoOverrides: initialLogoOverrides
+  logoOverrides: initialLogoOverrides,
+  isLoading = false
 }: ReposSectionProps) {
   const [searchTerm, setSearchTerm] = useState("")
   const [deployedUrls, setDeployedUrls] = useState<Record<number, string>>(initialDeployedUrls || {})
@@ -789,8 +792,37 @@ export function ReposSection({
         )}
       </AnimatePresence>
 
+      {/* Loading Skeleton */}
+      {isLoading && selectedRepositories.length === 0 && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3 }}
+          className="space-y-4"
+        >
+          {[1, 2, 3].map((i) => (
+            <Card key={i} className="bg-white">
+              <CardContent className="p-6">
+                <div className="flex gap-4">
+                  <Skeleton className="h-16 w-16 rounded-lg" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-5 w-48" />
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-3/4" />
+                    <div className="flex gap-2 mt-2">
+                      <Skeleton className="h-6 w-16" />
+                      <Skeleton className="h-6 w-16" />
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </motion.div>
+      )}
+
       {/* Empty State */}
-      {selectedRepositories.length === 0 && (
+      {!isLoading && selectedRepositories.length === 0 && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
