@@ -44,6 +44,7 @@ interface HomeSectionProps {
 }
 
 export function HomeSection({ user, portfolioData, onUpdate, usernameAvailability, isInitialLoad = false, isLoading = false, experiences: experiencesProp = [], onExperiencesChange, cvUrl: cvUrlProp, setCvUrl: setCvUrlProp }: HomeSectionProps) {
+  // Initialize formData - will be updated by useEffect when user/portfolioData loads
   const [formData, setFormData] = useState({
     displayName: "",
     jobTitle: "",
@@ -114,34 +115,25 @@ export function HomeSection({ user, portfolioData, onUpdate, usernameAvailabilit
   const [hasInitialized, setHasInitialized] = useState(false) // Track if we've done the initial setup
   
   useEffect(() => {
-    console.log("🔍 HomeSection useEffect:", { portfolioData, user, isInitialized, hasInitialized })
-    
-    // Don't initialize if already done
-    if (hasInitialized) {
-      return
-    }
-    
-    // If user exists, initialize immediately with user data (for instant display)
-    if (user) {
+    // Initialize formData immediately when user or portfolioData is available
+    // This ensures data shows instantly without skeleton flicker
+    if (user && !hasInitialized) {
       const displayName = portfolioData?.displayName || user.name || user.githubUsername || ""
       const bio = portfolioData?.bio || user.bio || ""
       const profilePic = portfolioData?.profilePic || user.avatarUrl || ""
       const jobTitle = portfolioData?.jobTitle || ""
       const customUsername = portfolioData?.customUsername || user.githubUsername || ""
       
-      // Only initialize if we have at least displayName or user data
-      if (displayName || user.name || user.githubUsername) {
-        console.log("🔍 Setting formData (instant display):", { displayName, bio, profilePic, jobTitle, customUsername })
-        setFormData({
-          displayName,
-          jobTitle,
-          bio,
-          profilePic,
-          customUsername,
-        })
-        setIsInitialized(true)
-        setHasInitialized(true) // Mark that we've done initial setup
-      }
+      // Set formData immediately for instant display
+      setFormData({
+        displayName,
+        jobTitle,
+        bio,
+        profilePic,
+        customUsername,
+      })
+      setIsInitialized(true)
+      setHasInitialized(true)
     }
   }, [user, portfolioData, hasInitialized])
 
@@ -219,9 +211,11 @@ export function HomeSection({ user, portfolioData, onUpdate, usernameAvailabilit
     onExperiencesChange?.(next)
   }
 
-  // Show skeleton while loading OR when no data exists yet (no user data and no portfolio data)
-  const hasNoData = !formData.displayName && !user?.name && (!portfolioData || Object.keys(portfolioData).length === 0)
-  const shouldShowSkeleton = isLoading || (hasNoData && !isInitialized)
+  // Show skeleton ONLY if:
+  // 1. Currently loading, OR
+  // 2. User not loaded yet
+  // Once user is loaded, we show data immediately (even if empty, it's better than skeleton flicker)
+  const shouldShowSkeleton = isLoading || !user
   
   if (shouldShowSkeleton) {
     return (
