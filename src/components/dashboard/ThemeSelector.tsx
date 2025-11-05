@@ -89,9 +89,29 @@ export default function ThemeSelector({
 
       if (response.ok) {
         const result = await response.json()
-        console.log('Theme updated:', result.message)
+        console.log('✅ Theme updated successfully:', result.message)
+        
+        // Reload basic portfolio data to get updated theme
+        // This ensures the theme is properly synced in usePortfolio hook
+        try {
+          const basicResponse = await fetch('/api/portfolio/basic', {
+            credentials: 'include'
+          })
+          if (basicResponse.ok) {
+            const basicData = await basicResponse.json()
+            if (basicData.portfolio?.selectedTheme) {
+              setSelectedTheme(basicData.portfolio.selectedTheme as ThemeKey)
+              if (onThemeChange) {
+                onThemeChange(basicData.portfolio.selectedTheme as ThemeKey)
+              }
+              console.log('✅ Theme synced from server:', basicData.portfolio.selectedTheme)
+            }
+          }
+        } catch (syncError) {
+          console.warn('⚠️ Failed to sync theme from server, but theme was updated:', syncError)
+        }
       } else {
-        console.error('Failed to update theme')
+        console.error('❌ Failed to update theme')
         // Revert selection on error
         setSelectedTheme(currentTheme)
         if (onThemeChange) {
@@ -99,7 +119,7 @@ export default function ThemeSelector({
         }
       }
     } catch (error) {
-      console.error('Error updating theme:', error)
+      console.error('❌ Error updating theme:', error)
       // Revert selection on error
       setSelectedTheme(currentTheme)
       if (onThemeChange) {

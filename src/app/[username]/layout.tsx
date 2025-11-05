@@ -64,8 +64,25 @@ export async function generateMetadata({
     const ogImageUrl = `${baseUrl}/api/og?username=${encodeURIComponent(username)}&displayName=${encodeURIComponent(displayName)}&jobTitle=${encodeURIComponent(jobTitle)}&bio=${encodeURIComponent(bio.slice(0, 100))}&profilePic=${encodeURIComponent(profilePic)}&v=${Math.floor(Date.now() / 3600000)}`
     
     // Generate dynamic favicon URL using user's profile picture
-    const faviconUrl = profilePic && profilePic.startsWith('http') 
-      ? `${baseUrl}/api/favicon?url=${encodeURIComponent(profilePic)}&username=${encodeURIComponent(username)}&v=${Math.floor(Date.now() / 300000)}`
+    // Use profilePic URL hash for cache busting - ensures favicon updates when profile picture changes
+    const generateCacheBuster = (url: string): string => {
+      // Simple hash function to generate cache busting parameter from profilePic URL
+      let hash = 0
+      for (let i = 0; i < url.length; i++) {
+        const char = url.charCodeAt(i)
+        hash = ((hash << 5) - hash) + char
+        hash = hash & hash // Convert to 32bit integer
+      }
+      return Math.abs(hash).toString(36).slice(0, 8)
+    }
+    
+    // Generate favicon URL with strong cache busting
+    const faviconHash = profilePic && profilePic.startsWith('http') 
+      ? generateCacheBuster(profilePic)
+      : null
+    
+    const faviconUrl = faviconHash
+      ? `${baseUrl}/api/favicon?url=${encodeURIComponent(profilePic)}&username=${encodeURIComponent(username)}&hash=${faviconHash}&t=${Date.now()}&v=2`
       : `${baseUrl}/favicon-d.svg`
     
     // Extract skills for keywords
@@ -131,9 +148,13 @@ export async function generateMetadata({
         },
       },
       icons: {
-        icon: faviconUrl,
+        icon: [
+          { url: faviconUrl, type: 'image/png' },
+          { url: faviconUrl, sizes: '32x32', type: 'image/png' },
+          { url: faviconUrl, sizes: '16x16', type: 'image/png' },
+        ],
         shortcut: faviconUrl,
-        apple: "/icon-192.png",
+        apple: faviconUrl, // Use profile pic for apple touch icon too
       },
     }
   } catch (error) {

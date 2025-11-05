@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, Suspense } from "react"
+import { useEffect, useState, Suspense, useCallback, useRef } from "react"
 import { useParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { StructuredData } from "@/components/StructuredData"
@@ -29,9 +29,95 @@ export default function PublicPortfolioPage() {
     )
   }
 
+  // Track if favicon has been updated to prevent multiple calls
+  const faviconUpdatedRef = useRef<string | null>(null)
+
+  // Helper function to update favicon - OPTIMIZED: Only updates once per profilePic
+  const updateFavicon = useCallback((profilePic: string, username: string) => {
+    if (!profilePic || !profilePic.startsWith('http')) {
+      return
+    }
+
+    // Prevent duplicate updates for the same profile picture
+    if (faviconUpdatedRef.current === profilePic) {
+      console.log('⏭️ Favicon already updated for this profile picture, skipping')
+      return
+    }
+
+    const generateCacheBuster = (url: string): string => {
+      let hash = 0
+      for (let i = 0; i < url.length; i++) {
+        const char = url.charCodeAt(i)
+        hash = ((hash << 5) - hash) + char
+        hash = hash & hash
+      }
+      return Math.abs(hash).toString(36).slice(0, 8)
+    }
+
+    const baseUrl = window.location.origin
+    const cacheBuster = generateCacheBuster(profilePic)
+    const timestamp = Date.now()
+    const faviconUrl = `${baseUrl}/api/favicon?url=${encodeURIComponent(profilePic)}&username=${encodeURIComponent(username)}&hash=${cacheBuster}&t=${timestamp}`
+
+    // Mark as updated
+    faviconUpdatedRef.current = profilePic
+
+    // Remove existing favicon links (including from root layout)
+    const existingIcons = document.querySelectorAll("link[rel*='icon'], link[rel='shortcut icon'], link[rel='apple-touch-icon']")
+    existingIcons.forEach(icon => icon.remove())
+
+    // Create new favicon link - simple and efficient
+    const createFaviconLink = (rel: string, type?: string) => {
+      const link = document.createElement('link')
+      link.rel = rel
+      if (type) link.type = type
+      link.href = faviconUrl
+      // Add to beginning of head to ensure priority
+      const firstChild = document.head.firstChild
+      if (firstChild) {
+        document.head.insertBefore(link, firstChild)
+      } else {
+        document.head.appendChild(link)
+      }
+      return link
+    }
+
+    // Create icon links (only once)
+    createFaviconLink('icon', 'image/png')
+    createFaviconLink('shortcut icon', 'image/png')
+    createFaviconLink('apple-touch-icon')
+
+    // Simple browser refresh trick - just touch document title once
+    const originalTitle = document.title
+    document.title = ' '
+    setTimeout(() => {
+      document.title = originalTitle
+    }, 10)
+
+    console.log('✅ Favicon updated (one-time):', faviconUrl)
+  }, [username])
+
+  // Try to update favicon immediately on mount (before portfolio loads)
+  // This helps catch favicon early if portfolio data is cached
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      // Remove default favicon immediately
+      const defaultIcons = document.querySelectorAll("link[rel*='icon'][href*='favicon-d'], link[rel='shortcut icon'][href*='favicon-d']")
+      defaultIcons.forEach(icon => icon.remove())
+    }
+  }, [])
+
   useEffect(() => {
     fetchPortfolio()
   }, [username])
+
+  // Update favicon once when portfolio data is available - OPTIMIZED: Single update
+  useEffect(() => {
+    if (portfolio?.profilePic && typeof window !== 'undefined') {
+      // Update only once - the ref will prevent duplicate calls
+      updateFavicon(portfolio.profilePic, username)
+    }
+  }, [portfolio?.profilePic, username, updateFavicon])
 
   // Track portfolio view
   useEffect(() => {
@@ -61,6 +147,7 @@ export default function PublicPortfolioPage() {
 
       if (response.ok) {
         setPortfolio(result.portfolio)
+        // Favicon will be updated via useEffect hook
       } else {
         setError(result.error || "Portfolio not found")
       }

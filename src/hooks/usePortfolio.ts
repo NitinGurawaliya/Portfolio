@@ -304,6 +304,17 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
           id: basicData.id
         })
         
+        // Set theme and customization if available
+        if (basicData.selectedTheme !== undefined) {
+          setSelectedTheme(basicData.selectedTheme || 'light')
+        }
+        if (basicData.backgroundColor !== undefined) {
+          setBackgroundColor(basicData.backgroundColor)
+        }
+        if (basicData.backgroundPattern !== undefined) {
+          setBackgroundPattern(basicData.backgroundPattern)
+        }
+        
         // Set experiences if available
         if (basicData.experiences) {
           setExperiences(basicData.experiences)

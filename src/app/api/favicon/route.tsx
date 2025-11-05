@@ -2,7 +2,7 @@ import { ImageResponse } from 'next/og'
 import { NextRequest } from 'next/server'
 
 export const runtime = 'edge'
-export const revalidate = 300 // Cache for 5 minutes
+export const revalidate = 0 // Don't cache - always fetch fresh favicon
 
 export async function GET(request: NextRequest) {
   try {
@@ -24,25 +24,43 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    // Fetch the profile image
+    // Fetch the profile image with retry logic
     let profileImageData = null
-    try {
-      const imageResponse = await fetch(imageUrl, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (compatible; DevFolio-Favicon/1.0)',
-        },
-        signal: AbortSignal.timeout(5000), // 5 second timeout
-      })
-      
-      if (imageResponse.ok && imageResponse.headers.get('content-type')?.startsWith('image/')) {
-        profileImageData = await imageResponse.arrayBuffer()
-        console.log('Successfully fetched profile image for favicon')
-      } else {
-        console.log('Invalid response for profile image:', imageResponse.status, imageResponse.statusText)
+    const fetchImageWithRetry = async (url: string, retries = 3): Promise<ArrayBuffer | null> => {
+      for (let i = 0; i < retries; i++) {
+        try {
+          const imageResponse = await fetch(url, {
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (compatible; DevFolio-Favicon/1.0)',
+              'Accept': 'image/*',
+            },
+            signal: AbortSignal.timeout(8000), // 8 second timeout
+          })
+          
+          if (imageResponse.ok) {
+            const contentType = imageResponse.headers.get('content-type')
+            if (contentType && contentType.startsWith('image/')) {
+              const buffer = await imageResponse.arrayBuffer()
+              console.log(`✅ Successfully fetched profile image for favicon (attempt ${i + 1})`)
+              return buffer
+            } else {
+              console.log(`⚠️ Invalid content-type for image: ${contentType}`)
+            }
+          } else {
+            console.log(`⚠️ Image fetch failed: ${imageResponse.status} ${imageResponse.statusText} (attempt ${i + 1})`)
+          }
+        } catch (err) {
+          console.log(`⚠️ Failed to fetch profile image (attempt ${i + 1}):`, err)
+          if (i < retries - 1) {
+            // Wait before retry
+            await new Promise(resolve => setTimeout(resolve, 500 * (i + 1)))
+          }
+        }
       }
-    } catch (err) {
-      console.log('Failed to fetch profile image for favicon:', err)
+      return null
     }
+
+    profileImageData = await fetchImageWithRetry(imageUrl)
 
     // If we couldn't fetch the image, return default favicon
     if (!profileImageData) {
@@ -86,7 +104,9 @@ export async function GET(request: NextRequest) {
         height: 32,
         headers: {
           'Content-Type': 'image/png',
-          'Cache-Control': 'public, max-age=300, must-revalidate',
+          'Cache-Control': 'public, max-age=0, must-revalidate, no-cache',
+          'Pragma': 'no-cache',
+          'Expires': '0',
         },
       }
     )

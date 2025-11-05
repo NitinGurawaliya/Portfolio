@@ -62,6 +62,9 @@ export async function GET(req: NextRequest) {
         bio: true,
         profilePic: true,
         customUsername: true,
+        selectedTheme: true,
+        backgroundColor: true,
+        backgroundPattern: true,
         cvUrl: true,
         experiences: {
           select: {
