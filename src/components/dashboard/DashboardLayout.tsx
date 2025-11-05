@@ -19,7 +19,9 @@ import {
   Palette,
   BarChart3,
   Eye,
-  X
+  X,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react"
 import { DevFolioInlineLoader } from "@/components/ui/DevFolioLoader"
 
@@ -50,6 +52,7 @@ export function DashboardLayout({
 }: DashboardLayoutProps) {
   const [previewMode, setPreviewMode] = useState<"mobile">("mobile")
   const [isPreviewOpen, setIsPreviewOpen] = useState(false)
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState(false)
 
   const sidebarItems = [
     { id: "home", label: "Bio", icon: User },
@@ -104,18 +107,20 @@ export function DashboardLayout({
   }
 
   return (
-    <div className="h-screen w-full bg-white text-black overflow-hidden min-w-[1024px] flex relative">
+      <div className="h-screen w-full bg-white text-black overflow-hidden min-w-[1024px] flex relative">
       {/* Main Content - Using Flex Layout */}
         {/* Left Sidebar - Instant render */}
         <motion.div 
-          className="w-12 bg-gray-50 flex flex-col items-center py-4 overflow-visible relative z-40 flex-shrink-0"
+          className={`bg-gray-50 flex flex-col py-4 overflow-visible relative z-40 flex-shrink-0 transition-all duration-300 ${
+            isSidebarExpanded ? 'w-48 px-3' : 'w-12 items-center px-0'
+          }`}
           variants={itemVariants}
           initial="visible"
           animate="visible"
         >
           {/* DevFolio Logo */}
           <motion.div
-            className="mb-6"
+            className={`mb-6 flex items-center ${isSidebarExpanded ? 'justify-between' : 'justify-center'}`}
             initial={{ opacity: 1, scale: 1 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0 }}
@@ -123,10 +128,32 @@ export function DashboardLayout({
             <div className="w-8 h-8 bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-sm">D</span>
             </div>
+            {isSidebarExpanded && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsSidebarExpanded(false)}
+                className="h-6 w-6 p-0 text-gray-400 hover:text-black hover:bg-gray-100"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+            )}
           </motion.div>
+          
+          {/* Expand Button - Only visible when collapsed */}
+          {!isSidebarExpanded && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsSidebarExpanded(true)}
+              className="h-8 w-8 p-0 mb-4 text-gray-400 hover:text-black hover:bg-gray-100"
+            >
+              <ChevronRight className="h-3 w-3" />
+            </Button>
+          )}
 
           {/* Navigation Items */}
-          <div className="flex flex-col space-y-4 flex-1">
+          <div className="flex flex-col space-y-2 flex-1">
             {sidebarItems.map((item, index) => {
             const Icon = item.icon
             const isActive = activeSection === item.id
@@ -149,15 +176,22 @@ export function DashboardLayout({
                     // Instant navigation - no delays
                     onSectionChange(item.id)
                   }}
-                  className={`h-8 w-8 p-0 relative z-50 cursor-pointer transition-colors duration-75 ${
+                  className={`relative z-50 cursor-pointer transition-colors duration-75 ${
+                    isSidebarExpanded 
+                      ? 'h-9 w-full justify-start px-3 gap-3' 
+                      : 'h-8 w-8 p-0 justify-center'
+                  } ${
                     isActive 
                       ? "bg-black text-white" 
                       : "text-gray-400 hover:text-black hover:bg-gray-100"
                   }`}
                   style={{ willChange: 'background-color' }}
                 >
-                    <Icon className="h-3 w-3" />
-                    {isActive && (
+                    <Icon className={`${isSidebarExpanded ? 'h-4 w-4' : 'h-3 w-3'}`} />
+                    {isSidebarExpanded && (
+                      <span className="text-sm font-medium">{item.label}</span>
+                    )}
+                    {isActive && !isSidebarExpanded && (
                       <motion.div
                         className="absolute -right-1 -top-1 w-2 h-2 bg-orange-500 rounded-full"
                         initial={{ scale: 0 }}
@@ -179,11 +213,13 @@ export function DashboardLayout({
                     )}
                 </Button>
                 
-                {/* Tooltip */}
-                <div className="absolute left-14 top-1/2 -translate-y-1/2 bg-black text-white px-2 py-0.5 rounded-md text-[10px] font-medium whitespace-nowrap z-50 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-150 shadow-md">
-                  {item.label}
-                  <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1 w-0 h-0 border-l-0 border-r-[4px] border-t-[3px] border-b-[3px] border-transparent border-r-black" />
-                </div>
+                {/* Tooltip - Only show when collapsed */}
+                {!isSidebarExpanded && (
+                  <div className="absolute left-14 top-1/2 -translate-y-1/2 bg-black text-white px-2 py-0.5 rounded-md text-[10px] font-medium whitespace-nowrap z-50 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-150 shadow-md">
+                    {item.label}
+                    <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1 w-0 h-0 border-l-0 border-r-[4px] border-t-[3px] border-b-[3px] border-transparent border-r-black" />
+                  </div>
+                )}
               </motion.div>
             )
           })}
@@ -204,16 +240,25 @@ export function DashboardLayout({
               variant="ghost"
               size="sm"
               onClick={handleLogout}
-              className="h-8 w-8 p-0 relative z-50 cursor-pointer text-gray-400 hover:text-red-600 hover:bg-gray-100 transition-colors"
+              className={`relative z-50 cursor-pointer text-gray-400 hover:text-red-600 hover:bg-gray-100 transition-colors ${
+                isSidebarExpanded 
+                  ? 'h-9 w-full justify-start px-3 gap-3' 
+                  : 'h-8 w-8 p-0 justify-center'
+              }`}
             >
-              <LogOut className="h-3 w-3" />
+              <LogOut className={`${isSidebarExpanded ? 'h-4 w-4' : 'h-3 w-3'}`} />
+              {isSidebarExpanded && (
+                <span className="text-sm font-medium">Logout</span>
+              )}
             </Button>
             
-            {/* Tooltip */}
-            <div className="absolute left-14 top-1/2 -translate-y-1/2 bg-black text-white px-2 py-0.5 rounded-md text-[10px] font-medium whitespace-nowrap z-50 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-150 shadow-md">
-              Logout
-              <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1 w-0 h-0 border-l-0 border-r-[4px] border-t-[3px] border-b-[3px] border-transparent border-r-black" />
-            </div>
+            {/* Tooltip - Only show when collapsed */}
+            {!isSidebarExpanded && (
+              <div className="absolute left-14 top-1/2 -translate-y-1/2 bg-black text-white px-2 py-0.5 rounded-md text-[10px] font-medium whitespace-nowrap z-50 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-150 shadow-md">
+                Logout
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1 w-0 h-0 border-l-0 border-r-[4px] border-t-[3px] border-b-[3px] border-transparent border-r-black" />
+              </div>
+            )}
           </motion.div>
         </motion.div>
 
