@@ -6,6 +6,7 @@ import { DemoSection } from "@/components/landing/demo-section"
 import { WallOfFame } from "@/components/landing/wall-of-fame"
 import { CTASection } from "@/components/landing/cta-section"
 import { Footer } from "@/components/landing/footer"
+import { FeatureShowcase } from "@/components/landing/feature-showcase"
 import { SessionRedirect } from "@/components/SessionRedirect"
 
 export const metadata: Metadata = {
@@ -25,10 +26,11 @@ export default function HomePage() {
       <Header />
       <main>
         <HeroSection />
-        <FeaturesSection />
+        {/* <FeaturesSection /> */}
+        <FeatureShowcase />
         <WallOfFame limit={6} />
         {/* <DemoSection /> */}
-        <CTASection />
+        {/* <CTASection /> */}
       </main>
       <Footer />
     </div>

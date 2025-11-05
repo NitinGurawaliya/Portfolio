@@ -103,7 +103,7 @@ export function WallOfFame({ limit = 6 }: WallOfFameProps) {
   if (loading) {
     return (
       <section className="py-16 sm:py-20 lg:py-24">
-        <div className="container px-4 sm:px-6 mx-auto">
+        <div className="container px-4 sm:px-6 lg:px-8 mx-auto max-w-7xl">
           <div className="flex justify-center items-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
             <span className="ml-2 text-muted-foreground">Loading live portfolios...</span>
@@ -116,7 +116,7 @@ export function WallOfFame({ limit = 6 }: WallOfFameProps) {
   if (error || portfolios.length === 0) {
     return (
       <section className="py-16 sm:py-20 lg:py-24">
-        <div className="container px-4 sm:px-6 mx-auto">
+        <div className="container px-4 sm:px-6 lg:px-8 mx-auto max-w-7xl">
           <div className="mx-auto max-w-2xl text-center">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -155,7 +155,7 @@ export function WallOfFame({ limit = 6 }: WallOfFameProps) {
 
   return (
     <section className="py-16 sm:py-20 lg:py-24">
-      <div className="container px-4 sm:px-6 mx-auto">
+      <div className="container px-4 sm:px-6 lg:px-8 mx-auto max-w-7xl">
         <div className="mx-auto max-w-2xl text-center mb-12 sm:mb-16">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -294,15 +294,15 @@ export function WallOfFame({ limit = 6 }: WallOfFameProps) {
         </div>
 
         {/* CTA */}
-        <motion.div
+        {/* <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.8 }}
           className="text-center mt-12"
         >
           <p className="text-sm text-muted-foreground mb-4">
-            Ready to join them?
-          </p>
+            
+          </p>Ready to join them?
           <Button size="lg" className="text-sm sm:text-base" asChild>
             <Link href="/auth">
               <Github className="mr-2 h-4 w-4" />
@@ -310,7 +310,7 @@ export function WallOfFame({ limit = 6 }: WallOfFameProps) {
               <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>
-        </motion.div>
+        </motion.div> */}
       </div>
     </section>
   )

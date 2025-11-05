@@ -5,9 +5,12 @@ import { ThemeToggle } from "@/components/landing/theme-toggle"
 export function Header() {
   return (
     <header className="border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-14 max-w-screen-2xl items-center px-4 sm:px-6 mx-auto">
+      <div className="container flex h-14 max-w-screen-2xl items-center px-4 sm:px-6 lg:px-8 mx-auto">
         <div className="flex">
-          <a className="mr-4 sm:mr-6 flex items-center space-x-2" href="/">
+          <a className="mr-4 sm:mr-6 flex items-center space-x-2.5" href="/">
+            <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg bg-gradient-to-r from-orange-500 to-orange-600 flex items-center justify-center shadow-sm">
+              <span className="text-white font-bold text-base sm:text-lg">D</span>
+            </div>
             <span className="font-bold text-lg sm:text-xl bg-gradient-to-r from-orange-600 to-orange-700 bg-clip-text text-transparent">
               DevFolio
             </span>

@@ -4,11 +4,13 @@ import { Button } from "@/components/ui/button"
 export function Footer() {
   return (
     <footer className="border-t border-border/40 bg-background/95 backdrop-blur">
-      <div className="container py-12 sm:py-16 px-4 sm:px-6 mx-auto">
+      <div className="container py-12 sm:py-16 px-4 sm:px-6 lg:px-8 mx-auto max-w-7xl">
         <div className="grid gap-6 sm:gap-8 grid-cols-1 md:grid-cols-3">
           <div className="md:col-span-2">
-            <div className="flex items-center space-x-2 mb-4">
-              <div className="h-5 w-5 sm:h-6 sm:w-6 rounded bg-gradient-to-r from-orange-500 to-orange-600" />
+            <div className="flex items-center space-x-2.5 mb-4">
+              <div className="h-6 w-6 sm:h-7 sm:w-7 rounded-lg bg-gradient-to-r from-orange-500 to-orange-600 flex items-center justify-center shadow-sm">
+                <span className="text-white font-bold text-sm sm:text-base">D</span>
+              </div>
               <span className="font-bold text-base sm:text-lg bg-gradient-to-r from-orange-600 to-orange-700 bg-clip-text text-transparent">
                 DevFolio
               </span>
