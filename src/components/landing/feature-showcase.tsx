@@ -332,7 +332,7 @@ const getPatternStyle = (pattern: string | null) => {
 export function FeatureShowcase() {
   return (
     <section className="py-16 sm:py-20 lg:py-24 bg-background">
-      <div className="container px-4 sm:px-6 lg:px-8 mx-auto max-w-7xl">
+      <div className="container mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-8">
           <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
