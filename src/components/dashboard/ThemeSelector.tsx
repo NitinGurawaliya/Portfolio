@@ -23,24 +23,29 @@ interface ThemeSelectorProps {
 // to dark gradient backgrounds in dark theme layouts.
 // Light and subtle colors - visible but not overpowering
 const BACKGROUND_COLORS = [
-  { name: 'Default', value: '#ffffff', preview: 'linear-gradient(to bottom right, #ffffff, #f8f8f8)' },
-  { name: 'Sky Blue', value: '#eff6ff', preview: 'linear-gradient(to bottom right, #eff6ff, #dbeafe)' },
-  { name: 'Mint Green', value: '#ecfdf5', preview: 'linear-gradient(to bottom right, #ecfdf5, #d1fae5)' },
-  { name: 'Peach', value: '#fff7ed', preview: 'linear-gradient(to bottom right, #fff7ed, #fed7aa)' },
-  { name: 'Lavender', value: '#f5f3ff', preview: 'linear-gradient(to bottom right, #f5f3ff, #e9d5ff)' },
-  { name: 'Rose Pink', value: '#fdf2f8', preview: 'linear-gradient(to bottom right, #fdf2f8, #fce7f3)' },
-  { name: 'Canary Yellow', value: '#fffbeb', preview: 'linear-gradient(to bottom right, #fffbeb, #fef3c7)' },
-  { name: 'Soft Cyan', value: '#ecfeff', preview: 'linear-gradient(to bottom right, #ecfeff, #cffafe)' },
+  { name: "Default", value: "#ffffff", preview: "linear-gradient(to bottom right, #ffffff, #f8f8f8)" },
+  { name: "Cloud", value: "#f8fafc", preview: "linear-gradient(to bottom right, #f8fafc, #eef2f6)" },
+  { name: "Sky Mist", value: "#f1f6ff", preview: "linear-gradient(to bottom right, #f1f6ff, #e0edff)" },
+  { name: "Soft Lilac", value: "#f6f1ff", preview: "linear-gradient(to bottom right, #f6f1ff, #ebe2ff)" },
+  { name: "Blush", value: "#fff1f5", preview: "linear-gradient(to bottom right, #fff1f5, #ffe4eb)" },
+  { name: "Morning Peach", value: "#fff6ec", preview: "linear-gradient(to bottom right, #fff6ec, #ffe8d6)" },
+  { name: "Mint Whisper", value: "#f1fdf6", preview: "linear-gradient(to bottom right, #f1fdf6, #dcfce7)" },
+  { name: "Seafoam", value: "#ecfeff", preview: "linear-gradient(to bottom right, #ecfeff, #d7f5f7)" },
+  { name: "Lemon Ice", value: "#fffbea", preview: "linear-gradient(to bottom right, #fffbea, #fef3c7)" },
+  { name: "Porcelain", value: "#f3f4f6", preview: "linear-gradient(to bottom right, #f3f4f6, #e5e7eb)" },
 ]
 
 // Background pattern options
 const BACKGROUND_PATTERNS = [
-  { name: 'None', value: null },
-  { name: 'Dots', value: 'dots' },
-  { name: 'Grid', value: 'grid' },
-  { name: 'Cross', value: 'cross' },
-  { name: 'Waves', value: 'waves' },
-  { name: 'Stars', value: 'stars' },
+  { name: "None", value: null },
+  { name: "Dots", value: "dots" },
+  { name: "Grid", value: "grid" },
+  { name: "Cross", value: "cross" },
+  { name: "Waves", value: "waves" },
+  { name: "Stars", value: "stars" },
+  { name: "Sprinkles", value: "sprinkles" },
+  { name: "Diagonal", value: "diagonal" },
+  { name: "Mesh", value: "mesh" },
 ]
 
 export default function ThemeSelector({ 
@@ -152,30 +157,55 @@ export default function ThemeSelector({
   const getPatternStyle = (pattern: string | null) => {
     if (!pattern) return {}
     
+    const accent = "color-mix(in srgb, var(--foreground) 8%, transparent)"
+    const accentStrong = "color-mix(in srgb, var(--foreground) 12%, transparent)"
+
     // Subtle patterns - light opacity for gentle visual texture
     switch (pattern) {
       case 'dots':
         return {
-          backgroundImage: 'radial-gradient(circle, rgba(0,0,0,0.06) 1px, transparent 1px)',
+          backgroundImage: `radial-gradient(circle, ${accent} 1px, transparent 1px)`,
           backgroundSize: '20px 20px'
         }
       case 'grid':
         return {
-          backgroundImage: 'linear-gradient(rgba(0,0,0,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.06) 1px, transparent 1px)',
-          backgroundSize: '20px 20px'
+          backgroundImage: `linear-gradient(${accent} 1px, transparent 1px), linear-gradient(90deg, ${accent} 1px, transparent 1px)`,
+          backgroundSize: '22px 22px'
         }
       case 'cross':
         return {
-          backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,0,0,0.04) 10px, rgba(0,0,0,0.04) 20px)'
+          backgroundImage: `repeating-linear-gradient(45deg, transparent, transparent 12px, ${accent} 12px, ${accent} 13px)`
         }
       case 'waves':
         return {
-          backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px)'
+          backgroundImage: `repeating-linear-gradient(0deg, transparent, transparent 3px, ${accent} 3px, ${accent} 4px)`
         }
       case 'stars':
         return {
-          backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(0,0,0,0.08) 1px, transparent 0)',
-          backgroundSize: '30px 30px'
+          backgroundImage: `radial-gradient(circle at 2px 2px, ${accentStrong} 1px, transparent 0)`,
+          backgroundSize: '28px 28px'
+        }
+      case 'sprinkles':
+        return {
+          backgroundImage: `
+            radial-gradient(circle, ${accentStrong} 0.6px, transparent 0.6px),
+            radial-gradient(circle, ${accent} 0.6px, transparent 0.6px)
+          `,
+          backgroundSize: '24px 24px',
+          backgroundPosition: '0 0, 12px 12px'
+        }
+      case 'diagonal':
+        return {
+          backgroundImage: `repeating-linear-gradient(135deg, transparent, transparent 16px, ${accent} 16px, ${accent} 17px)`
+        }
+      case 'mesh':
+        return {
+          backgroundImage: `
+            radial-gradient(60% 60% at 20% 20%, ${accentStrong} 0%, transparent 60%),
+            radial-gradient(50% 50% at 80% 0%, ${accent} 0%, transparent 55%),
+            radial-gradient(70% 70% at 30% 80%, ${accent} 0%, transparent 60%)
+          `,
+          backgroundBlendMode: 'screen'
         }
       default:
         return {}

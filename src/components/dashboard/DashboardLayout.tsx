@@ -2,28 +2,23 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
 import { PortfolioPreview } from "./PortfolioPreview"
 import { motion, AnimatePresence } from "framer-motion"
-import { 
+import {
   User,
-  Code, 
-  Wrench, 
-  Users, 
-  Monitor,
-  Smartphone,
-  Tablet,
+  Code,
+  Wrench,
+  Users,
   ExternalLink,
-  Loader2,
   LogOut,
   Palette,
   BarChart3,
   Eye,
   X,
-  ChevronLeft,
-  ChevronRight
 } from "lucide-react"
 import { DevFolioInlineLoader } from "@/components/ui/DevFolioLoader"
+import { ThemeToggle } from "@/components/landing/theme-toggle"
+import { cn } from "@/lib/utils"
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -107,54 +102,40 @@ export function DashboardLayout({
   }
 
   return (
-      <div className="h-screen w-full bg-white text-black overflow-hidden min-w-[1024px] flex relative">
-      {/* Main Content - Using Flex Layout */}
-        {/* Left Sidebar - Instant render */}
-        <motion.div 
-          className={`bg-gray-50 flex flex-col py-4 overflow-visible relative z-40 flex-shrink-0 transition-all duration-300 ${
-            isSidebarExpanded ? 'w-48 px-3' : 'w-12 items-center px-0'
-          }`}
-          variants={itemVariants}
-          initial="visible"
-          animate="visible"
-        >
-          {/* DevFolio Logo */}
-          <motion.div
-            className={`mb-6 flex items-center ${isSidebarExpanded ? 'justify-between' : 'justify-center'}`}
-            initial={{ opacity: 1, scale: 1 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0 }}
-          >
-            <div className="w-8 h-8 bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">D</span>
-            </div>
-            {isSidebarExpanded && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsSidebarExpanded(false)}
-                className="h-6 w-6 p-0 text-gray-400 hover:text-black hover:bg-gray-100"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-            )}
-          </motion.div>
-          
-          {/* Expand Button - Only visible when collapsed */}
-          {!isSidebarExpanded && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsSidebarExpanded(true)}
-              className="h-8 w-8 p-0 mb-4 text-gray-400 hover:text-black hover:bg-gray-100"
-            >
-              <ChevronRight className="h-3 w-3" />
-            </Button>
+    <div className="relative flex min-h-screen w-full overflow-hidden bg-background text-foreground">
+      {/* Sidebar */}
+      <motion.div
+        onMouseEnter={() => setIsSidebarExpanded(true)}
+        onMouseLeave={() => setIsSidebarExpanded(false)}
+        variants={itemVariants}
+        initial="visible"
+        animate="visible"
+        className={cn(
+          "relative z-40 flex flex-col overflow-visible border-r border-border/60 bg-card/80 backdrop-blur-sm transition-all duration-200",
+          isSidebarExpanded ? "w-64 px-4 py-6" : "w-16 items-center px-2 py-6"
+        )}
+      >
+        <motion.div
+          className={cn(
+            "mb-6 flex items-center gap-3",
+            isSidebarExpanded ? "justify-start" : "justify-center"
           )}
+          initial={{ opacity: 1, scale: 1 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0 }}
+        >
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 text-base font-semibold text-white shadow-sm">
+            D
+          </div>
+          {isSidebarExpanded && (
+            <span className="text-sm font-semibold tracking-wide text-foreground/80">
+              DevFolio
+            </span>
+          )}
+        </motion.div>
 
-          {/* Navigation Items */}
-          <div className="flex flex-col space-y-2 flex-1">
-            {sidebarItems.map((item, index) => {
+        <nav className="flex flex-1 flex-col space-y-1">
+          {sidebarItems.map((item) => {
             const Icon = item.icon
             const isActive = activeSection === item.id
             return (
@@ -163,161 +144,140 @@ export function DashboardLayout({
                 className="relative group"
                 initial={{ opacity: 1, x: 0 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ 
-                  duration: 0,
-                  delay: 0,
-                  ease: "easeOut"
-                }}
+                transition={{ duration: 0 }}
               >
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => {
-                    // Instant navigation - no delays
-                    onSectionChange(item.id)
-                  }}
-                  className={`relative z-50 cursor-pointer transition-colors duration-75 ${
-                    isSidebarExpanded 
-                      ? 'h-9 w-full justify-start px-3 gap-3' 
-                      : 'h-8 w-8 p-0 justify-center'
-                  } ${
-                    isActive 
-                      ? "bg-black text-white" 
-                      : "text-gray-400 hover:text-black hover:bg-gray-100"
-                  }`}
-                  style={{ willChange: 'background-color' }}
+                  onClick={() => onSectionChange(item.id)}
+                  className={cn(
+                    "relative cursor-pointer rounded-xl transition-all duration-150",
+                    isSidebarExpanded
+                      ? "h-10 w-full justify-start gap-3 px-3"
+                      : "h-10 w-10 justify-center",
+                    isActive
+                      ? "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90"
+                      : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                  )}
                 >
-                    <Icon className={`${isSidebarExpanded ? 'h-4 w-4' : 'h-3 w-3'}`} />
-                    {isSidebarExpanded && (
-                      <span className="text-sm font-medium">{item.label}</span>
-                    )}
-                    {isActive && !isSidebarExpanded && (
-                      <motion.div
-                        className="absolute -right-1 -top-1 w-2 h-2 bg-orange-500 rounded-full"
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{ duration: 0.3 }}
-                      >
-                        <motion.div
-                          className="w-full h-full bg-white rounded-full"
-                          animate={{ 
-                            scale: [0.5, 0.8, 0.5],
-                          }}
-                          transition={{ 
-                            duration: 2,
-                            repeat: Infinity,
-                            ease: "easeInOut"
-                          }}
-                        />
-                      </motion.div>
-                    )}
+                  <Icon className="h-4 w-4" />
+                  {isSidebarExpanded && (
+                    <span className="text-sm font-medium">{item.label}</span>
+                  )}
+                  {isActive && !isSidebarExpanded && (
+                    <motion.span
+                      className="absolute -right-1 -top-1 size-2 rounded-full bg-primary"
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ duration: 0.3 }}
+                    />
+                  )}
                 </Button>
-                
-                {/* Tooltip - Only show when collapsed */}
                 {!isSidebarExpanded && (
-                  <div className="absolute left-14 top-1/2 -translate-y-1/2 bg-black text-white px-2 py-0.5 rounded-md text-[10px] font-medium whitespace-nowrap z-50 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-150 shadow-md">
+                  <div className="pointer-events-none absolute left-14 top-1/2 -translate-y-1/2 rounded-md border border-border/60 bg-popover px-2 py-1 text-[11px] font-medium text-popover-foreground opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100">
                     {item.label}
-                    <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1 w-0 h-0 border-l-0 border-r-[4px] border-t-[3px] border-b-[3px] border-transparent border-r-black" />
                   </div>
                 )}
               </motion.div>
             )
           })}
-          </div>
+        </nav>
 
-          {/* Logout Button */}
-          <motion.div
-            className="relative group"
-            initial={{ opacity: 1, y: 0 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ 
-              duration: 0,
-              delay: 0,
-              ease: "easeOut"
-            }}
-          >
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleLogout}
-              className={`relative z-50 cursor-pointer text-gray-400 hover:text-red-600 hover:bg-gray-100 transition-colors ${
-                isSidebarExpanded 
-                  ? 'h-9 w-full justify-start px-3 gap-3' 
-                  : 'h-8 w-8 p-0 justify-center'
-              }`}
-            >
-              <LogOut className={`${isSidebarExpanded ? 'h-4 w-4' : 'h-3 w-3'}`} />
-              {isSidebarExpanded && (
-                <span className="text-sm font-medium">Logout</span>
-              )}
-            </Button>
-            
-            {/* Tooltip - Only show when collapsed */}
-            {!isSidebarExpanded && (
-              <div className="absolute left-14 top-1/2 -translate-y-1/2 bg-black text-white px-2 py-0.5 rounded-md text-[10px] font-medium whitespace-nowrap z-50 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-150 shadow-md">
-                Logout
-                <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1 w-0 h-0 border-l-0 border-r-[4px] border-t-[3px] border-b-[3px] border-transparent border-r-black" />
-              </div>
+        <div
+          className={cn(
+            "mt-6 flex items-center",
+            isSidebarExpanded
+              ? "justify-between gap-3 rounded-xl bg-muted/60 px-3 py-2"
+              : "justify-center"
+          )}
+        >
+          <ThemeToggle />
+          {isSidebarExpanded && (
+            <span className="text-xs font-medium text-muted-foreground">
+              Toggle theme
+            </span>
+          )}
+        </div>
+
+        <motion.div
+          className="mt-4"
+          initial={{ opacity: 1, y: 0 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0 }}
+        >
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleLogout}
+            className={cn(
+              "rounded-xl transition-all duration-150",
+              isSidebarExpanded
+                ? "h-10 w-full justify-start gap-3 px-3 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                : "h-10 w-10 justify-center text-muted-foreground hover:text-destructive"
             )}
-          </motion.div>
+          >
+            <LogOut className="h-4 w-4" />
+            {isSidebarExpanded && (
+              <span className="text-sm font-medium">Logout</span>
+            )}
+          </Button>
         </motion.div>
+      </motion.div>
 
 
         {/* Main Dashboard Content Area */}
-        <div className="flex-1 bg-white overflow-hidden flex flex-col relative">
+        <div className="relative flex flex-1 flex-col overflow-hidden bg-background">
           {/* Dashboard Controls at Top */}
-          <motion.div 
-            className="flex items-center justify-between w-full p-3 bg-white border-b border-gray-100 relative z-50"
+          <motion.div
+            className="relative z-20 flex w-full items-center justify-between border-b border-border/60 bg-background/80 px-4 py-4 backdrop-blur-sm"
             variants={itemVariants}
             initial="visible"
             animate="visible"
           >
-            {/* Left - Title */}
-            <div className="flex items-center">
-              <h2 className="text-lg font-semibold text-black">Dashboard</h2>
-            </div>
+            <h2 className="text-lg font-semibold">Dashboard</h2>
 
-            {/* Right - Action Buttons */}
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center gap-2">
               <Button
+                size="sm"
+                variant="outline"
                 onClick={() => {
                   const currentDomain = window.location.origin
-                  const username = livePortfolio?.customUsername || portfolioData?.customUsername || user?.githubUsername || 'username'
-                  window.open(`${currentDomain}/${username}`, '_blank')
+                  const username =
+                    livePortfolio?.customUsername ||
+                    portfolioData?.customUsername ||
+                    user?.githubUsername ||
+                    "username"
+                  window.open(`${currentDomain}/${username}`, "_blank")
                 }}
-                className="bg-gray-100 text-gray-700 hover:bg-gray-200 px-4 py-2 rounded-lg text-sm font-medium transition-colors border border-gray-200"
+                className="rounded-lg px-4 text-sm"
               >
                 Visit Profile
-                <ExternalLink className="h-4 w-4 ml-2" />
+                <ExternalLink className="ml-2 h-4 w-4" />
               </Button>
 
               <Button
+                size="sm"
+                variant={isPreviewOpen ? "default" : "outline"}
                 onClick={() => setIsPreviewOpen(!isPreviewOpen)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                  isPreviewOpen 
-                    ? "bg-orange-600 text-white hover:bg-orange-700" 
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
+                className="rounded-lg px-4 text-sm"
               >
-                <Eye className="h-4 w-4 mr-2" />
+                <Eye className="mr-2 h-4 w-4" />
                 {isPreviewOpen ? "Hide Preview" : "Show Preview"}
               </Button>
-              
+
               <Button
+                size="sm"
                 onClick={onPublish}
                 disabled={!hasUnsavedChanges || isPublishing}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  hasUnsavedChanges && !isPublishing
-                    ? "bg-orange-600 text-white hover:bg-orange-700"
-                    : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                }`}
+                variant={hasUnsavedChanges && !isPublishing ? "default" : "secondary"}
+                className="rounded-lg px-4 text-sm"
               >
                 {isPublishing ? (
                   <DevFolioInlineLoader />
                 ) : hasUnsavedChanges ? (
                   <span className="inline-flex items-center gap-2">
                     <span>Publish 🔥</span>
-                    <span className="hidden md:inline text-[11px] px-1.5 py-0.5 rounded bg-white/15 border border-white/20">
+                    <span className="hidden rounded border border-border/60 bg-muted/40 px-1.5 py-0.5 text-[11px] md:inline">
                       Ctrl+S
                     </span>
                   </span>
@@ -328,13 +288,9 @@ export function DashboardLayout({
             </div>
           </motion.div>
 
-          {/* Dashboard Content - Instant navigation */}
-          <div className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide">
-            <div
-              key={activeSection}
-              className="p-4"
-              style={{ willChange: 'contents' }}
-            >
+          {/* Dashboard Content */}
+          <div className="flex-1 overflow-y-auto overflow-x-hidden bg-muted/20 scrollbar-hide">
+            <div key={activeSection} className="p-6" style={{ willChange: "contents" }}>
               {children}
             </div>
           </div>
@@ -347,38 +303,35 @@ export function DashboardLayout({
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
-              transition={{ 
-                type: "spring", 
-                damping: 25, 
+              transition={{
+                type: "spring",
+                damping: 25,
                 stiffness: 200,
-                duration: 0.4
+                duration: 0.4,
               }}
-              className="fixed top-0 right-0 w-[400px] h-screen bg-white border-l border-gray-200 shadow-2xl z-50 flex flex-col"
+              className="fixed right-0 top-0 z-50 flex h-screen w-[400px] flex-col border-l border-border/60 bg-card shadow-2xl"
             >
-              {/* Sidebar Header */}
-              <div className="flex items-center justify-between p-4 border-b border-gray-100 bg-gray-50">
-                <h3 className="text-lg font-semibold text-gray-800">Portfolio Preview</h3>
+              <div className="flex items-center justify-between border-b border-border/60 bg-muted/40 px-4 py-3">
+                <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                  Portfolio Preview
+                </h3>
                 <Button
                   onClick={() => setIsPreviewOpen(false)}
                   variant="ghost"
-                  size="sm"
-                  className="h-8 w-8 p-0 hover:bg-gray-200"
+                  size="icon"
+                  className="h-8 w-8 hover:bg-muted/60"
                 >
                   <X className="h-4 w-4" />
                 </Button>
               </div>
 
-
-              {/* Preview Content */}
-              <div className="flex-1 overflow-hidden">
-                <div className="w-full h-full overflow-hidden">
-                  <PortfolioPreview 
-                    username={user?.githubUsername} 
-                    previewMode={previewMode}
-                    portfolio={livePortfolio}
-                    key={`${previewMode}-preview`}
-                  />
-                </div>
+              <div className="flex-1 overflow-hidden bg-background">
+                <PortfolioPreview
+                  username={user?.githubUsername}
+                  previewMode={previewMode}
+                  portfolio={livePortfolio}
+                  key={`${previewMode}-preview`}
+                />
               </div>
             </motion.div>
           )}
