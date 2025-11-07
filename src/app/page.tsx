@@ -8,6 +8,7 @@ import { CTASection } from "@/components/landing/cta-section"
 import { Footer } from "@/components/landing/footer"
 import { FeatureShowcase } from "@/components/landing/feature-showcase"
 import { SessionRedirect } from "@/components/SessionRedirect"
+import TopContributors from "@/components/landing/contribiuters"
 
 export const metadata: Metadata = {
   title: "DevFolio - Build Your Developer Portfolio in Minutes",
@@ -31,6 +32,7 @@ export default function HomePage() {
         <WallOfFame limit={6} />
         {/* <DemoSection /> */}
         {/* <CTASection /> */}
+        <TopContributors />
       </main>
       <Footer />
     </div>
