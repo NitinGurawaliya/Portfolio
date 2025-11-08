@@ -284,7 +284,7 @@ export default function ThemeSelector({
         {/* Background Colors */}
         <div>
           <p className="text-sm font-medium text-gray-700 mb-3">Background Colors</p>
-          <div className="grid grid-cols-4 md:grid-cols-8 gap-3">
+          <div className="grid grid-cols-4 md:grid-cols-8 gap-x-3 gap-y-6">
             {BACKGROUND_COLORS.map((color) => (
               <motion.div
                 key={color.name}
@@ -311,7 +311,7 @@ export default function ThemeSelector({
                     </motion.div>
                   )}
                 </button>
-                <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
+                <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-20">
                   {color.name}
                 </div>
               </motion.div>
@@ -322,7 +322,7 @@ export default function ThemeSelector({
         {/* Background Patterns */}
         <div>
           <p className="text-sm font-medium text-gray-700 mb-3">Background Patterns</p>
-          <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
+          <div className="grid grid-cols-3 md:grid-cols-6 gap-x-3 gap-y-6">
             {BACKGROUND_PATTERNS.map((pattern) => (
               <motion.div
                 key={pattern.name}
@@ -352,7 +352,7 @@ export default function ThemeSelector({
                     </motion.div>
                   )}
                 </button>
-                <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
+                <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-20">
                   {pattern.name}
                 </div>
               </motion.div>

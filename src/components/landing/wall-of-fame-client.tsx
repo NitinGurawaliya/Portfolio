@@ -183,9 +183,7 @@ export function WallOfFameClient({
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <div className="text-xs font-semibold uppercase text-muted-foreground">
-                            #{index + 1} · {portfolio.totalViews} views
-                          </div>
+                          
                           <h3 className="font-semibold text-foreground">
                             {portfolio.displayName}
                           </h3>

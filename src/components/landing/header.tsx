@@ -5,7 +5,7 @@ import { ThemeToggle } from "@/components/landing/theme-toggle"
 export function Header() {
   return (
     <header className="border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto flex h-14 max-w-6xl items-center px-4 sm:px-6 lg:px-8">
+      <div className="container mx-auto flex h-14 max-w-6xl items-center px-6 sm:px-8 lg:px-12">
         <div className="flex">
           <a className="mr-4 sm:mr-6 flex items-center space-x-2.5" href="/">
             <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg bg-gradient-to-r from-orange-500 to-orange-600 flex items-center justify-center shadow-sm">

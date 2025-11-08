@@ -15,9 +15,10 @@ import {
   BarChart3,
   Eye,
   X,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react"
 import { DevFolioInlineLoader } from "@/components/ui/DevFolioLoader"
-import { ThemeToggle } from "@/components/landing/theme-toggle"
 import { cn } from "@/lib/utils"
 
 interface DashboardLayoutProps {
@@ -47,11 +48,14 @@ export function DashboardLayout({
 }: DashboardLayoutProps) {
   const [previewMode, setPreviewMode] = useState<"mobile">("mobile")
   const [isPreviewOpen, setIsPreviewOpen] = useState(false)
-  const [isSidebarExpanded, setIsSidebarExpanded] = useState(false)
+  const [isSidebarPinned, setIsSidebarPinned] = useState(true)
+  const [isSidebarHovered, setIsSidebarHovered] = useState(false)
+
+  const isSidebarExpanded = isSidebarPinned || isSidebarHovered
 
   const sidebarItems = [
     { id: "home", label: "Bio", icon: User },
-    { id: "repos", label: "Repos", icon: Code },
+    { id: "repos", label: "Projects", icon: Code },
     { id: "skills", label: "Skills", icon: Wrench },
     { id: "socials", label: "Socials", icon: Users },
     { id: "analytics", label: "Analytics", icon: BarChart3 },
@@ -102,23 +106,31 @@ export function DashboardLayout({
   }
 
   return (
-    <div className="relative flex min-h-screen w-full overflow-hidden bg-background text-foreground">
+    <div className="relative flex h-screen w-full overflow-hidden bg-background text-foreground">
       {/* Sidebar */}
       <motion.div
-        onMouseEnter={() => setIsSidebarExpanded(true)}
-        onMouseLeave={() => setIsSidebarExpanded(false)}
+        onMouseEnter={() => {
+          if (!isSidebarPinned) {
+            setIsSidebarHovered(true)
+          }
+        }}
+        onMouseLeave={() => {
+          if (!isSidebarPinned) {
+            setIsSidebarHovered(false)
+          }
+        }}
         variants={itemVariants}
         initial="visible"
         animate="visible"
         className={cn(
-          "relative z-40 flex flex-col overflow-visible border-r border-border/60 bg-card/80 backdrop-blur-sm transition-all duration-200",
-          isSidebarExpanded ? "w-64 px-4 py-6" : "w-16 items-center px-2 py-6"
+          "sticky top-0 border-b border-border/60 z-40 flex h-screen flex-col border-r border-border/60 bg-card/80 backdrop-blur-sm transition-all duration-200",
+          isSidebarExpanded ? "w-42 px-3" : "w-16 items-center px-2"
         )}
       >
         <motion.div
           className={cn(
-            "mb-6 flex items-center gap-3",
-            isSidebarExpanded ? "justify-start" : "justify-center"
+            "sticky top-0 z-10 flex items-center gap-3 bg-card/90",
+            isSidebarExpanded ? "justify-start px-1 pt-6 pb-4" : "justify-center pt-6 pb-4"
           )}
           initial={{ opacity: 1, scale: 1 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -134,73 +146,88 @@ export function DashboardLayout({
           )}
         </motion.div>
 
-        <nav className="flex flex-1 flex-col space-y-1">
-          {sidebarItems.map((item) => {
-            const Icon = item.icon
-            const isActive = activeSection === item.id
-            return (
-              <motion.div
-                key={item.id}
-                className="relative group"
-                initial={{ opacity: 1, x: 0 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0 }}
-              >
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onSectionChange(item.id)}
-                  className={cn(
-                    "relative cursor-pointer rounded-xl transition-all duration-150",
-                    isSidebarExpanded
-                      ? "h-10 w-full justify-start gap-3 px-3"
-                      : "h-10 w-10 justify-center",
-                    isActive
-                      ? "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90"
-                      : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
-                  )}
-                >
-                  <Icon className="h-4 w-4" />
-                  {isSidebarExpanded && (
-                    <span className="text-sm font-medium">{item.label}</span>
-                  )}
-                  {isActive && !isSidebarExpanded && (
-                    <motion.span
-                      className="absolute -right-1 -top-1 size-2 rounded-full bg-primary"
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      transition={{ duration: 0.3 }}
-                    />
-                  )}
-                </Button>
-                {!isSidebarExpanded && (
-                  <div className="pointer-events-none absolute left-14 top-1/2 -translate-y-1/2 rounded-md border border-border/60 bg-popover px-2 py-1 text-[11px] font-medium text-popover-foreground opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100">
-                    {item.label}
-                  </div>
-                )}
-              </motion.div>
-            )
-          })}
-        </nav>
-
         <div
           className={cn(
-            "mt-6 flex items-center",
-            isSidebarExpanded
-              ? "justify-between gap-3 rounded-xl bg-muted/60 px-3 py-2"
-              : "justify-center"
+            "flex w-full",
+            isSidebarExpanded ? "justify-end px-1" : "justify-center"
           )}
         >
-          <ThemeToggle />
-          {isSidebarExpanded && (
-            <span className="text-xs font-medium text-muted-foreground">
-              Toggle theme
-            </span>
-          )}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => {
+              setIsSidebarPinned((prev) => !prev)
+              if (isSidebarPinned) {
+                setIsSidebarHovered(false)
+              }
+            }}
+            className={cn(
+              "h-8 w-8 rounded-lg text-muted-foreground transition-colors hover:text-foreground",
+              !isSidebarExpanded && "hover:bg-muted/60"
+            )}
+            aria-label={isSidebarPinned ? "Collapse sidebar" : "Expand sidebar"}
+          >
+            {isSidebarPinned ? (
+              <ChevronLeft className="h-4 w-4" />
+            ) : (
+              <ChevronRight className="h-4 w-4" />
+            )}
+          </Button>
         </div>
 
+        <nav className="flex-1 overflow-y-auto pb-6">
+          <div className="flex flex-col space-y-1">
+            {sidebarItems.map((item) => {
+              const Icon = item.icon
+              const isActive = activeSection === item.id
+              return (
+                <motion.div
+                  key={item.id}
+                  className="relative group"
+                  initial={{ opacity: 1, x: 0 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0 }}
+                >
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onSectionChange(item.id)}
+                    className={cn(
+                      "relative cursor-pointer rounded-xl transition-all duration-150",
+                      isSidebarExpanded
+                        ? "h-10 w-full justify-start gap-3 px-3"
+                        : "h-10 w-10 justify-center",
+                      isActive
+                        ? "bg-gray-100 text-black shadow-sm hover:bg-gray-200"
+                        : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                    )}
+                  >
+                    <Icon className="h-4 w-4" />
+                    {isSidebarExpanded && (
+                      <span className="text-sm font-medium">{item.label}</span>
+                    )}
+                    {isActive && !isSidebarExpanded && (
+                      <motion.span
+                        className="absolute -right-1 -top-1 size-2 rounded-full bg-primary"
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ duration: 0.3 }}
+                      />
+                    )}
+                  </Button>
+                  {!isSidebarExpanded && (
+                    <div className="pointer-events-none absolute left-14 top-1/2 -translate-y-1/2 rounded-md border border-border/60 bg-popover px-2 py-1 text-[11px] font-medium text-popover-foreground opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100">
+                      {item.label}
+                    </div>
+                  )}
+                </motion.div>
+              )
+            })}
+          </div>
+        </nav>
+
         <motion.div
-          className="mt-4"
+          className="sticky bottom-0 z-10 bg-card/90 pt-4 pb-6"
           initial={{ opacity: 1, y: 0 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0 }}
@@ -270,7 +297,12 @@ export function DashboardLayout({
                 onClick={onPublish}
                 disabled={!hasUnsavedChanges || isPublishing}
                 variant={hasUnsavedChanges && !isPublishing ? "default" : "secondary"}
-                className="rounded-lg px-4 text-sm"
+                className={cn(
+                  "rounded-lg px-4 text-sm transition-colors",
+                  hasUnsavedChanges && !isPublishing
+                    ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700"
+                    : ""
+                )}
               >
                 {isPublishing ? (
                   <DevFolioInlineLoader />

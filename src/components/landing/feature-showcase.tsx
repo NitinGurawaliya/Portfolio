@@ -332,7 +332,7 @@ const getPatternStyle = (pattern: string | null) => {
 export function FeatureShowcase() {
   return (
     <section className="py-16 sm:py-20 lg:py-24 bg-background">
-      <div className="container mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+      <div className="container mx-auto max-w-6xl px-6 sm:px-8 lg:px-12">
         {/* Header */}
         <div className="text-center mb-8">
           <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
@@ -408,13 +408,13 @@ export function FeatureShowcase() {
               </div>
 
               {/* Visits over time and Top Referrers - Side by Side */}
-              <div className="flex flex-col lg:flex-row gap-3">
+              <div className="flex flex-col lg:flex-row gap-3 lg:gap-6">
                 {/* Heatmap - Left side */}
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <CardTitle className="text-base text-card-foreground font-bold mb-2">Visits over time</CardTitle>
-                  <div className="flex items-start gap-1">
+                  <div className="flex items-start gap-2 overflow-hidden">
                     {/* Weekday labels */}
-                    <div className="flex flex-col gap-1 pt-0.5">
+                    <div className="flex flex-col gap-1 pt-0.5 flex-shrink-0">
                       <span className="text-[9px] text-muted-foreground font-medium h-3 leading-none">Sun</span>
                       <span className="text-[9px] text-muted-foreground font-medium h-3 leading-none">Mon</span>
                       <span className="text-[9px] text-muted-foreground font-medium h-3 leading-none">Tue</span>
@@ -424,46 +424,50 @@ export function FeatureShowcase() {
                       <span className="text-[9px] text-muted-foreground font-medium h-3 leading-none">Sat</span>
                     </div>
                     
-                    <div className="flex flex-col">
-                      {/* Month labels */}
-                      <div className="flex gap-1 mb-1.5 pl-7">
-                        {["Nov", "Dec", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov"].map((month, idx) => (
-                          <div key={idx} className="w-3 flex items-start justify-center">
-                            {idx === 0 || idx === 12 ? (
-                              <span className="text-[9px] text-muted-foreground font-medium">{month}</span>
-                            ) : null}
-                          </div>
-                        ))}
-                      </div>
-                      
-                      {/* Heatmap grid */}
-                      <div className="flex gap-1">
-                        {heatmapWeeks.map((week, weekIndex) => (
-                          <div key={weekIndex} className="flex flex-col gap-1">
-                            {week.map((day, dayIndex) => (
-                              <div
-                                key={`${weekIndex}-${dayIndex}`}
-                                className={`w-3 h-3 rounded-sm ${getHeatmapColor(day.count)}`}
-                              />
+                    <div className="flex flex-col overflow-hidden max-w-full lg:max-w-[620px]">
+                      <div className="overflow-x-auto">
+                        <div className="inline-flex flex-col gap-1 min-w-[520px] pr-2">
+                          {/* Month labels */}
+                          <div className="flex gap-1 mb-1.5 pl-7">
+                            {["Nov", "Dec", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov"].map((month, idx) => (
+                              <div key={idx} className="w-3 flex items-start justify-center">
+                                {idx === 0 || idx === 12 ? (
+                                  <span className="text-[9px] text-muted-foreground font-medium">{month}</span>
+                                ) : null}
+                              </div>
                             ))}
                           </div>
-                        ))}
+                          
+                          {/* Heatmap grid */}
+                          <div className="flex gap-1">
+                            {heatmapWeeks.map((week, weekIndex) => (
+                              <div key={weekIndex} className="flex flex-col gap-1">
+                                {week.map((day, dayIndex) => (
+                                  <div
+                                    key={`${weekIndex}-${dayIndex}`}
+                                    className={`w-3 h-3 rounded-sm ${getHeatmapColor(day.count)}`}
+                                  />
+                                ))}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
 
                 {/* Top Referrers - Right side */}
-                <div className="w-full lg:w-72 flex-shrink-0">
+                <div className="w-full lg:w-72 lg:max-w-[280px] flex-shrink-0 min-w-0">
                   <CardTitle className="text-base text-card-foreground font-bold mb-2">Top Referrers</CardTitle>
                   <div className="space-y-2">
                     {demoAnalytics.topReferrers.map((ref, index) => (
-                      <div key={index} className="flex items-center justify-between">
+                      <div key={index} className="flex items-center justify-between gap-2 rounded-md border border-border/40 px-2 py-1.5">
                         <div className="flex items-center gap-2 min-w-0 flex-1">
                           {getReferrerIcon(ref.referrer)}
                           <span className="text-xs text-card-foreground font-medium truncate">{ref.referrer}</span>
                         </div>
-                        <span className="text-xs font-bold text-card-foreground ml-2">{ref.count}</span>
+                        <span className="text-xs font-bold text-card-foreground ml-2 shrink-0 text-right tabular-nums">{ref.count}</span>
                       </div>
                     ))}
                   </div>

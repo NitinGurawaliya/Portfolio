@@ -88,8 +88,23 @@ const getPatternStyle = (pattern: string | null) => {
       }
     case 'stars':
       return {
-        backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(255,255,255,0.06) 1px, transparent 0)',
+        backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(255,255,255,0.15) 1px, transparent 0)',
         backgroundSize: '30px 30px'
+      }
+    case 'sprinkles':
+      return {
+        backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.16) 0.6px, transparent 0.6px), radial-gradient(circle, rgba(255,255,255,0.1) 0.6px, transparent 0.6px)',
+        backgroundSize: '24px 24px',
+        backgroundPosition: '0 0, 12px 12px'
+      }
+    case 'diagonal':
+      return {
+        backgroundImage: 'repeating-linear-gradient(135deg, transparent, transparent 14px, rgba(255,255,255,0.14) 14px, rgba(255,255,255,0.14) 15px)'
+      }
+    case 'mesh':
+      return {
+        backgroundImage: 'radial-gradient(60% 60% at 20% 20%, rgba(255,255,255,0.18) 0%, transparent 65%), radial-gradient(50% 50% at 80% 0%, rgba(255,255,255,0.12) 0%, transparent 60%), radial-gradient(70% 70% at 30% 80%, rgba(255,255,255,0.1) 0%, transparent 65%)',
+        backgroundBlendMode: 'screen'
       }
     default:
       return {}
@@ -162,19 +177,19 @@ export default function LayoutDark({ theme, portfolio }: LayoutDarkProps) {
 
       {/* Main Container - Two Column Layout on Large Screens */}
       <div className="relative z-10 pt-8 md:pt-12 lg:pt-16 pb-6 md:pb-8 lg:pb-10">
-        <div className="mx-auto px-4 sm:px-6 lg:px-8 max-w-screen-xl">
+        <div className="mx-auto px-4 sm:px-6 lg:px-12 max-w-screen-xl">
           {/* Two Column Grid - Left: User Info, Right: Projects */}
           <div className="lg:grid lg:grid-cols-12 lg:gap-8 xl:gap-12">
             
             {/* LEFT COLUMN - User Info & Skills (1/3 width on large screens) */}
-            <div className="lg:col-span-4 xl:col-span-4 space-y-6 lg:pr-4">
+            <div className="lg:col-span-4 xl:col-span-4 space-y-4 lg:pr-4">
               
               {/* Profile Picture */}
               <motion.div
                 initial={{ scale: 0, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
-                className="relative group flex justify-center lg:justify-start mb-4"
+                className="relative group flex justify-center lg:justify-start mb-2"
               >
                 <Avatar className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 border-3 border-orange-500/20 bg-gray-800 relative shadow-2xl group-hover:border-orange-500/40 transition-all duration-300">
                   <AvatarImage 
@@ -191,12 +206,12 @@ export default function LayoutDark({ theme, portfolio }: LayoutDarkProps) {
 
               {/* Name & Handle */}
               <motion.div 
-                className="text-center lg:text-left space-y-1"
+                className="text-center lg:text-left space-y-0.5"
                 initial={{ y: 30, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.8, delay: 0.4 }}
               >
-                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white leading-tight">
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white leading-snug">
                   {portfolio.displayName}
                 </h1>
                 {portfolio.jobTitle && (
@@ -237,7 +252,7 @@ export default function LayoutDark({ theme, portfolio }: LayoutDarkProps) {
                     onClick={() => {
                       window.open(portfolio.cvUrl!, '_blank')
                     }}
-                    className="w-full flex items-center justify-between bg-white/10 border border-gray-700 rounded-lg px-4 py-2.5 hover:bg-white/20 transition-all duration-200 text-left backdrop-blur-sm"
+                    className="w-full flex items-center justify-between bg-white/10 border border-gray-700 rounded-lg px-4 py-2 hover:bg-white/20 transition-all duration-200 text-left backdrop-blur-sm"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                   >
@@ -273,7 +288,7 @@ export default function LayoutDark({ theme, portfolio }: LayoutDarkProps) {
               {/* Social Icons */}
               {portfolio.socials && portfolio.socials.filter(social => social.isPinned).length > 0 && (
                 <motion.div 
-                  className="flex gap-2 justify-center lg:justify-start flex-wrap"
+                  className="flex gap-1.5 justify-center lg:justify-start flex-wrap"
                   initial={{ y: -20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ duration: 0.8, delay: 0.8 }}
@@ -304,7 +319,7 @@ export default function LayoutDark({ theme, portfolio }: LayoutDarkProps) {
               {/* Skills Section */}
               {portfolio.skills && portfolio.skills.length > 0 && (
                 <motion.section 
-                  className="pt-4"
+                  className="pt-2"
                   initial={{ opacity: 0, y: 30 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.8 }}
@@ -314,11 +329,11 @@ export default function LayoutDark({ theme, portfolio }: LayoutDarkProps) {
                   <h2 className="text-base sm:text-lg font-bold mb-3 text-white text-center lg:text-left">
                     Skills
                   </h2>
-                  <div className="flex flex-wrap gap-2 justify-center lg:justify-start">
+                  <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 sm:flex-wrap sm:overflow-visible sm:pb-0 sm:mx-0 sm:px-0 sm:justify-center lg:justify-start">
                     {portfolio.skills.map((skill, index) => (
                       <motion.div
                         key={skill.id}
-                        className="group relative flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-gray-900/40 border border-orange-500/20 hover:bg-gray-800/60 hover:border-orange-500/40 transition-all duration-300 cursor-pointer"
+                        className="group relative flex flex-shrink-0 items-center gap-1.5 rounded-lg border border-orange-500/20 bg-gray-900/40 px-2.5 py-1 hover:bg-gray-800/60 hover:border-orange-500/40 transition-all duration-300 cursor-pointer sm:flex-shrink"
                         initial={{ opacity: 0, scale: 0.8 }}
                         whileInView={{ opacity: 1, scale: 1 }}
                         transition={{ duration: 0.3, delay: index * 0.05 }}
@@ -326,8 +341,10 @@ export default function LayoutDark({ theme, portfolio }: LayoutDarkProps) {
                         whileHover={{ scale: 1.05, y: -2 }}
                         whileTap={{ scale: 0.95 }}
                         aria-label={`${skill.name} skill`}
-                      >
-                        <SkillIcon skillName={skill.name} className="w-4 h-4 text-orange-400" />
+                        >
+                          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gray-800/80 shadow-inner">
+                            <SkillIcon skillName={skill.name} className="w-3.5 h-3.5" />
+                          </span>
                         <span className="text-xs font-medium text-gray-300 group-hover:text-white transition-colors duration-300">
                           {skill.name}
                         </span>
@@ -416,13 +433,13 @@ export default function LayoutDark({ theme, portfolio }: LayoutDarkProps) {
                   >
                     Projects
                   </motion.h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 auto-rows-fr">
               {portfolio.repositories
                 .filter(repo => repo.isVisible)
                 .map((repo, index) => (
                 <motion.article
                   key={repo.id}
-                  className="group relative cursor-pointer h-fit w-full"
+                  className="group relative flex h-full w-full cursor-pointer"
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, delay: index * 0.1 }}
@@ -454,7 +471,7 @@ export default function LayoutDark({ theme, portfolio }: LayoutDarkProps) {
                   tabIndex={0}
                   aria-label={`View ${repo.repository.name} project`}
                 >
-                  <div className="relative bg-transparent border border-orange-500/30 rounded-lg p-4 sm:p-6 hover:border-orange-500/50 transition-all duration-300 h-full flex flex-col w-full">
+                    <div className="relative bg-transparent border border-orange-500/30 rounded-lg p-4 sm:p-6 hover:border-orange-500/50 transition-all duration-300 h-full min-h-[300px] flex flex-col w-full">
                     {/* OG image preview for public card only */}
                     {repo.repository.logo && (/^https?:/i.test(repo.repository.logo) || /^data:image\//i.test(repo.repository.logo)) && (
                       <div className="mb-4 -mt-1 overflow-hidden rounded-md">
@@ -509,7 +526,7 @@ export default function LayoutDark({ theme, portfolio }: LayoutDarkProps) {
                     </div>
                     
                     {/* All Languages badges */}
-                    <div className="flex items-center flex-wrap gap-2 mb-3">
+                    <div className="flex items-center flex-wrap gap-2 mb-3 mt-auto">
                       {(() => {
                         // Parse languages from JSON string
                         let languages: string[] = []
@@ -566,7 +583,7 @@ export default function LayoutDark({ theme, portfolio }: LayoutDarkProps) {
         viewport={{ once: true }}
         aria-label="Footer"
       >
-        <div className="mx-auto px-6 lg:px-8 max-w-6xl">
+        <div className="mx-auto px-4 sm:px-6 lg:px-12 max-w-6xl">
           <div className="flex justify-end">
             <motion.a
               href="/"

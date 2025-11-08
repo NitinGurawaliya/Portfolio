@@ -41,17 +41,17 @@ export function HeroSection() {
   }, []);
 
   return (
-    <section className="relative overflow-hidden py-10 sm:py-14 lg:py-20">
+    <section className="relative overflow-hidden py-10 ">
       <div className="absolute inset-0 grid-bg opacity-30" />
       <div className="container relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <div className="grid items-center justify-items-center gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
           {/* Left Column - Text Content */}
-          <div className="text-center">
+          <div className="w-full text-center">
             {/* <div className="mb-4 sm:mb-5 inline-flex items-center rounded-full border border-border/40 bg-muted/50 px-3 py-1.5 text-xs sm:text-sm backdrop-blur-sm">
               <span className="mr-1.5 sm:mr-2">🔥</span>
               <span className="text-xs sm:text-sm">Free right now - grab it while it's hot</span>
             </div> */}
-
+ 
               <h1 className="mb-3 text-2xl font-semibold leading-tight tracking-tight text-balance sm:mb-4 sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl">
               Turn your GitHub into a{" "}
               <span className="bg-gradient-to-r from-orange-500 to-orange-600 bg-clip-text text-transparent block sm:inline">
@@ -59,11 +59,11 @@ export function HeroSection() {
               </span>
               {" "}in minutes
             </h1>
-            
+ 
               <p className="mx-auto mb-4 max-w-2xl text-sm text-muted-foreground text-pretty sm:mb-5 sm:text-base lg:text-lg">
               No coding required. Import your projects, customize your theme, and publish. Your portfolio is live in 2 minutes.
             </p>
-            
+ 
               <div className="mb-3 flex flex-col flex-wrap items-center justify-center gap-2 sm:mb-4 sm:flex-row sm:gap-3">
                 {!isChecking && (
                   <>
@@ -104,7 +104,7 @@ export function HeroSection() {
                   </>
                 )}
               </div>
-
+ 
               {!isChecking && !isLoggedIn && (
                 <div className="mb-4 flex flex-col items-center">
                   <span
@@ -115,12 +115,12 @@ export function HeroSection() {
                   </span>
                 </div>
               )}
-
+ 
               <div className="mt-8 text-sm text-muted-foreground sm:mt-12 sm:text-base">
                 Used by devs who actually ship stuff
               </div>
           </div>
-
+ 
           {/* Right Column - Mobile Preview (Desktop) */}
           <div className="hidden lg:flex items-center justify-center">
             <PortfolioMobilePreview />
@@ -128,7 +128,7 @@ export function HeroSection() {
         </div>
 
         {/* Mobile Preview (Mobile/Tablet - Below Hero Text) */}
-        <div className="flex lg:hidden justify-center items-center mt-8 sm:mt-12">
+        <div className="flex lg:hidden justify-center items-center mt-8 md:mt-12">
           <PortfolioMobilePreview />
         </div>
       </div>

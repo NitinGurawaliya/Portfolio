@@ -123,10 +123,8 @@ export default function TopContributors({
                 <div>
                     <h2 className="text-2xl font-extrabold leading-tight">{title}</h2>
                     <p className="text-sm text-gray-500">
-                        Showing top {maxContributors} contributors across {repos.length} {repos.length === 1 ? 'repository' : 'repositories'}
                     </p>
                 </div>
-                <div className="text-xs text-gray-400">Last updated: {new Date().toLocaleString()}</div>
             </div>
 
             <div className="bg-gradient-to-r from-indigo-50 to-white rounded-2xl p-4 shadow-lg">

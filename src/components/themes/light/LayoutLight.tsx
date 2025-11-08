@@ -88,8 +88,23 @@ const getPatternStyle = (pattern: string | null) => {
       }
     case 'stars':
       return {
-        backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(0,0,0,0.06) 1px, transparent 0)',
+        backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(0,0,0,0.12) 1px, transparent 0)',
         backgroundSize: '30px 30px'
+      }
+    case 'sprinkles':
+      return {
+        backgroundImage: 'radial-gradient(circle, rgba(0,0,0,0.12) 0.6px, transparent 0.6px), radial-gradient(circle, rgba(0,0,0,0.08) 0.6px, transparent 0.6px)',
+        backgroundSize: '24px 24px',
+        backgroundPosition: '0 0, 12px 12px'
+      }
+    case 'diagonal':
+      return {
+        backgroundImage: 'repeating-linear-gradient(135deg, transparent, transparent 14px, rgba(0,0,0,0.04) 14px, rgba(0,0,0,0.04) 15px)'
+      }
+    case 'mesh':
+      return {
+        backgroundImage: 'radial-gradient(60% 60% at 20% 20%, rgba(0,0,0,0.14) 0%, transparent 65%), radial-gradient(50% 50% at 80% 0%, rgba(0,0,0,0.1) 0%, transparent 60%), radial-gradient(70% 70% at 30% 80%, rgba(0,0,0,0.08) 0%, transparent 65%)',
+        backgroundBlendMode: 'screen'
       }
     default:
       return {}
@@ -162,17 +177,17 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
       />
 
       {/* Main Container - Two Column Layout on Large Screens */}
-      <div className="relative z-10 pt-6 md:pt-8 lg:pt-10 pb-2 md:pb-3 lg:pb-4">
-        <div className="mx-auto px-2 sm:px-4 md:px-6 lg:px-8 max-w-screen-xl">
+      <div className="relative z-10 pt-6 md:pt-8 lg:pt-10 pb-4 md:pb-6 lg:pb-8">
+        <div className="mx-auto px-4 sm:px-6 lg:px-12 max-w-screen-xl">
           {/* Two Column Grid - Left: User Info, Right: Projects */}
           <div className="lg:grid lg:grid-cols-12 lg:gap-8 xl:gap-12">
             
             {/* LEFT COLUMN - User Info & Skills (1/3 width on large screens) */}
-            <div className="lg:col-span-4 xl:col-span-4 space-y-6 lg:pr-4">
+            <div className="lg:col-span-4 xl:col-span-4 space-y-4 lg:pr-4">
               
               {/* Profile Picture */}
               <motion.div
-                className="flex justify-start mb-4"
+                className="flex justify-start mb-2"
                 initial={{ scale: 0, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
@@ -196,7 +211,7 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.8, delay: 0.4 }}
               >
-                <h1 className="text-xl sm:text-2xl md:text-2xl lg:text-xl font-bold text-gray-800">
+                <h1 className="text-xl sm:text-2xl md:text-2xl lg:text-xl font-bold text-gray-800 leading-snug">
                   {portfolio.displayName}
                 </h1>
                 {portfolio.jobTitle && (
@@ -234,7 +249,7 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
                     onClick={() => {
                       window.open(portfolio.cvUrl!, '_blank')
                     }}
-                    className="w-full flex items-center justify-between bg-white border border-gray-300 rounded-lg px-4 py-2.5 hover:bg-gray-50 transition-all duration-200 text-left"
+                    className="w-full flex items-center justify-between bg-white border border-gray-300 rounded-lg px-4 py-2 hover:bg-gray-50 transition-all duration-200 text-left"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                   >
@@ -249,7 +264,7 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
               {/* Social Icons */}
               {portfolio.socials && portfolio.socials.length > 0 && (
                 <motion.div 
-                  className="flex gap-2 justify-start flex-wrap"
+                  className="flex gap-1.5 justify-start flex-wrap"
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.8 }}
@@ -360,7 +375,7 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
               {/* Skills Section */}
               {portfolio.skills && portfolio.skills.length > 0 && (
                 <motion.section 
-                  className="pt-4"
+                  className="pt-2"
                   initial={{ opacity: 0, y: 30 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.8 }}
@@ -370,19 +385,19 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
                     <h2 className="mb-3 text-base font-semibold text-gray-900 text-left">
                     Skills
                   </h2>
-                    <div className="flex flex-wrap gap-2.5">
+                    <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 sm:flex-wrap sm:overflow-visible sm:pb-0 sm:mx-0 sm:px-0">
                       {portfolio.skills.map((skill, index) => (
                         <motion.div
                           key={skill.id}
-                          className="group"
+                          className="group flex-shrink-0 sm:flex-shrink"
                           initial={{ opacity: 0, y: 6 }}
                           whileInView={{ opacity: 1, y: 0 }}
                           transition={{ duration: 0.3, delay: index * 0.05 }}
                           viewport={{ once: true }}
                           whileHover={{ y: -2 }}
                         >
-                          <div className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition-all duration-300 group-hover:border-gray-300 group-hover:shadow-md">
-                            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-100 text-gray-600 shadow-inner">
+                          <div className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white/90 px-2.5 py-1 text-[11px] font-medium text-gray-700 shadow-sm transition-all duration-300 group-hover:border-gray-300 group-hover:shadow-md">
+                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white shadow-inner">
                               <SkillIcon skillName={skill.name} className="h-3.5 w-3.5" />
                             </span>
                             <span className="whitespace-nowrap">{skill.name}</span>
@@ -482,13 +497,13 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
                     >
                       Projects I've Made
                     </motion.h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 md:gap-6 auto-rows-fr">
               {portfolio.repositories
                 .filter(repo => repo.isVisible)
                 .map((repo, index) => (
                 <motion.article
                   key={repo.id}
-                  className="group relative cursor-pointer w-full"
+                  className="group relative flex h-full w-full cursor-pointer"
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, delay: index * 0.1 }}
@@ -520,7 +535,7 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
                   tabIndex={0}
                   aria-label={`View ${repo.repository.name} project`}
                 >
-                    <div className="relative w-full rounded-2xl border border-gray-200 bg-white p-3 xs:p-4 sm:p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+                    <div className="relative flex h-full w-full min-h-[300px] flex-col rounded-2xl border border-gray-200 bg-white p-3 xs:p-4 sm:p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
                     {/* OG image preview for public card only */}
                     {repo.repository.logo && (/^https?:/i.test(repo.repository.logo) || /^data:image\//i.test(repo.repository.logo)) && (
                       <div className="mb-2 -mt-1 overflow-hidden rounded-md">
@@ -632,7 +647,7 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
         viewport={{ once: true }}
         aria-label="Footer"
       >
-        <div className="mx-auto px-6 lg:px-8 max-w-4xl">
+        <div className="mx-auto px-4 sm:px-6 lg:px-12 max-w-4xl">
           <div className="flex justify-center">
             <motion.a
               href="/"

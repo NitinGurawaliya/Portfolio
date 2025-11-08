@@ -64,9 +64,7 @@ export function TestimonialsSection() {
           <h2 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
             What devs say about DevFolio
           </h2>
-          <p className="mt-3 text-sm text-muted-foreground sm:text-base">
-            Drop in embeds from X (Twitter) to feature community feedback in seconds.
-          </p>
+
         </motion.div>
 
         <div className="grid gap-6 md:grid-cols-2">

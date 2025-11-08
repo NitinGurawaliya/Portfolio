@@ -26,7 +26,7 @@ export default function HomePage() {
     <div className="min-h-screen bg-background">
       {/* <SessionRedirect />  -- REMOVE AUTO-REDIRECT! */}
       <Header />
-      <main>
+      <main className="px-6 sm:px-8 lg:px-14">
         <HeroSection />
         {/* <FeaturesSection /> */}
         <FeatureShowcase />
