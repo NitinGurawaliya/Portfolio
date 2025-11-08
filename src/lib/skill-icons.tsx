@@ -360,7 +360,11 @@ export const SkillIcon: React.FC<{ skillName: string; className?: string }> = ({
   const color = getSkillColor(skillName)
   
   if (IconComponent) {
-    return <IconComponent className={className} style={color ? { color } : undefined} />
+    return (
+      <span style={color ? { color } : undefined}>
+        <IconComponent className={className} />
+      </span>
+    )
   }
   
   // Fallback to first letter if no icon found
