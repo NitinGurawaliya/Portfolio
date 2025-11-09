@@ -185,15 +185,31 @@ export default function LayoutModern({ theme, portfolio }: LayoutModernProps) {
   const hasExperience = experiences.length > 0
   const hasGithub = Boolean(portfolio.user?.githubUsername)
 
+  const containerPaddingStyle: CSSProperties = {
+    paddingTop: "calc(env(safe-area-inset-top, 0px) + 1.5rem)",
+    paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 1.5rem)",
+  }
+
+  const projectGridStyles: CSSProperties = {
+    gridTemplateColumns: "repeat(auto-fit, minmax(min(17rem, 100%), 1fr))",
+  }
+
   return (
     <div className="min-h-screen relative" style={{ color: theme.colors.text }}>
-      <div className="fixed inset-0 z-0" style={getBackgroundStyle(portfolio)} />
+      <div
+        aria-hidden="true"
+        className="fixed inset-0 z-0 pointer-events-none"
+        style={getBackgroundStyle(portfolio)}
+      />
 
-      <div className="relative z-10 px-3 xs:px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 py-6 xs:py-8 sm:py-10 md:py-14">
+      <div
+        className="relative z-10 px-3 xs:px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 py-6 xs:py-8 sm:py-10 md:py-14"
+        style={containerPaddingStyle}
+      >
         <div className="max-w-6xl mx-auto space-y-6 xs:space-y-8 sm:space-y-10 md:space-y-12">
           {/* Primary Layout */}
           <section className="grid gap-6 xs:gap-8 sm:gap-10 md:gap-12 lg:gap-12 xl:gap-16 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,2.05fr)] xl:grid-cols-[minmax(0,1fr)_minmax(0,2.2fr)] items-start">
-            <div className="space-y-6 xs:space-y-7 sm:space-y-8">
+            <div className="space-y-6 xs:space-y-7 sm:space-y-8 order-2 lg:order-1">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -248,13 +264,13 @@ export default function LayoutModern({ theme, portfolio }: LayoutModernProps) {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.1 }}
-                  className="rounded-3xl border border-neutral-200 bg-transparent p-4 xs:p-5 sm:p-6 shadow-none"
+                    className="rounded-3xl border border-neutral-200 bg-transparent p-4 xs:p-5 sm:p-6 shadow-none"
                 >
                   <h2 className="text-base xs:text-lg sm:text-xl font-semibold text-neutral-900 tracking-tight">
                     Work Experience
                   </h2>
-                  <div className="relative mt-4 xs:mt-6 pl-4 xs:pl-6 space-y-4 xs:space-y-5">
-                    <span className="absolute left-[10px] xs:left-[11px] top-1 bottom-1 w-px bg-neutral-200" />
+                    <div className="relative mt-4 xs:mt-6 pl-5 xs:pl-6 sm:pl-7 space-y-4 xs:space-y-5">
+                      <span className="absolute left-0 top-1 bottom-1 w-px bg-neutral-200 -translate-x-1/2" />
                     {experiences.map((exp: any, index: number) => (
                       <motion.div
                         key={index}
@@ -264,7 +280,7 @@ export default function LayoutModern({ theme, portfolio }: LayoutModernProps) {
                         transition={{ duration: 0.4, delay: index * 0.05 }}
                         viewport={{ once: true }}
                       >
-                        <span className="absolute left-[-14px] xs:left-[-17px] top-4 h-2.5 xs:h-3.5 w-2.5 xs:w-3.5 rounded-full border-2 border-white bg-neutral-300" />
+                          <span className="absolute left-0 top-4 h-2.5 xs:h-3.5 w-2.5 xs:w-3.5 -translate-x-1/2 rounded-full border-2 border-white bg-neutral-300" />
                         <a
                           className={`block rounded-2xl border border-neutral-200 ${exp.companyUrl ? "hover:-translate-y-1 hover:shadow-md transition" : ""} bg-white/80 p-3 xs:p-4 shadow-sm`}
                           {...(exp.companyUrl
@@ -309,8 +325,7 @@ export default function LayoutModern({ theme, portfolio }: LayoutModernProps) {
                 </motion.div>
               )}
             </div>
-
-            <div className="space-y-8 xs:space-y-10">
+              <div className="space-y-8 xs:space-y-10 order-1 lg:order-2">
               <div className="space-y-4 xs:space-y-6 text-center lg:text-left">
                 <div className="flex items-center justify-center lg:justify-start gap-4 text-xs uppercase tracking-[0.35em] text-neutral-400">
                   <span className="h-px w-8 xs:w-10 bg-neutral-300" />
@@ -325,7 +340,7 @@ export default function LayoutModern({ theme, portfolio }: LayoutModernProps) {
                     {portfolio.user?.company && <span>• {portfolio.user.company}</span>}
                   </div>
                 </div>
-                <p className="text-xs xs:text-sm sm:text-base md:text-lg text-neutral-600 max-w-3xl leading-relaxed mx-auto lg:mx-0">
+                  <p className="text-xs xs:text-sm sm:text-base md:text-lg text-neutral-600 max-w-3xl leading-relaxed text-pretty mx-auto lg:mx-0">
                   {displayedBio}
                   {!isTypingComplete && (
                     <motion.span
@@ -389,7 +404,7 @@ export default function LayoutModern({ theme, portfolio }: LayoutModernProps) {
                       Curated projects showcasing recent capabilities.
                     </p>
                   </div>
-                  <div className="grid grid-cols-1 gap-3 xs:gap-4 sm:gap-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 auto-rows-fr">
+                    <div className="grid gap-3 xs:gap-4 sm:gap-5 auto-rows-fr" style={projectGridStyles}>
                     {visibleRepos.map((repo: any, index: number) => (
                       <motion.article
                         key={repo.id}
