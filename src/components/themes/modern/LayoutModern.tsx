@@ -190,10 +190,6 @@ export default function LayoutModern({ theme, portfolio }: LayoutModernProps) {
     paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 1.5rem)",
   }
 
-  const projectGridStyles: CSSProperties = {
-    gridTemplateColumns: "repeat(auto-fit, minmax(min(17rem, 100%), 1fr))",
-  }
-
   return (
     <div className="relative min-h-screen overflow-x-hidden" style={{ color: theme.colors.text }}>
       <div
@@ -208,7 +204,7 @@ export default function LayoutModern({ theme, portfolio }: LayoutModernProps) {
       >
           <div className="mx-auto max-w-6xl space-y-6 sm:space-y-9 md:space-y-12">
           {/* Primary Layout */}
-            <section className="grid gap-6 sm:gap-8 md:gap-10 lg:gap-12 xl:gap-16 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,2.05fr)] xl:grid-cols-[minmax(0,1fr)_minmax(0,2.2fr)] items-start">
+              <section className="grid grid-cols-1 gap-6 sm:gap-8 md:gap-10 lg:gap-12 xl:gap-16 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,2.05fr)] xl:grid-cols-[minmax(0,1fr)_minmax(0,2.2fr)]">
               <div className="order-2 space-y-6 sm:space-y-7 md:space-y-8 lg:order-1">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -404,7 +400,7 @@ export default function LayoutModern({ theme, portfolio }: LayoutModernProps) {
                       Curated projects showcasing recent capabilities.
                     </p>
                   </div>
-                    <div className="grid auto-rows-fr gap-3 sm:gap-4 md:gap-5" style={projectGridStyles}>
+                    <div className="grid auto-rows-fr grid-cols-1 gap-3 sm:gap-4 md:gap-5 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
                     {visibleRepos.map((repo: any, index: number) => (
                       <motion.article
                         key={repo.id}
