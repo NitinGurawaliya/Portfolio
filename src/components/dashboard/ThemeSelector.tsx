@@ -5,7 +5,7 @@ import { motion } from 'framer-motion'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Check, Palette, Moon, Sun, Sparkles } from 'lucide-react'
-import { THEMES, ThemeKey, ThemeConfig, getTheme } from '@/lib/theme-config'
+import { THEMES, ThemeKey, ThemeConfig } from '@/lib/theme-config'
 
 interface ThemeSelectorProps {
   currentTheme: ThemeKey
@@ -50,16 +50,15 @@ const BACKGROUND_PATTERNS = [
 
 export default function ThemeSelector({ 
   currentTheme, 
-  userId, 
+  userId: _userId, 
   onThemeChange,
-  portfolioId,
+  portfolioId: _portfolioId,
   backgroundColor: backgroundColorProp,
   backgroundPattern: backgroundPatternProp,
   setBackgroundColor: setBackgroundColorProp,
   setBackgroundPattern: setBackgroundPatternProp
 }: ThemeSelectorProps) {
   const [selectedTheme, setSelectedTheme] = useState<ThemeKey>(currentTheme)
-  const [isLoading, setIsLoading] = useState(false)
   
   // Use props if provided, otherwise use local state as fallback
   const backgroundColor = backgroundColorProp ?? null
@@ -72,66 +71,14 @@ export default function ThemeSelector({
     setSelectedTheme(currentTheme)
   }, [currentTheme])
 
-  const handleThemeSelect = async (theme: ThemeKey) => {
+  const handleThemeSelect = (theme: ThemeKey) => {
     if (theme === selectedTheme) return
 
-    setIsLoading(true)
     setSelectedTheme(theme)
 
     // Update live preview instantly
     if (onThemeChange) {
       onThemeChange(theme)
-    }
-
-    try {
-      const response = await fetch(`/api/portfolio/theme`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ theme, userId }),
-      })
-
-      if (response.ok) {
-        const result = await response.json()
-        console.log('✅ Theme updated successfully:', result.message)
-        
-        // Reload basic portfolio data to get updated theme
-        // This ensures the theme is properly synced in usePortfolio hook
-        try {
-          const basicResponse = await fetch('/api/portfolio/basic', {
-            credentials: 'include'
-          })
-          if (basicResponse.ok) {
-            const basicData = await basicResponse.json()
-            if (basicData.portfolio?.selectedTheme) {
-              setSelectedTheme(basicData.portfolio.selectedTheme as ThemeKey)
-              if (onThemeChange) {
-                onThemeChange(basicData.portfolio.selectedTheme as ThemeKey)
-              }
-              console.log('✅ Theme synced from server:', basicData.portfolio.selectedTheme)
-            }
-          }
-        } catch (syncError) {
-          console.warn('⚠️ Failed to sync theme from server, but theme was updated:', syncError)
-        }
-      } else {
-        console.error('❌ Failed to update theme')
-        // Revert selection on error
-        setSelectedTheme(currentTheme)
-        if (onThemeChange) {
-          onThemeChange(currentTheme)
-        }
-      }
-    } catch (error) {
-      console.error('❌ Error updating theme:', error)
-      // Revert selection on error
-      setSelectedTheme(currentTheme)
-      if (onThemeChange) {
-        onThemeChange(currentTheme)
-      }
-    } finally {
-      setIsLoading(false)
     }
   }
 
@@ -143,12 +90,16 @@ export default function ThemeSelector({
     setBackgroundPattern(pattern)
   }
 
+  const selectableThemes: ThemeKey[] = ['light', 'modern']
   const getThemeIcon = (themeKey: ThemeKey) => {
     switch (themeKey) {
       case 'dark':
         return <Moon className="h-6 w-6" />
       case 'light':
         return <Sun className="h-6 w-6" />
+      case 'modern':
+        return <Sparkles className="h-6 w-6" />
+     
       default:
         return <Palette className="h-6 w-6" />
     }
@@ -274,6 +225,81 @@ export default function ThemeSelector({
 
   return (
     <div className="space-y-6">
+      {/* Theme Layout Selection */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <Palette className="h-5 w-5 text-orange-600" />
+          <h3 className="text-lg font-semibold text-gray-900">Choose Your Layout</h3>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          {Array.from(new Set<ThemeKey>([...selectableThemes, selectedTheme].filter((key): key is ThemeKey => key in THEMES))).map((themeKey) => {
+            const themeConfig = THEMES[themeKey]
+            const isSelected = selectedTheme === themeKey
+            const isSelectable = selectableThemes.includes(themeKey)
+            return (
+              <motion.div
+                key={themeKey}
+                whileHover={{ y: isSelectable ? -3 : 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <Card
+                  className={`relative h-full cursor-pointer border transition-all ${
+                    isSelected ? 'border-orange-500 ring-2 ring-orange-200' : 'border-gray-200 hover:border-gray-300'
+                  } ${!isSelectable ? 'cursor-not-allowed opacity-75' : ''}`}
+                  onClick={() => {
+                    if (!isSelectable) return
+                    handleThemeSelect(themeKey)
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(event) => {
+                    if (!isSelectable) return
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault()
+                      handleThemeSelect(themeKey)
+                    }
+                  }}
+                >
+                  <CardContent className="space-y-4 p-5">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          {getThemeIcon(themeKey)}
+                          <p className="text-sm font-semibold text-gray-900">
+                            {themeConfig.name}
+                            {!isSelectable && <span className="ml-2 text-xs uppercase tracking-wide text-gray-400">Legacy</span>}
+                          </p>
+                        </div>
+                        <p className="mt-1 text-xs text-gray-500">{themeConfig.description}</p>
+                      </div>
+                      {isSelected && (
+                        <motion.span
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          className="flex h-6 w-6 items-center justify-center rounded-full bg-orange-500 text-white"
+                        >
+                          <Check className="h-4 w-4" />
+                        </motion.span>
+                      )}
+                    </div>
+                    {getThemePreview(themeConfig)}
+                    <div className="pt-1">
+                      <Button
+                        variant={isSelected ? "default" : "outline"}
+                        className={`w-full rounded-full ${isSelected ? 'bg-orange-500 hover:bg-orange-600' : 'border-gray-200 text-gray-700 hover:bg-gray-100'}`}
+                        disabled={!isSelectable || isSelected}
+                      >
+                        {isSelected ? (isSelectable ? "Selected" : "Active (Legacy)") : isSelectable ? "Use this layout" : "Not available"}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )
+          })}
+        </div>
+      </div>
+
       {/* Background Customization Section */}
       <div className="space-y-4">
         <div className="flex items-center gap-2">

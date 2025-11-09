@@ -25,6 +25,33 @@ export const THEMES = {
     layout: "LayoutLight",
     previewImage: "/themes/light-preview.png",
     description: "Clean light theme with blue accents"
+  },
+  modern: {
+    name: "Modern",
+    colors: {
+      background: "#ffffff",
+      text: "#0f172a",
+      accent: "#111111",
+      cardBg: "#f5f5f5",
+      border: "#d1d5db"
+    },
+    layout: "LayoutModern",
+    previewImage: "/themes/modern-preview.png",
+    description: "Minimal monochrome layout with bold sections"
+  },
+  demo:{
+      name: "Demo",
+      colors: {
+        background: "#ffffff",
+        text: "#0f172a",
+        accent: "#111111",
+        cardBg: "#f5f5f5",
+        border: "#d1d5db"
+      },
+      layout: "LayoutDemo",
+      previewImage: "/themes/modern-preview.png",
+      description: "Minimal monochrome layout with bold sections"
+    
   }
 } as const
 
@@ -47,11 +74,11 @@ export type ThemeKey = keyof typeof THEMES
 
 // Helper function to get theme by key
 export function getTheme(themeKey: ThemeKey): ThemeConfig {
-  return THEMES[themeKey] || THEMES.dark
+  return THEMES[themeKey] || THEMES.light
 }
 
 // Default theme
-export const DEFAULT_THEME: ThemeKey = 'dark'
+export const DEFAULT_THEME: ThemeKey = 'light'
 
 // Available themes array for easy iteration
-export const AVAILABLE_THEMES = Object.keys(THEMES) as ThemeKey[]
+export const AVAILABLE_THEMES = ['light', 'modern', 'demo'] as ThemeKey[]

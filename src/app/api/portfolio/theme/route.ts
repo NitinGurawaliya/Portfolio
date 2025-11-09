@@ -29,7 +29,20 @@ const THEMES = {
     layout: "LayoutLight",
     previewImage: "/themes/light-preview.png",
     description: "Clean light theme with blue accents"
-  }
+  },
+  modern: {
+    name: "Modern",
+    colors: {
+      background: "#ffffff",
+      text: "#0f172a",
+      accent: "#111111",
+      cardBg: "#f5f5f5",
+      border: "#d1d5db"
+    },
+    layout: "LayoutModern",
+    previewImage: "/themes/modern-preview.png",
+    description: "Minimal monochrome layout with bold sections"
+  },
 } as const
 
 type ThemeKey = keyof typeof THEMES
