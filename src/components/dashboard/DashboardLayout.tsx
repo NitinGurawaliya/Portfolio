@@ -17,6 +17,7 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
+  Newspaper,
 } from "lucide-react"
 import { DevFolioInlineLoader } from "@/components/ui/DevFolioLoader"
 import { cn } from "@/lib/utils"
@@ -34,9 +35,9 @@ interface DashboardLayoutProps {
   isPublishing?: boolean
 }
 
-export function DashboardLayout({ 
-  children, 
-  user, 
+export function DashboardLayout({
+  children,
+  user,
   activeSection,
   onSectionChange,
   refreshTrigger,
@@ -44,7 +45,7 @@ export function DashboardLayout({
   portfolioData,
   hasUnsavedChanges = false,
   onPublish,
-  isPublishing = false
+  isPublishing = false,
 }: DashboardLayoutProps) {
   const [previewMode, setPreviewMode] = useState<"mobile">("mobile")
   const [isPreviewOpen, setIsPreviewOpen] = useState(false)
@@ -56,6 +57,7 @@ export function DashboardLayout({
   const sidebarItems = [
     { id: "home", label: "Bio", icon: User },
     { id: "repos", label: "Projects", icon: Code },
+    { id: "feed", label: "Feed", icon: Newspaper },
     { id: "skills", label: "Skills", icon: Wrench },
     { id: "socials", label: "Socials", icon: Users },
     { id: "analytics", label: "Analytics", icon: BarChart3 },

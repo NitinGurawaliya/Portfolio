@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState, useMemo, useRef } from "react"
+import { useRouter } from "next/navigation"
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout"
 import { HomeSection } from "@/components/dashboard/HomeSection"
 import { ReposSection } from "@/components/dashboard/ReposSection"
@@ -22,6 +23,8 @@ export default function DashboardPage() {
   const [activeSection, setActiveSection] = useState("home")
   const [isPublishing, setIsPublishing] = useState(false)
   
+  const router = useRouter()
+
   // Session hook - redirect to auth if session is invalid
   const { user, loading } = useSession({ redirectOnAuthFailure: true })
   
@@ -163,134 +166,138 @@ export default function DashboardPage() {
   }, [isPublishing, portfolio, user])
 
   // Render active section - memoized for instant navigation
-  const renderActiveSection = useMemo(() => {
-    switch (activeSection) {
-      case "home":
-        // Home section shows immediately with user data, updates when portfolio loads
-        return (
-          <HomeSection 
-            user={user} 
-            portfolioData={portfolio.portfolioData}
-            onUpdate={handlers.handleUpdatePortfolioData}
-            usernameAvailability={handlers.usernameAvailability}
-            isInitialLoad={portfolio.isLoadingPortfolio}
-            isLoading={portfolio.isLoadingPortfolio}
-            experiences={portfolio.experiences}
-            onExperiencesChange={portfolio.setExperiences}
-            cvUrl={portfolio.cvUrl}
-            setCvUrl={portfolio.setCvUrl}
-          />
-        )
-      case "repos":
-        // Use database repositories (importedProjects) as the primary source since they have favicon/logo data
-        // Fall back to GitHub repositories only if not found in database
-        const allRepositories = [...portfolio.importedProjects, ...(user?.repositories || [])]
-        const mergedRepositories = allRepositories.reduce((acc, repo) => {
-          const existingIndex = acc.findIndex(r => r.id === repo.id)
-          if (existingIndex === -1) {
-            acc.push(repo)
-          } else {
-            // If repository already exists, prioritize the one with portfolioRepositoryId
-            // This ensures analytics IDs are preserved
-            if (repo.portfolioRepositoryId && !acc[existingIndex].portfolioRepositoryId) {
+  const handleSectionChange = (section: string) => {
+    if (section === "feed") {
+      router.push("/feed/projects")
+      return
+    }
+    setActiveSection(section)
+  }
+
+    const renderActiveSection = useMemo(() => {
+      switch (activeSection) {
+        case "home":
+          // Home section shows immediately with user data, updates when portfolio loads
+          return (
+            <HomeSection
+              user={user}
+              portfolioData={portfolio.portfolioData}
+              onUpdate={handlers.handleUpdatePortfolioData}
+              usernameAvailability={handlers.usernameAvailability}
+              isInitialLoad={portfolio.isLoadingPortfolio}
+              isLoading={portfolio.isLoadingPortfolio}
+              experiences={portfolio.experiences}
+              onExperiencesChange={portfolio.setExperiences}
+              cvUrl={portfolio.cvUrl}
+              setCvUrl={portfolio.setCvUrl}
+            />
+          )
+        case "repos": {
+          const allRepositories = [
+            ...portfolio.importedProjects,
+            ...(user?.repositories || []),
+          ]
+          const mergedRepositories = allRepositories.reduce((acc, repo) => {
+            const existingIndex = acc.findIndex((r) => r.id === repo.id)
+            if (existingIndex === -1) {
+              acc.push(repo)
+            } else if (repo.portfolioRepositoryId && !acc[existingIndex].portfolioRepositoryId) {
               acc[existingIndex] = repo
             }
-          }
-          return acc
-        }, [] as any[])
-        
-        const portfolioId = portfolio.originalData?.id || portfolio.portfolioData.id
-        // TypeScript fix: PortfolioData now includes id property
-        console.log('🔍 Dashboard - Portfolio ID for ReposSection:', {
-          originalDataId: portfolio.originalData?.id,
-          portfolioDataId: portfolio.portfolioData.id,
-          finalPortfolioId: portfolioId,
-          portfolioIdType: typeof portfolioId
-        })
-        
-        return (
-          <ReposSection
-            repositories={mergedRepositories}
-            selectedRepos={portfolio.selectedRepos}
-            deployedUrls={portfolio.deployedUrls}
-            customNames={portfolio.customNames}
-            customDescriptions={portfolio.customDescriptions}
-            githubUrls={portfolio.githubUrls}
-            repoOrder={portfolio.repoOrder}
-            onToggleRepo={handlers.handleToggleRepo}
-            onUpdateDeployedUrl={handlers.handleUpdateDeployedUrl}
-            onUpdateCustomName={handlers.handleUpdateCustomName}
-            onUpdateCustomDescription={handlers.handleUpdateCustomDescription}
-            onUpdateGithubUrl={handlers.handleUpdateGithubUrl}
-            onUpdateRepoOrder={handlers.handleUpdateRepoOrder}
-            onAddImportedProject={handlers.handleAddImportedProject}
-            analytics={portfolio.analytics}
-            portfolioId={portfolioId}
-            onUpdateLogo={(repoId: number, logo: string | null) => {
-              portfolio.setLogoOverrides(prev => {
-                if (logo === null) {
-                  // Remove the entry if logo is null
-                  const newState = { ...prev }
-                  delete newState[repoId]
-                  return newState
-                }
-                // Add or update the logo
-                return {
-                  ...prev,
-                  [repoId]: logo
-                }
-              })
-            }}
-            logoOverrides={portfolio.logoOverrides}
-            isLoading={portfolio.isLoadingPortfolio}
-          />
-        )
-      case "skills":
-        return (
-          <SkillsSection
-            skills={portfolio.skills}
-            onAddSkill={handlers.handleAddSkill}
-            onRemoveSkill={handlers.handleRemoveSkill}
-            isLoading={portfolio.isLoadingPortfolio}
-          />
-        )
-      case "socials":
-        return (
-          <SocialsSection
-            socials={portfolio.socials}
-            onAddSocial={handlers.handleAddSocial}
-            onRemoveSocial={handlers.handleRemoveSocial}
-            onTogglePin={handlers.handleTogglePin}
-            onUpdateSocial={handlers.handleUpdateSocial}
-            isLoading={portfolio.isLoadingPortfolio}
-          />
-        )
-      case "analytics":
-        // Analytics section shows immediately, loads data in background
-        console.log("🔍 Analytics Section - Portfolio ID:", portfolio.originalData?.id)
-        return (
-          <AnalyticsSection 
-            portfolioId={portfolio.originalData?.id || portfolio.portfolioData?.id || 0}
-            analyticsData={portfolio.analytics}
-          />
-        )
-      case "theme":
-        return (
-          <ThemeSelector
-            currentTheme={portfolio.selectedTheme as any}
-            userId={user?.id || 0}
-            onThemeChange={handlers.handleThemeChange}
-            portfolioId={portfolio.originalData?.id || portfolio.portfolioData.id}
-            backgroundColor={portfolio.backgroundColor}
-            backgroundPattern={portfolio.backgroundPattern}
-            setBackgroundColor={portfolio.setBackgroundColor}
-            setBackgroundPattern={portfolio.setBackgroundPattern}
-          />
-        )
-      default:
-        return null
-    }
-  }, [activeSection, user, portfolio, handlers])
+            return acc
+          }, [] as any[])
+
+          const portfolioId = portfolio.originalData?.id || portfolio.portfolioData.id
+          console.log("🔍 Dashboard - Portfolio ID for ReposSection:", {
+            originalDataId: portfolio.originalData?.id,
+            portfolioDataId: portfolio.portfolioData.id,
+            finalPortfolioId: portfolioId,
+            portfolioIdType: typeof portfolioId,
+          })
+
+          return (
+            <ReposSection
+              repositories={mergedRepositories}
+              selectedRepos={portfolio.selectedRepos}
+              deployedUrls={portfolio.deployedUrls}
+              customNames={portfolio.customNames}
+              customDescriptions={portfolio.customDescriptions}
+              githubUrls={portfolio.githubUrls}
+              repoOrder={portfolio.repoOrder}
+              onToggleRepo={handlers.handleToggleRepo}
+              onUpdateDeployedUrl={handlers.handleUpdateDeployedUrl}
+              onUpdateCustomName={handlers.handleUpdateCustomName}
+              onUpdateCustomDescription={handlers.handleUpdateCustomDescription}
+              onUpdateGithubUrl={handlers.handleUpdateGithubUrl}
+              onUpdateRepoOrder={handlers.handleUpdateRepoOrder}
+              onAddImportedProject={handlers.handleAddImportedProject}
+              analytics={portfolio.analytics}
+              portfolioId={portfolioId}
+              onUpdateLogo={(repoId: number, logo: string | null) => {
+                portfolio.setLogoOverrides((prev) => {
+                  if (logo === null) {
+                    const newState = { ...prev }
+                    delete newState[repoId]
+                    return newState
+                  }
+                  return {
+                    ...prev,
+                    [repoId]: logo,
+                  }
+                })
+              }}
+              logoOverrides={portfolio.logoOverrides}
+              isLoading={portfolio.isLoadingPortfolio}
+            />
+          )
+        }
+        case "skills":
+          return (
+            <SkillsSection
+              skills={portfolio.skills}
+              onAddSkill={handlers.handleAddSkill}
+              onRemoveSkill={handlers.handleRemoveSkill}
+              isLoading={portfolio.isLoadingPortfolio}
+            />
+          )
+        case "socials":
+          return (
+            <SocialsSection
+              socials={portfolio.socials}
+              onAddSocial={handlers.handleAddSocial}
+              onRemoveSocial={handlers.handleRemoveSocial}
+              onTogglePin={handlers.handleTogglePin}
+              onUpdateSocial={handlers.handleUpdateSocial}
+              isLoading={portfolio.isLoadingPortfolio}
+            />
+          )
+        case "analytics":
+          console.log("🔍 Analytics Section - Portfolio ID:", portfolio.originalData?.id)
+          return (
+            <AnalyticsSection
+              portfolioId={portfolio.originalData?.id || portfolio.portfolioData?.id || 0}
+              analyticsData={portfolio.analytics}
+            />
+          )
+        case "theme":
+          return (
+            <ThemeSelector
+              currentTheme={portfolio.selectedTheme as any}
+              userId={user?.id || 0}
+              onThemeChange={handlers.handleThemeChange}
+              portfolioId={portfolio.originalData?.id || portfolio.portfolioData.id}
+              backgroundColor={portfolio.backgroundColor}
+              backgroundPattern={portfolio.backgroundPattern}
+              setBackgroundColor={portfolio.setBackgroundColor}
+              setBackgroundPattern={portfolio.setBackgroundPattern}
+            />
+          )
+        case "feed":
+          return null
+        default:
+          return null
+      }
+    }, [activeSection, user, portfolio, handlers])
 
   // Show dashboard immediately - no loader blocking
   // If session is invalid, redirect will happen automatically via useSession hook
@@ -304,21 +311,21 @@ export default function DashboardPage() {
     repositories: []
   }
 
-  return (
-    <>
-      <Toaster position="top-left" />
-      <DashboardLayout 
-        user={displayUser} 
-        activeSection={activeSection}
-        onSectionChange={setActiveSection}
-        livePortfolio={portfolio.livePortfolio}
-        portfolioData={portfolio.portfolioData}
-        hasUnsavedChanges={portfolio.hasUnsavedChanges && !portfolio.isInitialLoad}
-        onPublish={handlePublishAll}
-        isPublishing={isPublishing}
-      >
-        {renderActiveSection}
-      </DashboardLayout>
-    </>
-  )
+    return (
+      <>
+        <Toaster position="top-left" />
+        <DashboardLayout
+          user={displayUser}
+          activeSection={activeSection}
+          onSectionChange={handleSectionChange}
+          livePortfolio={portfolio.livePortfolio}
+          portfolioData={portfolio.portfolioData}
+          hasUnsavedChanges={portfolio.hasUnsavedChanges && !portfolio.isInitialLoad}
+          onPublish={handlePublishAll}
+          isPublishing={isPublishing}
+        >
+          {renderActiveSection}
+        </DashboardLayout>
+      </>
+    )
 }

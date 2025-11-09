@@ -26,6 +26,7 @@ model User {
   websiteUrl      String?
   portfolio       Portfolio?
   repositories    Repository[]
+  projectUpvotes  ProjectUpvote[]
 
   // Index for fast portfolio lookup by githubUsername
   @@index([githubUsername])
@@ -127,6 +128,7 @@ model PortfolioRepository {
   technologies      String?
   portfolio         Portfolio  @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
   repository        Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  upvotes           ProjectUpvote[]
   
   @@index([portfolioId, isVisible])
 }
@@ -236,6 +238,18 @@ model DailyProjectViews {
   @@index([projectId])
   @@index([date])
   @@index([portfolioId, projectId]) // Composite index for faster lookups
+}
+
+model ProjectUpvote {
+  id                    Int                 @id @default(autoincrement())
+  userId                Int
+  portfolioRepositoryId Int
+  createdAt             DateTime            @default(now())
+  user                  User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  portfolioRepository   PortfolioRepository @relation(fields: [portfolioRepositoryId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, portfolioRepositoryId])
+  @@index([portfolioRepositoryId])
 }
 
 model Experience {
