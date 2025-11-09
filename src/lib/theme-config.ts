@@ -39,6 +39,19 @@ export const THEMES = {
     previewImage: "/themes/modern-preview.png",
     description: "Minimal monochrome layout with bold sections"
   },
+    nocturne: {
+      name: "Nocturne",
+      colors: {
+        background: "#050816",
+        text: "#f8fafc",
+        accent: "#38bdf8",
+        cardBg: "#0f172a",
+        border: "#1e293b"
+      },
+      layout: "LayoutNocturne",
+      previewImage: "/themes/nocturne-preview.png",
+      description: "Atmospheric dark theme with neon highlights and glassmorphism cards"
+    },
   demo:{
       name: "Demo",
       colors: {
@@ -81,4 +94,4 @@ export function getTheme(themeKey: ThemeKey): ThemeConfig {
 export const DEFAULT_THEME: ThemeKey = 'light'
 
 // Available themes array for easy iteration
-export const AVAILABLE_THEMES = ['light', 'modern', 'demo'] as ThemeKey[]
+export const AVAILABLE_THEMES = ['light', 'modern', 'nocturne', 'demo'] as ThemeKey[]

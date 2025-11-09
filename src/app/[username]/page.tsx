@@ -5,7 +5,7 @@ import { useParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { StructuredData } from "@/components/StructuredData"
 import { DevFolioLoader } from "@/components/ui/DevFolioLoader"
-import { getTheme, ThemeKey } from "@/lib/theme-config"
+import { DEFAULT_THEME, getTheme, ThemeKey } from "@/lib/theme-config"
 import { getLayoutComponent } from "@/lib/theme-layouts"
 import { Portfolio } from "@/interface"
 
@@ -195,7 +195,7 @@ export default function PublicPortfolioPage() {
   }
 
   // Dynamic theme rendering
-  const themeKey = (portfolio.selectedTheme as ThemeKey) || 'light'
+  const themeKey = (portfolio.selectedTheme as ThemeKey) || DEFAULT_THEME
   const theme = getTheme(themeKey)
   const Layout = getLayoutComponent(theme.layout)
 

@@ -195,7 +195,7 @@ export default function LayoutModern({ theme, portfolio }: LayoutModernProps) {
   }
 
   return (
-    <div className="min-h-screen relative" style={{ color: theme.colors.text }}>
+    <div className="relative min-h-screen overflow-x-hidden" style={{ color: theme.colors.text }}>
       <div
         aria-hidden="true"
         className="fixed inset-0 z-0 pointer-events-none"
@@ -203,37 +203,37 @@ export default function LayoutModern({ theme, portfolio }: LayoutModernProps) {
       />
 
       <div
-        className="relative z-10 px-3 xs:px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 py-6 xs:py-8 sm:py-10 md:py-14"
+        className="relative z-10 px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 py-6 sm:py-10 md:py-14"
         style={containerPaddingStyle}
       >
-        <div className="max-w-6xl mx-auto space-y-6 xs:space-y-8 sm:space-y-10 md:space-y-12">
+          <div className="mx-auto max-w-6xl space-y-6 sm:space-y-9 md:space-y-12">
           {/* Primary Layout */}
-          <section className="grid gap-6 xs:gap-8 sm:gap-10 md:gap-12 lg:gap-12 xl:gap-16 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,2.05fr)] xl:grid-cols-[minmax(0,1fr)_minmax(0,2.2fr)] items-start">
-            <div className="space-y-6 xs:space-y-7 sm:space-y-8 order-2 lg:order-1">
+            <section className="grid gap-6 sm:gap-8 md:gap-10 lg:gap-12 xl:gap-16 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,2.05fr)] xl:grid-cols-[minmax(0,1fr)_minmax(0,2.2fr)] items-start">
+              <div className="order-2 space-y-6 sm:space-y-7 md:space-y-8 lg:order-1">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6 }}
                 className="rounded-3xl border border-neutral-200 bg-white/90 backdrop-blur-sm shadow-sm overflow-hidden"
               >
-                <div className="p-4 xs:p-5 sm:p-6 space-y-5 xs:space-y-6">
-                  <div className="flex flex-col xs:flex-col sm:flex-row items-center sm:items-start gap-3 xs:gap-4">
-                    <Avatar className="w-16 xs:w-20 sm:w-24 h-16 xs:h-20 sm:h-24 border border-neutral-200 flex-shrink-0">
+                  <div className="space-y-5 sm:space-y-6 p-4 sm:p-5 md:p-6">
+                    <div className="flex flex-col sm:flex-row items-center sm:items-start gap-3 sm:gap-4">
+                      <Avatar className="flex-shrink-0 h-16 w-16 sm:h-20 sm:w-20 md:h-24 md:w-24 border border-neutral-200">
                       <AvatarImage src={portfolio.profilePic || "/placeholder.svg"} alt={portfolio.displayName} />
-                      <AvatarFallback className="bg-neutral-100 text-neutral-600 text-xl xs:text-2xl sm:text-3xl font-semibold">
+                        <AvatarFallback className="bg-neutral-100 text-neutral-600 text-xl sm:text-2xl md:text-3xl font-semibold">
                         {portfolio.displayName?.charAt(0) || "U"}
                       </AvatarFallback>
                     </Avatar>
-                    <div className="space-y-2 xs:space-y-3 text-center sm:text-left flex-1 min-w-0">
+                      <div className="min-w-0 flex-1 space-y-2 sm:space-y-3 text-center sm:text-left">
                       <div>
                         <p className="text-xs uppercase tracking-[0.3em] text-neutral-400">Username</p>
-                        <p className="text-xs xs:text-sm font-semibold text-neutral-800 truncate">
+                          <p className="text-xs sm:text-sm font-semibold text-neutral-800 truncate">
                           @{portfolio.user?.githubUsername}
                         </p>
                       </div>
                       <div>
                         <p className="text-xs uppercase tracking-[0.3em] text-neutral-400">Location</p>
-                        <p className="text-xs xs:text-sm font-semibold text-neutral-800 truncate">
+                          <p className="text-xs sm:text-sm font-semibold text-neutral-800 truncate">
                           {portfolio.user?.location || "Remote"}
                         </p>
                       </div>
@@ -241,15 +241,15 @@ export default function LayoutModern({ theme, portfolio }: LayoutModernProps) {
                   </div>
 
                   {portfolio.skills && portfolio.skills.length > 0 && (
-                    <div className="space-y-2 xs:space-y-3">
+                      <div className="space-y-2 sm:space-y-3">
                       <p className="text-xs uppercase tracking-[0.3em] text-neutral-400">Capabilities</p>
-                      <div className="flex flex-wrap gap-1.5 xs:gap-2">
+                        <div className="flex flex-wrap gap-1.5 sm:gap-2">
                         {portfolio.skills.map((skill: any) => (
                           <span
                             key={skill.id}
-                            className="flex items-center gap-1.5 xs:gap-2 rounded-full border border-neutral-200 bg-white px-2.5 xs:px-3 py-1 xs:py-1.5 text-xs font-medium uppercase tracking-widest text-neutral-700"
+                              className="flex items-center gap-1.5 sm:gap-2 rounded-full border border-neutral-200 bg-white px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs font-medium uppercase tracking-widest text-neutral-700"
                           >
-                            <SkillIcon skillName={skill.name} className="h-3 xs:h-3.5 w-3 xs:w-3.5 flex-shrink-0" />
+                              <SkillIcon skillName={skill.name} className="h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0" />
                             <span className="whitespace-nowrap">{skill.name}</span>
                           </span>
                         ))}
@@ -259,30 +259,30 @@ export default function LayoutModern({ theme, portfolio }: LayoutModernProps) {
                 </div>
               </motion.div>
 
-              {hasExperience && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: 0.1 }}
-                    className="rounded-3xl border border-neutral-200 bg-transparent p-4 xs:p-5 sm:p-6 shadow-none"
-                >
-                  <h2 className="text-base xs:text-lg sm:text-xl font-semibold text-neutral-900 tracking-tight">
+                {hasExperience && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, delay: 0.1 }}
+                    className="rounded-3xl border border-neutral-200 bg-transparent p-4 sm:p-5 md:p-6 shadow-none"
+                  >
+                    <h2 className="text-base sm:text-lg md:text-xl font-semibold text-neutral-900 tracking-tight">
                     Work Experience
                   </h2>
-                    <div className="relative mt-4 xs:mt-6 pl-5 xs:pl-6 sm:pl-7 space-y-4 xs:space-y-5">
-                      <span className="absolute left-0 top-1 bottom-1 w-px bg-neutral-200 -translate-x-1/2" />
+                    <div className="relative mt-4 sm:mt-6 space-y-4 sm:space-y-5">
+                      <span className="pointer-events-none absolute left-4 top-1 bottom-1 hidden sm:block w-px bg-neutral-200" />
                     {experiences.map((exp: any, index: number) => (
                       <motion.div
                         key={index}
-                        className="relative"
+                          className="relative pl-6 sm:pl-10"
                         initial={{ opacity: 0, y: 15 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.4, delay: index * 0.05 }}
                         viewport={{ once: true }}
                       >
-                          <span className="absolute left-0 top-4 h-2.5 xs:h-3.5 w-2.5 xs:w-3.5 -translate-x-1/2 rounded-full border-2 border-white bg-neutral-300" />
+                          <span className="absolute left-1 top-4 h-2.5 w-2.5 rounded-full border-2 border-white bg-neutral-300 sm:left-4" />
                         <a
-                          className={`block rounded-2xl border border-neutral-200 ${exp.companyUrl ? "hover:-translate-y-1 hover:shadow-md transition" : ""} bg-white/80 p-3 xs:p-4 shadow-sm`}
+                            className={`block rounded-2xl border border-neutral-200 ${exp.companyUrl ? "transition hover:-translate-y-1 hover:shadow-md" : ""} bg-white/80 p-3 sm:p-4 shadow-sm`}
                           {...(exp.companyUrl
                             ? {
                                 onClick: () => window.open(exp.companyUrl!, "_blank"),
@@ -292,27 +292,27 @@ export default function LayoutModern({ theme, portfolio }: LayoutModernProps) {
                               }
                             : {})}
                         >
-                          <div className="flex items-start gap-2 xs:gap-3">
+                            <div className="flex items-start gap-2 sm:gap-3">
                             {exp.faviconUrl ? (
-                              <div className="flex h-8 xs:h-9 w-8 xs:w-9 flex-shrink-0 items-center justify-center rounded-full border border-neutral-200 bg-white">
+                                <div className="flex h-8 w-8 sm:h-9 sm:w-9 flex-shrink-0 items-center justify-center rounded-full border border-neutral-200 bg-white">
                                 <img
                                   src={exp.faviconUrl || "/placeholder.svg"}
                                   alt={exp.companyName}
-                                  className="h-3.5 xs:h-4 w-3.5 xs:w-4 object-contain"
+                                    className="h-3.5 w-3.5 sm:h-4 sm:w-4 object-contain"
                                 />
                               </div>
                             ) : (
-                              <div className="flex h-8 xs:h-9 w-8 xs:w-9 flex-shrink-0 items-center justify-center rounded-full border border-neutral-200 bg-neutral-100 text-xs font-semibold text-neutral-500">
+                                <div className="flex h-8 w-8 sm:h-9 sm:w-9 flex-shrink-0 items-center justify-center rounded-full border border-neutral-200 bg-neutral-100 text-xs font-semibold text-neutral-500">
                                 {exp.companyName?.charAt(0) || "•"}
                               </div>
                             )}
                             <div className="min-w-0 flex-1">
-                              <p className="text-xs xs:text-sm font-semibold text-neutral-900">{exp.companyName}</p>
+                                <p className="text-xs sm:text-sm font-semibold text-neutral-900">{exp.companyName}</p>
                               <p className="text-xs uppercase tracking-[0.25em] text-neutral-500 mt-1">
                                 {[exp.role, exp.duration].filter(Boolean).join(" • ")}
                               </p>
                               {exp.description && (
-                                <p className="mt-2 xs:mt-3 text-xs xs:text-sm text-neutral-600 leading-relaxed">
+                                  <p className="mt-2 sm:mt-3 text-xs sm:text-sm text-neutral-600 leading-relaxed">
                                   {exp.description}
                                 </p>
                               )}
@@ -323,24 +323,24 @@ export default function LayoutModern({ theme, portfolio }: LayoutModernProps) {
                     ))}
                   </div>
                 </motion.div>
-              )}
-            </div>
-              <div className="space-y-8 xs:space-y-10 order-1 lg:order-2">
-              <div className="space-y-4 xs:space-y-6 text-center lg:text-left">
-                <div className="flex items-center justify-center lg:justify-start gap-4 text-xs uppercase tracking-[0.35em] text-neutral-400">
-                  <span className="h-px w-8 xs:w-10 bg-neutral-300" />
+                )}
+              </div>
+              <div className="order-1 space-y-8 sm:space-y-10 lg:order-2">
+                <div className="space-y-4 sm:space-y-6 text-center lg:text-left">
+                  <div className="flex items-center justify-center lg:justify-start gap-4 text-xs uppercase tracking-[0.35em] text-neutral-400">
+                    <span className="h-px w-8 sm:w-10 bg-neutral-300" />
                   Portfolio
                 </div>
-                <div className="space-y-2 xs:space-y-3">
-                  <h1 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl font-semibold text-neutral-900 leading-tight break-words">
+                  <div className="space-y-2 sm:space-y-3">
+                    <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-semibold text-neutral-900 leading-tight break-words">
                     {portfolio.displayName}
                   </h1>
-                  <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 xs:gap-3 text-xs xs:text-sm sm:text-base md:text-lg text-neutral-500 uppercase tracking-[0.2em]">
+                    <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 sm:gap-3 text-xs sm:text-sm md:text-base lg:text-lg text-neutral-500 uppercase tracking-[0.2em]">
                     {portfolio.jobTitle && <span>{portfolio.jobTitle}</span>}
                     {portfolio.user?.company && <span>• {portfolio.user.company}</span>}
                   </div>
                 </div>
-                  <p className="text-xs xs:text-sm sm:text-base md:text-lg text-neutral-600 max-w-3xl leading-relaxed text-pretty mx-auto lg:mx-0">
+                  <p className="mx-auto max-w-3xl text-pretty text-xs sm:text-sm md:text-base lg:text-lg leading-relaxed text-neutral-600 lg:mx-0">
                   {displayedBio}
                   {!isTypingComplete && (
                     <motion.span
@@ -349,30 +349,30 @@ export default function LayoutModern({ theme, portfolio }: LayoutModernProps) {
                       transition={{ duration: 0.6, repeat: Number.POSITIVE_INFINITY }}
                     />
                   )}
-                </p>
-                <div className="flex flex-col xs:flex-col sm:flex-row items-stretch sm:items-center justify-center lg:justify-start gap-2 xs:gap-3">
+                  </p>
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center lg:justify-start gap-2 sm:gap-3">
                   {portfolio.cvUrl && (
                     <Button
                       onClick={() => window.open(portfolio.cvUrl!, "_blank")}
-                      className="rounded-full bg-neutral-900 text-white px-5 xs:px-6 py-2 xs:py-2.5 h-auto text-xs xs:text-sm tracking-wide hover:bg-neutral-700"
+                        className="h-auto rounded-full bg-neutral-900 px-5 sm:px-6 py-2 sm:py-2.5 text-xs sm:text-sm tracking-wide text-white hover:bg-neutral-700"
                     >
                       Download CV
-                      <Download className="h-3.5 xs:h-4 w-3.5 xs:w-4 ml-2" />
+                        <Download className="ml-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
                     </Button>
                   )}
                   {portfolio.user?.websiteUrl && (
                     <Button
                       variant="outline"
                       onClick={() => window.open(portfolio.user.websiteUrl, "_blank")}
-                      className="rounded-full border-neutral-300 text-neutral-700 px-5 xs:px-6 py-2 xs:py-2.5 h-auto text-xs xs:text-sm hover:bg-neutral-100"
+                        className="h-auto rounded-full border-neutral-300 px-5 sm:px-6 py-2 sm:py-2.5 text-xs sm:text-sm text-neutral-700 hover:bg-neutral-100"
                     >
                       Portfolio Site
-                      <ExternalLink className="h-3.5 xs:h-4 w-3.5 xs:w-4 ml-2" />
+                        <ExternalLink className="ml-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
                     </Button>
                   )}
                 </div>
                 {portfolio.socials && portfolio.socials.length > 0 && (
-                  <div className="flex flex-wrap items-center justify-center lg:justify-start gap-1.5 xs:gap-2 pt-1 xs:pt-2">
+                    <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 pt-1 sm:pt-2 lg:justify-start">
                     {portfolio.socials
                       .filter((social) => social.url)
                       .map((social) => {
@@ -381,12 +381,12 @@ export default function LayoutModern({ theme, portfolio }: LayoutModernProps) {
                           <motion.button
                             key={social.id}
                             onClick={() => window.open(social.url, "_blank")}
-                            className="inline-flex h-8 xs:h-9 w-8 xs:w-9 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-600 transition hover:text-neutral-900 hover:border-neutral-400"
+                              className="inline-flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-600 transition hover:border-neutral-400 hover:text-neutral-900"
                             whileHover={{ y: -2 }}
                             whileTap={{ scale: 0.95 }}
                             aria-label={`Visit ${social.platform}`}
                           >
-                            <Icon className="h-3 xs:h-3.5 w-3 xs:w-3.5" />
+                              <Icon className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                           </motion.button>
                         )
                       })}
@@ -395,20 +395,20 @@ export default function LayoutModern({ theme, portfolio }: LayoutModernProps) {
               </div>
 
               {hasProjects && (
-                <div className="space-y-4 xs:space-y-5 sm:space-y-6">
+                  <div className="space-y-4 sm:space-y-5 md:space-y-6">
                   <div className="space-y-1">
-                    <h2 className="text-lg xs:text-xl sm:text-2xl font-semibold text-neutral-900 tracking-tight">
+                      <h2 className="text-lg sm:text-xl md:text-2xl font-semibold text-neutral-900 tracking-tight">
                       Selected Work
                     </h2>
-                    <p className="text-xs xs:text-sm sm:text-base text-neutral-500">
+                      <p className="text-xs sm:text-sm md:text-base text-neutral-500">
                       Curated projects showcasing recent capabilities.
                     </p>
                   </div>
-                    <div className="grid gap-3 xs:gap-4 sm:gap-5 auto-rows-fr" style={projectGridStyles}>
+                    <div className="grid auto-rows-fr gap-3 sm:gap-4 md:gap-5" style={projectGridStyles}>
                     {visibleRepos.map((repo: any, index: number) => (
                       <motion.article
                         key={repo.id}
-                        className="group flex h-full min-w-0 flex-col rounded-xl border border-neutral-200 bg-white/90 p-3 xs:p-4 shadow-sm transition hover:-translate-y-1 hover:shadow-md cursor-pointer"
+                          className="group flex h-full min-w-0 flex-col cursor-pointer rounded-xl border border-neutral-200 bg-white/90 p-3 sm:p-4 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
                         initial={{ opacity: 0, y: 20 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.4, delay: index * 0.05 }}
@@ -426,15 +426,15 @@ export default function LayoutModern({ theme, portfolio }: LayoutModernProps) {
                         tabIndex={0}
                         aria-label={`View ${repo.repository.name} project`}
                       >
-                        <div className="flex items-start justify-between gap-2 xs:gap-3 mb-3 xs:mb-4">
-                          <div className="flex-1 min-w-0 space-y-1.5 xs:space-y-2">
+                          <div className="mb-3 flex items-start justify-between gap-2 sm:mb-4 sm:gap-3">
+                            <div className="min-w-0 flex-1 space-y-1.5 sm:space-y-2">
                             <ProjectIcon
                               favicon={repo.repository.favicon}
                               logo={repo.repository.logo}
                               title={repo.customName || repo.repository.name}
                               size="md"
                             />
-                            <h3 className="text-sm xs:text-base sm:text-lg font-semibold text-neutral-900 break-words line-clamp-2">
+                              <h3 className="text-sm sm:text-base md:text-lg font-semibold text-neutral-900 break-words line-clamp-2">
                               {repo.customName || repo.repository.name}
                             </h3>
                           </div>
@@ -445,29 +445,29 @@ export default function LayoutModern({ theme, portfolio }: LayoutModernProps) {
                               const githubUrl = repo.repository.githubUrl || repo.repository.htmlUrl
                               window.open(githubUrl, "_blank")
                             }}
-                            className="flex h-8 xs:h-9 w-8 xs:w-9 flex-shrink-0 items-center justify-center rounded-full border border-neutral-300 text-neutral-600 hover:bg-neutral-900 hover:text-white transition"
+                              className="flex h-8 w-8 sm:h-9 sm:w-9 flex-shrink-0 items-center justify-center rounded-full border border-neutral-300 text-neutral-600 transition hover:bg-neutral-900 hover:text-white"
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
                             aria-label={`View ${repo.repository.name} on GitHub`}
                           >
-                            <SiGithub className="h-3.5 xs:h-4 w-3.5 xs:w-4" />
+                              <SiGithub className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                           </motion.button>
                         </div>
 
                         {repo.repository.logo &&
                           (/^https?:/i.test(repo.repository.logo) || /^data:image\//i.test(repo.repository.logo)) && (
-                            <div className="mb-3 xs:mb-4 overflow-hidden rounded-xl border border-neutral-200">
+                              <div className="mb-3 overflow-hidden rounded-xl border border-neutral-200 sm:mb-4">
                               <img
                                 src={repo.repository.logo || "/placeholder.svg"}
                                 alt={(repo.customName || repo.repository.name) + " preview"}
-                                className={`w-full aspect-[16/9] ${/^data:image\//i.test(repo.repository.logo) ? "object-cover object-top" : "object-cover"}`}
+                                  className={`aspect-[16/9] w-full ${/^data:image\//i.test(repo.repository.logo) ? "object-cover object-top" : "object-cover"}`}
                                 loading="lazy"
                               />
                             </div>
                           )}
 
                         <div
-                          className="text-xs xs:text-sm text-neutral-600 leading-relaxed line-clamp-3 flex-1"
+                            className="flex-1 text-xs sm:text-sm leading-relaxed text-neutral-600 line-clamp-3"
                           dangerouslySetInnerHTML={{
                             __html:
                               repo.customDescription ||
@@ -476,7 +476,7 @@ export default function LayoutModern({ theme, portfolio }: LayoutModernProps) {
                           }}
                         />
 
-                        <div className="mt-3 xs:mt-4 flex flex-wrap gap-1.5 xs:gap-2">
+                          <div className="mt-3 flex flex-wrap gap-1.5 sm:mt-4 sm:gap-2">
                           {(() => {
                             let languages: string[] = []
                             if (repo.repository.languages) {
@@ -496,7 +496,7 @@ export default function LayoutModern({ theme, portfolio }: LayoutModernProps) {
                               .map((lang, idx) => (
                                 <span
                                   key={idx}
-                                  className="rounded-full border border-neutral-200 bg-neutral-100 px-2.5 xs:px-3 py-0.5 xs:py-1 text-xs font-medium uppercase tracking-widest text-neutral-600"
+                                    className="rounded-full border border-neutral-200 bg-neutral-100 px-2.5 py-0.5 text-xs font-medium uppercase tracking-widest text-neutral-600 sm:px-3 sm:py-1"
                                 >
                                   {lang}
                                 </span>
@@ -510,7 +510,7 @@ export default function LayoutModern({ theme, portfolio }: LayoutModernProps) {
               )}
 
               {hasGithub && (
-                <div className="rounded-3xl border border-neutral-200 bg-white/95 p-3 xs:p-4 sm:p-4 lg:p-6 shadow-sm overflow-hidden">
+                  <div className="overflow-hidden rounded-3xl border border-neutral-200 bg-white/95 p-3 sm:p-4 lg:p-6 shadow-sm">
                   <GitHubActivity username={portfolio.user.githubUsername!} theme="light" />
                 </div>
               )}

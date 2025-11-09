@@ -90,7 +90,7 @@ export default function ThemeSelector({
     setBackgroundPattern(pattern)
   }
 
-  const selectableThemes: ThemeKey[] = ['light', 'modern']
+  const selectableThemes: ThemeKey[] = ['light', 'modern', 'nocturne']
   const getThemeIcon = (themeKey: ThemeKey) => {
     switch (themeKey) {
       case 'dark':
@@ -99,6 +99,8 @@ export default function ThemeSelector({
         return <Sun className="h-6 w-6" />
       case 'modern':
         return <Sparkles className="h-6 w-6" />
+      case 'nocturne':
+        return <Moon className="h-6 w-6" />
      
       default:
         return <Palette className="h-6 w-6" />
