@@ -91,20 +91,6 @@ export default function ThemeSelector({
   }
 
   const selectableThemes: ThemeKey[] = ['light', 'modern']
-  const getThemeIcon = (themeKey: ThemeKey) => {
-    switch (themeKey) {
-      case 'dark':
-        return <Moon className="h-6 w-6" />
-      case 'light':
-        return <Sun className="h-6 w-6" />
-      case 'modern':
-        return <Sparkles className="h-6 w-6" />
-     
-      default:
-        return <Palette className="h-6 w-6" />
-    }
-  }
-
   const getPatternStyle = (pattern: string | null) => {
     if (!pattern) return {}
     
@@ -164,6 +150,19 @@ export default function ThemeSelector({
   }
 
   const getThemePreview = (themeConfig: ThemeConfig) => {
+    if (themeConfig.previewImage) {
+      return (
+        <div className="relative w-full overflow-hidden rounded-2xl bg-white aspect-[16/9]">
+          <img
+            src={themeConfig.previewImage}
+            alt={`${themeConfig.name} preview`}
+            className="absolute inset-0 h-full w-full object-cover"
+            loading="lazy"
+          />
+        </div>
+      )
+    }
+
     return (
       <div 
         className="w-full h-20 rounded-lg border relative overflow-hidden shadow-sm"
@@ -172,9 +171,7 @@ export default function ThemeSelector({
           borderColor: themeConfig.colors.border || themeConfig.colors.accent + '30'
         }}
       >
-        {/* Preview content */}
         <div className="absolute inset-0 p-2">
-          {/* Profile section */}
           <div className="flex items-center gap-2 mb-2">
             <div 
               className="w-5 h-5 rounded-full border-2"
@@ -200,8 +197,6 @@ export default function ThemeSelector({
               />
             </div>
           </div>
-          
-          {/* Project cards */}
           <div className="space-y-1">
             <div 
               className="h-3 rounded border"
@@ -228,10 +223,9 @@ export default function ThemeSelector({
       {/* Theme Layout Selection */}
       <div className="space-y-4">
         <div className="flex items-center gap-2">
-          <Palette className="h-5 w-5 text-orange-600" />
           <h3 className="text-lg font-semibold text-gray-900">Choose Your Layout</h3>
         </div>
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {Array.from(new Set<ThemeKey>([...selectableThemes, selectedTheme].filter((key): key is ThemeKey => key in THEMES))).map((themeKey) => {
             const themeConfig = THEMES[themeKey]
             const isSelected = selectedTheme === themeKey
@@ -241,11 +235,12 @@ export default function ThemeSelector({
                 key={themeKey}
                 whileHover={{ y: isSelectable ? -3 : 0 }}
                 transition={{ duration: 0.2 }}
+                className="flex flex-col items-center gap-2"
               >
                 <Card
-                  className={`relative h-full cursor-pointer border transition-all ${
-                    isSelected ? 'border-orange-500 ring-2 ring-orange-200' : 'border-gray-200 hover:border-gray-300'
-                  } ${!isSelectable ? 'cursor-not-allowed opacity-75' : ''}`}
+                  className={`relative mx-auto w-full max-w-[240px] cursor-pointer overflow-hidden rounded-3xl border-0  transition-all ${
+                    !isSelectable ? 'cursor-not-allowed opacity-75' : ''
+                  }`}
                   onClick={() => {
                     if (!isSelectable) return
                     handleThemeSelect(themeKey)
@@ -260,40 +255,17 @@ export default function ThemeSelector({
                     }
                   }}
                 >
-                  <CardContent className="space-y-4 p-5">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          {getThemeIcon(themeKey)}
-                          <p className="text-sm font-semibold text-gray-900">
-                            {themeConfig.name}
-                            {!isSelectable && <span className="ml-2 text-xs uppercase tracking-wide text-gray-400">Legacy</span>}
-                          </p>
-                        </div>
-                        <p className="mt-1 text-xs text-gray-500">{themeConfig.description}</p>
-                      </div>
-                      {isSelected && (
-                        <motion.span
-                          initial={{ scale: 0 }}
-                          animate={{ scale: 1 }}
-                          className="flex h-6 w-6 items-center justify-center rounded-full bg-orange-500 text-white"
-                        >
-                          <Check className="h-4 w-4" />
-                        </motion.span>
-                      )}
-                    </div>
+                  <CardContent className="p-0">
                     {getThemePreview(themeConfig)}
-                    <div className="pt-1">
-                      <Button
-                        variant={isSelected ? "default" : "outline"}
-                        className={`w-full rounded-full ${isSelected ? 'bg-orange-500 hover:bg-orange-600' : 'border-gray-200 text-gray-700 hover:bg-gray-100'}`}
-                        disabled={!isSelectable || isSelected}
-                      >
-                        {isSelected ? (isSelectable ? "Selected" : "Active (Legacy)") : isSelectable ? "Use this layout" : "Not available"}
-                      </Button>
-                    </div>
                   </CardContent>
                 </Card>
+                <Button
+                  variant={isSelected ? "default" : "outline"}
+                  className={`w-full max-w-[240px] rounded-full text-xs ${isSelected ? 'bg-orange-500 hover:bg-orange-600' : 'border-gray-200 text-gray-700 hover:bg-gray-100'}`}
+                  disabled={!isSelectable || isSelected}
+                >
+                  {isSelected ? (isSelectable ? "Selected" : "Active (Legacy)") : isSelectable ? "Use this layout" : "Not available"}
+                </Button>
               </motion.div>
             )
           })}
@@ -303,7 +275,6 @@ export default function ThemeSelector({
       {/* Background Customization Section */}
       <div className="space-y-4">
         <div className="flex items-center gap-2">
-          <Sparkles className="h-5 w-5 text-orange-600" />
           <h3 className="text-lg font-semibold text-gray-900">Customize Background</h3>
         </div>
         
