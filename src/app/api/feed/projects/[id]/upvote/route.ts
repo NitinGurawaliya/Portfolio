@@ -4,10 +4,10 @@ import { resolveCurrentUserId } from "@/app/api/feed/utils"
 
 export async function POST(
   req: NextRequest,
-  context: { params: Promise<{ id: string }> | { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await Promise.resolve(context.params)
+    const { id } = await params
     const projectId = Number(id)
     if (!projectId || Number.isNaN(projectId)) {
       return NextResponse.json(
