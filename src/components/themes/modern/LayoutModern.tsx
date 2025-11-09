@@ -192,7 +192,7 @@ export default function LayoutModern({ theme, portfolio }: LayoutModernProps) {
       <div className="relative z-10 px-3 xs:px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 py-6 xs:py-8 sm:py-10 md:py-14">
         <div className="max-w-6xl mx-auto space-y-6 xs:space-y-8 sm:space-y-10 md:space-y-12">
           {/* Primary Layout */}
-          <section className="grid gap-6 xs:gap-8 sm:gap-10 md:gap-12 lg:gap-12 xl:gap-16 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,2.05fr)] xl:grid-cols-[minmax(0,1fr)_minmax(0,2.2fr)] items-start">
+          <section className="grid grid-cols-1 gap-6 xs:gap-8 sm:gap-10 md:gap-12 lg:gap-12 xl:gap-16 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,2.05fr)] xl:grid-cols-[minmax(0,1fr)_minmax(0,2.2fr)] items-start">
             <div className="space-y-6 xs:space-y-7 sm:space-y-8">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -210,7 +210,6 @@ export default function LayoutModern({ theme, portfolio }: LayoutModernProps) {
                     </Avatar>
                     <div className="space-y-2 xs:space-y-3 text-center sm:text-left flex-1 min-w-0">
                       <div>
-                        <p className="text-xs uppercase tracking-[0.3em] text-neutral-400">Username</p>
                         <p className="text-xs xs:text-sm font-semibold text-neutral-800 truncate">
                           @{portfolio.user?.githubUsername}
                         </p>
@@ -393,7 +392,7 @@ export default function LayoutModern({ theme, portfolio }: LayoutModernProps) {
                     {visibleRepos.map((repo: any, index: number) => (
                       <motion.article
                         key={repo.id}
-                        className="group flex h-full min-w-0 flex-col rounded-xl border border-neutral-200 bg-white/90 p-3 xs:p-4 shadow-sm transition hover:-translate-y-1 hover:shadow-md cursor-pointer"
+                        className="group flex h-full w-full min-w-0 flex-col rounded-xl border border-neutral-200 bg-white/90 p-3 xs:p-4 shadow-sm transition hover:-translate-y-1 hover:shadow-md cursor-pointer"
                         initial={{ opacity: 0, y: 20 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.4, delay: index * 0.05 }}
@@ -495,7 +494,7 @@ export default function LayoutModern({ theme, portfolio }: LayoutModernProps) {
               )}
 
               {hasGithub && (
-                <div className="rounded-3xl border border-neutral-200 bg-white/95 p-3 xs:p-4 sm:p-4 lg:p-6 shadow-sm overflow-hidden">
+                <div className="w-full rounded-3xl border border-neutral-200 bg-white/95 p-3 xs:p-4 sm:p-4 lg:p-6 shadow-sm overflow-hidden">
                   <GitHubActivity username={portfolio.user.githubUsername!} theme="light" />
                 </div>
               )}
