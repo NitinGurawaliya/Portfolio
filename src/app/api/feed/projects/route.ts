@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
+import prisma from "@/lib/prisma"
 import { resolveCurrentUserId } from "@/app/api/feed/utils"
 
 type SortOption = "newest" | "most_upvoted" | "most_viewed"
@@ -46,9 +46,6 @@ export async function GET(req: NextRequest) {
             },
           },
         },
-        _count: {
-          select: { upvotes: true },
-        },
       },
       orderBy: {
         createdAt: "desc",
@@ -57,6 +54,7 @@ export async function GET(req: NextRequest) {
 
     const projectIds = projects.map((project) => project.id)
     const viewsMap = new Map<number, number>()
+    const upvotesMap = new Map<number, number>()
 
     if (projectIds.length > 0) {
       const dailyViews = await prisma.dailyProjectViews.groupBy({
@@ -74,6 +72,20 @@ export async function GET(req: NextRequest) {
         const totalViews = entry._sum.views ?? 0
         viewsMap.set(projectIdNumber, totalViews)
       })
+
+      const upvoteRows = await prisma.projectUpvote.findMany({
+        where: {
+          portfolioRepositoryId: { in: projectIds },
+        },
+        select: {
+          portfolioRepositoryId: true,
+        },
+      })
+
+      for (const { portfolioRepositoryId } of upvoteRows) {
+        const current = upvotesMap.get(portfolioRepositoryId) ?? 0
+        upvotesMap.set(portfolioRepositoryId, current + 1)
+      }
     }
 
     let userUpvoteSet = new Set<number>()
@@ -89,13 +101,16 @@ export async function GET(req: NextRequest) {
         },
       })
 
-      userUpvoteSet = new Set(userUpvotes.map((upvote) => upvote.portfolioRepositoryId))
+      userUpvoteSet = new Set(
+        userUpvotes.map(({ portfolioRepositoryId }) => portfolioRepositoryId)
+      )
     }
 
     const normalizedProjects = projects.map((project) => {
       const title = project.customName ?? project.repository.name
       const description = project.customDescription ?? project.repository.description ?? ""
       const totalViews = viewsMap.get(project.id) ?? 0
+      const upvotes = upvotesMap.get(project.id) ?? 0
       const profileSlug =
         project.portfolio.customUsername ||
         project.portfolio.user?.githubUsername ||
@@ -113,7 +128,7 @@ export async function GET(req: NextRequest) {
         logo: project.repository.logo,
         createdAt: project.createdAt,
         updatedAt: project.updatedAt,
-        upvotes: project._count.upvotes ?? 0,
+        upvotes,
         views: totalViews,
         hasUpvoted: userUpvoteSet.has(project.id),
         author: {

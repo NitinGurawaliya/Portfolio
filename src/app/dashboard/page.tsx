@@ -17,6 +17,7 @@ import { usePortfolioHandlers } from "@/hooks/usePortfolioHandlers"
 import { publishPortfolio } from "@/lib/services/portfolio-service"
 import { playNotificationSound } from "@/lib/portfolio-utils"
 import { successToastConfig, errorToastConfig } from "@/lib/utils"
+import { loadFeedCache, saveFeedCache } from "@/lib/feed-cache"
 
 
 export default function DashboardPage() {
@@ -30,6 +31,8 @@ export default function DashboardPage() {
   
   // Portfolio hook
   const portfolio = usePortfolio(user)
+  
+  const feedPrefetchStartedRef = useRef(false)
   
   // Handlers hook - portfolio data को original data के रूप में pass करें
   const handlers = usePortfolioHandlers(
@@ -164,6 +167,45 @@ export default function DashboardPage() {
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [isPublishing, portfolio, user])
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    if (loading || !user) return
+    if (portfolio.isLoadingPortfolio || portfolio.isInitialLoad) return
+    if (feedPrefetchStartedRef.current) return
+
+    const cached = loadFeedCache<any[]>("newest")
+    if (cached && Array.isArray(cached.projects)) {
+      feedPrefetchStartedRef.current = true
+      return
+    }
+
+    feedPrefetchStartedRef.current = true
+
+    const controller = new AbortController()
+    const timer = window.setTimeout(async () => {
+      try {
+        const response = await fetch(`/api/feed/projects?sort=newest`, {
+          cache: "no-store",
+          signal: controller.signal,
+        })
+
+        if (!response.ok) return
+
+        const data = await response.json()
+        saveFeedCache("newest", data.projects ?? [])
+      } catch (error) {
+        if (!controller.signal.aborted) {
+          console.error("Feed prefetch failed", error)
+        }
+      }
+    }, 1500)
+
+    return () => {
+      controller.abort()
+      window.clearTimeout(timer)
+    }
+  }, [loading, user, portfolio.isLoadingPortfolio, portfolio.isInitialLoad])
 
   // Render active section - memoized for instant navigation
   const handleSectionChange = (section: string) => {

@@ -42,7 +42,13 @@ export function HeroSection() {
 
   return (
     <section className="relative overflow-hidden py-10 ">
+
       <div className="absolute inset-0 grid-bg opacity-30" />
+      <div className="w-64 mx-auto">
+      <a href="https://shipsquad.space/saas/1eb0b450-6fb4-44ef-ab2b-ce0ce95e25b9" target="_blank" rel="noopener">
+  <img src="https://shipsquad.space/api/badge?id=1eb0b450-6fb4-44ef-ab2b-ce0ce95e25b9&style=light" alt="Featured on ShipSquad" />
+</a>
+</div>
       <div className="container relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <div className="grid items-center justify-items-center gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
           {/* Left Column - Text Content */}
@@ -132,6 +138,7 @@ export function HeroSection() {
           <PortfolioMobilePreview />
         </div>
       </div>
+      
     </section>
   )
 }

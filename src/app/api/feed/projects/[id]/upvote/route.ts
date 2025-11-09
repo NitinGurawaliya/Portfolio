@@ -4,10 +4,11 @@ import { resolveCurrentUserId } from "@/app/api/feed/utils"
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
-    const projectId = Number(params.id)
+    const { id } = await Promise.resolve(context.params)
+    const projectId = Number(id)
     if (!projectId || Number.isNaN(projectId)) {
       return NextResponse.json(
         { error: "Invalid project id" },

@@ -57,12 +57,13 @@ export function DashboardLayout({
   const sidebarItems = [
     { id: "home", label: "Bio", icon: User },
     { id: "repos", label: "Projects", icon: Code },
-    { id: "feed", label: "Feed", icon: Newspaper },
     { id: "skills", label: "Skills", icon: Wrench },
     { id: "socials", label: "Socials", icon: Users },
     { id: "analytics", label: "Analytics", icon: BarChart3 },
     { id: "theme", label: "Theme", icon: Palette },
   ]
+
+  const communityItem = { id: "feed", label: "Community Feed", icon: Newspaper }
 
   const handleLogout = async () => {
     try {
@@ -108,7 +109,7 @@ export function DashboardLayout({
   }
 
   return (
-    <div className="relative flex h-screen w-full overflow-hidden bg-background text-foreground">
+    <div className="relative flex h-screen w-full overflow-hidden bg-background text-foreground text-[0.95rem]">
       {/* Sidebar */}
       <motion.div
         onMouseEnter={() => {
@@ -126,7 +127,7 @@ export function DashboardLayout({
         animate="visible"
         className={cn(
           "sticky top-0 border-b border-border/60 z-40 flex h-screen flex-col border-r border-border/60 bg-card/80 backdrop-blur-sm transition-all duration-200",
-          isSidebarExpanded ? "w-42 px-3" : "w-16 items-center px-2"
+          isSidebarExpanded ? "w-58 px-3" : "w-16 items-center px-2"
         )}
       >
         <motion.div
@@ -226,6 +227,49 @@ export function DashboardLayout({
               )
             })}
           </div>
+
+          <div
+            className={cn(
+              "mt-6",
+              isSidebarExpanded
+                ? "space-y-3 rounded-2xl border border-border/60 bg-muted/20 p-3"
+                : "flex justify-center"
+            )}
+          >
+            {isSidebarExpanded ? (
+              <>
+                
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onSectionChange(communityItem.id)}
+                  className="relative h-11 w-full justify-start gap-3 rounded-xl bg-card px-3 text-foreground transition-all duration-150 hover:border-primary/30 hover:bg-card/80"
+                >
+                  <Newspaper className="h-4 w-4" />
+                  <div className="flex flex-1 flex-col items-start">
+                    <span className="text-sm font-semibold text-foreground">Community Feed</span>
+                    <span className="text-[11px] font-medium text-muted-foreground">
+                      Discover published projects
+                    </span>
+                  </div>
+                </Button>
+              </>
+            ) : (
+              <div className="relative group">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onSectionChange(communityItem.id)}
+                  className="flex h-10 w-10 items-center justify-center rounded-xl text-foreground transition-all duration-150 hover:bg-muted/60"
+                >
+                  <Newspaper className="h-4 w-4" />
+                </Button>
+                <div className="pointer-events-none absolute left-14 top-1/2 -translate-y-1/2 rounded-md border border-border/60 bg-popover px-2 py-1 text-[11px] font-medium text-popover-foreground opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100">
+                  Community Feed
+                </div>
+              </div>
+            )}
+          </div>
         </nav>
 
         <motion.div
@@ -258,12 +302,12 @@ export function DashboardLayout({
         <div className="relative flex flex-1 flex-col overflow-hidden bg-background">
           {/* Dashboard Controls at Top */}
           <motion.div
-            className="relative z-20 flex w-full items-center justify-between border-b border-border/60 bg-background/80 px-4 py-4 backdrop-blur-sm"
+            className="relative z-20 flex w-full items-center justify-between border-b border-border/60 bg-background/80 px-3 py-3 backdrop-blur-sm"
             variants={itemVariants}
             initial="visible"
             animate="visible"
           >
-            <h2 className="text-lg font-semibold">Dashboard</h2>
+            <h2 className="text-base font-semibold">Dashboard</h2>
 
             <div className="flex items-center gap-2">
               <Button
@@ -278,19 +322,19 @@ export function DashboardLayout({
                     "username"
                   window.open(`${currentDomain}/${username}`, "_blank")
                 }}
-                className="rounded-lg px-4 text-sm"
+                className="rounded-lg px-3 text-xs font-semibold"
               >
                 Visit Profile
-                <ExternalLink className="ml-2 h-4 w-4" />
+                <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
               </Button>
 
               <Button
                 size="sm"
                 variant={isPreviewOpen ? "default" : "outline"}
                 onClick={() => setIsPreviewOpen(!isPreviewOpen)}
-                className="rounded-lg px-4 text-sm"
+                className="rounded-lg px-3 text-xs font-semibold"
               >
-                <Eye className="mr-2 h-4 w-4" />
+                <Eye className="mr-1.5 h-3.5 w-3.5" />
                 {isPreviewOpen ? "Hide Preview" : "Show Preview"}
               </Button>
 
@@ -300,7 +344,7 @@ export function DashboardLayout({
                 disabled={!hasUnsavedChanges || isPublishing}
                 variant={hasUnsavedChanges && !isPublishing ? "default" : "secondary"}
                 className={cn(
-                  "rounded-lg px-4 text-sm transition-colors",
+                  "rounded-lg px-3 text-xs font-semibold transition-colors",
                   hasUnsavedChanges && !isPublishing
                     ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700"
                     : ""
@@ -324,7 +368,7 @@ export function DashboardLayout({
 
           {/* Dashboard Content */}
           <div className="flex-1 overflow-y-auto overflow-x-hidden bg-muted/20 scrollbar-hide">
-            <div key={activeSection} className="p-6" style={{ willChange: "contents" }}>
+            <div key={activeSection} className="p-5" style={{ willChange: "contents" }}>
               {children}
             </div>
           </div>
