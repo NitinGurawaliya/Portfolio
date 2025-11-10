@@ -33,6 +33,7 @@ interface DashboardLayoutProps {
   hasUnsavedChanges?: boolean
   onPublish?: () => Promise<void>
   isPublishing?: boolean
+  notificationBell?: React.ReactNode
 }
 
 export function DashboardLayout({
@@ -46,6 +47,7 @@ export function DashboardLayout({
   hasUnsavedChanges = false,
   onPublish,
   isPublishing = false,
+  notificationBell,
 }: DashboardLayoutProps) {
   const [previewMode, setPreviewMode] = useState<"mobile">("mobile")
   const [isPreviewOpen, setIsPreviewOpen] = useState(false)
@@ -307,63 +309,64 @@ export function DashboardLayout({
             initial="visible"
             animate="visible"
           >
-            <h2 className="text-base font-semibold">Dashboard</h2>
+              <h2 className="text-base font-semibold">Dashboard</h2>
 
-            <div className="flex items-center gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => {
-                  const currentDomain = window.location.origin
-                  const username =
-                    livePortfolio?.customUsername ||
-                    portfolioData?.customUsername ||
-                    user?.githubUsername ||
-                    "username"
-                  window.open(`${currentDomain}/${username}`, "_blank")
-                }}
-                className="rounded-lg px-3 text-xs font-semibold"
-              >
-                Visit Profile
-                <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
-              </Button>
+              <div className="flex items-center gap-2">
+                {notificationBell}
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    const currentDomain = window.location.origin
+                    const username =
+                      livePortfolio?.customUsername ||
+                      portfolioData?.customUsername ||
+                      user?.githubUsername ||
+                      "username"
+                    window.open(`${currentDomain}/${username}`, "_blank")
+                  }}
+                  className="rounded-lg px-3 text-xs font-semibold"
+                >
+                  Visit Profile
+                  <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
+                </Button>
 
-              <Button
-                size="sm"
-                variant={isPreviewOpen ? "default" : "outline"}
-                onClick={() => setIsPreviewOpen(!isPreviewOpen)}
-                className="rounded-lg px-3 text-xs font-semibold"
-              >
-                <Eye className="mr-1.5 h-3.5 w-3.5" />
-                {isPreviewOpen ? "Hide Preview" : "Show Preview"}
-              </Button>
+                <Button
+                  size="sm"
+                  variant={isPreviewOpen ? "default" : "outline"}
+                  onClick={() => setIsPreviewOpen(!isPreviewOpen)}
+                  className="rounded-lg px-3 text-xs font-semibold"
+                >
+                  <Eye className="mr-1.5 h-3.5 w-3.5" />
+                  {isPreviewOpen ? "Hide Preview" : "Show Preview"}
+                </Button>
 
-              <Button
-                size="sm"
-                onClick={onPublish}
-                disabled={!hasUnsavedChanges || isPublishing}
-                variant={hasUnsavedChanges && !isPublishing ? "default" : "secondary"}
-                className={cn(
-                  "rounded-lg px-3 text-xs font-semibold transition-colors",
-                  hasUnsavedChanges && !isPublishing
-                    ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700"
-                    : ""
-                )}
-              >
-                {isPublishing ? (
-                  <DevFolioInlineLoader />
-                ) : hasUnsavedChanges ? (
-                  <span className="inline-flex items-center gap-2">
-                    <span>Publish 🔥</span>
-                    <span className="hidden rounded border border-border/60 bg-muted/40 px-1.5 py-0.5 text-[11px] md:inline">
-                      Ctrl+S
+                <Button
+                  size="sm"
+                  onClick={onPublish}
+                  disabled={!hasUnsavedChanges || isPublishing}
+                  variant={hasUnsavedChanges && !isPublishing ? "default" : "secondary"}
+                  className={cn(
+                    "rounded-lg px-3 text-xs font-semibold transition-colors",
+                    hasUnsavedChanges && !isPublishing
+                      ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700"
+                      : ""
+                  )}
+                >
+                  {isPublishing ? (
+                    <DevFolioInlineLoader />
+                  ) : hasUnsavedChanges ? (
+                    <span className="inline-flex items-center gap-2">
+                      <span>Publish 🔥</span>
+                      <span className="hidden rounded border border-border/60 bg-muted/40 px-1.5 py-0.5 text-[11px] md:inline">
+                        Ctrl+S
+                      </span>
                     </span>
-                  </span>
-                ) : (
-                  "No Changes"
-                )}
-              </Button>
-            </div>
+                  ) : (
+                    "No Changes"
+                  )}
+                </Button>
+              </div>
           </motion.div>
 
           {/* Dashboard Content */}

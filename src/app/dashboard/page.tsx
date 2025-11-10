@@ -9,7 +9,9 @@ import { SkillsSection } from "@/components/dashboard/SkillsSection"
 import { SocialsSection } from "@/components/dashboard/SocialsSection"
 import { AnalyticsSection } from "@/components/dashboard/AnalyticsSection"
 import ThemeSelector from "@/components/dashboard/ThemeSelector"
-import { DevFolioLoader } from "@/components/ui/DevFolioLoader"
+import { UpvoteNotificationsBell, UpvoteNotification } from "@/components/dashboard/UpvoteNotificationsBell"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
 import toast, { Toaster } from "react-hot-toast"
 import { useSession } from "@/hooks/useSession"
 import { usePortfolio } from "@/hooks/usePortfolio"
@@ -33,6 +35,19 @@ export default function DashboardPage() {
   const portfolio = usePortfolio(user)
   
   const feedPrefetchStartedRef = useRef(false)
+  type SummaryProject = {
+    projectId: number
+    projectName: string
+    recentUpvotes: number
+    totalUpvotes: number
+  }
+  const [notifications, setNotifications] = useState<UpvoteNotification[]>([])
+  const [unreadNotifications, setUnreadNotifications] = useState(0)
+  const notificationSocketRef = useRef<WebSocket | null>(null)
+  const summaryFetchTriggeredRef = useRef(false)
+  const [summaryOpen, setSummaryOpen] = useState(false)
+  const [summaryProjects, setSummaryProjects] = useState<SummaryProject[]>([])
+  const [summarySinceLabel, setSummarySinceLabel] = useState<string | null>(null)
   
   // Handlers hook - portfolio data को original data के रूप में pass करें
   const handlers = usePortfolioHandlers(
@@ -89,6 +104,195 @@ export default function DashboardPage() {
       }
     }
   }, []);
+
+  useEffect(() => {
+    summaryFetchTriggeredRef.current = false
+  }, [user?.id])
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    if (!user?.id) return
+
+    if (notificationSocketRef.current) {
+      try {
+        notificationSocketRef.current.close()
+      } catch (closeError) {
+        console.error("🔔 Failed to close existing notification socket:", closeError)
+      }
+      notificationSocketRef.current = null
+    }
+
+    const protocol = window.location.protocol === "https:" ? "wss" : "ws"
+    const socket = new WebSocket(`${protocol}://${window.location.host}/api/notifications/stream`)
+    notificationSocketRef.current = socket
+
+    let heartbeat: ReturnType<typeof setInterval> | null = null
+
+    socket.addEventListener("open", () => {
+      heartbeat = setInterval(() => {
+        if (socket.readyState === WebSocket.OPEN) {
+          socket.send("ping")
+        }
+      }, 30000)
+    })
+
+    socket.addEventListener("message", async (event) => {
+      try {
+        if (event.data === "pong") return
+        const payload =
+          typeof event.data === "string"
+            ? event.data
+            : typeof Blob !== "undefined" && event.data instanceof Blob
+              ? await event.data.text()
+              : null
+
+        if (!payload) return
+
+        const parsed = JSON.parse(payload)
+        if (parsed?.type !== "project-upvote" || !parsed.data) return
+
+        const notification: UpvoteNotification = {
+          id: parsed.data.notificationId,
+          projectId: parsed.data.projectId,
+          projectName: parsed.data.projectName,
+          totalUpvotes: parsed.data.totalUpvotes,
+          createdAt: parsed.data.createdAt,
+          actor: parsed.data.actor,
+        }
+
+        setNotifications((prev) => {
+          const filtered = prev.filter((item) => item.id !== notification.id)
+          const next = [notification, ...filtered]
+          return next.slice(0, 25)
+        })
+
+        setUnreadNotifications((count) => count + 1)
+
+        playNotificationSound()
+
+        const actorDisplay =
+          notification.actor?.githubUsername ||
+          notification.actor?.name ||
+          "किसी ने"
+
+        toast.success(
+          `${actorDisplay} ने "${notification.projectName}" को upvote किया!`,
+          successToastConfig
+        )
+      } catch (messageError) {
+        console.error("🔔 Failed to process upvote websocket message:", messageError)
+      }
+    })
+
+    socket.addEventListener("close", () => {
+      if (heartbeat) {
+        clearInterval(heartbeat)
+      }
+    })
+
+    socket.addEventListener("error", (event) => {
+      console.error("🔔 Upvote websocket error:", event)
+    })
+
+    return () => {
+      if (heartbeat) {
+        clearInterval(heartbeat)
+      }
+      if (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING) {
+        try {
+          socket.close()
+        } catch (closeError) {
+          console.error("🔔 Failed to close notification socket:", closeError)
+        }
+      }
+      if (notificationSocketRef.current === socket) {
+        notificationSocketRef.current = null
+      }
+    }
+  }, [user?.id])
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    if (loading || !user?.id) return
+    if (summaryFetchTriggeredRef.current) return
+
+    summaryFetchTriggeredRef.current = true
+
+    const controller = new AbortController()
+
+    const fetchSummary = async () => {
+      try {
+        const lastSeen = localStorage.getItem("devfolio:lastUpvoteSummarySeenAt")
+        const params = new URLSearchParams()
+        if (lastSeen) {
+          params.set("since", lastSeen)
+        }
+        const query = params.toString()
+        const response = await fetch(
+          `/api/dashboard/upvotes/summary${query ? `?${query}` : ""}`,
+          {
+            cache: "no-store",
+            signal: controller.signal,
+          }
+        )
+        if (!response.ok) return
+
+        const data = await response.json()
+        if (controller.signal.aborted) return
+
+        if (Array.isArray(data.projects) && data.projects.length > 0) {
+          setSummaryProjects(data.projects)
+          setSummaryOpen(true)
+
+          if (data.since) {
+            try {
+              const date = new Date(data.since)
+              if (!Number.isNaN(date.getTime())) {
+                setSummarySinceLabel(
+                  date.toLocaleString(undefined, {
+                    dateStyle: "medium",
+                    timeStyle: "short",
+                  })
+                )
+              } else {
+                setSummarySinceLabel(null)
+              }
+            } catch {
+              setSummarySinceLabel(null)
+            }
+          } else {
+            setSummarySinceLabel(null)
+          }
+        }
+      } catch (error) {
+        if (!controller.signal.aborted) {
+          console.error("🔔 Failed to load upvote summary:", error)
+        }
+      }
+    }
+
+    fetchSummary()
+
+    return () => {
+      controller.abort()
+    }
+  }, [loading, user?.id])
+  const handleNotificationsOpenChange = (open: boolean) => {
+    if (!open) return
+    setUnreadNotifications(0)
+    if (typeof window !== "undefined") {
+      localStorage.setItem("devfolio:lastUpvoteNotificationSeenAt", new Date().toISOString())
+    }
+  }
+
+  const dismissSummary = () => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("devfolio:lastUpvoteSummarySeenAt", new Date().toISOString())
+    }
+    setSummaryOpen(false)
+    setSummaryProjects([])
+    setSummarySinceLabel(null)
+  }
 
   // Publish handler
   const handlePublishAll = async () => {
@@ -353,21 +557,76 @@ export default function DashboardPage() {
     repositories: []
   }
 
-    return (
-      <>
-        <Toaster position="top-left" />
-        <DashboardLayout
-          user={displayUser}
-          activeSection={activeSection}
-          onSectionChange={handleSectionChange}
-          livePortfolio={portfolio.livePortfolio}
-          portfolioData={portfolio.portfolioData}
-          hasUnsavedChanges={portfolio.hasUnsavedChanges && !portfolio.isInitialLoad}
-          onPublish={handlePublishAll}
-          isPublishing={isPublishing}
-        >
-          {renderActiveSection}
-        </DashboardLayout>
-      </>
-    )
+  return (
+    <>
+      <Toaster position="top-left" />
+
+      <Dialog
+        open={summaryOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            dismissSummary()
+          }
+        }}
+      >
+        <DialogContent className="max-w-md space-y-4">
+          <DialogHeader>
+            <DialogTitle>आपकी कम्युनिटी अपडेट्स</DialogTitle>
+            <DialogDescription>
+              {summarySinceLabel
+                ? `${summarySinceLabel} से आपके प्रोजेक्ट्स को नए upvotes मिले हैं।`
+                : "आपके प्रोजेक्ट्स को समुदाय से नई सराहना मिली है।"}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3">
+            {summaryProjects.map((project) => (
+              <div
+                key={project.projectId}
+                className="rounded-xl border border-border/60 bg-muted/20 px-4 py-3 shadow-sm"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold text-foreground line-clamp-2">
+                    {project.projectName}
+                  </span>
+                  <span className="text-sm font-bold text-orange-600">
+                    +{project.recentUpvotes}
+                  </span>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  कुल upvotes: {project.totalUpvotes}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          <DialogFooter>
+            <Button onClick={dismissSummary} className="ml-auto">
+              ठीक है, धन्यवाद
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <DashboardLayout
+        user={displayUser}
+        activeSection={activeSection}
+        onSectionChange={handleSectionChange}
+        livePortfolio={portfolio.livePortfolio}
+        portfolioData={portfolio.portfolioData}
+        hasUnsavedChanges={portfolio.hasUnsavedChanges && !portfolio.isInitialLoad}
+        onPublish={handlePublishAll}
+        isPublishing={isPublishing}
+        notificationBell={
+          <UpvoteNotificationsBell
+            notifications={notifications}
+            unreadCount={unreadNotifications}
+            onOpenChange={handleNotificationsOpenChange}
+          />
+        }
+      >
+        {renderActiveSection}
+      </DashboardLayout>
+    </>
+  )
 }
