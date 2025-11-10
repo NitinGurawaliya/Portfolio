@@ -8,6 +8,11 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url)
     const sort = (searchParams.get("sort") as SortOption) ?? "newest"
+    const pageParam = searchParams.get("page")
+    const limitParam = searchParams.get("limit")
+
+    const page = Math.max(parseInt(pageParam ?? "1", 10) || 1, 1)
+    const pageSize = Math.min(Math.max(parseInt(limitParam ?? "10", 10) || 10, 1), 50)
 
     const currentUserId = await resolveCurrentUserId(req)
 
@@ -169,9 +174,20 @@ export async function GET(req: NextRequest) {
       )
     }
 
+    const total = sortedProjects.length
+    const start = (page - 1) * pageSize
+    const end = start + pageSize
+
+    const paginatedProjects = sortedProjects.slice(start, end)
+    const hasMore = end < total
+
     return NextResponse.json({
       sort,
-      projects: sortedProjects,
+      page,
+      pageSize,
+      total,
+      hasMore,
+      projects: paginatedProjects,
     })
   } catch (error) {
     console.error("❌ Feed: Failed to fetch projects:", error)

@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { ProjectIcon } from "@/components/ui/project-icon"
-import { ArrowBigUp, Check, Eye, Loader2, Share2 } from "lucide-react"
+import { ArrowBigUp, Check, Eye, Share2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 export type FeedProject = {
@@ -32,10 +32,10 @@ export type FeedProject = {
 interface ProjectFeedCardProps {
   project: FeedProject
   onToggleUpvote: (projectId: number) => void
-  upvoteLoading?: boolean
+  upvotePending?: boolean
 }
 
-export function ProjectFeedCard({ project, onToggleUpvote, upvoteLoading = false }: ProjectFeedCardProps) {
+export function ProjectFeedCard({ project, onToggleUpvote, upvotePending = false }: ProjectFeedCardProps) {
   const portfolioHref = project.author.portfolioSlug ? `/${project.author.portfolioSlug}` : undefined
 
   const description =
@@ -44,10 +44,10 @@ export function ProjectFeedCard({ project, onToggleUpvote, upvoteLoading = false
       : "No description has been provided for this project yet."
 
   return (
-    <Card className="group relative mx-auto flex h-full w-full max-w-3xl min-h-[240px] flex-col overflow-hidden rounded-2xl border border-border/20 bg-card/90 shadow-[0_8px_16px_rgba(0,0,0,0.08)] transition-all duration-200">
-      <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-4">
-        <div className="flex flex-1 items-start gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted/40">
+    <Card className="group relative mx-auto w-full max-w-xl gap-0 rounded-xl   p-0 border-1 border-gray-200 shadow-none transition-colors duration-150">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 px-6 pb-3 pt-5">
+        <div className="flex flex-1 items-center gap-3.5">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border/30 bg-muted/30">
             <ProjectIcon
               favicon={project.favicon || undefined}
               logo={project.logo || undefined}
@@ -56,13 +56,13 @@ export function ProjectFeedCard({ project, onToggleUpvote, upvoteLoading = false
             />
           </div>
           <div className="flex-1">
-            <h3 className="text-sm font-semibold leading-tight text-foreground">
+            <h3 className="text-md font-semibold leading-tight text-foreground">
               {project.deployedUrl || project.githubUrl ? (
                 <Link
                   href={project.deployedUrl ?? project.githubUrl!}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="transition hover:text-primary"
+                  className="transition hover:text-orange-500"
                 >
                   {project.title}
                 </Link>
@@ -72,34 +72,29 @@ export function ProjectFeedCard({ project, onToggleUpvote, upvoteLoading = false
             </h3>
           </div>
         </div>
-         <button
-           type="button"
-           aria-label={project.hasUpvoted ? "Remove upvote" : "Upvote project"}
-           onClick={() => onToggleUpvote(project.id)}
-           disabled={upvoteLoading}
-           className={cn(
-             "flex h-10 w-10 shrink-0 flex-col items-center justify-center rounded-lg border border-border/30 bg-background text-[11px] font-semibold text-muted-foreground transition hover:border-primary/40 hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/40",
-             project.hasUpvoted && "border-primary/40 bg-primary/10 text-primary",
-             upvoteLoading && "cursor-wait opacity-80"
-           )}
-         >
-           {upvoteLoading ? (
-             <Loader2 className="h-3.5 w-3.5 animate-spin" />
-           ) : (
-             <ArrowBigUp className="h-3.5 w-3.5" />
-           )}
-           <span className="mt-0.5 leading-none">{project.upvotes.toLocaleString()}</span>
-         </button>
+        <button
+          type="button"
+          aria-label={project.hasUpvoted ? "Remove upvote" : "Upvote project"}
+          onClick={() => onToggleUpvote(project.id)}
+          className={cn(
+            "flex h-10 border-2 border-black rounded-md w-10 shrink-0 flex-col items-center justify-center rounded-md border border-border/40 bg-background text-sm font-semibold text-muted-foreground transition focus:outline-none focus:ring-2",
+            project.hasUpvoted && "border-orange-500 bg-orange-500/10 text-orange-500",
+            upvotePending && "opacity-70"
+          )}
+        >
+          <ArrowBigUp className="h-3.5 w-3.5" />
+          <span className="mt-0.5 leading-none text-sm">{project.upvotes.toLocaleString()}</span>
+        </button>
       </CardHeader>
 
-      <CardContent className="flex flex-1 flex-col gap-3 px-5 pb-0">
-        <p className="text-sm leading-relaxed text-muted-foreground">{description}</p>
-        <div className="flex flex-wrap items-center gap-2">
+      <CardContent className="flex flex-1 flex-col gap-3 mt-2 px-6 pb-0">
+        <p className="w-full text-sm  break-words">{description}</p>
+        <div className="flex flex-wrap items-center gap-1.5">
           {project.tags &&
             project.tags.map((tag) => (
               <span
                 key={tag}
-                className="inline-flex items-center gap-1 rounded-full border border-border/30 bg-muted/30 px-2.5 py-1 text-xs font-medium text-foreground"
+                className="inline-flex items-center gap-1 rounded-full border border-border/30 bg-muted/20 px-2.5 py-0.5 text-[11px] font-medium text-foreground/70"
               >
                 <span className="text-foreground/60">#</span>
                 {tag}
@@ -108,15 +103,17 @@ export function ProjectFeedCard({ project, onToggleUpvote, upvoteLoading = false
         </div>
       </CardContent>
 
-      <CardFooter className="mt-4 flex items-center justify-between border-t border-border/10 bg-background/40 px-5 py-3">
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <span className="font-medium">Made by</span>
+      <CardFooter className="mt-0 flex items-center justify-between border-t border-border/15 bg-background/80 px-6 py-3 text-xs text-muted-foreground">
+        <div className="flex items-center gap-2.5">
+          <span className="font-medium text-foreground">Created by</span>
           {portfolioHref ? (
             <Link
               href={portfolioHref}
+              target="_blank"
+              rel="noopener noreferrer"
               className="flex items-center gap-2 font-semibold text-foreground transition hover:text-primary"
             >
-              <span className="flex h-6 w-6 items-center justify-center overflow-hidden rounded-full bg-muted/60">
+              <span className="flex h-6 w-6 items-center ml-0 justify-center overflow-hidden rounded-full border border-border/30 bg-muted/50">
                 {project.author.avatarUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={project.author.avatarUrl} alt={project.author.name} className="h-full w-full object-cover" />
@@ -126,14 +123,14 @@ export function ProjectFeedCard({ project, onToggleUpvote, upvoteLoading = false
                   </span>
                 )}
               </span>
-              <span className="flex items-center gap-1">
+              <span className="flex items-center gap-1 ml-0">
                 {project.author.name}
-                {project.author.verified && <Check className="h-3.5 w-3.5 text-blue-500" />}
+                {project.author.verified && <Check className="h-3 w-3 text-blue-500" />}
               </span>
             </Link>
           ) : (
             <span className="flex items-center gap-2 font-semibold text-foreground">
-              <span className="flex h-6 w-6 items-center justify-center overflow-hidden rounded-full bg-muted/60">
+              <span className="flex h-7 w-7 items-center justify-center overflow-hidden rounded-full border border-border/30 bg-muted/50">
                 {project.author.avatarUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={project.author.avatarUrl} alt={project.author.name} className="h-full w-full object-cover" />
@@ -145,20 +142,20 @@ export function ProjectFeedCard({ project, onToggleUpvote, upvoteLoading = false
               </span>
               <span className="flex items-center gap-1">
                 {project.author.name}
-                {project.author.verified && <Check className="h-3.5 w-3.5 text-blue-500" />}
+                {project.author.verified && <Check className="h-3 w-3 text-blue-500" />}
               </span>
             </span>
           )}
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+          <div className="flex items-center gap-1 text-xs text-gray-500">
             <Eye className="h-3.5 w-3.5" />
-            <span className="font-medium">{project.views}</span>
+            <span className="font-medium text-foreground">{project.views}</span>
           </div>
           {(project.deployedUrl || project.githubUrl) && (
             <button
               type="button"
-              className="flex h-6 w-6 items-center justify-center text-muted-foreground transition hover:text-foreground"
+              className="flex h-6 w-6 border border-gray-300 rounded-md items-center justify-center text-muted-foreground transition hover:text-foreground"
               onClick={() => {
                 const target = project.deployedUrl ?? project.githubUrl
                 if (target) {
