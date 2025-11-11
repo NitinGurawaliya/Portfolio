@@ -43,9 +43,17 @@ export function HeroSection() {
   return (
     <section className="relative overflow-hidden px-4 py-10 sm:px-6 lg:px-8">
       <div className="absolute inset-0 grid-bg opacity-30" />
-      <div className="mx-auto w-full max-w-[16rem]">
-        <a href="https://shipsquad.space/saas/1eb0b450-6fb4-44ef-ab2b-ce0ce95e25b9" target="_blank" rel="noopener">
-          <img src="https://shipsquad.space/api/badge?id=1eb0b450-6fb4-44ef-ab2b-ce0ce95e25b9&style=light" alt="Featured on ShipSquad" />
+      <div className="mx-auto w-full max-w-[14rem] -mt-2 sm:mt-0 sm:max-w-[12rem]">
+        <a
+          href="https://shipsquad.space/saas/1eb0b450-6fb4-44ef-ab2b-ce0ce95e25b9"
+          target="_blank"
+          rel="noopener"
+        >
+          <img
+            src="https://shipsquad.space/api/badge?id=1eb0b450-6fb4-44ef-ab2b-ce0ce95e25b9&style=light"
+            alt="Featured on ShipSquad"
+            className="w-full"
+          />
         </a>
       </div>
       <div className="container relative mx-auto max-w-6xl px-0">
@@ -69,13 +77,13 @@ export function HeroSection() {
               No coding required. Import your projects, customize your theme, and publish. Your portfolio is live in 2 minutes.
             </p>
  
-            <div className="mb-3 flex w-full flex-col items-stretch justify-center gap-2 sm:mb-4 sm:flex-row sm:items-center sm:gap-3">
+            <div className="mb-3 flex w-full flex-col items-stretch justify-start gap-2 sm:mb-4 sm:flex-row sm:items-center sm:gap-3 sm:justify-start">
                 {!isChecking && (
                   <>
                     {isLoggedIn ? (
                       <Button
                         size="lg"
-                      className="inline-flex w-full border-0 bg-gradient-to-r from-orange-500 to-orange-600 px-4 text-xs text-white shadow-md hover:from-orange-600 hover:to-orange-700 sm:w-auto sm:px-6 sm:text-sm lg:px-8 lg:text-base"
+                        className="inline-flex w-full max-w-[18rem] border-0 bg-gradient-to-r from-orange-500 to-orange-600 px-4 text-xs text-white shadow-md hover:from-orange-600 hover:to-orange-700 sm:w-auto sm:max-w-none sm:px-6 sm:text-sm lg:px-8 lg:text-base"
                         asChild
                       >
                         <a href="/dashboard">
@@ -86,7 +94,7 @@ export function HeroSection() {
                     ) : (
                       <Button
                         size="lg"
-                        className="inline-flex w-full border-0 bg-gradient-to-r from-orange-500 to-orange-600 px-4 text-xs text-white shadow-md hover:from-orange-600 hover:to-orange-700 sm:w-auto sm:px-6 sm:text-sm lg:px-8 lg:text-base"
+                        className="inline-flex w-full max-w-[18rem] border-0 bg-gradient-to-r from-orange-500 to-orange-600 px-4 text-xs text-white shadow-md hover:from-orange-600 hover:to-orange-700 sm:w-auto sm:max-w-none sm:px-6 sm:text-sm lg:px-8 lg:text-base"
                         asChild
                       >
                         <a href="/auth">
@@ -98,7 +106,7 @@ export function HeroSection() {
                     <Button
                       variant="outline"
                       size="lg"
-                    className="inline-flex w-full bg-transparent px-4 text-xs sm:w-auto sm:px-6 sm:text-sm lg:px-8 lg:text-base"
+                      className="inline-flex w-full max-w-[18rem] bg-transparent px-4 text-xs sm:w-auto sm:max-w-none sm:px-6 sm:text-sm lg:px-8 lg:text-base"
                       asChild
                     >
                       <a href="https://devfolio.cc/Nitin" target="_blank" rel="noopener noreferrer">

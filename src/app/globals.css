@@ -224,4 +224,36 @@ html {
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
   }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: rgba(17, 24, 39, 0.15);
+    border-radius: 9999px;
+  }
+
+  .dashboard-wrapper {
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    justify-content: flex-start;
+    overflow: hidden;
+  }
+
+  .dashboard-zoom {
+    width: 100%;
+    min-height: 100vh;
+    transform-origin: top left;
+    transform: none;
+  }
 }

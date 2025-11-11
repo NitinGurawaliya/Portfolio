@@ -20,7 +20,8 @@ import {
   FileText,
   Pencil,
   Trash2,
-  Plus
+  Plus,
+  ArrowRight
 } from "lucide-react"
 import { debounce } from "lodash"
 import { AddExperienceModal } from "./AddExperienceModal"
@@ -42,9 +43,22 @@ interface HomeSectionProps {
   onExperiencesChange?: (exps: any[]) => void
   cvUrl?: string | null
   setCvUrl?: (url: string | null) => void
+  onNavigateToSection?: (section: string) => void
 }
 
-export function HomeSection({ user, portfolioData, onUpdate, usernameAvailability, isInitialLoad = false, isLoading = false, experiences: experiencesProp = [], onExperiencesChange, cvUrl: cvUrlProp, setCvUrl: setCvUrlProp }: HomeSectionProps) {
+export function HomeSection({
+  user,
+  portfolioData,
+  onUpdate,
+  usernameAvailability,
+  isInitialLoad = false,
+  isLoading = false,
+  experiences: experiencesProp = [],
+  onExperiencesChange,
+  cvUrl: cvUrlProp,
+  setCvUrl: setCvUrlProp,
+  onNavigateToSection,
+}: HomeSectionProps) {
   // Initialize formData - will be updated by useEffect when user/portfolioData loads
   const [formData, setFormData] = useState({
     displayName: "",
@@ -273,13 +287,13 @@ export function HomeSection({ user, portfolioData, onUpdate, usernameAvailabilit
 
   return (
     <motion.div
-      className="space-y-2 px-4 sm:px-6 md:px-10"
+      className="space-y-1.5 px-4 sm:px-6 md:px-10"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.2 }}
     >
       {/* Welcome Section */}
-      <motion.div
+      {/* <motion.div
         className="-mt-6 md:-mt-8"
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -290,22 +304,23 @@ export function HomeSection({ user, portfolioData, onUpdate, usernameAvailabilit
             <div className="flex items-center justify-between">
               <CardTitle className="text-xl md:text-2xl flex items-center font-bold text-gray-900 dark:text-gray-100"
               >
-                <User className="h-4 w-4 mr-2 text-gray-700 dark:text-gray-300" />
                 Bio
               </CardTitle>
             </div>
           </CardHeader>
         </Card>
-      </motion.div>
+      </motion.div> */}
 
       {/* Profile Section with Two-Column Layout */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.2 }}
+          className="bg-transparent shadow-none border-none"
         >
-          <Card className="rounded-2xl border border-border/60 bg-background/80 shadow-sm">
-            <CardContent className="space-y-5 p-4 sm:p-6">
+           
+          <Card className="rounded-2xl bg-transparent shadow-none border-none">
+            <CardContent className="space-y-3.5 sm:space-y-4.5 p-4 sm:p-5">
               {/* Profile Photo Section */}
               <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
                 <Avatar className="h-14 w-14 sm:h-16 sm:w-16">
@@ -338,45 +353,39 @@ export function HomeSection({ user, portfolioData, onUpdate, usernameAvailabilit
               </div>
 
               {/* Two-Column Form */}
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2">
                 {/* Display Name */}
-                <div className="space-y-1.5">
-                  <Label htmlFor="displayName" className="text-sm font-medium">
+                <div className="space-y-1">
+                  <Label htmlFor="displayName" className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                     Display name
                   </Label>
                   <Input
                     id="displayName"
                     value={formData.displayName}
                     onChange={(e) => handleInputChange("displayName", e.target.value)}
-                    className="h-11 rounded-xl border-border/60 bg-muted/30 text-sm focus-visible:ring-2 focus-visible:ring-primary"
+                    className="h-9 rounded-lg border-border/60 bg-muted/30 text-[13px] focus-visible:ring-2 focus-visible:ring-primary"
                     placeholder="Your name"
                   />
-                  <p className="text-xs text-muted-foreground">
-                    This name will appear on your public portfolio.
-                  </p>
                 </div>
 
                 {/* Job Title */}
-                <div className="space-y-1.5">
-                  <Label htmlFor="jobTitle" className="text-sm font-medium">
+                <div className="space-y-1">
+                  <Label htmlFor="jobTitle" className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                     Job title
                   </Label>
                   <Input
                     id="jobTitle"
                     value={formData.jobTitle}
                     onChange={(e) => handleInputChange("jobTitle", e.target.value)}
-                    className="h-11 rounded-xl border-border/60 bg-muted/30 text-sm focus-visible:ring-2 focus-visible:ring-primary"
+                    className="h-9 rounded-lg border-border/60 bg-muted/30 text-[13px] focus-visible:ring-2 focus-visible:ring-primary"
                     placeholder="e.g. • Full Stack Developer"
                     maxLength={50}
                   />
-                  <p className="text-xs text-muted-foreground">
-                    Add a short headline for your role.
-                  </p>
                 </div>
 
                 {/* Portfolio Username */}
-                <div className="space-y-1.5">
-                  <Label htmlFor="customUsername" className="text-sm font-medium">
+                <div className="space-y-1">
+                  <Label htmlFor="customUsername" className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                     Portfolio username
                   </Label>
                   <div className="relative">
@@ -384,28 +393,28 @@ export function HomeSection({ user, portfolioData, onUpdate, usernameAvailabilit
                       id="customUsername"
                       value={portfolioData?.customUsername || user?.githubUsername || ""}
                       onChange={(e) => handleUsernameChange(e.target.value)}
-                      className="h-11 rounded-xl border-border/60 bg-muted/30 pl-8 text-sm focus-visible:ring-2 focus-visible:ring-primary"
+                      className="h-9 rounded-lg border-border/60 bg-muted/30 pl-7 text-[13px] focus-visible:ring-2 focus-visible:ring-primary"
                       placeholder="Choose a unique username"
                     />
-                    <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                    <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[13px] text-muted-foreground">
                       /
                     </span>
                     <div className="absolute right-3 top-1/2 -translate-y-1/2">
                       {usernameAvailability?.isChecking && (
-                        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                        <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
                       )}
                       {!usernameAvailability?.isChecking && usernameAvailability?.isAvailable === true && (
-                        <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
                       )}
                       {!usernameAvailability?.isChecking && usernameAvailability?.isAvailable === false && (
-                        <XCircle className="h-4 w-4 text-red-500" />
+                        <XCircle className="h-3.5 w-3.5 text-red-500" />
                       )}
                     </div>
                   </div>
                   {usernameAvailability?.message && (
                     <p
                       className={cn(
-                        "text-xs font-medium",
+                        "text-xs font-medium leading-tight",
                         usernameAvailability.isAvailable === true
                           ? "text-emerald-600"
                           : usernameAvailability.isAvailable === false
@@ -416,26 +425,23 @@ export function HomeSection({ user, portfolioData, onUpdate, usernameAvailabilit
                       {usernameAvailability.message}
                     </p>
                   )}
-                    <p className="text-xs text-muted-foreground">
-                      Portfolio URL: <span className="font-medium">{`devfolio.cc/${formData.customUsername || user?.githubUsername || "username"}`}</span>
-                  </p>
                 </div>
 
                 {/* Bio */}
-                <div className="space-y-1.5">
-                  <Label htmlFor="bio" className="text-sm font-medium">
-                    Bio <span className="text-xs text-muted-foreground">(max {bioLimit} characters)</span>
+                <div className="space-y-1">
+                  <Label htmlFor="bio" className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    Bio <span className="ml-1 text-[11px] normal-case text-muted-foreground">(max {bioLimit} characters)</span>
                   </Label>
                   <Textarea
                     id="bio"
                     value={formData.bio}
                     onChange={(e) => handleInputChange("bio", e.target.value)}
-                    className="rounded-xl border-border/60 bg-muted/30 text-sm focus-visible:ring-2 focus-visible:ring-primary"
+                    className="rounded-lg border-border/60 bg-muted/30 text-[13px] focus-visible:ring-2 focus-visible:ring-primary"
                   placeholder="Share your story, mission, or current focus…"
                     rows={3}
                     maxLength={bioLimit}
                   />
-                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <div className="flex items-center justify-between text-[11px] text-muted-foreground">
                     <span>This text appears in your live portfolio hero section.</span>
                     <span>
                       {bioCharacterCount}/{bioLimit}
@@ -447,6 +453,19 @@ export function HomeSection({ user, portfolioData, onUpdate, usernameAvailabilit
           </Card>
         </motion.div>
 
+        {onNavigateToSection && (
+          <div className="pointer-events-none fixed bottom-6 right-6 z-40">
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => onNavigateToSection("repos")}
+              className="pointer-events-auto flex items-center gap-2 rounded-full bg-black px-4 py-2 text-xs font-semibold text-white shadow-lg transition hover:bg-black/85 focus-visible:ring-2 focus-visible:ring-orange-400"
+            >
+              Next: Projects
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        )}
       {/* CV URL Modal */}
       {isCvModalOpen && (
         <div className="fixed inset-0 z-[110]">

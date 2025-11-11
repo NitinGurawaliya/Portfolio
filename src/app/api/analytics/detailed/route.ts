@@ -70,6 +70,25 @@ export async function GET(req: NextRequest) {
     
     console.log(`🔍 DEBUG: Project ID to Repo ID mapping:`, projectIdToRepoId)
     console.log(`🔍 DEBUG: DB Repo ID to Repo ID mapping:`, dbRepoIdToRepoId)
+
+    // Fetch upvote counts for all portfolio repositories
+    const portfolioRepoIds = portfolioRepos.map((repo) => repo.id)
+    let upvoteCounts: Array<{ portfolioRepositoryId: number; _count: { _all: number } }> = []
+    if (portfolioRepoIds.length > 0) {
+      upvoteCounts = await prisma.projectUpvote.groupBy({
+        by: ["portfolioRepositoryId"],
+        where: {
+          portfolioRepositoryId: { in: portfolioRepoIds }
+        },
+        _count: {
+          _all: true
+        }
+      })
+    }
+    const upvoteCountMap = upvoteCounts.reduce((acc, entry) => {
+      acc.set(entry.portfolioRepositoryId, entry._count._all)
+      return acc
+    }, new Map<number, number>())
     
     // Group project clicks by repository ID (GitHub ID)
     const projectStats = projectClicks.reduce((acc, click) => {
@@ -110,6 +129,22 @@ export async function GET(req: NextRequest) {
     console.log(`🔍 DEBUG: Final project stats:`, projectStats)
     console.log(`🔍 DEBUG: Project stats keys:`, Object.keys(projectStats))
     console.log(`🔍 DEBUG: Project stats values:`, Object.values(projectStats))
+
+    // Ensure every portfolio repository has an entry and enrich with upvote counts
+    portfolioRepos.forEach((repo) => {
+      const key = repo.id.toString()
+      if (!projectStats[key]) {
+        projectStats[key] = {
+          projectId: repo.id,
+          portfolioProjectId: repo.id,
+          githubId: Number(repo.repository.githubId),
+          projectName: repo.repository.name,
+          clickCount: 0,
+          lastClicked: null
+        }
+      }
+      projectStats[key].upvoteCount = upvoteCountMap.get(repo.id) ?? 0
+    })
     
     // Get social clicks
     const socialClicks = await prisma.socialClick.findMany({

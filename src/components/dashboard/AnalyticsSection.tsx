@@ -625,7 +625,7 @@ export function AnalyticsSection({ portfolioId, analyticsData }: AnalyticsSectio
 
       {/* Activity Graph and Top Referrers - Side by Side */}
         <motion.div variants={itemVariants}>
-          <div className="flex flex-col gap-4 lg:flex-row">
+          <div className="flex flex-col gap-4">
           {/* Heatmap - Left side */}
           <Card className="shadow-none border-none flex-1 bg-background">
             <CardHeader className="pb-0">
@@ -640,7 +640,7 @@ export function AnalyticsSection({ portfolioId, analyticsData }: AnalyticsSectio
               <CardContent className="pt-4">
                 <div
                   ref={heatmapRef}
-                  className="w-full overflow-x-auto scrollbar-hide"
+                  className="w-full overflow-x-auto scrollbar-thin sm:scrollbar-hide"
                   style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
                 >
                   <div className="min-w-[680px]">
@@ -703,7 +703,7 @@ export function AnalyticsSection({ portfolioId, analyticsData }: AnalyticsSectio
 
           {/* Top Referrers - Right side */}
           {analytics?.topReferrers && analytics.topReferrers.length > 0 && (
-              <div className="w-full flex-shrink-0 lg:w-80">
+            <div className="w-full xl:w-[30rem] max-w-full">
               <TopReferrersList referrers={analytics.topReferrers} />
             </div>
           )}

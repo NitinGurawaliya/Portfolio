@@ -566,6 +566,7 @@ export default function DashboardPage() {
               onExperiencesChange={portfolio.setExperiences}
               cvUrl={portfolio.cvUrl}
               setCvUrl={portfolio.setCvUrl}
+              onNavigateToSection={handleSectionChange}
             />
           )
         case "repos": {
@@ -624,6 +625,7 @@ export default function DashboardPage() {
               }}
               logoOverrides={portfolio.logoOverrides}
               isLoading={portfolio.isLoadingPortfolio}
+              onNavigateToSection={handleSectionChange}
             />
           )
         }
@@ -634,6 +636,7 @@ export default function DashboardPage() {
               onAddSkill={handlers.handleAddSkill}
               onRemoveSkill={handlers.handleRemoveSkill}
               isLoading={portfolio.isLoadingPortfolio}
+              onNavigateToSection={handleSectionChange}
             />
           )
         case "socials":
@@ -645,6 +648,7 @@ export default function DashboardPage() {
               onTogglePin={handlers.handleTogglePin}
               onUpdateSocial={handlers.handleUpdateSocial}
               isLoading={portfolio.isLoadingPortfolio}
+              onNavigateToSection={handleSectionChange}
             />
           )
         case "analytics":

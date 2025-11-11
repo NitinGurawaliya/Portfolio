@@ -10,7 +10,8 @@ import {
   X, 
   Wrench,
   ChevronDown,
-  Plus
+  Plus,
+  ArrowRight
 } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
@@ -75,6 +76,7 @@ interface SkillsSectionProps {
   onAddSkill: (skill: Omit<Skill, 'id'>) => void
   onRemoveSkill: (skillId: string) => void
   isLoading?: boolean
+  onNavigateToSection?: (section: string) => void
 }
 
 // Comprehensive skills database with real technology icons
@@ -261,7 +263,7 @@ const otherSkills = [
   "Smart Contracts",
 ]
 
-export function SkillsSection({ skills, onAddSkill, onRemoveSkill, isLoading = false }: SkillsSectionProps) {
+export function SkillsSection({ skills, onAddSkill, onRemoveSkill, isLoading = false, onNavigateToSection }: SkillsSectionProps) {
   const [searchTerm, setSearchTerm] = useState("")
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
@@ -340,7 +342,6 @@ export function SkillsSection({ skills, onAddSkill, onRemoveSkill, isLoading = f
         <Card className="bg-white shadow-none border-none bg-background">
         <CardHeader className="pb-2">
             <CardTitle className="text-lg text-black font-bold flex items-center dark:text-white">
-              <Wrench className="h-4 w-4 mr-2" />
               Skills & Technologies
           </CardTitle>
             <div className="flex items-center justify-end">
@@ -629,6 +630,21 @@ export function SkillsSection({ skills, onAddSkill, onRemoveSkill, isLoading = f
             <div className="absolute left-2 top-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-black" />
           </motion.div>
         )}
+
+      {onNavigateToSection && (
+        <div className="pointer-events-none fixed bottom-6 right-6 z-40">
+          <Button
+            variant="default"
+            size="sm"
+            onClick={() => onNavigateToSection("socials")}
+            className="pointer-events-auto flex items-center gap-2 rounded-full bg-black px-4 py-2 text-xs font-semibold text-white shadow-lg transition hover:bg-black/85 focus-visible:ring-2 focus-visible:ring-orange-400"
+          >
+            Next: Socials
+            <ArrowRight className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      )}
+
       </AnimatePresence>
     </motion.div>
   )

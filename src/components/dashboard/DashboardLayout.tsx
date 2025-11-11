@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { PortfolioPreview } from "./PortfolioPreview"
 import { motion, AnimatePresence } from "framer-motion"
@@ -58,8 +58,13 @@ export function DashboardLayout({
   const [isActionsSheetOpen, setIsActionsSheetOpen] = useState(false)
   const [isSidebarPinned, setIsSidebarPinned] = useState(true)
   const [isSidebarHovered, setIsSidebarHovered] = useState(false)
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
 
   const isSidebarExpanded = isSidebarPinned || isSidebarHovered
+
+  useEffect(() => {
+    scrollContainerRef.current?.scrollTo({ top: 0, behavior: "auto" })
+  }, [activeSection])
 
     const sidebarItems = [
     { id: "home", label: "Bio", icon: User },
@@ -144,14 +149,14 @@ export function DashboardLayout({
   return (
     <>
       <Sheet open={isActionsSheetOpen} onOpenChange={setIsActionsSheetOpen}>
-        <SheetContent side="left" className="w-[260px] p-0 sm:w-[320px]">
-          <SheetHeader className="border-b border-border/60 px-4 py-4 text-left">
-            <SheetTitle className="text-base font-semibold">Quick actions</SheetTitle>
-            <SheetDescription className="text-sm text-muted-foreground">
+        <SheetContent side="left" className="w-[260px] p-2 sm:w-[320px]">
+          <SheetHeader className="border-b border-border/60 px-3 py-3 text-left">
+            <SheetTitle className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Quick actions</SheetTitle>
+            <SheetDescription className="text-xs text-muted-foreground">
               Manage preview, publishing, and profile access from one place.
             </SheetDescription>
           </SheetHeader>
-          <div className="flex flex-col gap-3 px-4 py-4">
+          <div className="flex flex-col gap-2.5 px-3 py-3 md:hidden">
             <Button
               variant="outline"
               size="sm"
@@ -159,7 +164,7 @@ export function DashboardLayout({
                 handleVisitProfile()
                 setIsActionsSheetOpen(false)
               }}
-              className="h-11 justify-start rounded-xl text-sm font-semibold"
+              className="h-8 justify-start rounded-lg text-xs font-medium"
             >
               Visit profile
               <ExternalLink className="ml-2 h-4 w-4" />
@@ -168,99 +173,89 @@ export function DashboardLayout({
               variant="outline"
               size="sm"
               onClick={handleTogglePreview}
-              className="h-11 justify-start rounded-xl text-sm font-semibold"
+              className="h-8 justify-start rounded-lg text-xs font-medium"
             >
               {isPreviewOpen ? "Hide preview" : "Show preview"}
               <Eye className="ml-2 h-4 w-4" />
-            </Button>
-            <Button
-              size="sm"
-              onClick={handlePublishClick}
-              disabled={!hasUnsavedChanges || isPublishing}
-              variant={hasUnsavedChanges && !isPublishing ? "default" : "secondary"}
-              className={cn(
-                "h-11 justify-start rounded-xl text-sm font-semibold transition-colors",
-                hasUnsavedChanges && !isPublishing
-                  ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700"
-                  : ""
-              )}
-            >
-              {isPublishing ? (
-                <DevFolioInlineLoader />
-              ) : hasUnsavedChanges ? (
-                <>
-                  Publish changes
-                  <span className="ml-2 hidden rounded border border-border/60 bg-muted/40 px-1.5 py-0.5 text-[11px] md:inline">
-                    Ctrl+S
-                  </span>
-                </>
-              ) : (
-                "No changes"
-              )}
             </Button>
           </div>
         </SheetContent>
       </Sheet>
 
       <Sheet open={isMobileNavOpen} onOpenChange={setIsMobileNavOpen}>
-        <SheetContent side="left" className="w-[280px] p-0 sm:w-[320px]">
-          <SheetHeader className="border-b border-border/60 px-4 py-4 text-left">
-            <SheetTitle className="flex items-center gap-2 text-base font-semibold">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 text-base font-semibold text-white shadow-sm">
+        <SheetContent side="left" className="w-[280px] p-1 sm:w-[320px]">
+          <SheetHeader className="border-b border-border/60 px-3 py-3 text-left">
+            <SheetTitle className="flex items-center gap-2 text-sm font-semibold">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 text-sm font-semibold text-white shadow-sm">
                 D
               </div>
               DevFolio
             </SheetTitle>
           </SheetHeader>
-          <div className="flex flex-col gap-2 px-4 py-4">
-            {sidebarItems.map((item) => {
-              const Icon = item.icon
-              const isActive = activeSection === item.id
-              return (
-                <Button
-                  key={item.id}
-                  variant={isActive ? "secondary" : "ghost"}
-                  size="sm"
-                  onClick={() => {
-                    onSectionChange(item.id)
-                    setIsMobileNavOpen(false)
-                  }}
-                  className="h-10 justify-start gap-3 rounded-xl text-sm font-medium"
-                >
-                  <Icon className="h-4 w-4" />
-                  {item.label}
-                </Button>
-              )
-            })}
-            <Button
-              variant={activeSection === communityItem.id ? "secondary" : "ghost"}
-              size="sm"
-              onClick={() => {
-                onSectionChange(communityItem.id)
-                setIsMobileNavOpen(false)
-              }}
-              className="h-10 justify-start gap-3 rounded-xl text-sm font-medium"
-            >
-              <CommunityIcon className="h-4 w-4" />
-              {communityItem.label}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setIsMobileNavOpen(false)
-                void handleLogout()
-              }}
-              className="h-10 justify-start gap-3 rounded-xl text-sm font-medium"
-            >
-              <LogOut className="h-4 w-4" />
-              Logout
-            </Button>
+          <div className="flex h-full flex-col gap-3 px-3 py-3">
+            <div className="space-y-2">
+              {sidebarItems.map((item) => {
+                const Icon = item.icon
+                const isActive = activeSection === item.id
+                return (
+                  <Button
+                    key={item.id}
+                    variant={isActive ? "secondary" : "ghost"}
+                    size="lg"
+                    onClick={() => {
+                      onSectionChange(item.id)
+                      setIsMobileNavOpen(false)
+                    }}
+                    className="h-10 w-full justify-start gap-2.5 rounded-lg text-sm font-medium"
+                  >
+                    <Icon className="h-4 w-4" />
+                    {item.label}
+                  </Button>
+                )
+              })}
+            </div>
+            <div className="mt-2 border-t border-border/60 pt-3 space-y-2">
+              <Button
+                variant={activeSection === communityItem.id ? "secondary" : "ghost"}
+                size="lg"
+                onClick={() => {
+                  onSectionChange(communityItem.id)
+                  setIsMobileNavOpen(false)
+                }}
+                className="h-10 w-full justify-start gap-2.5 rounded-lg text-sm font-medium"
+              >
+                <CommunityIcon className="h-4 w-4" />
+                {communityItem.label}
+              </Button>
+            </div>
+            <div className="mt-auto border-t border-border/60 pt-3 space-y-2">
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() => {
+                  setIsMobileNavOpen(false)
+                  void handleLogout()
+                }}
+                className="h-10 w-full justify-start gap-2.5 rounded-lg text-sm font-medium"
+              >
+                <LogOut className="h-4 w-4" />
+                Logout
+              </Button>
+            </div>
           </div>
         </SheetContent>
       </Sheet>
 
-      <div className="relative grid min-h-screen w-full bg-background text-foreground text-[0.95rem] md:grid-cols-[minmax(0,260px)_1fr]">
+      <div className="dashboard-wrapper">
+        <div className="dashboard-zoom">
+          <div
+            className={cn(
+              "relative grid h-screen w-full overflow-hidden bg-background text-foreground text-[0.95rem]",
+              isSidebarExpanded
+                ? "md:grid-cols-[minmax(0,14rem)_1fr]"
+                : "md:grid-cols-[minmax(0,3.5rem)_1fr]"
+            )}
+          >
         <motion.aside
           onMouseEnter={() => {
             if (!isSidebarPinned) {
@@ -276,24 +271,24 @@ export function DashboardLayout({
           initial="visible"
           animate="visible"
           className={cn(
-            "relative hidden h-full flex-col border-r border-border/60 bg-card/80 backdrop-blur-sm transition-all duration-200 md:sticky md:top-0 md:z-40 md:flex md:min-h-screen",
-            isSidebarExpanded ? "md:w-[16rem] md:px-3" : "md:w-16 md:items-center md:px-2"
+            "relative hidden h-full flex-col border-r border-border/60 bg-card/80 backdrop-blur-sm transition-all duration-200 md:sticky md:top-0 md:z-40 md:flex md:h-screen md:overflow-hidden",
+            isSidebarExpanded ? "md:w-[14rem] md:px-2" : "md:w-14 md:items-center md:px-2"
           )}
         >
           <motion.div
             className={cn(
-              "sticky top-0 z-10 flex items-center gap-3 bg-card/90",
-              isSidebarExpanded ? "justify-start px-1 pt-6 pb-4" : "justify-center pt-6 pb-4"
+            "sticky top-0 z-10 flex items-center gap-2.5 bg-card/90",
+            isSidebarExpanded ? "justify-start px-1 pt-5 pb-4" : "justify-center pt-5 pb-4"
             )}
             initial={{ opacity: 1, scale: 1 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0 }}
           >
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 text-base font-semibold text-white shadow-sm">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 text-sm font-semibold text-white shadow-sm">
               D
             </div>
             {isSidebarExpanded && (
-              <span className="text-sm font-semibold tracking-wide text-foreground/80">
+              <span className="text-xs font-semibold tracking-wide text-foreground/80">
                 DevFolio
               </span>
             )}
@@ -346,10 +341,10 @@ export function DashboardLayout({
                       size="sm"
                       onClick={() => onSectionChange(item.id)}
                       className={cn(
-                        "relative cursor-pointer rounded-xl transition-all duration-150",
+                        "relative cursor-pointer rounded-lg transition-all duration-150",
                         isSidebarExpanded
-                          ? "h-10 w-full justify-start gap-3 px-3"
-                          : "h-10 w-10 justify-center",
+                          ? "h-9 w-full justify-start gap-2.5 px-3 text-[11px] font-medium tracking-wide text-muted-foreground"
+                          : "h-9 w-9 justify-center text-[11px]",
                         isActive
                           ? "bg-gray-100 text-black shadow-sm dark:bg-card/80 dark:text-[#E5E7EB] dark:hover:bg-card/80"
                           : "text-muted-foreground hover:bg-card/60 hover:text-foreground"
@@ -357,7 +352,7 @@ export function DashboardLayout({
                     >
                       <Icon className="h-4 w-4" />
                       {isSidebarExpanded && (
-                        <span className="text-sm font-medium">{item.label}</span>
+                        <span className="text-[11px] font-medium tracking-wide">{item.label}</span>
                       )}
                       {isActive && !isSidebarExpanded && (
                         <motion.span
@@ -420,7 +415,7 @@ export function DashboardLayout({
           </nav>
 
           <motion.div
-            className="sticky bottom-0 z-10 pt-4 pb-6"
+            className="sticky bottom-0 z-10 pt-4 pb-5"
             initial={{ opacity: 1, y: 0 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0 }}
@@ -430,23 +425,23 @@ export function DashboardLayout({
               size="sm"
               onClick={handleLogout}
               className={cn(
-                "rounded-xl transition-all duration-150",
+              "rounded-lg transition-all duration-150",
                 isSidebarExpanded
-                  ? "h-10 w-full justify-start gap-3 px-3 text-muted-foreground hover:bg-destructive hover:text-white"
-                  : "h-10 w-10 justify-center text-muted-foreground hover:text-destructive"
+                ? "h-9 w-full justify-start gap-2.5 px-3 text-[11px] font-medium tracking-wide text-muted-foreground hover:bg-destructive hover:text-white"
+                : "h-9 w-9 justify-center text-[11px] text-muted-foreground hover:text-destructive"
               )}
             >
               <LogOut className="h-4 w-4" />
               {isSidebarExpanded && (
-                <span className="text-sm font-medium">Logout</span>
+              <span className="text-[11px] font-medium">Logout</span>
               )}
             </Button>
           </motion.div>
         </motion.aside>
 
-        <div className="flex min-h-screen flex-1 flex-col">
+        <div className="flex h-full flex-1 flex-col overflow-hidden">
           <motion.header
-            className="relative z-30 flex flex-wrap items-center gap-2 border-b border-border/60 bg-background/80 px-4 py-3 backdrop-blur-sm sm:px-6"
+            className="relative z-30 flex flex-wrap items-center gap-2 border-b border-border/60 bg-background/80 pl-4 pr-3 py-3 backdrop-blur-sm sm:pl-6 sm:pr-4"
             variants={itemVariants}
             initial="visible"
             animate="visible"
@@ -461,26 +456,96 @@ export function DashboardLayout({
                 <Menu className="h-5 w-5" />
                 <span className="sr-only">Open navigation</span>
               </Button>
+              <h2 className="text-base font-semibold sm:ml-2">Dashboard</h2>
+            </div>
+            <div className="flex items-center gap-1.5 md:hidden">
+              {notificationBell ? (
+                <div className="flex items-center">{notificationBell}</div>
+              ) : null}
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-9 w-9"
+                className="h-8 w-8"
                 onClick={() => setIsActionsSheetOpen(true)}
               >
                 <SlidersHorizontal className="h-5 w-5" />
                 <span className="sr-only">Open quick actions</span>
               </Button>
+              <Button
+                size="sm"
+                onClick={handlePublishClick}
+                disabled={!hasUnsavedChanges || isPublishing}
+                variant={hasUnsavedChanges && !isPublishing ? "default" : "secondary"}
+                className={cn(
+                  "h-7 rounded-md px-2.5 text-[11px] font-semibold transition-colors",
+                  hasUnsavedChanges && !isPublishing
+                    ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700"
+                    : ""
+                )}
+              >
+                {isPublishing ? (
+                  <DevFolioInlineLoader />
+                ) : hasUnsavedChanges ? (
+                  "Publish"
+                ) : (
+                  "No changes"
+                )}
+              </Button>
+            </div>
+            <div className="hidden items-center gap-1.5 md:flex">
               {notificationBell ? (
                 <div className="flex items-center">{notificationBell}</div>
               ) : null}
-              <h2 className="text-base font-semibold sm:ml-2">Dashboard</h2>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleVisitProfile}
+                className="h-7 rounded-md px-3 text-xs font-medium"
+              >
+                Visit profile
+                <ExternalLink className="ml-2 h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleTogglePreview}
+                className="h-7 rounded-md px-3 text-xs font-medium"
+              >
+                {isPreviewOpen ? "Hide preview" : "Show preview"}
+                <Eye className="ml-2 h-4 w-4" />
+              </Button>
+              <Button
+                size="sm"
+                onClick={handlePublishClick}
+                disabled={!hasUnsavedChanges || isPublishing}
+                variant={hasUnsavedChanges && !isPublishing ? "default" : "secondary"}
+                className={cn(
+                  "h-7 rounded-md px-3 text-xs font-semibold transition-colors",
+                  hasUnsavedChanges && !isPublishing
+                    ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700"
+                    : ""
+                )}
+              >
+                {isPublishing ? (
+                  <DevFolioInlineLoader />
+                ) : hasUnsavedChanges ? (
+                  <>
+                    Publish
+                    <span className="ml-2 rounded border border-border/60 bg-muted/40 px-1.5 py-0.5 text-[11px]">
+                      Ctrl+S
+                    </span>
+                  </>
+                ) : (
+                  "No changes"
+                )}
+              </Button>
             </div>
           </motion.header>
 
-          <div className="flex-1 overflow-y-auto bg-muted/20 scrollbar-hide">
+          <div ref={scrollContainerRef} className="flex-1 overflow-y-auto bg-muted/20 scrollbar-hide">
             <div
               key={activeSection}
-              className="px-4 py-5 sm:px-6"
+              className="mx-auto w-full max-w-5xl px-4 py-5 sm:px-6"
               style={{ willChange: "contents" }}
             >
               {children}
@@ -488,56 +553,58 @@ export function DashboardLayout({
           </div>
         </div>
 
-        <AnimatePresence>
-          {isPreviewOpen && (
-            <>
-              <motion.div
-                key="preview-backdrop"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm lg:hidden"
-                onClick={() => setIsPreviewOpen(false)}
-              />
-              <motion.div
-                key="preview-panel"
-                initial={{ x: "100%" }}
-                animate={{ x: 0 }}
-                exit={{ x: "100%" }}
-                transition={{
-                  type: "spring",
-                  damping: 25,
-                  stiffness: 200,
-                  duration: 0.4,
-                }}
-                className="fixed inset-y-0 right-0 z-50 flex h-full w-full flex-col border-l border-border/60 bg-card shadow-2xl sm:max-w-[420px] lg:w-[400px]"
-              >
-                <div className="flex items-center justify-between border-b border-border/60 bg-muted/40 px-4 py-3">
-                  <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                    Portfolio Preview
-                  </h3>
-                  <Button
-                    onClick={() => setIsPreviewOpen(false)}
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 hover:bg-muted/60"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
+          <AnimatePresence>
+            {isPreviewOpen && (
+              <>
+                <motion.div
+                  key="preview-backdrop"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm lg:hidden"
+                  onClick={() => setIsPreviewOpen(false)}
+                />
+                <motion.div
+                  key="preview-panel"
+                  initial={{ x: "100%" }}
+                  animate={{ x: 0 }}
+                  exit={{ x: "100%" }}
+                  transition={{
+                    type: "spring",
+                    damping: 25,
+                    stiffness: 200,
+                    duration: 0.4,
+                  }}
+                  className="fixed inset-y-0 right-0 z-50 flex h-full w-full flex-col border-l border-border/60 bg-card shadow-2xl sm:max-w-[420px] lg:w-[400px]"
+                >
+                  <div className="flex items-center justify-between border-b border-border/60 bg-muted/40 px-4 py-3">
+                    <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                      Portfolio Preview
+                    </h3>
+                    <Button
+                      onClick={() => setIsPreviewOpen(false)}
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 hover:bg-muted/60"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
 
-                <div className="flex-1 overflow-y-auto bg-background">
-                  <PortfolioPreview
-                    username={user?.githubUsername}
-                    previewMode={previewMode}
-                    portfolio={livePortfolio}
-                    key={`${previewMode}-preview`}
-                  />
-                </div>
-              </motion.div>
-            </>
-          )}
-        </AnimatePresence>
+                  <div className="flex-1 overflow-y-auto bg-background">
+                    <PortfolioPreview
+                      username={user?.githubUsername}
+                      previewMode={previewMode}
+                      portfolio={livePortfolio}
+                      key={`${previewMode}-preview`}
+                    />
+                  </div>
+                </motion.div>
+              </>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
       </div>
     </>
   )

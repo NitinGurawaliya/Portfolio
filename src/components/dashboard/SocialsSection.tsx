@@ -22,7 +22,8 @@ import {
   ExternalLink,
   Users,
   Globe,
-  Phone
+  Phone,
+  ArrowRight
 } from "lucide-react"
 import { SiStackoverflow, SiReddit } from "react-icons/si"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -42,6 +43,7 @@ interface SocialsSectionProps {
   onTogglePin: (socialId: number) => void
   onUpdateSocial: (socialId: number, updates: Partial<Social>) => void
   isLoading?: boolean
+  onNavigateToSection?: (section: string) => void
 }
 
 // Platform configurations with authentic brand styling
@@ -175,7 +177,8 @@ export function SocialsSection({
   onRemoveSocial, 
   onTogglePin, 
   onUpdateSocial,
-  isLoading = false
+  isLoading = false,
+  onNavigateToSection
 }: SocialsSectionProps) {
   // Create state for all platform usernames
   const [platformUsernames, setPlatformUsernames] = useState<Record<string, string>>({})
@@ -263,7 +266,6 @@ export function SocialsSection({
         <Card className="transition-all duration-300 bg-background">
           <CardHeader className="pb-2">
             <CardTitle className="text-lg text-black flex items-center font-bold dark:text-white">
-              <Users className="h-4 w-4 mr-2" />
               Socials
             </CardTitle>
           </CardHeader>
@@ -305,7 +307,7 @@ export function SocialsSection({
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.3, delay: index * 0.05 }}
-                    className="flex flex-col gap-3 rounded-xl border border-border/60 bg-background/80 p-3 transition-all duration-300 hover:shadow-lg sm:flex-row sm:items-center sm:gap-0 sm:space-x-3"
+                    className="flex flex-row flex-wrap items-center gap-3 rounded-xl border border-border/60 bg-background/80 p-3 transition-all duration-300 hover:shadow-lg sm:flex-nowrap"
                   >
                     {/* Platform Icon with Animation */}
                     <motion.div 
@@ -325,7 +327,7 @@ export function SocialsSection({
                     
                     {/* Input Field with Brand Styling */}
                     <motion.div 
-                      className="relative w-full overflow-hidden rounded-xl sm:flex-1"
+                      className="relative flex-1 overflow-hidden rounded-xl"
                       style={{ 
                         background: username ? platform.bgGradient : "#f3f4f6",
                         border: username ? "none" : "1px solid #e5e7eb"
@@ -446,6 +448,20 @@ export function SocialsSection({
             </CardContent>
           </Card>
         </motion.div>
+      )}
+
+      {onNavigateToSection && (
+        <div className="pointer-events-none fixed bottom-6 right-6 z-40">
+          <Button
+            variant="default"
+            size="sm"
+            onClick={() => onNavigateToSection("theme")}
+            className="pointer-events-auto flex items-center gap-2 rounded-full bg-black px-4 py-2 text-xs font-semibold text-white shadow-lg transition hover:bg-black/85 focus-visible:ring-2 focus-visible:ring-orange-400"
+          >
+            Next: Theme
+            <ArrowRight className="h-3.5 w-3.5" />
+          </Button>
+        </div>
       )}
     </motion.div>
   )

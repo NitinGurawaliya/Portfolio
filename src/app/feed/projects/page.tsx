@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
 import { ProjectFeedCard, FeedProject } from "@/components/feed/ProjectFeedCard"
 import { Button } from "@/components/ui/button"
@@ -44,15 +44,18 @@ export default function ProjectFeedPage() {
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(true)
   const [showScrollTop, setShowScrollTop] = useState(false)
+  const fetchControllerRef = useRef<AbortController | null>(null)
+  const prefetchedSortsRef = useRef<Record<SortOption, boolean>>({ newest: false, most_upvoted: false, most_viewed: false })
 
   const arrangeProjects = useCallback(
-    (list: FeedProject[]) => {
+    (list: FeedProject[], modeSort?: SortOption) => {
+      const activeSort = modeSort ?? sort
       const keyFor = (project: FeedProject) =>
         project.author.portfolioSlug || project.author.id?.toString() || project.author.githubUsername || project.author.name
 
       const metricValue = (project: FeedProject) => {
-        if (sort === "most_viewed") return project.views
-        if (sort === "most_upvoted") return project.upvotes
+        if (activeSort === "most_viewed") return project.views
+        if (activeSort === "most_upvoted") return project.upvotes
         return new Date(project.createdAt).getTime()
       }
 
@@ -94,22 +97,31 @@ export default function ProjectFeedPage() {
   const fetchProjects = useCallback(
     async (
       selectedSort: SortOption,
-      options?: { page?: number; append?: boolean; showLoading?: boolean }
+      options?: { page?: number; append?: boolean; showLoading?: boolean; prefetch?: boolean }
     ) => {
+      let wasAborted = false
       const targetPage = options?.page ?? 1
       const shouldAppend = options?.append ?? false
+      const isPrefetch = options?.prefetch ?? false
 
       if (shouldAppend) {
         setLoadingMore(true)
-      } else if (options?.showLoading !== false) {
+      } else if (!isPrefetch && options?.showLoading !== false) {
         setIsSwitching(true)
         setLoading(true)
       }
 
       setError(null)
       try {
+        if (fetchControllerRef.current && !shouldAppend && !isPrefetch) {
+          fetchControllerRef.current.abort()
+        }
+        const controller = new AbortController()
+        fetchControllerRef.current = controller
+
         const response = await fetch(`/api/feed/projects?sort=${selectedSort}&page=${targetPage}&limit=10`, {
           cache: "no-store",
+          signal: controller.signal,
         })
 
         if (!response.ok) {
@@ -120,34 +132,54 @@ export default function ProjectFeedPage() {
         const data = await response.json()
         const incomingProjects: FeedProject[] = data.projects ?? []
 
-        setProjects((prev) => {
-          if (shouldAppend) {
-            return arrangeProjects([...prev, ...incomingProjects])
-          }
-          return arrangeProjects(incomingProjects)
-        })
-        setPage(data.page ?? targetPage)
-        setHasMore(Boolean(data.hasMore))
+        const arranged = arrangeProjects(incomingProjects, selectedSort)
 
-        if (!shouldAppend) {
-          saveFeedCache(selectedSort, {
-            items: incomingProjects,
-            hasMore: Boolean(data.hasMore),
+        if (!isPrefetch) {
+          setProjects((prev) => {
+            if (shouldAppend) {
+              return arrangeProjects([...prev, ...incomingProjects], selectedSort)
+            }
+            return arranged
           })
+          setPage(data.page ?? targetPage)
+          setHasMore(Boolean(data.hasMore))
+        }
+
+        saveFeedCache(selectedSort, {
+          items: arranged,
+          hasMore: Boolean(data.hasMore),
+        })
+
+        if (!isPrefetch) {
+          prefetchedSortsRef.current[selectedSort] = true
         }
       } catch (err) {
+        const isAbortError =
+          (typeof DOMException !== "undefined" && err instanceof DOMException && err.name === "AbortError") ||
+          ((err as { name?: string } | null) && (err as { name?: string }).name === "AbortError")
+
+        if (isAbortError) {
+          console.info("ℹ️ Feed: Request aborted due to a newer fetch, ignoring.")
+          wasAborted = true
+          return
+        }
+
         console.error("❌ Feed: Failed to fetch projects:", err)
         setError(err instanceof Error ? err.message : "Something went wrong.")
       } finally {
+        if (wasAborted) {
+          return
+        }
+
         if (shouldAppend) {
           setLoadingMore(false)
-        } else {
+        } else if (!isPrefetch) {
           setLoading(false)
           setIsSwitching(false)
         }
       }
     },
-    []
+    [arrangeProjects]
   )
 
   useEffect(() => {
@@ -300,6 +332,19 @@ export default function ProjectFeedPage() {
   }, [fetchProjects, hasMore, loadingMore, page, sort])
 
   useEffect(() => {
+    if (projects.length === 0 || isSwitching) return
+
+    SORT_OPTIONS.forEach((option) => {
+      if (option.value === sort) return
+      if (prefetchedSortsRef.current[option.value]) return
+      prefetchedSortsRef.current[option.value] = true
+      fetchProjects(option.value, { showLoading: false, prefetch: true }).catch(() => {
+        prefetchedSortsRef.current[option.value] = false
+      })
+    })
+  }, [fetchProjects, projects.length, sort, isSwitching])
+
+  useEffect(() => {
     const handleScroll = () => {
       setShowScrollTop(window.scrollY > 320)
     }
@@ -314,7 +359,7 @@ export default function ProjectFeedPage() {
   }, [])
 
   const content = useMemo(() => {
-    if ((loading && projects.length === 0) || isSwitching) {
+    if (loading && projects.length === 0) {
       return <FeedSkeletonList />
     }
 
@@ -345,7 +390,7 @@ export default function ProjectFeedPage() {
     }
 
     return (
-      <div className="flex flex-col items-center gap-4">
+      <div className="relative flex flex-col items-center gap-4">
         {projects.map((project) => (
           <ProjectFeedCard
             key={project.id}
@@ -355,6 +400,9 @@ export default function ProjectFeedPage() {
           />
         ))}
         {loadingMore && <FeedSkeletonList count={2} />}
+        {isSwitching && (
+          <div className="pointer-events-none absolute inset-0 rounded-2xl bg-background/60 backdrop-blur-sm" />
+        )}
       </div>
     )
   }, [error, handleRetry, handleToggleUpvote, isSwitching, loading, loadingMore, pendingUpvotes, projects])
@@ -366,18 +414,8 @@ export default function ProjectFeedPage() {
             <h1 className="text-3xl font-semibold text-foreground md:text-4xl">Discover DevFolio Projects</h1>
           </header>
 
-          <div className="flex flex-col gap-1 text-left">
-            <h2 className="text-lg font-semibold text-foreground sm:text-xl">{feedHeadline.title}</h2>
-            <p className="text-sm text-muted-foreground">{feedHeadline.subtitle}</p>
-          </div>
 
           <section className="space-y-3 rounded-2xl border border-border/30 bg-background/80 p-4 sm:p-5">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-semibold text-muted-foreground">Sort by</span>
-              <p className="text-xs text-muted-foreground">
-                {isSwitching ? "Updating…" : `${projects.length} shown · Page ${page}`}
-              </p>
-            </div>
             <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
               {SORT_OPTIONS.map((option) => (
                 <Button
@@ -389,16 +427,20 @@ export default function ProjectFeedPage() {
                   disabled={isSwitching}
                   aria-pressed={sort === option.value}
                   className={cn(
-                    "min-w-[110px] flex-shrink-0 rounded-full px-4 text-xs font-semibold transition",
+                    "min-w-[80px] flex-shrink-0 rounded-full px-4 border border-gray-200  text-xs font-semibold transition",
                     sort === option.value
-                      ? "bg-foreground text-background"
-                      : "border border-border/40 bg-background text-muted-foreground hover:text-foreground"
+                      ? "bg-foreground text-background border-foreground"
+                      : "border border-gray-200 bg-background text-muted-foreground hover:text-foreground"
                   )}
                 >
                   {option.label}
                 </Button>
               ))}
             </div>
+            <div className="flex flex-col gap-1 text-left">
+            <h2 className="text-lg font-semibold text-foreground sm:text-xl">{feedHeadline.title}</h2>
+            <p className="text-sm text-muted-foreground">{feedHeadline.subtitle}</p>
+          </div>
           </section>
       </div>
 

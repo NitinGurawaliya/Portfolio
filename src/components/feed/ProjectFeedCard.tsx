@@ -44,19 +44,19 @@ export function ProjectFeedCard({ project, onToggleUpvote, upvotePending = false
       : "No description has been provided for this project yet."
 
   return (
-    <Card className="group relative mx-auto w-full max-w-xl rounded-2xl border border-border/40 bg-card/90 p-0 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md">
-      <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3 border-b border-border/20 bg-background/60 px-4 py-4 backdrop-blur-sm sm:flex-nowrap sm:px-6">
-          <div className="flex flex-1 items-center gap-3.5">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border/40 bg-muted/20">
+    <div className="group relative mx-auto w-full max-w-xl rounded-xl border border-gray-200 bg-card/90 p-2 text-card-foreground  sm:px-6 sm:py-6">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex flex-1 items-center gap-3">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted/40 sm:h-9 sm:w-9">
             <ProjectIcon
               favicon={project.favicon || undefined}
               logo={project.logo || undefined}
               title={project.title}
-              size="md"
+              size="sm"
             />
           </div>
           <div className="flex-1">
-            <h3 className="text-md font-semibold leading-tight text-foreground">
+            <h3 className="text-[12px] font-bold leading-tight text-foreground sm:text-base">
               {project.deployedUrl || project.githubUrl ? (
                 <Link
                   href={project.deployedUrl ?? project.githubUrl!}
@@ -77,35 +77,23 @@ export function ProjectFeedCard({ project, onToggleUpvote, upvotePending = false
           aria-label={project.hasUpvoted ? "Remove upvote" : "Upvote project"}
           onClick={() => onToggleUpvote(project.id)}
           className={cn(
-            "flex h-10 min-w-[3rem] shrink-0 flex-col items-center justify-center rounded-full border border-border/50 bg-background/80 text-xs font-semibold text-muted-foreground transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:text-sm",
+            "flex h-8 w-8 shrink-0 flex-col items-center justify-center rounded-md border border-border/40 bg-background/70 text-[11px] font-semibold text-muted-foreground transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:h-9 sm:w-9 sm:text-xs",
             project.hasUpvoted && "border-orange-500 bg-orange-500/10 text-orange-500",
             upvotePending && "opacity-70"
           )}
         >
-          <ArrowBigUp className="h-3.5 w-3.5" />
-          <span className="mt-0.5 leading-none text-sm">{project.upvotes.toLocaleString()}</span>
+          <ArrowBigUp className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+          <span className="mt-0.5 leading-none">{project.upvotes.toLocaleString()}</span>
         </button>
-      </CardHeader>
+      </div>
 
-      <CardContent className="flex flex-1 flex-col gap-3 px-4 pb-0 pt-4 sm:px-6">
-          <p className="w-full break-words text-sm">{description}</p>
-        <div className="flex flex-wrap items-center gap-1.5">
-          {project.tags &&
-            project.tags.map((tag) => (
-              <span
-                key={tag}
-                className="inline-flex items-center gap-1 rounded-full border border-border/30 bg-muted/20 px-2.5 py-0.5 text-[11px] font-medium text-foreground/70"
-              >
-                <span className="text-foreground/60">#</span>
-                {tag}
-              </span>
-            ))}
-        </div>
-      </CardContent>
+      <p className="mt-3 text-[13px] leading-relaxed text-muted-foreground sm:text-[14.5px]">
+        {description}
+      </p>
 
-      <CardFooter className="mt-0 flex flex-col gap-4 border-t border-border/15 bg-background/70 px-4 py-4 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-6">
-        <div className="flex items-start gap-2.5">
-          <span className="font-medium text-foreground">Created by</span>
+      <div className="mt-4 flex items-center justify-between gap-3 text-[11px] text-muted-foreground sm:text-xs">
+        <div className="flex min-w-0 items-center gap-2 sm:gap-4">
+          <span className="text-foreground font-medium"> Creator</span>
           {portfolioHref ? (
             <Link
               href={portfolioHref}
@@ -113,7 +101,7 @@ export function ProjectFeedCard({ project, onToggleUpvote, upvotePending = false
               rel="noopener noreferrer"
               className="flex items-center gap-2 font-semibold text-foreground transition hover:text-primary"
             >
-              <span className="flex h-6 w-6 items-center ml-0 justify-center overflow-hidden rounded-full border border-border/30 bg-muted/50">
+              <span className="flex h-6 w-6 items-center justify-center overflow-hidden rounded-full border border-border/30 bg-muted/50 sm:h-7 sm:w-7">
                 {project.author.avatarUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={project.author.avatarUrl} alt={project.author.name} className="h-full w-full object-cover" />
@@ -123,14 +111,14 @@ export function ProjectFeedCard({ project, onToggleUpvote, upvotePending = false
                   </span>
                 )}
               </span>
-              <span className="flex items-center gap-1 ml-0">
+              <span className="flex items-center gap-1">
                 {project.author.name}
                 {project.author.verified && <Check className="h-3 w-3 text-blue-500" />}
               </span>
             </Link>
           ) : (
-            <span className="flex items-center gap-2 font-semibold text-foreground">
-              <span className="flex h-7 w-7 items-center justify-center overflow-hidden rounded-full border border-border/30 bg-muted/50">
+            <span className="flex items-center gap-1.5 font-semibold text-foreground">
+              <span className="flex h-6 w-6 items-center justify-center overflow-hidden rounded-full border border-border/30 bg-muted/50 sm:h-7 sm:w-7">
                 {project.author.avatarUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={project.author.avatarUrl} alt={project.author.name} className="h-full w-full object-cover" />
@@ -147,15 +135,15 @@ export function ProjectFeedCard({ project, onToggleUpvote, upvotePending = false
             </span>
           )}
         </div>
-        <div className="flex w-full flex-wrap items-center justify-between gap-3 sm:w-auto sm:flex-nowrap">
-          <div className="flex items-center gap-1 text-xs text-gray-500">
+        <div className="flex items-center gap-2 text-gray-500 sm:gap-3">
+          <div className="flex items-center gap-1 text-xs text-gray-500 sm:text-[13px]">
             <Eye className="h-3.5 w-3.5" />
             <span className="font-medium text-foreground">{project.views}</span>
           </div>
           {(project.deployedUrl || project.githubUrl) && (
             <button
               type="button"
-              className="flex h-7 w-7 items-center justify-center rounded-full border border-border/40 text-muted-foreground transition hover:text-foreground"
+              className="flex h-6 w-6 items-center justify-center rounded-md border border-gray-200 text-muted-foreground transition hover:text-foreground sm:h-7 sm:w-7"
               onClick={() => {
                 const target = project.deployedUrl ?? project.githubUrl
                 if (target) {
@@ -163,11 +151,11 @@ export function ProjectFeedCard({ project, onToggleUpvote, upvotePending = false
                 }
               }}
             >
-              <Share2 className="h-3.5 w-3.5" />
+              <Share2 className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
             </button>
           )}
         </div>
-      </CardFooter>
-    </Card>
+      </div>
+    </div>
   )
 }
