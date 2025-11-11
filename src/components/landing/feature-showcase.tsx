@@ -343,7 +343,7 @@ export function FeatureShowcase() {
           </p>
         </div>
 
-        <div className="space-y-4">
+          <div className="space-y-6">
           {/* 1. Analytics Dashboard - Full Width */}
           <Card className="bg-card shadow-md border-border rounded-lg">
             <CardHeader className="pb-2">
@@ -351,7 +351,7 @@ export function FeatureShowcase() {
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Stats Cards */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 <Card className="bg-card shadow-md border-border rounded-lg h-24">
                   <CardContent className="p-3 h-full">
                     <p className="text-[10px] text-muted-foreground mb-1">Total Visits</p>
@@ -408,13 +408,13 @@ export function FeatureShowcase() {
               </div>
 
               {/* Visits over time and Top Referrers - Side by Side */}
-              <div className="flex flex-col lg:flex-row gap-3 lg:gap-6">
+                <div className="flex flex-col gap-4 lg:flex-row lg:gap-6">
                 {/* Heatmap - Left side */}
                 <div className="flex-1 min-w-0">
                   <CardTitle className="text-base text-card-foreground font-bold mb-2">Visits over time</CardTitle>
-                  <div className="flex items-start gap-2 overflow-hidden">
+                    <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:gap-2">
                     {/* Weekday labels */}
-                    <div className="flex flex-col gap-1 pt-0.5 flex-shrink-0">
+                      <div className="hidden flex-col gap-1 pt-0.5 flex-shrink-0 sm:flex">
                       <span className="text-[9px] text-muted-foreground font-medium h-3 leading-none">Sun</span>
                       <span className="text-[9px] text-muted-foreground font-medium h-3 leading-none">Mon</span>
                       <span className="text-[9px] text-muted-foreground font-medium h-3 leading-none">Tue</span>
@@ -424,9 +424,9 @@ export function FeatureShowcase() {
                       <span className="text-[9px] text-muted-foreground font-medium h-3 leading-none">Sat</span>
                     </div>
                     
-                    <div className="flex flex-col overflow-hidden max-w-full lg:max-w-[620px]">
-                      <div className="overflow-x-auto">
-                        <div className="inline-flex flex-col gap-1 min-w-[520px] pr-2">
+                      <div className="flex flex-col max-w-full lg:max-w-[620px]">
+                        <div className="overflow-x-auto">
+                          <div className="inline-flex min-w-[520px] flex-col gap-1 pr-2">
                           {/* Month labels */}
                           <div className="flex gap-1 mb-1.5 pl-7">
                             {["Nov", "Dec", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov"].map((month, idx) => (
@@ -439,7 +439,7 @@ export function FeatureShowcase() {
                           </div>
                           
                           {/* Heatmap grid */}
-                          <div className="flex gap-1">
+                              <div className="flex gap-1 pb-2 sm:pb-0">
                             {heatmapWeeks.map((week, weekIndex) => (
                               <div key={weekIndex} className="flex flex-col gap-1">
                                 {week.map((day, dayIndex) => (
@@ -634,8 +634,8 @@ export function FeatureShowcase() {
         </div>
         
         {/* Bottom CTA Text */}
-        <div className="mt-8 text-center">
-          <p className="text-sm text-muted-foreground max-w-3xl mx-auto">
+          <div className="mt-8 text-center">
+            <p className="text-sm text-muted-foreground max-w-3xl mx-auto">
             <span className="font-semibold text-foreground">Everything you need</span> to showcase your work, track your impact, and grow your developer brand—all in one beautiful portfolio.
           </p>
         </div>

@@ -667,7 +667,7 @@ export function ReposSection({
               </motion.div>
             </motion.div> */}
             
-            <div className="grid grid-cols-3 gap-3 md:gap-4">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3 md:gap-4">
               <AnimatePresence mode="popLayout">
                 {selectedRepositories.map((repo, index) => {
                   const isEditing = editingRepo === repo.id
