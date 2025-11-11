@@ -420,14 +420,14 @@ export function AnalyticsSection({ portfolioId, analyticsData }: AnalyticsSectio
         {/* Analytics Title */}
         <Card className="bg-transparent shadow-none border-none py-0">
           <CardHeader className="pb-0 mb-0 pt-0">
-            <CardTitle className="text-xl text-black font-bold flex items-center">
+            <CardTitle className="text-xl text-black font-bold flex items-center dark:text-white">
               Analytics and Insights
             </CardTitle>
           </CardHeader>
         </Card>
 
         {/* Creative Empty State */}
-        <Card className="bg-gradient-to-br from-gray-50 to-white border-2 border-dashed border-gray-200 rounded-xl overflow-hidden">
+        <Card className="bg-gradient-to-br from-gray-50 to-white border-2 border-dashed border-gray-200 rounded-xl overflow-hidden bg-background">
           <CardContent className="p-12 flex flex-col items-center justify-center text-center space-y-6">
             {/* Animated Icon */}
             <motion.div
@@ -448,7 +448,7 @@ export function AnalyticsSection({ portfolioId, analyticsData }: AnalyticsSectio
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3, duration: 0.4 }}
-                className="text-2xl font-bold text-gray-800"
+                className="text-2xl font-bold text-gray-800 dark:text-white"
               >
                 No Analytics Data Yet
               </motion.h3>
@@ -509,7 +509,7 @@ export function AnalyticsSection({ portfolioId, analyticsData }: AnalyticsSectio
       {/* Analytics Title */}
       <Card className="bg-transparent shadow-none border-none py-0">
         <CardHeader className="pb-0 mb-0 pt-0">
-          <CardTitle className="text-xl text-black font-bold flex items-center">
+          <CardTitle className="text-xl text-black font-bold flex items-center dark:text-white">
             Analytics and Insights
           </CardTitle>
         </CardHeader>
@@ -518,13 +518,13 @@ export function AnalyticsSection({ portfolioId, analyticsData }: AnalyticsSectio
       {/* Stats Cards */}
       <div className="grid grid-cols-4 gap-3 -mt-1">
         <motion.div variants={itemVariants}>
-          <Card data-stat="total-views" className="bg-white shadow-sm border border-gray-200 rounded-lg h-28 transition-all duration-300">
+          <Card data-stat="total-views" className="shadow-sm border-gray-200 rounded-lg h-28 transition-all duration-300 bg-background">
             <CardContent className="p-4 h-full">
               <p className="text-xs text-gray-500 mb-2">Total Visits</p>
               <div className="flex items-end justify-between">
-                <p className="text-3xl font-bold text-black leading-none">{analytics?.totalViews || 0}</p>
-                <div className="border border-gray-200 rounded p-1.5">
-                  <Eye className="h-5 w-5 text-black" />
+                <p className="text-3xl font-bold text-black leading-none dark:text-white">{analytics?.totalViews || 0}</p>
+                <div className="border-gray-900 rounded p-1.5">
+                  <Eye className="h-5 w-5 text-black dark:text-white" />
                 </div>
               </div>
             </CardContent>
@@ -532,13 +532,13 @@ export function AnalyticsSection({ portfolioId, analyticsData }: AnalyticsSectio
         </motion.div>
 
         <motion.div variants={itemVariants}>
-          <Card className="bg-white shadow-sm border border-gray-200 rounded-lg h-28">
+          <Card className="shadow-sm border-gray-200 rounded-lg h-28 bg-background">
             <CardContent className="p-4 h-full">
               <p className="text-xs text-gray-500 mb-2">Unique Sources</p>
               <div className="flex items-end justify-between">
-                <p className="text-3xl font-bold text-black leading-none">{analytics?.topReferrers?.length || 0}</p>
-                <div className="border border-gray-200 rounded p-1.5">
-                  <ExternalLink className="h-5 w-5 text-black" />
+                <p className="text-3xl font-bold text-black leading-none dark:text-white">{analytics?.topReferrers?.length || 0}</p>
+                <div className="border-gray-900 rounded p-1.5">
+                  <ExternalLink className="h-5 w-5 text-black dark:text-white" />
                 </div>
               </div>
             </CardContent>
@@ -546,14 +546,14 @@ export function AnalyticsSection({ portfolioId, analyticsData }: AnalyticsSectio
         </motion.div>
 
         <motion.div variants={itemVariants}>
-          <Card className="bg-white shadow-sm border border-gray-200 rounded-lg h-28">
+          <Card className="shadow-sm border-gray-200 rounded-lg h-28 bg-background">
             <CardContent className="p-4 h-full flex flex-col justify-between">
               <p className="text-xs text-gray-500">Top Device</p>
               <div className="flex items-center justify-between mt-auto">
                 <div>
-                  <p className="text-3xl font-bold text-black leading-none">{analytics?.topDevices?.[0]?.count || 0}</p>
+                  <p className="text-3xl font-bold text-black leading-none dark:text-white">{analytics?.topDevices?.[0]?.count || 0}</p>
                   {analytics?.topDevices?.[0]?.device && (
-                    <p className="text-[10px] text-gray-400 mt-0.5">
+                    <p className="text-[10px] text-gray-400 mt-0.5 dark:text-white">
                       {analytics.topDevices[0].device}
                     </p>
                   )}
@@ -564,7 +564,7 @@ export function AnalyticsSection({ portfolioId, analyticsData }: AnalyticsSectio
                   // Handle unknown devices
                   if (device === 'unknown' || !device) {
                     return (
-                      <div className="border border-gray-200 rounded p-1.5">
+                      <div className="border-gray-200 rounded p-1.5 dark:text-white">
                         <Circle className="h-5 w-5 text-gray-400" />
                       </div>
                     )
@@ -575,8 +575,8 @@ export function AnalyticsSection({ portfolioId, analyticsData }: AnalyticsSectio
                     device.includes('android') || device.includes('mobile') ? Smartphone :
                     Laptop
                   return (
-                    <div className="border border-gray-200 rounded p-1.5">
-                      <IconComponent className="h-5 w-5 text-black" />
+                    <div className="border-gray-200 rounded p-1.5">
+                      <IconComponent className="h-5 w-5 text-black dark:text-white" />
                     </div>
                   )
                 })()}
@@ -586,14 +586,14 @@ export function AnalyticsSection({ portfolioId, analyticsData }: AnalyticsSectio
         </motion.div>
 
         <motion.div variants={itemVariants}>
-          <Card className="bg-white shadow-sm border border-gray-200 rounded-lg h-28">
+          <Card className="shadow-sm border-gray-200 rounded-lg h-28 bg-background">
             <CardContent className="p-4 h-full flex flex-col justify-between">
               <p className="text-xs text-gray-500">Top Browser</p>
               <div className="flex items-center justify-between mt-auto">
                 <div>
-                  <p className="text-3xl font-bold text-black leading-none">{analytics?.topBrowsers?.[0]?.count || 0}</p>
+                  <p className="text-3xl font-bold text-black leading-none dark:text-white">{analytics?.topBrowsers?.[0]?.count || 0}</p>
                   {analytics?.topBrowsers?.[0]?.browser && (
-                    <p className="text-[10px] text-gray-400 mt-0.5">
+                    <p className="text-[10px] text-gray-400 mt-0.5 dark:text-white">
                       {analytics.topBrowsers[0].browser}
                     </p>
                   )}
@@ -605,14 +605,14 @@ export function AnalyticsSection({ portfolioId, analyticsData }: AnalyticsSectio
                   // Handle unknown browsers
                   if (browser === 'unknown' || !browser) {
                     return (
-                      <div className="border border-gray-200 rounded p-1.5">
+                      <div className="rounded p-1.5">
                         <Circle className="h-5 w-5 text-gray-400" />
                       </div>
                     )
                   }
                   
                   return (
-                    <div className="border border-gray-200 rounded p-1.5">
+                    <div className="rounded p-1.5">
                       {getBrowserIcon(browserValue, "h-5 w-5")}
                     </div>
                   )
@@ -627,11 +627,11 @@ export function AnalyticsSection({ portfolioId, analyticsData }: AnalyticsSectio
       <motion.div variants={itemVariants}>
         <div className="flex gap-4">
           {/* Heatmap - Left side */}
-          <Card className="bg-white shadow-none border-none flex-1">
+          <Card className="shadow-none border-none flex-1 bg-background">
             <CardHeader className="pb-0">
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="text-xl text-black font-bold flex items-center">
+                  <CardTitle className="text-xl text-black font-bold flex items-center dark:text-white">
                     Visits over time
                   </CardTitle>
                 </div>

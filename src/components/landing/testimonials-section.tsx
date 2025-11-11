@@ -67,23 +67,26 @@ export function TestimonialsSection() {
 
         </motion.div>
 
-        <div className="grid gap-6 md:grid-cols-2">
-          {testimonialEmbeds.map((embed, index) => (
-            <motion.article
-              key={index}
-              className="h-full rounded-3xl border border-border/60 bg-card/80 p-4 shadow-lg transition-all duration-300 hover:shadow-xl sm:p-5"
-              initial={{ opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: index * 0.1 }}
-              viewport={{ once: true }}
-            >
-              <div
-                className="[&_iframe]:w-full [&_iframe]:max-w-full [&_iframe]:rounded-2xl [&_.twitter-tweet]:mx-auto [&_.twitter-tweet]:max-w-full"
-                dangerouslySetInnerHTML={{ __html: embed }}
-              />
-            </motion.article>
-          ))}
-        </div>
+       <div className="grid gap-6 md:grid-cols-2">
+  {testimonialEmbeds.map((embed, index) => (
+    <motion.article
+      key={index}
+      className="h-full rounded-3xl border border-border/60 p-4 shadow-lg transition-all duration-300 hover:shadow-xl sm:p-5 
+                 bg-white dark:bg-card/60 dark:border-border/40 dark:hover:bg-card/80 dark:shadow-md"
+      initial={{ opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay: index * 0.1 }}
+      viewport={{ once: true }}
+    >
+      <div
+        className="[&_iframe]:w-full [&_iframe]:max-w-full [&_iframe]:rounded-2xl [&_.twitter-tweet]:mx-auto [&_.twitter-tweet]:max-w-full 
+                   bg-white dark:bg-card/60"
+        dangerouslySetInnerHTML={{ __html: embed }}
+      />
+    </motion.article>
+  ))}
+</div>
+
 
         <div className="mt-6 text-center text-xs text-muted-foreground sm:mt-8">
           Tip: generate embed code at{" "}

@@ -119,7 +119,7 @@ export function AddProjectModal({ open, onOpenChange, repositories, onAddImporte
       <div className="absolute inset-0 bg-black/40" onClick={() => onOpenChange(false)} />
       {/* Modal Centered */}
       <div className="absolute inset-0 flex items-center justify-center p-4">
-        <div className="w-[720px] max-w-full rounded-xl bg-white shadow-2xl border border-gray-200">
+        <div className="w-[720px] max-w-full rounded-xl shadow-2xl border border-gray-600 bg-background">
           <div className="px-6 py-4 border-b flex items-center justify-between">
             <div>
               <div className="text-xl font-bold">Add new project</div>
@@ -187,9 +187,9 @@ export function AddProjectModal({ open, onOpenChange, repositories, onAddImporte
                 </div>
                 <div className="text-xs text-gray-500">Preview (OG image)</div>
               </div>
-              <div className="relative aspect-[16/9] w-full rounded-lg border bg-gray-50 overflow-hidden">
+              <div className="relative aspect-[16/9] w-full rounded-lg border overflow-hidden bg-background">
                 {logo ? (
-                  <img src={logo} alt="preview" className="h-full w-full object-contain" />
+                  <img src={logo} alt="preview" className="h-full w-full object-contain " />
                 ) : (
                   <div className="h-full w-full flex items-center justify-center text-[11px] text-red-600">No OG image found — upload a screenshot</div>
                 )}
