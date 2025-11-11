@@ -612,7 +612,7 @@ export function ReposSection({
 
   return (
     <motion.div 
-      className="space-y-2 px-6 md:px-10"
+      className="space-y-2 px-6 md:px-10 mt-8"
       initial="hidden"
       animate="visible"
       variants={containerVariants}
@@ -621,12 +621,12 @@ export function ReposSection({
 
       {/* Header */}
       <motion.div variants={itemVariants} className="-mt-6 md:-mt-8">
-        <Card className="bg-white shadow-none border-none">
+        <Card className="bg-white shadow-none border-none dark:bg-background">
           <CardHeader className="py-0">
-            <CardTitle className="text-xl md:text-2xl text-black flex items-center font-bold">
+            <CardTitle className="text-xl md:text-2xl text-black dark:text-white flex items-center font-bold">
               Projects
               <div className="ml-auto">
-                <Button onClick={() => setIsAddProjectOpen(true)} className="bg-black text-white hover:bg-gray-800 h-8 px-3 text-xs">
+                <Button onClick={() => setIsAddProjectOpen(true)} className="dark:bg-white dark:text-black bg-black text-white hover:bg-gray-800 h-8 px-3 text-xs">
                   + Add Project (Ctrl+K)
                 </Button>
               </div>
@@ -688,7 +688,7 @@ export function ReposSection({
                       layoutId={`repo-${repo.id}`}
                     >
                       <Card 
-                        className="bg-white border border-gray-200 hover:border-gray-300 transition-all duration-300 group h-[300px] relative"
+                        className="hover:border-gray-600 transition-all duration-300 group h-[300px] relative bg-background"
                       >
                         <CardContent className="p-0 h-full">
                           <div className="flex flex-col h-full px-3 relative">
@@ -721,7 +721,7 @@ export function ReposSection({
                                   className="flex-shrink-0"
                                 />
                                 <div className="min-w-0">
-                                  <h3 className="text-[15px] md:text-base font-semibold text-gray-900 truncate">
+                                  <h3 className="text-[15px] md:text-base font-semibold text-gray-900 truncate dark:text-white">
                                     {customName}
                                   </h3>
                                   <p className="text-[12px] text-gray-500 truncate">
@@ -829,7 +829,7 @@ export function ReposSection({
           transition={{ duration: 0.4 }}
           variants={itemVariants}
         >
-          <Card className="bg-white   transition-all duration-300">
+          <Card className="bg-white transition-all duration-300 dark:bg-background">
             <CardContent className="pt-8">
               <div className="text-center py-8">
                 <motion.div
@@ -845,7 +845,7 @@ export function ReposSection({
                 >
                   <Code2 className="h-16 w-16 text-gray-300 mx-auto mb-4" />
                 </motion.div>
-                <h3 className="text-xl font-bold text-black mb-3">No projects selected</h3>
+                <h3 className="text-xl font-bold text-black dark:text-white mb-3">No projects selected</h3>
                 <p className="text-gray-600 font-medium mb-6 max-w-md mx-auto">
                   Import repositories from GitHub to showcase your work and build an impressive portfolio
                 </p>
@@ -855,7 +855,7 @@ export function ReposSection({
                 >
                   <Button 
                     onClick={() => setIsDropdownOpen(true)}
-                    className="bg-black text-white hover:bg-gray-800 font-bold px-8 py-3  transition-all duration-300"
+                    className="bg-black text-white hover:bg-gray-800 font-bold px-8 py-3  transition-all duration-300 dark:bg-white dark:text-black"
                   >
                     <motion.div
                       className="flex items-center"
@@ -879,6 +879,7 @@ export function ReposSection({
         repositories={repositories}
         onAddImportedProject={(p) => onAddImportedProject?.(p as any)}
       />
+
       {editInitial && (
         <EditModal
           open={isEditOpen}

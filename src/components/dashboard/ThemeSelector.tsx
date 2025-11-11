@@ -223,7 +223,7 @@ export default function ThemeSelector({
       {/* Theme Layout Selection */}
       <div className="space-y-4">
         <div className="flex items-center gap-2">
-          <h3 className="text-lg font-semibold text-gray-900">Choose Your Layout</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Choose Your Layout</h3>
         </div>
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {Array.from(new Set<ThemeKey>([...selectableThemes, selectedTheme].filter((key): key is ThemeKey => key in THEMES))).map((themeKey) => {
@@ -275,12 +275,12 @@ export default function ThemeSelector({
       {/* Background Customization Section */}
       <div className="space-y-4">
         <div className="flex items-center gap-2">
-          <h3 className="text-lg font-semibold text-gray-900">Customize Background</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Customize Background</h3>
         </div>
         
         {/* Background Colors */}
         <div>
-          <p className="text-sm font-medium text-gray-700 mb-3">Background Colors</p>
+          <p className="text-sm font-medium text-gray-700 mb-3 dark:text-white">Background Colors</p>
           <div className="grid grid-cols-4 md:grid-cols-8 gap-x-3 gap-y-6">
             {BACKGROUND_COLORS.map((color) => (
               <motion.div
@@ -318,7 +318,7 @@ export default function ThemeSelector({
 
         {/* Background Patterns */}
         <div>
-          <p className="text-sm font-medium text-gray-700 mb-3">Background Patterns</p>
+          <p className="text-sm font-medium text-gray-700 mb-3 dark:text-white">Background Patterns</p>
           <div className="grid grid-cols-3 md:grid-cols-6 gap-x-3 gap-y-6">
             {BACKGROUND_PATTERNS.map((pattern) => (
               <motion.div

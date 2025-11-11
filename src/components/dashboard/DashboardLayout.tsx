@@ -198,13 +198,13 @@ export function DashboardLayout({
                     size="sm"
                     onClick={() => onSectionChange(item.id)}
                     className={cn(
-                      "relative cursor-pointer rounded-xl transition-all duration-150",
+                      "relative cursor-pointer rounded-xl transition-all duration-15",
                       isSidebarExpanded
                         ? "h-10 w-full justify-start gap-3 px-3"
                         : "h-10 w-10 justify-center",
                       isActive
-                        ? "bg-gray-100 text-black shadow-sm hover:bg-gray-200"
-                        : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                        ? "bg-gray-100 text-black dark:bg-card/80 dark:hover:bg-card/80 dark:text-[#E5E7EB] shadow-sm"
+                        : "text-muted-foreground hover:bg-card/60 hover:text-foreground"
                     )}
                   >
                     <Icon className="h-4 w-4" />
@@ -275,7 +275,7 @@ export function DashboardLayout({
         </nav>
 
         <motion.div
-          className="sticky bottom-0 z-10 bg-card/90 pt-4 pb-6"
+          className="sticky bottom-0 z-10 pt-4 pb-6"
           initial={{ opacity: 1, y: 0 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0 }}
@@ -287,7 +287,7 @@ export function DashboardLayout({
             className={cn(
               "rounded-xl transition-all duration-150",
               isSidebarExpanded
-                ? "h-10 w-full justify-start gap-3 px-3 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                ? "h-10 w-full justify-start gap-3 px-3 text-muted-foreground hover:bg-destructive hover:text-white"
                 : "h-10 w-10 justify-center text-muted-foreground hover:text-destructive"
             )}
           >

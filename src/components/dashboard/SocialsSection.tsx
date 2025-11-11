@@ -260,9 +260,9 @@ export function SocialsSection({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
       >
-        <Card className="bg-white transition-all duration-300">
+        <Card className="transition-all duration-300 bg-background">
           <CardHeader className="pb-2">
-            <CardTitle className="text-lg text-black flex items-center font-bold">
+            <CardTitle className="text-lg text-black flex items-center font-bold dark:text-white">
               <Users className="h-4 w-4 mr-2" />
               Socials
             </CardTitle>
@@ -276,7 +276,7 @@ export function SocialsSection({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.1 }}
       >
-        <Card className="bg-white transition-all duration-300">
+        <Card className="transition-all duration-300 bg-background">
           <CardContent className="pt-2">
             {/* Loading Skeleton */}
             {isLoading && socials.length === 0 && (

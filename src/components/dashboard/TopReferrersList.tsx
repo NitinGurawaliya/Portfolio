@@ -149,9 +149,9 @@ export function TopReferrersList({ referrers }: TopReferrersListProps) {
   }
 
   return (
-    <Card className="bg-white border border-gray-200 shadow-none">
+    <Card className="border border-gray-200 shadow-none bg-background">
       <CardHeader className="pb-3">
-        <CardTitle className="text-sm font-bold text-black">Top Referrers</CardTitle>
+        <CardTitle className="text-sm font-bold text-black dark:text-white">Top Referrers</CardTitle>
       </CardHeader>
       <CardContent className="pt-0">
         <div className="space-y-2.5">
@@ -162,9 +162,9 @@ export function TopReferrersList({ referrers }: TopReferrersListProps) {
               <div key={index} className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   {getReferrerIcon(ref.referrer)}
-                  <span className="text-sm text-black font-medium">{domainName}</span>
+                  <span className="text-sm text-black font-medium dark:text-white">{domainName}</span>
                 </div>
-                <span className="text-sm font-bold text-black">{ref.count}</span>
+                <span className="text-sm font-bold text-black dark:text-white">{ref.count}</span>
               </div>
             )
           })}

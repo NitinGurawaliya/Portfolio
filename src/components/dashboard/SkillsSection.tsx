@@ -337,9 +337,9 @@ export function SkillsSection({ skills, onAddSkill, onRemoveSkill, isLoading = f
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
       >
-        <Card className="bg-white shadow-none border-none">
+        <Card className="bg-white shadow-none border-none bg-background">
         <CardHeader className="pb-2">
-            <CardTitle className="text-lg text-black font-bold flex items-center">
+            <CardTitle className="text-lg text-black font-bold flex items-center dark:text-white">
               <Wrench className="h-4 w-4 mr-2" />
               Skills & Technologies
           </CardTitle>
@@ -349,7 +349,7 @@ export function SkillsSection({ skills, onAddSkill, onRemoveSkill, isLoading = f
                   onClick={() => setShowCustomSkillInput(true)}
                   variant="outline"
                   size="sm"
-                  className="text-black hover:bg-black hover:text-white"
+                  className="text-black hover:bg-black hover:text-white dark:bg-white dark:text-black"
                 >
                   <Plus className="h-3 w-3 mr-1" />
                   Custom
@@ -366,7 +366,7 @@ export function SkillsSection({ skills, onAddSkill, onRemoveSkill, isLoading = f
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.1 }}
       >
-        <Card className="bg-white   transition-all duration-300">
+        <Card className="bg-white   transition-all duration-300 bg-background">
         <CardContent className="pt-2 space-y-3">
             {/* Custom Skill Input */}
             <AnimatePresence>
@@ -441,7 +441,7 @@ export function SkillsSection({ skills, onAddSkill, onRemoveSkill, isLoading = f
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: -10, scale: 0.95 }}
                     transition={{ duration: 0.2 }}
-                    className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-xl z-50 max-h-80 overflow-hidden"
+                    className="absolute top-full left-0 right-0 mt-2 border border-gray-200 rounded-lg shadow-xl z-50 max-h-80 overflow-hidden bg-background"
                   >
                     <div className="p-4">
                       <div 
@@ -512,10 +512,10 @@ export function SkillsSection({ skills, onAddSkill, onRemoveSkill, isLoading = f
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.2 }}
         >
-          <Card className="bg-white transition-all duration-300">
+          <Card className="bg-white transition-all duration-300 bg-background">
               <CardHeader className="pb-2">
               <CardTitle className="text-lg text-black font-bold flex items-center justify-between">
-                <span>Selected Skills</span>
+                <span className="dark:text-white">Selected Skills</span>
                 <span className="text-xs bg-orange-600 text-white px-2 py-0.5 rounded-full">
                   {skills.length}
                 </span>
@@ -572,7 +572,7 @@ export function SkillsSection({ skills, onAddSkill, onRemoveSkill, isLoading = f
           animate={{ opacity: 1 }}
           transition={{ duration: 0.3 }}
         >
-          <Card className="bg-white">
+          <Card className="bg-background">
             <CardContent className="pt-6">
               <div className="grid grid-cols-10 sm:grid-cols-12 md:grid-cols-14 lg:grid-cols-16 gap-2">
                 {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
@@ -591,7 +591,7 @@ export function SkillsSection({ skills, onAddSkill, onRemoveSkill, isLoading = f
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.2 }}
         >
-          <Card className="bg-white   transition-all duration-300">
+          <Card className="bg-white   transition-all duration-300 bg-background">
           <CardContent className="pt-6">
               <div className="text-center py-8">
                 <motion.div

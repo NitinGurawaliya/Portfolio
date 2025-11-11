@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { motion } from "framer-motion"
-import { 
+import {
   Upload,
   User,
   Sparkles,
@@ -59,14 +59,14 @@ export function HomeSection({ user, portfolioData, onUpdate, usernameAvailabilit
   const [isCvModalOpen, setIsCvModalOpen] = useState(false)
   const [tempCvUrl, setTempCvUrl] = useState<string>(cvUrlProp || "")
   const [isEditingCv, setIsEditingCv] = useState(false)
-  
+
   // Sync cvUrl with prop
   useEffect(() => {
     if (cvUrlProp !== undefined) {
       setTempCvUrl(cvUrlProp || "")
     }
   }, [cvUrlProp])
-  
+
   // Reset modal when closed
   useEffect(() => {
     if (!isCvModalOpen) {
@@ -74,7 +74,7 @@ export function HomeSection({ user, portfolioData, onUpdate, usernameAvailabilit
       setIsEditingCv(false)
     }
   }, [isCvModalOpen, cvUrlProp])
-  
+
   const handleSaveCvUrl = () => {
     if (setCvUrlProp && tempCvUrl.trim()) {
       setCvUrlProp(tempCvUrl.trim())
@@ -82,7 +82,7 @@ export function HomeSection({ user, portfolioData, onUpdate, usernameAvailabilit
     setIsCvModalOpen(false)
     setIsEditingCv(false)
   }
-  
+
   const handleEditCv = () => {
     setTempCvUrl(cvUrlProp || "")
     setIsEditingCv(true)
@@ -113,7 +113,7 @@ export function HomeSection({ user, portfolioData, onUpdate, usernameAvailabilit
   // Only initialize once when the component mounts or when portfolioData is first loaded
   const [isInitialized, setIsInitialized] = useState(false)
   const [hasInitialized, setHasInitialized] = useState(false) // Track if we've done the initial setup
-  
+
   useEffect(() => {
     // Initialize formData immediately when user or portfolioData is available
     // This ensures data shows instantly without skeleton flicker
@@ -123,7 +123,7 @@ export function HomeSection({ user, portfolioData, onUpdate, usernameAvailabilit
       const profilePic = portfolioData?.profilePic || user.avatarUrl || ""
       const jobTitle = portfolioData?.jobTitle || ""
       const customUsername = portfolioData?.customUsername || user.githubUsername || ""
-      
+
       // Set formData immediately for instant display
       setFormData({
         displayName,
@@ -171,13 +171,13 @@ export function HomeSection({ user, portfolioData, onUpdate, usernameAvailabilit
         alert("File size must be less than 2MB")
         return
       }
-      
+
       // Check file type
       if (!file.type.match(/image\/(jpeg|jpg|png|gif)/)) {
         alert("Only JPG, PNG, and GIF files are allowed")
         return
       }
-      
+
       // Create a FileReader to convert image to base64
       const reader = new FileReader()
       reader.onloadend = () => {
@@ -216,7 +216,7 @@ export function HomeSection({ user, portfolioData, onUpdate, usernameAvailabilit
   // 2. User not loaded yet
   // Once user is loaded, we show data immediately (even if empty, it's better than skeleton flicker)
   const shouldShowSkeleton = isLoading || !user
-  
+
   if (shouldShowSkeleton) {
     return (
       <div className="space-y-2 px-6 md:px-10">
@@ -224,7 +224,7 @@ export function HomeSection({ user, portfolioData, onUpdate, usernameAvailabilit
         <div className="-mt-6 md:-mt-8">
           <Skeleton className="h-8 w-32 mb-4" />
         </div>
-        
+
         {/* Profile Card Skeleton */}
         <Card className="bg-white shadow-none border-none">
           <CardContent className="py-1 space-y-4">
@@ -244,7 +244,7 @@ export function HomeSection({ user, portfolioData, onUpdate, usernameAvailabilit
             </div>
           </CardContent>
         </Card>
-        
+
         {/* Experience Section Skeleton */}
         <Card className="bg-white shadow-none border-none">
           <CardContent className="pt-4 space-y-4">
@@ -268,7 +268,7 @@ export function HomeSection({ user, portfolioData, onUpdate, usernameAvailabilit
   }
 
   return (
-    <motion.div 
+    <motion.div
       className="space-y-2 px-6 md:px-10"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -284,8 +284,9 @@ export function HomeSection({ user, portfolioData, onUpdate, usernameAvailabilit
         <Card className="bg-transparent shadow-none border-none">
           <CardHeader className="py-0">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-xl md:text-2xl text-black flex items-center font-bold">
-                <User className="h-4 w-4 mr-2" />
+              <CardTitle className="text-xl md:text-2xl flex items-center font-bold text-gray-900 dark:text-gray-100"
+              >
+                <User className="h-4 w-4 mr-2 text-gray-700 dark:text-gray-300" />
                 Bio
               </CardTitle>
             </div>
@@ -299,113 +300,134 @@ export function HomeSection({ user, portfolioData, onUpdate, usernameAvailabilit
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.2 }}
       >
-        <Card className="bg-white shadow-none border-none">
+        <Card className="bg-white dark:bg-background shadow-none border-card/80">
           <CardContent className="py-1 space-y-2">
 
-          {/* Profile Photo Preview - Full Width */}
-          <div className="px-2 py-2">
-            <div className="flex items-center gap-3">
-              <Avatar className="h-12 w-12">
-                <AvatarImage src={formData.profilePic} alt={formData.displayName || 'Profile'} />
-                <AvatarFallback>{(formData.displayName || 'U').charAt(0)}</AvatarFallback>
-              </Avatar>
-              <div>
-                <Button
-                  type="button"
-                  className="h-8 px-3 text-xs bg-white border border-gray-300 text-black hover:bg-gray-50 rounded-lg"
-                  onClick={() => document.getElementById('profilePicInput')?.click()}
-                >
-                  Change Photo
-                </Button>
-                <input
-                  id="profilePicInput"
-                  type="file"
-                  accept="image/jpeg,image/png,image/gif"
-                  className="hidden"
-                  onChange={handlePhotoChange}
-                />
-              </div>
-            </div>
-          </div>
+            {/* Profile Photo Section */}
+            <div className="px-2 py-2">
+              <div className="flex items-center gap-3">
+                <Avatar className="h-12 w-12">
+                  <AvatarImage src={formData.profilePic} alt={formData.displayName || 'Profile'} />
+                  <AvatarFallback>{(formData.displayName || 'U').charAt(0)}</AvatarFallback>
+                </Avatar>
 
-          {/* Two-Column Layout: Left (Display Name, Job Title) | Right (Portfolio Username, Bio) */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 px-2">
-            {/* Left Column */}
-            <div className="space-y-2">
-              <div className="space-y-1.5">
-                <Label htmlFor="displayName" className="text-black font-medium text-sm">Display Name</Label>
-                <Input
-                  id="displayName"
-                  value={formData.displayName}
-                  onChange={(e) => handleInputChange("displayName", e.target.value)}
-                  className="bg-gray-50 text-black font-medium text-sm focus:bg-white placeholder:text-gray-400"
-                  placeholder="Your display name"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="jobTitle" className="text-black font-medium text-sm">Job Title</Label>
-                <Input
-                  id="jobTitle"
-                  value={formData.jobTitle}
-                  onChange={(e) => handleInputChange("jobTitle", e.target.value)}
-                  className="bg-gray-50 text-black font-medium text-sm focus:bg-white placeholder:text-gray-400"
-                  placeholder="e.g., Full Stack Developer"
-                  maxLength={50}
-                />
-              </div>
-            </div>
-
-            {/* Right Column */}
-            <div className="space-y-2">
-              <div className="space-y-1.5">
-                <Label htmlFor="customUsername" className="text-black font-medium text-sm">Portfolio Username</Label>
-                <div className="relative">
-                <Input
-                  id="customUsername"
-                  value={portfolioData?.customUsername || user?.githubUsername || ""}
-                  onChange={(e) => handleUsernameChange(e.target.value)}
-                  className="bg-gray-50 text-black font-medium text-sm focus:bg-white pr-10 placeholder:text-gray-400"
-                  placeholder="Your portfolio username"
-                />
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                    {usernameAvailability?.isChecking && (
-                      <Loader2 className="h-4 w-4 text-gray-400 animate-spin" />
-                    )}
-                    {!usernameAvailability?.isChecking && usernameAvailability?.isAvailable === true && (
-                      <CheckCircle2 className="h-4 w-4 text-green-500" />
-                    )}
-                    {!usernameAvailability?.isChecking && usernameAvailability?.isAvailable === false && (
-                      <XCircle className="h-4 w-4 text-red-500" />
-                    )}
-                  </div>
+                <div>
+                  <Button
+                    type="button"
+                    className="bg-gray-50"
+                    onClick={() => document.getElementById('profilePicInput')?.click()}
+                  >
+                    Change Photo
+                  </Button>
+                  <input
+                    id="profilePicInput"
+                    type="file"
+                    accept="image/jpeg,image/png,image/gif"
+                    className="hidden"
+                    onChange={handlePhotoChange}
+                  />
                 </div>
-                {usernameAvailability?.message && (
-                  <p className={`text-[11px] font-medium ${
-                    usernameAvailability.isAvailable === true ? 'text-green-600' : 
-                    usernameAvailability.isAvailable === false ? 'text-red-600' : 
-                    'text-gray-500'
-                  }`}>
-                    {usernameAvailability.message}
-                  </p>
-                )}
-                <p className="text-[11px] text-gray-500">This will be used in your portfolio URL: /portfolio/{formData.customUsername || user?.githubUsername || 'username'}</p>
-              </div>
-              <div className="space-y-0.5">
-                <Label htmlFor="bio" className="text-black font-medium text-sm">Bio</Label>
-                <Textarea
-                  id="bio"
-                  value={formData.bio}
-                  onChange={(e) => handleInputChange("bio", e.target.value)}
-                  className="bg-gray-50 text-black font-medium text-base focus:bg-white placeholder:text-gray-400 px-3 py-1.5 leading-snug"
-                  placeholder="Tell us about yourself..."
-                  rows={2}
-                  maxLength={150}
-                />
               </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+
+            {/* Two-Column Form */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 px-2">
+              {/* Left Column */}
+              <div className="space-y-2">
+                {/* Display Name */}
+                <div className="space-y-1.5">
+                  <Label htmlFor="displayName" className="text-gray-900 dark:text-gray-100 font-medium text-sm">
+                    Display Name
+                  </Label>
+                  <Input
+                    id="displayName"
+                    value={formData.displayName}
+                    onChange={(e) => handleInputChange("displayName", e.target.value)}
+                    className="bg-gray-50"
+                    placeholder="Your display name"
+                  />
+                </div>
+
+                {/* Job Title */}
+                <div className="space-y-1.5">
+                  <Label htmlFor="jobTitle" className="text-gray-900 dark:text-gray-100 font-medium text-sm">
+                    Job Title
+                  </Label>
+                  <Input
+                    id="jobTitle"
+                    value={formData.jobTitle}
+                    onChange={(e) => handleInputChange("jobTitle", e.target.value)}
+                    className="bg-gray-50"
+                    placeholder="e.g., Full Stack Developer"
+                    maxLength={50}
+                  />
+                </div>
+              </div>
+
+              {/* Right Column */}
+              <div className="space-y-2">
+                {/* Portfolio Username */}
+                <div className="space-y-1.5">
+                  <Label htmlFor="customUsername" className="text-gray-900 dark:text-gray-100 font-medium text-sm">
+                    Portfolio Username
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="customUsername"
+                      value={portfolioData?.customUsername || user?.githubUsername || ""}
+                      onChange={(e) => handleUsernameChange(e.target.value)}
+                      className="bg-gray-50"
+                      placeholder="Your portfolio username"
+                    />
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                      {usernameAvailability?.isChecking && (
+                        <Loader2 className="h-4 w-4 text-gray-400 dark:text-gray-500 animate-spin" />
+                      )}
+                      {!usernameAvailability?.isChecking && usernameAvailability?.isAvailable === true && (
+                        <CheckCircle2 className="h-4 w-4 text-green-500" />
+                      )}
+                      {!usernameAvailability?.isChecking && usernameAvailability?.isAvailable === false && (
+                        <XCircle className="h-4 w-4 text-red-500" />
+                      )}
+                    </div>
+                  </div>
+                  {usernameAvailability?.message && (
+                    <p
+                      className={`text-[11px] font-medium ${usernameAvailability.isAvailable === true
+                          ? "text-green-600"
+                          : usernameAvailability.isAvailable === false
+                            ? "text-red-600"
+                            : "text-gray-500 dark:text-gray-400"
+                        }`}
+                    >
+                      {usernameAvailability.message}
+                    </p>
+                  )}
+                  <p className="text-[11px] text-gray-500 dark:text-gray-400">
+                    This will be used in your portfolio URL: /portfolio/
+                    {formData.customUsername || user?.githubUsername || "username"}
+                  </p>
+                </div>
+
+                {/* Bio */}
+                <div className="space-y-0.5">
+                  <Label htmlFor="bio" className="text-gray-900 dark:text-gray-100 font-medium text-sm">
+                    Bio
+                  </Label>
+                  <Textarea
+                    id="bio"
+                    value={formData.bio}
+                    onChange={(e) => handleInputChange("bio", e.target.value)}
+                    className="bg-gray-50"
+                    placeholder="Tell us about yourself..."
+                    rows={2}
+                    maxLength={150}
+                  />
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </motion.div>
 
       {/* CV URL Modal */}
@@ -459,10 +481,10 @@ export function HomeSection({ user, portfolioData, onUpdate, usernameAvailabilit
       >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Work Experience Section - Left (below Display Name & Job Title) */}
-          <Card className="bg-white shadow-none border-none">
+          <Card className="bg-white dark:bg-background shadow-none border-card/80">
             <CardContent className="pt-4 space-y-4">
               <div className="flex items-center justify-between">
-                <div className="text-base font-semibold text-black">Work Experience</div>
+                <div className="text-base font-semibold text-gray-900 dark:text-gray-100">Work Experience</div>
                 <Button onClick={() => setIsAddExpOpen(true)} className="bg-black text-white hover:bg-gray-800 h-8 px-3 text-xs rounded-lg"><Plus className="h-4 w-4" /> Add Experience</Button>
               </div>
               <div className="space-y-3">
@@ -517,10 +539,10 @@ export function HomeSection({ user, portfolioData, onUpdate, usernameAvailabilit
           </Card>
 
           {/* CV/Resume Section - Right (below Portfolio Username & Bio) */}
-          <Card className="bg-white shadow-none border-none">
+          <Card className="bg-white dark:bg-background shadow-none border-card/80">
             <CardContent className="pt-4 space-y-4">
               <div className="flex items-center justify-between">
-                <div className="text-base font-semibold text-black">CV/Resume</div>
+                <div className="text-base font-semibold text-gray-900 dark:text-gray-100">CV/Resume</div>
                 <Button
                   type="button"
                   onClick={() => setIsCvModalOpen(true)}
@@ -531,7 +553,7 @@ export function HomeSection({ user, portfolioData, onUpdate, usernameAvailabilit
                   Add CV
                 </Button>
               </div>
-              
+
               {/* CV Cards */}
               <div className="space-y-3">
                 {cvUrlProp && (
@@ -540,13 +562,13 @@ export function HomeSection({ user, portfolioData, onUpdate, usernameAvailabilit
                     <div className="h-12 w-12 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
                       <FileText className="h-6 w-6 text-gray-700" />
                     </div>
-                    
+
                     {/* CV Info */}
                     <div className="flex-1 min-w-0">
                       <div className="font-semibold text-sm text-black mb-0.5">CV Document</div>
                       <div className="text-xs text-gray-500 truncate">{cvUrlProp}</div>
                     </div>
-                    
+
                     {/* Action Buttons */}
                     <div className="flex items-center gap-2 flex-shrink-0">
                       <Button
@@ -572,7 +594,7 @@ export function HomeSection({ user, portfolioData, onUpdate, usernameAvailabilit
                     </div>
                   </div>
                 )}
-                
+
                 {!cvUrlProp && (
                   <div className="text-xs text-gray-500">No CV/Resume added yet.</div>
                 )}
