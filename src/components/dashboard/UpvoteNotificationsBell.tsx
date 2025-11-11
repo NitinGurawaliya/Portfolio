@@ -48,67 +48,67 @@ export function UpvoteNotificationsBell({
         </Button>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent align="end" className="w-[320px] p-0">
-        <div className="flex items-center justify-between border-b border-border/60 px-3 py-2">
-          <p className="text-sm font-semibold text-foreground">Recent upvotes</p>
-          <span className="text-xs font-medium text-muted-foreground">
-            {notifications.length} अपडेट{notifications.length === 1 ? "" : "s"}
-          </span>
-        </div>
-
-        {notifications.length === 0 ? (
-          <div className="flex min-h-[120px] flex-col items-center justify-center gap-1 px-6 py-6 text-center">
-            <p className="text-sm font-semibold text-muted-foreground">अभी कोई नया upvote नहीं</p>
-            <p className="text-xs text-muted-foreground/80">
-              जैसे ही आपके प्रोजेक्ट को upvote मिलेगा, आपको यहाँ सूचनाएँ दिखेंगी।
-            </p>
+        <DropdownMenuContent align="end" className="w-[320px] p-0">
+          <div className="flex items-center justify-between border-b border-border/60 px-3 py-2">
+            <p className="text-sm font-semibold text-foreground">Recent upvotes</p>
+            <span className="text-xs font-medium text-muted-foreground">
+              {notifications.length} update{notifications.length === 1 ? "" : "s"}
+            </span>
           </div>
-        ) : (
-          <div className="max-h-[360px] overflow-y-auto py-1">
-            {notifications.map((notification) => {
-              const createdAt = new Date(notification.createdAt)
 
-              const username =
-                notification.actor?.githubUsername ||
-                notification.actor?.name ||
-                "किसी ने"
+          {notifications.length === 0 ? (
+            <div className="flex min-h-[120px] flex-col items-center justify-center gap-1 px-6 py-6 text-center">
+              <p className="text-sm font-semibold text-muted-foreground">No new upvotes yet</p>
+              <p className="text-xs text-muted-foreground/80">
+                You&apos;ll see alerts here as soon as one of your projects gets upvoted.
+              </p>
+            </div>
+          ) : (
+            <div className="max-h-[360px] overflow-y-auto py-1">
+              {notifications.map((notification) => {
+                const createdAt = new Date(notification.createdAt)
 
-              const avatarFallback =
-                notification.actor?.githubUsername?.[0] ||
-                notification.actor?.name?.[0] ||
-                "U"
+                const username =
+                  notification.actor?.githubUsername ||
+                  notification.actor?.name ||
+                  "Someone"
 
-              return (
-                <DropdownMenuItem
-                  key={notification.id}
-                  className="flex items-start gap-3 rounded-none px-3 py-2 focus:bg-muted/60 focus:text-foreground"
-                >
-                  <Avatar className="h-8 w-8 border border-border/50 shadow-sm">
-                    {notification.actor?.avatarUrl ? (
-                      <AvatarImage src={notification.actor.avatarUrl} alt={username} />
-                    ) : null}
-                    <AvatarFallback className="bg-orange-500/20 text-xs font-semibold text-orange-700">
-                      {avatarFallback.toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
+                const avatarFallback =
+                  notification.actor?.githubUsername?.[0] ||
+                  notification.actor?.name?.[0] ||
+                  "U"
 
-                  <div className="flex flex-1 flex-col gap-1">
-                    <span className="text-sm font-semibold text-foreground line-clamp-1">
-                      {notification.projectName}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {username} ने आपके प्रोजेक्ट को upvote किया। कुल {notification.totalUpvotes} upvotes।
-                    </span>
-                    <span className="text-[11px] font-medium text-muted-foreground/80">
-                      {createdAt.toLocaleString()}
-                    </span>
-                  </div>
-                </DropdownMenuItem>
-              )
-            })}
-          </div>
-        )}
-      </DropdownMenuContent>
+                return (
+                  <DropdownMenuItem
+                    key={notification.id}
+                    className="flex items-start gap-3 rounded-none px-3 py-2 focus:bg-muted/60 focus:text-foreground"
+                  >
+                    <Avatar className="h-8 w-8 border border-border/50 shadow-sm">
+                      {notification.actor?.avatarUrl ? (
+                        <AvatarImage src={notification.actor.avatarUrl} alt={username} />
+                      ) : null}
+                      <AvatarFallback className="bg-orange-500/20 text-xs font-semibold text-orange-700">
+                        {avatarFallback.toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+
+                    <div className="flex flex-1 flex-col gap-1">
+                      <span className="text-sm font-semibold text-foreground line-clamp-1">
+                        {notification.projectName}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {username} upvoted this project. Total upvotes: {notification.totalUpvotes}.
+                      </span>
+                      <span className="text-[11px] font-medium text-muted-foreground/80">
+                        {createdAt.toLocaleString()}
+                      </span>
+                    </div>
+                  </DropdownMenuItem>
+                )
+              })}
+            </div>
+          )}
+        </DropdownMenuContent>
     </DropdownMenu>
   )
 }

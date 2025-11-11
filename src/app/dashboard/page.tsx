@@ -173,10 +173,10 @@ export default function DashboardPage() {
         const actorDisplay =
           notification.actor?.githubUsername ||
           notification.actor?.name ||
-          "किसी ने"
+          "Someone"
 
         toast.success(
-          `${actorDisplay} ने "${notification.projectName}" को upvote किया!`,
+          `${actorDisplay} upvoted “${notification.projectName}”!`,
           successToastConfig
         )
       } catch (messageError) {
@@ -571,11 +571,11 @@ export default function DashboardPage() {
       >
         <DialogContent className="max-w-md space-y-4">
           <DialogHeader>
-            <DialogTitle>आपकी कम्युनिटी अपडेट्स</DialogTitle>
+            <DialogTitle>Community updates</DialogTitle>
             <DialogDescription>
               {summarySinceLabel
-                ? `${summarySinceLabel} से आपके प्रोजेक्ट्स को नए upvotes मिले हैं।`
-                : "आपके प्रोजेक्ट्स को समुदाय से नई सराहना मिली है।"}
+                ? `Your projects received new upvotes since ${summarySinceLabel}.`
+                : "Your projects recently received fresh upvotes from the community."}
             </DialogDescription>
           </DialogHeader>
 
@@ -594,7 +594,7 @@ export default function DashboardPage() {
                   </span>
                 </div>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  कुल upvotes: {project.totalUpvotes}
+                  Total upvotes: {project.totalUpvotes}
                 </p>
               </div>
             ))}
@@ -602,7 +602,7 @@ export default function DashboardPage() {
 
           <DialogFooter>
             <Button onClick={dismissSummary} className="ml-auto">
-              ठीक है, धन्यवाद
+              Got it, thanks
             </Button>
           </DialogFooter>
         </DialogContent>
