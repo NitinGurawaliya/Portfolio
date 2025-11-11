@@ -20,22 +20,23 @@ export async function GET(req: NextRequest) {
   }
 
   const { client, server } = pair
+  const serverSocket = server as ServerWebSocket
   const hub = getNotificationHub()
 
   const cleanup = () => {
     hub.removeClient(userId, server)
   }
 
-  server.accept?.()
+  serverSocket.accept?.()
   hub.addClient(userId, server)
 
-  server.addEventListener("close", cleanup)
-  server.addEventListener("error", cleanup)
+  serverSocket.addEventListener("close", cleanup)
+  serverSocket.addEventListener("error", cleanup)
 
-  server.addEventListener("message", (event: any) => {
+  serverSocket.addEventListener("message", (event: any) => {
     if (event.data === "ping") {
       try {
-        server.send("pong")
+        serverSocket.send("pong")
       } catch (error) {
         console.error("🔔 Failed to send pong:", error)
       }
@@ -71,4 +72,8 @@ function createWebSocketPair(): WebSocketPairResult {
   }
 
   return { client, server }
+}
+
+type ServerWebSocket = WebSocket & {
+  accept?: () => void
 }
