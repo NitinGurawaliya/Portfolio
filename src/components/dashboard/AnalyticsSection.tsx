@@ -515,8 +515,8 @@ export function AnalyticsSection({ portfolioId, analyticsData }: AnalyticsSectio
         </CardHeader>
       </Card>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-4 gap-3 -mt-1">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 gap-3 -mt-1 sm:grid-cols-2 xl:grid-cols-4">
         <motion.div variants={itemVariants}>
           <Card data-stat="total-views" className="shadow-sm border-gray-200 rounded-lg h-28 transition-all duration-300 bg-background">
             <CardContent className="p-4 h-full">
@@ -624,8 +624,8 @@ export function AnalyticsSection({ portfolioId, analyticsData }: AnalyticsSectio
       </div>
 
       {/* Activity Graph and Top Referrers - Side by Side */}
-      <motion.div variants={itemVariants}>
-        <div className="flex gap-4">
+        <motion.div variants={itemVariants}>
+          <div className="flex flex-col gap-4 lg:flex-row">
           {/* Heatmap - Left side */}
           <Card className="shadow-none border-none flex-1 bg-background">
             <CardHeader className="pb-0">
@@ -637,74 +637,73 @@ export function AnalyticsSection({ portfolioId, analyticsData }: AnalyticsSectio
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="pt-4">
-              {/* Month labels row */}
-              <div className="flex gap-1 min-w-max mb-2 overflow-x-auto scrollbar-hide pl-7">
-                {weeks.map((week, weekIndex) => {
-                  // Get the first day of this week to determine month
-                  const firstDay = week.find(day => day.date)
-                  if (!firstDay || !firstDay.date) return null
-                  
-                  const date = new Date(firstDay.date)
-                  const month = date.toLocaleDateString('en-US', { month: 'short' })
-                  const weekStart = date.getDate()
-                  
-                  // Show month label only on the first week of each month
-                  const isFirstWeekOfMonth = weekStart <= 7
-                  const shouldShowMonth = isFirstWeekOfMonth || weekIndex === 0
-                  
-                  return (
-                    <div key={weekIndex} className="w-3 flex items-start justify-center">
-                      {shouldShowMonth && (
-                      <span className="text-[10px] text-gray-500 font-medium whitespace-nowrap">
-                        {month}
-                      </span>
-                    )}
+              <CardContent className="pt-4">
+                <div
+                  ref={heatmapRef}
+                  className="w-full overflow-x-auto scrollbar-hide"
+                  style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+                >
+                  <div className="min-w-[680px]">
+                    {/* Month labels row */}
+                    <div className="mb-2 flex gap-1 pl-[42px]">
+                      {weeks.map((week, weekIndex) => {
+                        const firstDay = week.find(day => day.date)
+                        if (!firstDay || !firstDay.date) return <div key={weekIndex} className="w-3" />
+                        
+                        const date = new Date(firstDay.date)
+                        const month = date.toLocaleDateString("en-US", { month: "short" })
+                        const weekStart = date.getDate()
+                        const isFirstWeekOfMonth = weekStart <= 7
+                        const shouldShowMonth = isFirstWeekOfMonth || weekIndex === 0
+                        
+                        return (
+                          <div key={weekIndex} className="flex w-3 items-start justify-center">
+                            {shouldShowMonth && (
+                              <span className="whitespace-nowrap text-[10px] font-medium text-gray-500">
+                                {month}
+                              </span>
+                            )}
+                          </div>
+                        )
+                      })}
                     </div>
-                  )
-                })}
-              </div>
-              
-              <div className="flex items-start gap-1">
-                {/* Weekday labels - Left side */}
-                <div className="flex flex-col gap-1 pt-0.5">
-                  <span className="text-[10px] text-gray-500 font-medium h-3 leading-none">Sun</span>
-                  <span className="text-[10px] text-gray-500 font-medium h-3 leading-none">Mon</span>
-                  <span className="text-[10px] text-gray-500 font-medium h-3 leading-none">Tue</span>
-                  <span className="text-[10px] text-gray-500 font-medium h-3 leading-none">Wed</span>
-                  <span className="text-[10px] text-gray-500 font-medium h-3 leading-none">Thu</span>
-                  <span className="text-[10px] text-gray-500 font-medium h-3 leading-none">Fri</span>
-                  <span className="text-[10px] text-gray-500 font-medium h-3 leading-none">Sat</span>
-                </div>
-                
-                {/* Heatmap grid */}
-                <div className="overflow-x-auto overflow-y-hidden scrollbar-hide flex-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-                  <div 
-                    className="flex gap-1 min-w-max scroll-smooth" 
-                    ref={heatmapRef}
-                    style={{ scrollBehavior: 'smooth' }}
-                  >
-                     {weeks.map((week, weekIndex) => (
-                       <div key={weekIndex} className="flex flex-col gap-1">
-                         {week.map((day, dayIndex) => (
-                           <div
-                             key={`${day.date || `empty-${weekIndex}-${dayIndex}`}-${dayIndex}`}
-                             className={`w-3 h-3 rounded-sm ${getHeatmapColor(day.count)} cursor-pointer transition-all duration-150 hover:scale-110 hover:z-10 relative`}
-                             onMouseEnter={(e) => handleDayHover(e, day)}
-                             onMouseLeave={handleDayLeave}
-                           />
-                         ))}
-                       </div>
-                     ))}
+                    
+                    <div className="flex items-start gap-1">
+                      {/* Weekday labels - Left side */}
+                      <div className="flex flex-col gap-1 pt-0.5">
+                        <span className="h-3 leading-none text-[10px] font-medium text-gray-500">Sun</span>
+                        <span className="h-3 leading-none text-[10px] font-medium text-gray-500">Mon</span>
+                        <span className="h-3 leading-none text-[10px] font-medium text-gray-500">Tue</span>
+                        <span className="h-3 leading-none text-[10px] font-medium text-gray-500">Wed</span>
+                        <span className="h-3 leading-none text-[10px] font-medium text-gray-500">Thu</span>
+                        <span className="h-3 leading-none text-[10px] font-medium text-gray-500">Fri</span>
+                        <span className="h-3 leading-none text-[10px] font-medium text-gray-500">Sat</span>
+                      </div>
+                      
+                      {/* Heatmap grid */}
+                      <div className="flex flex-1 gap-1 pb-1">
+                        {weeks.map((week, weekIndex) => (
+                          <div key={weekIndex} className="flex flex-col gap-1">
+                            {week.map((day, dayIndex) => (
+                              <div
+                                key={`${day.date || `empty-${weekIndex}-${dayIndex}`}-${dayIndex}`}
+                                className={`h-3 w-3 rounded-sm ${getHeatmapColor(day.count)} cursor-pointer transition-all duration-150 hover:scale-110 hover:z-10`}
+                                onMouseEnter={(e) => handleDayHover(e, day)}
+                                onMouseLeave={handleDayLeave}
+                              />
+                            ))}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
             </CardContent>
           </Card>
 
           {/* Top Referrers - Right side */}
           {analytics?.topReferrers && analytics.topReferrers.length > 0 && (
-            <div className="w-80 flex-shrink-0">
+              <div className="w-full flex-shrink-0 lg:w-80">
               <TopReferrersList referrers={analytics.topReferrers} />
             </div>
           )}

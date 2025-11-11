@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useCallback, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { PortfolioPreview } from "./PortfolioPreview"
 import { motion, AnimatePresence } from "framer-motion"
@@ -13,16 +13,17 @@ import {
   LogOut,
   Palette,
   BarChart3,
-    Eye,
+  Eye,
   X,
   ChevronLeft,
   ChevronRight,
-    Newspaper,
-    Menu,
+  Newspaper,
+  Menu,
+  SlidersHorizontal,
 } from "lucide-react"
 import { DevFolioInlineLoader } from "@/components/ui/DevFolioLoader"
 import { cn } from "@/lib/utils"
-  import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -51,11 +52,12 @@ export function DashboardLayout({
   isPublishing = false,
   notificationBell,
 }: DashboardLayoutProps) {
-    const [previewMode, setPreviewMode] = useState<"mobile">("mobile")
-    const [isPreviewOpen, setIsPreviewOpen] = useState(false)
-    const [isMobileNavOpen, setIsMobileNavOpen] = useState(false)
-    const [isSidebarPinned, setIsSidebarPinned] = useState(true)
-    const [isSidebarHovered, setIsSidebarHovered] = useState(false)
+  const [previewMode, setPreviewMode] = useState<"mobile">("mobile")
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false)
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false)
+  const [isActionsSheetOpen, setIsActionsSheetOpen] = useState(false)
+  const [isSidebarPinned, setIsSidebarPinned] = useState(true)
+  const [isSidebarHovered, setIsSidebarHovered] = useState(false)
 
   const isSidebarExpanded = isSidebarPinned || isSidebarHovered
 
@@ -71,9 +73,30 @@ export function DashboardLayout({
     const communityItem = { id: "feed", label: "Community Feed", icon: Newspaper }
     const CommunityIcon = communityItem.icon
 
-    const notificationButton = notificationBell ? (
-      <div className="order-1 flex w-full justify-end sm:order-none sm:w-auto">{notificationBell}</div>
-    ) : null
+  const handleVisitProfile = useCallback(() => {
+    const currentDomain = typeof window !== "undefined" ? window.location.origin : ""
+    const username =
+      livePortfolio?.customUsername ||
+      portfolioData?.customUsername ||
+      user?.githubUsername ||
+      "username"
+    if (currentDomain) {
+      window.open(`${currentDomain}/${username}`, "_blank", "noopener,noreferrer")
+    }
+  }, [livePortfolio?.customUsername, portfolioData?.customUsername, user?.githubUsername])
+
+  const handleTogglePreview = useCallback(() => {
+    setIsPreviewOpen((prev) => !prev)
+    setIsActionsSheetOpen(false)
+  }, [])
+
+  const handlePublishClick = useCallback(async () => {
+    if (!onPublish || isPublishing) {
+      return
+    }
+    await onPublish()
+    setIsActionsSheetOpen(false)
+  }, [isPublishing, onPublish])
 
   const handleLogout = async () => {
     try {
@@ -120,6 +143,65 @@ export function DashboardLayout({
 
   return (
     <>
+      <Sheet open={isActionsSheetOpen} onOpenChange={setIsActionsSheetOpen}>
+        <SheetContent side="left" className="w-[260px] p-0 sm:w-[320px]">
+          <SheetHeader className="border-b border-border/60 px-4 py-4 text-left">
+            <SheetTitle className="text-base font-semibold">Quick actions</SheetTitle>
+            <SheetDescription className="text-sm text-muted-foreground">
+              Manage preview, publishing, and profile access from one place.
+            </SheetDescription>
+          </SheetHeader>
+          <div className="flex flex-col gap-3 px-4 py-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                handleVisitProfile()
+                setIsActionsSheetOpen(false)
+              }}
+              className="h-11 justify-start rounded-xl text-sm font-semibold"
+            >
+              Visit profile
+              <ExternalLink className="ml-2 h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleTogglePreview}
+              className="h-11 justify-start rounded-xl text-sm font-semibold"
+            >
+              {isPreviewOpen ? "Hide preview" : "Show preview"}
+              <Eye className="ml-2 h-4 w-4" />
+            </Button>
+            <Button
+              size="sm"
+              onClick={handlePublishClick}
+              disabled={!hasUnsavedChanges || isPublishing}
+              variant={hasUnsavedChanges && !isPublishing ? "default" : "secondary"}
+              className={cn(
+                "h-11 justify-start rounded-xl text-sm font-semibold transition-colors",
+                hasUnsavedChanges && !isPublishing
+                  ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700"
+                  : ""
+              )}
+            >
+              {isPublishing ? (
+                <DevFolioInlineLoader />
+              ) : hasUnsavedChanges ? (
+                <>
+                  Publish changes
+                  <span className="ml-2 hidden rounded border border-border/60 bg-muted/40 px-1.5 py-0.5 text-[11px] md:inline">
+                    Ctrl+S
+                  </span>
+                </>
+              ) : (
+                "No changes"
+              )}
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
+
       <Sheet open={isMobileNavOpen} onOpenChange={setIsMobileNavOpen}>
         <SheetContent side="left" className="w-[280px] p-0 sm:w-[320px]">
           <SheetHeader className="border-b border-border/60 px-4 py-4 text-left">
@@ -369,7 +451,7 @@ export function DashboardLayout({
             initial="visible"
             animate="visible"
           >
-            <div className="flex items-center gap-2">
+            <div className="flex flex-1 flex-wrap items-center gap-2">
               <Button
                 variant="ghost"
                 size="icon"
@@ -379,61 +461,19 @@ export function DashboardLayout({
                 <Menu className="h-5 w-5" />
                 <span className="sr-only">Open navigation</span>
               </Button>
-              <h2 className="text-base font-semibold">Dashboard</h2>
-            </div>
-            <div className="ml-auto flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto sm:flex-nowrap">
-              {notificationButton}
               <Button
-                size="sm"
-                variant="outline"
-                onClick={() => {
-                  const currentDomain = window.location.origin
-                  const username =
-                    livePortfolio?.customUsername ||
-                    portfolioData?.customUsername ||
-                    user?.githubUsername ||
-                    "username"
-                  window.open(`${currentDomain}/${username}`, "_blank")
-                }}
-                className="order-2 w-full rounded-lg px-3 text-xs font-semibold sm:order-none sm:w-auto"
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9"
+                onClick={() => setIsActionsSheetOpen(true)}
               >
-                Visit Profile
-                <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
+                <SlidersHorizontal className="h-5 w-5" />
+                <span className="sr-only">Open quick actions</span>
               </Button>
-              <Button
-                size="sm"
-                variant={isPreviewOpen ? "default" : "outline"}
-                onClick={() => setIsPreviewOpen(!isPreviewOpen)}
-                className="order-3 w-full rounded-lg px-3 text-xs font-semibold sm:order-none sm:w-auto"
-              >
-                <Eye className="mr-1.5 h-3.5 w-3.5" />
-                {isPreviewOpen ? "Hide Preview" : "Show Preview"}
-              </Button>
-              <Button
-                size="sm"
-                onClick={onPublish}
-                disabled={!hasUnsavedChanges || isPublishing}
-                variant={hasUnsavedChanges && !isPublishing ? "default" : "secondary"}
-                className={cn(
-                  "order-4 w-full rounded-lg px-3 text-xs font-semibold transition-colors sm:order-none sm:w-auto",
-                  hasUnsavedChanges && !isPublishing
-                    ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700"
-                    : ""
-                )}
-              >
-                {isPublishing ? (
-                  <DevFolioInlineLoader />
-                ) : hasUnsavedChanges ? (
-                  <span className="inline-flex items-center gap-2">
-                    <span>Publish 🔥</span>
-                    <span className="hidden rounded border border-border/60 bg-muted/40 px-1.5 py-0.5 text-[11px] md:inline">
-                      Ctrl+S
-                    </span>
-                  </span>
-                ) : (
-                  "No Changes"
-                )}
-              </Button>
+              {notificationBell ? (
+                <div className="flex items-center">{notificationBell}</div>
+              ) : null}
+              <h2 className="text-base font-semibold sm:ml-2">Dashboard</h2>
             </div>
           </motion.header>
 

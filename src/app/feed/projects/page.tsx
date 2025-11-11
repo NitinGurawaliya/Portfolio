@@ -361,42 +361,45 @@ export default function ProjectFeedPage() {
 
     return (
       <div className="mx-auto flex min-h-screen w-full max-w-3xl flex-col gap-10 px-4 py-12 sm:px-8 lg:px-10">
-        <div className="mx-auto flex w-full max-w-xl flex-col gap-4">
-        <header className="flex flex-col gap-2 text-left">
+        <div className="mx-auto flex w-full max-w-xl flex-col gap-3">
+          <header className="flex flex-col gap-2 text-left">
             <h1 className="text-3xl font-semibold text-foreground md:text-4xl">Discover DevFolio Projects</h1>
-        </header>
-
-          <section className="flex flex-col gap-3 rounded-2xl border border-border/30 bg-background/80 p-4 sm:p-5">
-            <div className="flex flex-wrap items-center gap-2">
-            {SORT_OPTIONS.map((option) => (
-              <Button
-                key={option.value}
-                type="button"
-                variant={sort === option.value ? "default" : "outline"}
-                size="sm"
-                onClick={() => handleSortChange(option.value)}
-                disabled={isSwitching}
-                aria-pressed={sort === option.value}
-                className={cn(
-                    "w-full rounded-full px-4 text-xs font-semibold transition sm:w-auto",
-                  sort === option.value
-                    ? "bg-foreground text-background"
-                    : "border border-border/40 bg-background text-muted-foreground hover:text-foreground"
-                )}
-              >
-                {option.label}
-              </Button>
-            ))}
-          </div>
-            <p className="text-xs text-muted-foreground">
-            {isSwitching ? "Updating…" : `${projects.length} shown · Page ${page}`}
-          </p>
-        </section>
+          </header>
 
           <div className="flex flex-col gap-1 text-left">
-          <h2 className="text-lg font-semibold text-foreground sm:text-xl">{feedHeadline.title}</h2>
-          <p className="text-sm text-muted-foreground">{feedHeadline.subtitle}</p>
-        </div>
+            <h2 className="text-lg font-semibold text-foreground sm:text-xl">{feedHeadline.title}</h2>
+            <p className="text-sm text-muted-foreground">{feedHeadline.subtitle}</p>
+          </div>
+
+          <section className="space-y-3 rounded-2xl border border-border/30 bg-background/80 p-4 sm:p-5">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-semibold text-muted-foreground">Sort by</span>
+              <p className="text-xs text-muted-foreground">
+                {isSwitching ? "Updating…" : `${projects.length} shown · Page ${page}`}
+              </p>
+            </div>
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
+              {SORT_OPTIONS.map((option) => (
+                <Button
+                  key={option.value}
+                  type="button"
+                  variant={sort === option.value ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => handleSortChange(option.value)}
+                  disabled={isSwitching}
+                  aria-pressed={sort === option.value}
+                  className={cn(
+                    "min-w-[110px] flex-shrink-0 rounded-full px-4 text-xs font-semibold transition",
+                    sort === option.value
+                      ? "bg-foreground text-background"
+                      : "border border-border/40 bg-background text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  {option.label}
+                </Button>
+              ))}
+            </div>
+          </section>
       </div>
 
       {content}

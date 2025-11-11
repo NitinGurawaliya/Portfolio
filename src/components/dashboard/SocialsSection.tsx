@@ -279,8 +279,8 @@ export function SocialsSection({
         <Card className="transition-all duration-300 bg-background">
           <CardContent className="pt-2">
             {/* Loading Skeleton */}
-            {isLoading && socials.length === 0 && (
-              <div className="grid grid-cols-2 gap-4">
+              {isLoading && socials.length === 0 && (
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 {[1, 2, 3, 4, 5, 6].map((i) => (
                   <div key={i} className="flex items-center space-x-3">
                     <Skeleton className="h-12 w-12 rounded-xl" />
@@ -292,112 +292,100 @@ export function SocialsSection({
             )}
             
             {/* Actual Inputs */}
-            {(!isLoading || socials.length > 0) && (
-              <div className="grid grid-cols-2 gap-4">
+              {(!isLoading || socials.length > 0) && (
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 {platformConfigs.map((platform, index) => {
               const Icon = platform.icon
               const username = platformUsernames[platform.id] || ""
               const isPinned = platformPinned[platform.id] || false
               
-              return (
-                <motion.div
-                  key={platform.id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.3, delay: index * 0.05 }}
-                  className="flex items-center space-x-3 rounded-xl overflow-hidden transition-all duration-300 hover:shadow-lg"
-                >
-                  {/* Platform Icon with Animation */}
-                  <motion.div 
-                    className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
-                    style={{ backgroundColor: platform.color }}
-                    whileHover={{ scale: 1.1, rotate: 5 }}
-                    whileTap={{ scale: 0.95 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <motion.div
-                      animate={{ 
-                        y: [0, -2, 0],
-                      }}
-                      transition={{ 
-                        duration: 2,
-                        repeat: Infinity,
-                        ease: "easeInOut"
-                      }}
-                    >
-                      <Icon 
-                        className="h-6 w-6" 
-                        style={{ color: platform.textColor }}
-                      />
-                    </motion.div>
-                  </motion.div>
-                  
-                  {/* Input Field with Brand Styling */}
-                  <motion.div 
-                    className="flex-1 relative rounded-xl overflow-hidden"
-                    style={{ 
-                      background: username ? platform.bgGradient : '#f3f4f6',
-                      border: username ? 'none' : '1px solid #e5e7eb'
-                    }}
-                    whileHover={{ scale: 1.02 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <div 
-                      className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium"
-                      style={{ color: username ? platform.textColor : '#6b7280' }}
-                    >
-                      @
-                    </div>
-                    <Input
-                      value={username}
-                      onChange={(e) => handleUsernameChange(platform.id, e.target.value)}
-                      placeholder={platform.placeholder}
-                      className="pl-8 pr-10 bg-transparent border-none text-sm font-medium h-12 focus:ring-0 focus:outline-none"
-                      style={{ 
-                        color: username ? platform.textColor : '#374151',
-                      }}
-                    />
-                    
-                    {/* Clear Button for filled inputs */}
-                    {username.trim() && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleUsernameChange(platform.id, '')}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 p-0 rounded-full hover:bg-black/10"
-                        style={{ color: platform.textColor }}
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                    )}
-                  </motion.div>
-                  
-                  {/* Pin Button with Animation */}
+                return (
                   <motion.div
-                    whileHover={{ scale: 1.1, rotate: isPinned ? 0 : 10 }}
-                    whileTap={{ scale: 0.9 }}
+                    key={platform.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.3, delay: index * 0.05 }}
+                    className="flex flex-col gap-3 rounded-xl border border-border/60 bg-background/80 p-3 transition-all duration-300 hover:shadow-lg sm:flex-row sm:items-center sm:gap-0 sm:space-x-3"
                   >
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handlePinToggle(platform.id)}
-                      className={`h-10 w-10 p-0 rounded-xl transition-all duration-200 ${
-                        isPinned 
-                          ? "bg-blue-500 text-white hover:bg-blue-600 shadow-md" 
-                          : "bg-gray-100 text-gray-400 hover:text-gray-600 hover:bg-gray-200"
-                      }`}
-                      disabled={!username.trim()}
+                    {/* Platform Icon with Animation */}
+                    <motion.div 
+                      className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl"
+                      style={{ backgroundColor: platform.color }}
+                      whileHover={{ scale: 1.1, rotate: 5 }}
+                      whileTap={{ scale: 0.95 }}
+                      transition={{ duration: 0.2 }}
                     >
                       <motion.div
-                        animate={isPinned ? { rotate: [0, -10, 10, -10, 0] } : {}}
-                        transition={{ duration: 0.5 }}
+                        animate={{ y: [0, -2, 0] }}
+                        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
                       >
-                        <Pin className="h-4 w-4" />
+                        <Icon className="h-6 w-6" style={{ color: platform.textColor }} />
                       </motion.div>
-                    </Button>
+                    </motion.div>
+                    
+                    {/* Input Field with Brand Styling */}
+                    <motion.div 
+                      className="relative w-full overflow-hidden rounded-xl sm:flex-1"
+                      style={{ 
+                        background: username ? platform.bgGradient : "#f3f4f6",
+                        border: username ? "none" : "1px solid #e5e7eb"
+                      }}
+                      whileHover={{ scale: 1.02 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <div 
+                        className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium"
+                        style={{ color: username ? platform.textColor : "#6b7280" }}
+                      >
+                        @
+                      </div>
+                      <Input
+                        value={username}
+                        onChange={(e) => handleUsernameChange(platform.id, e.target.value)}
+                        placeholder={platform.placeholder}
+                        className="h-12 border-none bg-transparent pl-8 pr-10 text-sm font-medium focus:outline-none focus:ring-0"
+                        style={{ 
+                          color: username ? platform.textColor : "#374151"
+                        }}
+                      />
+                      
+                      {/* Clear Button for filled inputs */}
+                      {username.trim() && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleUsernameChange(platform.id, "")}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 rounded-full p-0 hover:bg-black/10"
+                          style={{ color: platform.textColor }}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      )}
+                    </motion.div>
+                    
+                    {/* Pin Button with Animation */}
+                    <motion.div
+                      className="flex items-center justify-end sm:justify-center"
+                      whileHover={{ scale: 1.1, rotate: isPinned ? 0 : 10 }}
+                      whileTap={{ scale: 0.9 }}
+                    >
+                      <Button
+                        variant={isPinned ? "default" : "outline"}
+                        size="icon"
+                        onClick={() => handlePinToggle(platform.id)}
+                        className={`h-10 w-10 rounded-xl transition-all duration-300 ${isPinned ? "bg-black text-white hover:bg-black/90" : "border-dashed"}`}
+                        disabled={!username.trim()}
+                      >
+                        <motion.div
+                          animate={isPinned ? { rotate: [0, -10, 10, -10, 0] } : {}}
+                          transition={{ duration: 0.5 }}
+                        >
+                          <Pin className="h-4 w-4" />
+                        </motion.div>
+                      </Button>
+                    </motion.div>
                   </motion.div>
-                </motion.div>
-              )
+                )
             })}
               </div>
             )}
