@@ -1,7 +1,9 @@
-import { Bell } from "lucide-react"
+import { useMemo } from "react"
+import { Bell, Check } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { cn } from "@/lib/utils"
 
 export interface UpvoteNotification {
   id: string
@@ -20,14 +22,20 @@ export interface UpvoteNotification {
 interface UpvoteNotificationsBellProps {
   notifications: UpvoteNotification[]
   unreadCount: number
+  readNotificationIds: string[]
   onOpenChange?: (open: boolean) => void
+  onMarkAllRead: () => void
 }
 
 export function UpvoteNotificationsBell({
   notifications,
   unreadCount,
+  readNotificationIds,
   onOpenChange,
+  onMarkAllRead,
 }: UpvoteNotificationsBellProps) {
+  const readIds = useMemo(() => new Set(readNotificationIds.map(String)), [readNotificationIds])
+  const hasUnread = unreadCount > 0
   const badgeContent = unreadCount > 9 ? "9+" : unreadCount.toString()
 
   return (
@@ -40,7 +48,7 @@ export function UpvoteNotificationsBell({
           aria-label="Upvote notifications"
         >
           <Bell className="h-4 w-4 text-muted-foreground" />
-          {unreadCount > 0 && (
+          {hasUnread && (
             <span className="absolute -right-1 -top-1 flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-orange-500 px-1 text-[10px] font-semibold text-white shadow-lg">
               {badgeContent}
             </span>
@@ -51,9 +59,23 @@ export function UpvoteNotificationsBell({
         <DropdownMenuContent align="end" className="w-[320px] p-0">
           <div className="flex items-center justify-between border-b border-border/60 px-3 py-2">
             <p className="text-sm font-semibold text-foreground">Recent upvotes</p>
-            <span className="text-xs font-medium text-muted-foreground">
-              {notifications.length} update{notifications.length === 1 ? "" : "s"}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-medium text-muted-foreground">
+                {notifications.length} update{notifications.length === 1 ? "" : "s"}
+              </span>
+              {notifications.length > 0 && (
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  aria-label="Mark all notifications as read"
+                  onClick={onMarkAllRead}
+                  disabled={!hasUnread}
+                  className="h-6 w-6 rounded-full text-muted-foreground hover:text-foreground disabled:opacity-50"
+                >
+                  <Check className="h-3.5 w-3.5" />
+                </Button>
+              )}
+            </div>
           </div>
 
           {notifications.length === 0 ? (
@@ -78,10 +100,15 @@ export function UpvoteNotificationsBell({
                   notification.actor?.name?.[0] ||
                   "U"
 
+                const isUnread = !readIds.has(notification.id)
+
                 return (
                   <DropdownMenuItem
                     key={notification.id}
-                    className="flex items-start gap-3 rounded-none px-3 py-2 focus:bg-muted/60 focus:text-foreground"
+                    className={cn(
+                      "relative flex items-start gap-3 rounded-none px-3 py-2 pr-4 focus:bg-muted/60 focus:text-foreground",
+                      isUnread ? "bg-muted/20" : ""
+                    )}
                   >
                     <Avatar className="h-8 w-8 border border-border/50 shadow-sm">
                       {notification.actor?.avatarUrl ? (
@@ -103,6 +130,13 @@ export function UpvoteNotificationsBell({
                         {createdAt.toLocaleString()}
                       </span>
                     </div>
+
+                    {isUnread && (
+                      <span
+                        className="absolute right-3 top-3 inline-flex h-2 w-2 rounded-full bg-orange-500"
+                        aria-hidden="true"
+                      />
+                    )}
                   </DropdownMenuItem>
                 )
               })}

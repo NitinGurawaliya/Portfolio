@@ -26,7 +26,7 @@ export async function POST(
       )
     }
 
-    const project = await prisma.portfolioRepository.findFirst({
+      const project = await prisma.portfolioRepository.findFirst({
       where: {
         id: projectId,
         deletedAt: null,
@@ -38,12 +38,12 @@ export async function POST(
       select: { id: true },
     })
 
-    if (!project) {
-      return NextResponse.json(
-        { error: "Project not found" },
-        { status: 404 }
-      )
-    }
+      if (!project) {
+        return NextResponse.json(
+          { error: "Project not found" },
+          { status: 404 }
+        )
+      }
 
       const existingUpvote = await prisma.projectUpvote.findUnique({
         where: {
@@ -55,6 +55,7 @@ export async function POST(
       })
 
       let upvoted = false
+      let newUpvoteRecord: { id: number; createdAt: Date } | null = null
 
       if (existingUpvote) {
         await prisma.projectUpvote.delete({
@@ -66,10 +67,14 @@ export async function POST(
           },
         })
       } else {
-        await prisma.projectUpvote.create({
+        newUpvoteRecord = await prisma.projectUpvote.create({
           data: {
             userId,
             portfolioRepositoryId: projectId,
+          },
+          select: {
+            id: true,
+            createdAt: true,
           },
         })
         upvoted = true
@@ -117,12 +122,12 @@ export async function POST(
             hub.send(recipientId, {
               type: "project-upvote",
               data: {
-                notificationId: randomUUID(),
+                notificationId: newUpvoteRecord ? newUpvoteRecord.id.toString() : randomUUID(),
                 projectId,
                 projectName,
                 totalUpvotes,
                 actor: actor || undefined,
-                createdAt: new Date().toISOString(),
+                createdAt: (newUpvoteRecord?.createdAt ?? new Date()).toISOString(),
               },
             })
           }

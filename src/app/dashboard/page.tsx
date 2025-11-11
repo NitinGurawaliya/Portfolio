@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useMemo, useRef } from "react"
+import { useEffect, useState, useMemo, useRef, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout"
 import { HomeSection } from "@/components/dashboard/HomeSection"
@@ -42,7 +42,7 @@ export default function DashboardPage() {
     totalUpvotes: number
   }
   const [notifications, setNotifications] = useState<UpvoteNotification[]>([])
-  const [unreadNotifications, setUnreadNotifications] = useState(0)
+  const [readNotificationIds, setReadNotificationIds] = useState<Set<string>>(new Set())
   const notificationSocketRef = useRef<WebSocket | null>(null)
   const summaryFetchTriggeredRef = useRef(false)
   const [summaryOpen, setSummaryOpen] = useState(false)
@@ -106,8 +106,113 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
+    if (typeof window === "undefined") return
+    try {
+      const stored = localStorage.getItem("devfolio:readUpvoteNotificationIds")
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        if (Array.isArray(parsed)) {
+          setReadNotificationIds(new Set(parsed.map(String)))
+        }
+      }
+    } catch (error) {
+      console.error("🔔 Failed to restore read upvote notifications:", error)
+    }
+  }, [])
+
+  const updateReadNotificationIds = useCallback(
+    (updater: (prev: Set<string>) => Set<string>) => {
+      setReadNotificationIds((prev) => {
+        const next = updater(prev)
+        if (next === prev) {
+          return prev
+        }
+        if (typeof window !== "undefined") {
+          try {
+            localStorage.setItem(
+              "devfolio:readUpvoteNotificationIds",
+              JSON.stringify(Array.from(next))
+            )
+          } catch (error) {
+            console.error("🔔 Failed to persist read upvote notifications:", error)
+          }
+        }
+        return next
+      })
+    },
+    []
+  )
+
+  const loadNotificationsFromServer = useCallback(
+    async (signal?: AbortSignal) => {
+      if (!user?.id) return
+      try {
+        const response = await fetch("/api/dashboard/upvotes/notifications", {
+          cache: "no-store",
+          signal,
+        })
+
+        if (!response.ok) {
+          if (response.status === 401) {
+            return
+          }
+          throw new Error("Failed to load upvote notifications")
+        }
+
+        const data = await response.json()
+        if (!Array.isArray(data.notifications)) {
+          return
+        }
+
+        const mapped: UpvoteNotification[] = data.notifications.map((item: any) => ({
+          id: String(item.id),
+          projectId: item.projectId,
+          projectName: item.projectName,
+          totalUpvotes: item.totalUpvotes,
+          createdAt: item.createdAt,
+          actor: item.actor
+            ? {
+                id: item.actor.id,
+                name: item.actor.name,
+                githubUsername: item.actor.githubUsername,
+                avatarUrl: item.actor.avatarUrl,
+              }
+            : undefined,
+        }))
+
+        setNotifications(mapped)
+
+        updateReadNotificationIds((prev) => {
+          const availableIds = new Set(mapped.map((item) => item.id))
+          const next = new Set([...prev].filter((id) => availableIds.has(id)))
+          if (next.size === prev.size) {
+            return prev
+          }
+          return next
+        })
+      } catch (error) {
+        if (signal?.aborted) {
+          return
+        }
+        console.error("🔔 Failed to load upvote notifications:", error)
+      }
+    },
+    [updateReadNotificationIds, user?.id]
+  )
+
+  useEffect(() => {
     summaryFetchTriggeredRef.current = false
   }, [user?.id])
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    if (loading || !user?.id) return
+
+    const controller = new AbortController()
+    void loadNotificationsFromServer(controller.signal)
+
+    return () => controller.abort()
+  }, [loading, user?.id, loadNotificationsFromServer])
 
   useEffect(() => {
     if (typeof window === "undefined") return
@@ -152,7 +257,7 @@ export default function DashboardPage() {
         if (parsed?.type !== "project-upvote" || !parsed.data) return
 
         const notification: UpvoteNotification = {
-          id: parsed.data.notificationId,
+          id: String(parsed.data.notificationId),
           projectId: parsed.data.projectId,
           projectName: parsed.data.projectName,
           totalUpvotes: parsed.data.totalUpvotes,
@@ -165,8 +270,6 @@ export default function DashboardPage() {
           const next = [notification, ...filtered]
           return next.slice(0, 25)
         })
-
-        setUnreadNotifications((count) => count + 1)
 
         playNotificationSound()
 
@@ -222,10 +325,25 @@ export default function DashboardPage() {
 
     const fetchSummary = async () => {
       try {
-        const lastSeen = localStorage.getItem("devfolio:lastUpvoteSummarySeenAt")
+        const summarySeen = localStorage.getItem("devfolio:lastUpvoteSummarySeenAt")
+        const notificationsSeen = localStorage.getItem("devfolio:lastUpvoteNotificationSeenAt")
         const params = new URLSearchParams()
-        if (lastSeen) {
-          params.set("since", lastSeen)
+
+        let sinceCandidate: string | null = summarySeen || null
+        if (notificationsSeen) {
+          if (!sinceCandidate) {
+            sinceCandidate = notificationsSeen
+          } else {
+            const notifDate = new Date(notificationsSeen)
+            const summaryDate = new Date(sinceCandidate)
+            if (!Number.isNaN(notifDate.getTime()) && notifDate > summaryDate) {
+              sinceCandidate = notificationsSeen
+            }
+          }
+        }
+
+        if (sinceCandidate) {
+          params.set("since", sinceCandidate)
         }
         const query = params.toString()
         const response = await fetch(
@@ -277,13 +395,25 @@ export default function DashboardPage() {
       controller.abort()
     }
   }, [loading, user?.id])
-  const handleNotificationsOpenChange = (open: boolean) => {
-    if (!open) return
-    setUnreadNotifications(0)
+  const handleNotificationsOpenChange = useCallback(
+    (open: boolean) => {
+      if (!open) return
+      void loadNotificationsFromServer()
+    },
+    [loadNotificationsFromServer]
+  )
+
+  const handleMarkAllNotificationsRead = useCallback(() => {
+    if (notifications.length === 0) return
+    updateReadNotificationIds((prev) => {
+      const next = new Set(prev)
+      notifications.forEach((notification) => next.add(notification.id))
+      return next
+    })
     if (typeof window !== "undefined") {
       localStorage.setItem("devfolio:lastUpvoteNotificationSeenAt", new Date().toISOString())
     }
-  }
+  }, [notifications, updateReadNotificationIds])
 
   const dismissSummary = () => {
     if (typeof window !== "undefined") {
@@ -557,6 +687,12 @@ export default function DashboardPage() {
     repositories: []
   }
 
+  const unreadNotificationCount = useMemo(() => {
+    return notifications.reduce((count, notification) => {
+      return count + (readNotificationIds.has(notification.id) ? 0 : 1)
+    }, 0)
+  }, [notifications, readNotificationIds])
+
   return (
     <>
       <Toaster position="top-left" />
@@ -620,8 +756,10 @@ export default function DashboardPage() {
         notificationBell={
           <UpvoteNotificationsBell
             notifications={notifications}
-            unreadCount={unreadNotifications}
+            unreadCount={unreadNotificationCount}
+            readNotificationIds={Array.from(readNotificationIds)}
             onOpenChange={handleNotificationsOpenChange}
+            onMarkAllRead={handleMarkAllNotificationsRead}
           />
         }
       >
