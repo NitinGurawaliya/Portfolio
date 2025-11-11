@@ -20,6 +20,7 @@ import { SkillIcon } from "@/lib/skill-icons"
 import { ProjectIcon } from "@/components/ui/project-icon"
 import { GitHubActivity } from "@/components/GitHubActivity"
 import { trackProjectClick } from "@/lib/analytics-utils"
+import { PublicShiplogList } from "@/components/shiplog/PublicShiplogList"
 
 interface ThemeConfig {
   name: string
@@ -48,6 +49,7 @@ interface PortfolioData {
   backgroundColor?: string | null
   backgroundPattern?: string | null
   cvUrl?: string | null
+  shiplogs?: any[]
   user: {
     githubUsername: string
     location: string
@@ -493,7 +495,13 @@ export default function LayoutModern({ theme, portfolio }: LayoutModernProps) {
                 </div>
               )}
 
-              {hasGithub && (
+                {portfolio.shiplogs && portfolio.shiplogs.length > 0 ? (
+                  <div className="rounded-3xl border border-neutral-200 bg-white/95 p-3 xs:p-4 sm:p-5 shadow-sm">
+                    <PublicShiplogList shiplogs={portfolio.shiplogs} />
+                  </div>
+                ) : null}
+
+                {hasGithub && (
                 <div className="w-full rounded-3xl border border-neutral-200 bg-white/95 p-3 xs:p-4 sm:p-4 lg:p-6 shadow-sm overflow-hidden">
                   <GitHubActivity username={portfolio.user.githubUsername!} theme="light" />
                 </div>

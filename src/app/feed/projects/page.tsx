@@ -414,6 +414,23 @@ export default function ProjectFeedPage() {
             <h1 className="text-3xl font-semibold text-foreground md:text-4xl">Discover DevFolio Projects</h1>
           </header>
 
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              asChild
+              variant="outline"
+              className="rounded-full px-4 text-xs font-semibold"
+            >
+              <Link href="/feed/shiplog">Shiplogs</Link>
+            </Button>
+            <Button
+              asChild
+              variant="default"
+              className="rounded-full px-4 text-xs font-semibold"
+            >
+              <Link href="/feed/projects">Projects</Link>
+            </Button>
+          </div>
+
 
           <section className="space-y-3 rounded-2xl border border-border/30 bg-background/80 p-4 sm:p-5">
             <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">

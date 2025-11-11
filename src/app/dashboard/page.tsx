@@ -8,6 +8,7 @@ import { ReposSection } from "@/components/dashboard/ReposSection"
 import { SkillsSection } from "@/components/dashboard/SkillsSection"
 import { SocialsSection } from "@/components/dashboard/SocialsSection"
 import { AnalyticsSection } from "@/components/dashboard/AnalyticsSection"
+import { ShiplogSection } from "@/components/dashboard/ShiplogSection"
 import ThemeSelector from "@/components/dashboard/ThemeSelector"
 import { UpvoteNotificationsBell, UpvoteNotification } from "@/components/dashboard/UpvoteNotificationsBell"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -569,6 +570,8 @@ export default function DashboardPage() {
               onNavigateToSection={handleSectionChange}
             />
           )
+        case "shiplog":
+          return <ShiplogSection />
         case "repos": {
           const allRepositories = [
             ...portfolio.importedProjects,

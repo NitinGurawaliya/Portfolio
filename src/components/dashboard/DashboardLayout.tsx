@@ -20,6 +20,7 @@ import {
   Newspaper,
   Menu,
   SlidersHorizontal,
+  Sparkles,
 } from "lucide-react"
 import { DevFolioInlineLoader } from "@/components/ui/DevFolioLoader"
 import { cn } from "@/lib/utils"
@@ -67,7 +68,8 @@ export function DashboardLayout({
   }, [activeSection])
 
     const sidebarItems = [
-    { id: "home", label: "Bio", icon: User },
+      { id: "home", label: "Bio", icon: User },
+      { id: "shiplog", label: "Shiplog", icon: Sparkles },
     { id: "repos", label: "Projects", icon: Code },
     { id: "skills", label: "Skills", icon: Wrench },
     { id: "socials", label: "Socials", icon: Users },

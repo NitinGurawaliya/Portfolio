@@ -5,6 +5,7 @@ import { Building, Download } from "lucide-react"
 import { SiGithub, SiX, SiLinkedin, SiInstagram, SiFacebook, SiYoutube, SiGmail, SiStackoverflow, SiReddit } from "react-icons/si"
 import { Globe } from "lucide-react"
 import { SkillIcon } from "@/lib/skill-icons"
+import { PublicShiplogList } from "@/components/shiplog/PublicShiplogList"
 import { useState, useEffect } from "react"
 import { GitHubActivity } from "@/components/GitHubActivity"
 import { trackProjectClick } from "@/lib/analytics-utils"
@@ -35,6 +36,7 @@ interface PortfolioData {
   backgroundColor?: string | null
   backgroundPattern?: string | null
   cvUrl?: string | null
+    shiplogs?: any[]
   user: {
     githubUsername: string
     location: string
@@ -560,7 +562,19 @@ export default function LayoutDark({ theme, portfolio }: LayoutDarkProps) {
                 </motion.section>
               )}
 
-              {/* GitHub Activity Section */}
+                {portfolio.shiplogs && portfolio.shiplogs.length > 0 ? (
+                  <motion.section
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.8 }}
+                    viewport={{ once: true }}
+                    aria-label="Shiplog updates"
+                  >
+                    <PublicShiplogList shiplogs={portfolio.shiplogs} />
+                  </motion.section>
+                ) : null}
+
+                {/* GitHub Activity Section */}
               {portfolio.user?.githubUsername && (
                 <GitHubActivity 
                   username={portfolio.user.githubUsername} 

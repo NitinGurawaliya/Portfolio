@@ -27,6 +27,10 @@ model User {
   portfolio       Portfolio?
   repositories    Repository[]
   projectUpvotes  ProjectUpvote[]
+  shiplogs        Shiplog[]
+  shiplogReactions ShiplogReaction[]
+  followingConnections UserFollow[] @relation("userFollows")
+  followerConnections  UserFollow[] @relation("userFollowed")
 
   // Index for fast portfolio lookup by githubUsername
   @@index([githubUsername])
@@ -129,6 +133,7 @@ model PortfolioRepository {
   portfolio         Portfolio  @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
   repository        Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
   upvotes           ProjectUpvote[]
+  shiplogs          Shiplog[]
   
   @@index([portfolioId, isVisible])
 }
@@ -266,4 +271,54 @@ model Experience {
   portfolio    Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
 
   @@index([portfolioId])
+}
+
+model Shiplog {
+  id                     Int                  @id @default(autoincrement())
+  userId                 Int
+  portfolioRepositoryId  Int?
+  content                String               @db.Text
+  imageUrl               String?
+  createdAt              DateTime              @default(now())
+  updatedAt              DateTime              @updatedAt
+  author                 User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project                PortfolioRepository? @relation(fields: [portfolioRepositoryId], references: [id], onDelete: SetNull)
+  reactions              ShiplogReaction[]
+
+  @@index([userId])
+  @@index([portfolioRepositoryId])
+  @@index([createdAt])
+}
+
+model ShiplogReaction {
+  id         Int                 @id @default(autoincrement())
+  shiplogId  Int
+  userId     Int
+  type       ShiplogReactionType
+  createdAt  DateTime            @default(now())
+  shiplog    Shiplog             @relation(fields: [shiplogId], references: [id], onDelete: Cascade)
+  user       User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([shiplogId, userId])
+  @@index([shiplogId])
+  @@index([userId])
+}
+
+model UserFollow {
+  id           Int      @id @default(autoincrement())
+  followerId   Int
+  followingId  Int
+  createdAt    DateTime @default(now())
+  follower     User     @relation("userFollows", fields: [followerId], references: [id], onDelete: Cascade)
+  following    User     @relation("userFollowed", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+}
+
+enum ShiplogReactionType {
+  SHIPPED
+  FIXED
+  SUPPORT
 }
