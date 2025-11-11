@@ -221,12 +221,12 @@ export function HomeSection({ user, portfolioData, onUpdate, usernameAvailabilit
     return (
       <div className="space-y-2 px-6 md:px-10">
         {/* Header Skeleton */}
-        <div className="-mt-6 md:-mt-8">
+        {/* <div className="-mt-6 md:-mt-8">
           <Skeleton className="h-8 w-32 mb-4" />
-        </div>
+        </div> */}
 
         {/* Profile Card Skeleton */}
-        <Card className="bg-white shadow-none border-none">
+        <Card className="shadow-none border-none bg-background">
           <CardContent className="py-1 space-y-4">
             <div className="flex gap-4">
               <Skeleton className="h-24 w-24 rounded-full flex-shrink-0" />
@@ -246,7 +246,7 @@ export function HomeSection({ user, portfolioData, onUpdate, usernameAvailabilit
         </Card>
 
         {/* Experience Section Skeleton */}
-        <Card className="bg-white shadow-none border-none">
+        <Card className=" shadow-none border-none bg-background">
           <CardContent className="pt-4 space-y-4">
             <Skeleton className="h-6 w-40" />
             <div className="space-y-3">
@@ -435,18 +435,18 @@ export function HomeSection({ user, portfolioData, onUpdate, usernameAvailabilit
         <div className="fixed inset-0 z-[110]">
           <div className="absolute inset-0 bg-black/40" onClick={() => setIsCvModalOpen(false)} />
           <div className="absolute inset-0 flex items-center justify-center p-4">
-            <div className="w-[720px] max-w-full rounded-xl bg-white shadow-2xl border border-gray-200">
+            <div className="w-[720px] max-w-full rounded-xl shadow-2xl border border-gray-200 bg-background">
               {/* Header */}
               <div className="px-6 py-4 border-b flex items-center justify-between">
                 <div>
-                  <div className="text-xl text-black font-bold">{isEditingCv ? 'Edit CV/Resume' : 'Add CV/Resume'}</div>
+                  <div className="text-xl text-black font-bold dark:text-white">{isEditingCv ? 'Edit CV/Resume' : 'Add CV/Resume'}</div>
                   <div className="text-xs text-gray-500">Enter the URL to your CV or Resume. Users will be able to download it from your portfolio.</div>
                 </div>
               </div>
               {/* Content */}
               <div className="px-6 py-6 space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="cvUrl" className="text-black font-medium">CV/Resume URL</Label>
+                  <Label htmlFor="cvUrl" className="text-black font-medium dark:text-white">CV/Resume URL</Label>
                   <Input
                     id="cvUrl"
                     value={tempCvUrl}
@@ -498,7 +498,7 @@ export function HomeSection({ user, portfolioData, onUpdate, usernameAvailabilit
                     )}
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
-                        <div className="font-semibold text-sm text-black">
+                        <div className="font-semibold text-sm text-black dark:text-white">
                           {exp.companyName}
                           {exp.role ? <span className="text-gray-500 font-normal"> • {exp.role}</span> : null}
                         </div>
@@ -557,7 +557,7 @@ export function HomeSection({ user, portfolioData, onUpdate, usernameAvailabilit
               {/* CV Cards */}
               <div className="space-y-3">
                 {cvUrlProp && (
-                  <div className="border border-gray-200 rounded-lg p-4 flex items-center gap-4 bg-white shadow-sm">
+                  <div className="border-gray-200 rounded-lg p-4 flex items-center gap-4  shadow-sm bg-background">
                     {/* Document Icon */}
                     <div className="h-12 w-12 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
                       <FileText className="h-6 w-6 text-gray-700" />
@@ -565,7 +565,7 @@ export function HomeSection({ user, portfolioData, onUpdate, usernameAvailabilit
 
                     {/* CV Info */}
                     <div className="flex-1 min-w-0">
-                      <div className="font-semibold text-sm text-black mb-0.5">CV Document</div>
+                      <div className="font-semibold text-sm text-black mb-0.5 dark:text-white">CV Document</div>
                       <div className="text-xs text-gray-500 truncate">{cvUrlProp}</div>
                     </div>
 

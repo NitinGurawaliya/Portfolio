@@ -10,6 +10,7 @@ import { FeatureShowcase } from "@/components/landing/feature-showcase"
 import { SessionRedirect } from "@/components/SessionRedirect"
 import TopContributors from "@/components/landing/contribiuters"
 import { TestimonialsSection } from "@/components/landing/testimonials-section"
+import CommunityStats from "@/components/landing/community-stats"
 
 export const metadata: Metadata = {
   title: "DevFolio - Build Your Developer Portfolio in Minutes",
@@ -28,6 +29,7 @@ export default function HomePage() {
       <Header />
       <main className="px-6 sm:px-8 lg:px-14">
         <HeroSection />
+        <CommunityStats />
         {/* <FeaturesSection /> */}
         <FeatureShowcase />
         <WallOfFame limit={3} />
