@@ -324,7 +324,7 @@ export function HomeSection({ user, portfolioData, onUpdate, usernameAvailabilit
                       Change photo
                     </Button>
                     <span className="text-xs text-muted-foreground">
-                      PNG, JPG या GIF (2MB तक)
+                      PNG, JPG or GIF (max 2MB)
                     </span>
                   </div>
                   <input
@@ -349,10 +349,10 @@ export function HomeSection({ user, portfolioData, onUpdate, usernameAvailabilit
                     value={formData.displayName}
                     onChange={(e) => handleInputChange("displayName", e.target.value)}
                     className="h-11 rounded-xl border-border/60 bg-muted/30 text-sm focus-visible:ring-2 focus-visible:ring-primary"
-                    placeholder="आपका नाम"
+                    placeholder="Your name"
                   />
                   <p className="text-xs text-muted-foreground">
-                    यह नाम आपके पब्लिक प्रोफ़ाइल में दिखाई देगा।
+                    This name will appear on your public portfolio.
                   </p>
                 </div>
 
@@ -366,11 +366,11 @@ export function HomeSection({ user, portfolioData, onUpdate, usernameAvailabilit
                     value={formData.jobTitle}
                     onChange={(e) => handleInputChange("jobTitle", e.target.value)}
                     className="h-11 rounded-xl border-border/60 bg-muted/30 text-sm focus-visible:ring-2 focus-visible:ring-primary"
-                    placeholder="जैसे • Full Stack Developer"
+                    placeholder="e.g. • Full Stack Developer"
                     maxLength={50}
                   />
                   <p className="text-xs text-muted-foreground">
-                    एक लाइन में अपनी भूमिका बताएं।
+                    Add a short headline for your role.
                   </p>
                 </div>
 
@@ -385,7 +385,7 @@ export function HomeSection({ user, portfolioData, onUpdate, usernameAvailabilit
                       value={portfolioData?.customUsername || user?.githubUsername || ""}
                       onChange={(e) => handleUsernameChange(e.target.value)}
                       className="h-11 rounded-xl border-border/60 bg-muted/30 pl-8 text-sm focus-visible:ring-2 focus-visible:ring-primary"
-                      placeholder="अपना यूज़रनेम चुनें"
+                      placeholder="Choose a unique username"
                     />
                     <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
                       /
@@ -416,27 +416,27 @@ export function HomeSection({ user, portfolioData, onUpdate, usernameAvailabilit
                       {usernameAvailability.message}
                     </p>
                   )}
-                  <p className="text-xs text-muted-foreground">
-                    आपका URL: <span className="font-medium">{`devfolio.cc/${formData.customUsername || user?.githubUsername || "username"}`}</span>
+                    <p className="text-xs text-muted-foreground">
+                      Portfolio URL: <span className="font-medium">{`devfolio.cc/${formData.customUsername || user?.githubUsername || "username"}`}</span>
                   </p>
                 </div>
 
                 {/* Bio */}
                 <div className="space-y-1.5">
                   <Label htmlFor="bio" className="text-sm font-medium">
-                    Bio <span className="text-xs text-muted-foreground">(अधिकतम {bioLimit} अक्षर)</span>
+                    Bio <span className="text-xs text-muted-foreground">(max {bioLimit} characters)</span>
                   </Label>
                   <Textarea
                     id="bio"
                     value={formData.bio}
                     onChange={(e) => handleInputChange("bio", e.target.value)}
                     className="rounded-xl border-border/60 bg-muted/30 text-sm focus-visible:ring-2 focus-visible:ring-primary"
-                    placeholder="अपनी कहानी, मिशन या वर्तमान फोकस साझा करें…"
+                  placeholder="Share your story, mission, or current focus…"
                     rows={3}
                     maxLength={bioLimit}
                   />
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>यह बायो आपके प्रोफ़ाइल के हीरो सेक्शन में दिखेगा।</span>
+                    <span>This text appears in your live portfolio hero section.</span>
                     <span>
                       {bioCharacterCount}/{bioLimit}
                     </span>
