@@ -41,18 +41,17 @@ export function HeroSection() {
   }, []);
 
   return (
-    <section className="relative overflow-hidden py-10 ">
-
+    <section className="relative overflow-hidden px-4 py-10 sm:px-6 lg:px-8">
       <div className="absolute inset-0 grid-bg opacity-30" />
-      <div className="w-64 mx-auto">
-      <a href="https://shipsquad.space/saas/1eb0b450-6fb4-44ef-ab2b-ce0ce95e25b9" target="_blank" rel="noopener">
-  <img src="https://shipsquad.space/api/badge?id=1eb0b450-6fb4-44ef-ab2b-ce0ce95e25b9&style=light" alt="Featured on ShipSquad" />
-</a>
-</div>
-      <div className="container relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-        <div className="grid items-center justify-items-center gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+      <div className="mx-auto w-full max-w-[16rem]">
+        <a href="https://shipsquad.space/saas/1eb0b450-6fb4-44ef-ab2b-ce0ce95e25b9" target="_blank" rel="noopener">
+          <img src="https://shipsquad.space/api/badge?id=1eb0b450-6fb4-44ef-ab2b-ce0ce95e25b9&style=light" alt="Featured on ShipSquad" />
+        </a>
+      </div>
+      <div className="container relative mx-auto max-w-6xl px-0">
+        <div className="grid items-center justify-items-center gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
           {/* Left Column - Text Content */}
-          <div className="w-full text-center">
+          <div className="w-full text-center lg:text-left">
             {/* <div className="mb-4 sm:mb-5 inline-flex items-center rounded-full border border-border/40 bg-muted/50 px-3 py-1.5 text-xs sm:text-sm backdrop-blur-sm">
               <span className="mr-1.5 sm:mr-2">🔥</span>
               <span className="text-xs sm:text-sm">Free right now - grab it while it's hot</span>
@@ -70,13 +69,13 @@ export function HeroSection() {
               No coding required. Import your projects, customize your theme, and publish. Your portfolio is live in 2 minutes.
             </p>
  
-              <div className="mb-3 flex flex-col flex-wrap items-center justify-center gap-2 sm:mb-4 sm:flex-row sm:gap-3">
+            <div className="mb-3 flex w-full flex-col items-stretch justify-center gap-2 sm:mb-4 sm:flex-row sm:items-center sm:gap-3">
                 {!isChecking && (
                   <>
                     {isLoggedIn ? (
                       <Button
                         size="lg"
-                        className="inline-flex border-0 bg-gradient-to-r from-orange-500 to-orange-600 px-4 text-xs text-white shadow-md hover:from-orange-600 hover:to-orange-700 sm:px-6 sm:text-sm lg:px-8 lg:text-base"
+                      className="inline-flex w-full border-0 bg-gradient-to-r from-orange-500 to-orange-600 px-4 text-xs text-white shadow-md hover:from-orange-600 hover:to-orange-700 sm:w-auto sm:px-6 sm:text-sm lg:px-8 lg:text-base"
                         asChild
                       >
                         <a href="/dashboard">
@@ -87,7 +86,7 @@ export function HeroSection() {
                     ) : (
                       <Button
                         size="lg"
-                        className="inline-flex border-0 bg-gradient-to-r from-orange-500 to-orange-600 px-4 text-xs text-white shadow-md hover:from-orange-600 hover:to-orange-700 sm:px-6 sm:text-sm lg:px-8 lg:text-base"
+                        className="inline-flex w-full border-0 bg-gradient-to-r from-orange-500 to-orange-600 px-4 text-xs text-white shadow-md hover:from-orange-600 hover:to-orange-700 sm:w-auto sm:px-6 sm:text-sm lg:px-8 lg:text-base"
                         asChild
                       >
                         <a href="/auth">
@@ -99,7 +98,7 @@ export function HeroSection() {
                     <Button
                       variant="outline"
                       size="lg"
-                      className="inline-flex bg-transparent px-4 text-xs sm:px-6 sm:text-sm lg:px-8 lg:text-base"
+                    className="inline-flex w-full bg-transparent px-4 text-xs sm:w-auto sm:px-6 sm:text-sm lg:px-8 lg:text-base"
                       asChild
                     >
                       <a href="https://devfolio.cc/Nitin" target="_blank" rel="noopener noreferrer">
@@ -114,7 +113,7 @@ export function HeroSection() {
               {!isChecking && !isLoggedIn && (
                 <div className="mb-4 flex flex-col items-center">
                   <span
-                    className="cursor-pointer text-sm text-muted-foreground underline transition-all hover:text-foreground"
+                  className="cursor-pointer text-sm text-muted-foreground underline transition-all hover:text-foreground"
                     onClick={() => router.push("/auth")}
                   >
                     Already have an account? Login
@@ -134,11 +133,10 @@ export function HeroSection() {
         </div>
 
         {/* Mobile Preview (Mobile/Tablet - Below Hero Text) */}
-        <div className="flex lg:hidden justify-center items-center mt-8 md:mt-12">
+          <div className="mt-8 flex items-center justify-center lg:hidden md:mt-12">
           <PortfolioMobilePreview />
         </div>
       </div>
-      
     </section>
   )
 }

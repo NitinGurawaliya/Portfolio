@@ -219,7 +219,7 @@ export function HomeSection({ user, portfolioData, onUpdate, usernameAvailabilit
 
   if (shouldShowSkeleton) {
     return (
-      <div className="space-y-2 px-6 md:px-10">
+      <div className="space-y-2 px-4 sm:px-6 md:px-10">
         {/* Header Skeleton */}
         <div className="-mt-6 md:-mt-8">
           <Skeleton className="h-8 w-32 mb-4" />
@@ -267,9 +267,9 @@ export function HomeSection({ user, portfolioData, onUpdate, usernameAvailabilit
     )
   }
 
-  return (
-    <motion.div
-      className="space-y-2 px-6 md:px-10"
+    return (
+      <motion.div
+        className="space-y-2 px-4 sm:px-6 md:px-10"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.2 }}
@@ -300,12 +300,12 @@ export function HomeSection({ user, portfolioData, onUpdate, usernameAvailabilit
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.2 }}
       >
-        <Card className="bg-white dark:bg-background shadow-none border-card/80">
+          <Card className="border-card/80 bg-white shadow-none dark:bg-background">
           <CardContent className="py-1 space-y-2">
 
             {/* Profile Photo Section */}
-            <div className="px-2 py-2">
-              <div className="flex items-center gap-3">
+              <div className="px-2 py-2 sm:px-4">
+                <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center">
                 <Avatar className="h-12 w-12">
                   <AvatarImage src={formData.profilePic} alt={formData.displayName || 'Profile'} />
                   <AvatarFallback>{(formData.displayName || 'U').charAt(0)}</AvatarFallback>
@@ -314,7 +314,7 @@ export function HomeSection({ user, portfolioData, onUpdate, usernameAvailabilit
                 <div>
                   <Button
                     type="button"
-                    className="bg-gray-50"
+                      className="w-full bg-gray-50 sm:w-auto"
                     onClick={() => document.getElementById('profilePicInput')?.click()}
                   >
                     Change Photo

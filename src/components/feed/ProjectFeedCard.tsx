@@ -44,10 +44,10 @@ export function ProjectFeedCard({ project, onToggleUpvote, upvotePending = false
       : "No description has been provided for this project yet."
 
   return (
-    <Card className="group relative mx-auto w-full max-w-xl gap-0 rounded-xl   p-0 border-1 border-gray-200 shadow-none transition-colors duration-150">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 px-6 pb-3 pt-5">
-        <div className="flex flex-1 items-center gap-3.5">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border/30 bg-muted/30">
+      <Card className="group relative mx-auto w-full max-w-xl rounded-xl border border-border/25 bg-background/80 p-0 shadow-none transition-colors duration-150">
+        <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3 px-4 pb-3 pt-5 sm:flex-nowrap sm:px-6">
+          <div className="flex flex-1 items-center gap-3.5">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border/30 bg-muted/30">
             <ProjectIcon
               favicon={project.favicon || undefined}
               logo={project.logo || undefined}
@@ -77,7 +77,7 @@ export function ProjectFeedCard({ project, onToggleUpvote, upvotePending = false
           aria-label={project.hasUpvoted ? "Remove upvote" : "Upvote project"}
           onClick={() => onToggleUpvote(project.id)}
           className={cn(
-            "flex h-10 border-2 border-black rounded-md w-10 shrink-0 flex-col items-center justify-center rounded-md border border-border/40 bg-background text-sm font-semibold text-muted-foreground transition focus:outline-none focus:ring-2",
+              "flex h-10 min-w-[3.25rem] shrink-0 flex-col items-center justify-center rounded-md border border-border/40 bg-background text-xs font-semibold text-muted-foreground transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:text-sm",
             project.hasUpvoted && "border-orange-500 bg-orange-500/10 text-orange-500",
             upvotePending && "opacity-70"
           )}
@@ -87,8 +87,8 @@ export function ProjectFeedCard({ project, onToggleUpvote, upvotePending = false
         </button>
       </CardHeader>
 
-      <CardContent className="flex flex-1 flex-col gap-3 mt-2 px-6 pb-0">
-        <p className="w-full text-sm  break-words">{description}</p>
+        <CardContent className="mt-2 flex flex-1 flex-col gap-3 px-4 pb-0 sm:px-6">
+          <p className="w-full break-words text-sm">{description}</p>
         <div className="flex flex-wrap items-center gap-1.5">
           {project.tags &&
             project.tags.map((tag) => (
@@ -103,8 +103,8 @@ export function ProjectFeedCard({ project, onToggleUpvote, upvotePending = false
         </div>
       </CardContent>
 
-      <CardFooter className="mt-0 flex items-center justify-between border-t border-border/15 bg-background/80 px-6 py-3 text-xs text-muted-foreground">
-        <div className="flex items-center gap-2.5">
+        <CardFooter className="mt-0 flex flex-wrap items-center justify-between gap-3 border-t border-border/15 bg-background/80 px-4 py-3 text-xs text-muted-foreground sm:flex-nowrap sm:px-6">
+          <div className="flex items-center gap-2.5">
           <span className="font-medium text-foreground">Created by</span>
           {portfolioHref ? (
             <Link
@@ -155,7 +155,7 @@ export function ProjectFeedCard({ project, onToggleUpvote, upvotePending = false
           {(project.deployedUrl || project.githubUrl) && (
             <button
               type="button"
-              className="flex h-6 w-6 border border-gray-300 rounded-md items-center justify-center text-muted-foreground transition hover:text-foreground"
+                className="flex h-7 w-7 items-center justify-center rounded-full border border-border/40 text-muted-foreground transition hover:text-foreground"
               onClick={() => {
                 const target = project.deployedUrl ?? project.githubUrl
                 if (target) {
