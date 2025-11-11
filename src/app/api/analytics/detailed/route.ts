@@ -73,22 +73,22 @@ export async function GET(req: NextRequest) {
 
     // Fetch upvote counts for all portfolio repositories
     const portfolioRepoIds = portfolioRepos.map((repo) => repo.id)
-    let upvoteCounts: Array<{ portfolioRepositoryId: number; _count: { _all: number } }> = []
+    const upvoteCountMap = new Map<number, number>()
     if (portfolioRepoIds.length > 0) {
-      upvoteCounts = await prisma.projectUpvote.groupBy({
-        by: ["portfolioRepositoryId"],
+      const upvoteRows = await prisma.projectUpvote.findMany({
         where: {
-          portfolioRepositoryId: { in: portfolioRepoIds }
+          portfolioRepositoryId: { in: portfolioRepoIds },
         },
-        _count: {
-          _all: true
-        }
+        select: {
+          portfolioRepositoryId: true,
+        },
       })
+
+      for (const { portfolioRepositoryId } of upvoteRows) {
+        const current = upvoteCountMap.get(portfolioRepositoryId) ?? 0
+        upvoteCountMap.set(portfolioRepositoryId, current + 1)
+      }
     }
-    const upvoteCountMap = upvoteCounts.reduce((acc, entry) => {
-      acc.set(entry.portfolioRepositoryId, entry._count._all)
-      return acc
-    }, new Map<number, number>())
     
     // Group project clicks by repository ID (GitHub ID)
     const projectStats = projectClicks.reduce((acc, click) => {
