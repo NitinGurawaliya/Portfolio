@@ -12,28 +12,31 @@ export const useSession = (options: { redirectOnAuthFailure?: boolean } = {}) =>
   useEffect(() => {
     const initSession = async () => {
       try {
-        // Fetch session and GitHub data in parallel for faster loading
-        const [sessionData, userData] = await Promise.all([
-          fetchSession(),
-          fetchGitHubData()
-        ])
-        
+        const sessionData = await fetchSession()
         setSession(sessionData)
-        setUser(userData)
-        
-        // Set loading to false as soon as we have user data
+
+        if (!sessionData) {
+          setUser(null)
+          setLoading(false)
+          if (options.redirectOnAuthFailure) {
+            router.push("/auth")
+          }
+          return null
+        }
+
+        const userData = await fetchGitHubData()
+        setUser(userData ?? null)
         setLoading(false)
         return userData
       } catch (error) {
         console.error("Session init error:", error)
         setLoading(false)
-        // सिर्फ़ प्रोटेक्टेड रूट्स पर redirect करें:
         if (options.redirectOnAuthFailure) {
           router.push("/auth")
         }
       }
     }
-    initSession()
+    void initSession()
   }, [router, options.redirectOnAuthFailure])
 
   return {

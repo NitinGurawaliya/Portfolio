@@ -122,6 +122,7 @@ export interface Portfolio {
       company: string
       websiteUrl: string
     }
+      shiplogs?: PortfolioShiplog[]
   }
   
   
@@ -145,6 +146,17 @@ export interface Portfolio {
       logo?: string
     }
   }
+
+export interface PortfolioShiplog {
+  id: number
+  content: string
+  imageUrl: string | null
+  createdAt: string
+  project?: {
+    id: number
+    name: string
+  } | null
+}
 
   export const skillsDatabase = [
     // Programming Languages

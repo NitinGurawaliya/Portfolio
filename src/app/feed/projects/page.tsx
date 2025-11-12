@@ -3,13 +3,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
 import { ProjectFeedCard, FeedProject } from "@/components/feed/ProjectFeedCard"
+import { FeedBrandMark } from "@/components/feed/FeedBrandMark"
+import { FeedTopNav } from "@/components/feed/FeedTopNav"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useToast } from "@/hooks/use-toast"
+import { useSession } from "@/hooks/useSession"
 import { cn } from "@/lib/utils"
-import { ArrowUp, RefreshCcw, Sparkles } from "lucide-react"
+import { ArrowUp, RefreshCcw, Sparkles, PenSquare, FolderOpen } from "lucide-react"
 import { loadFeedCache, saveFeedCache } from "@/lib/feed-cache"
 
 type SortOption = "newest" | "most_upvoted" | "most_viewed"
@@ -44,8 +46,12 @@ export default function ProjectFeedPage() {
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(true)
   const [showScrollTop, setShowScrollTop] = useState(false)
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false)
   const fetchControllerRef = useRef<AbortController | null>(null)
   const prefetchedSortsRef = useRef<Record<SortOption, boolean>>({ newest: false, most_upvoted: false, most_viewed: false })
+  const { user: sessionUser, loading: sessionLoading } = useSession()
+  const isAuthenticated = Boolean(sessionUser)
+ 
 
   const arrangeProjects = useCallback(
     (list: FeedProject[], modeSort?: SortOption) => {
@@ -248,10 +254,7 @@ export default function ProjectFeedPage() {
               : project
           )
         )
-        toast({
-          title: "Please log in first",
-          description: "You need to be logged in to upvote.",
-        })
+        setShowLoginPrompt(true)
         return
       }
 
@@ -354,6 +357,12 @@ export default function ProjectFeedPage() {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
+  useEffect(() => {
+    if (isAuthenticated && showLoginPrompt) {
+      setShowLoginPrompt(false)
+    }
+  }, [isAuthenticated, showLoginPrompt])
+
   const handleScrollTop = useCallback(() => {
     window.scrollTo({ top: 0, behavior: "smooth" })
   }, [])
@@ -390,14 +399,15 @@ export default function ProjectFeedPage() {
     }
 
     return (
-      <div className="relative flex flex-col items-center gap-4">
+      <div className="relative flex flex-col gap-6">
         {projects.map((project) => (
-          <ProjectFeedCard
-            key={project.id}
-            project={project}
-            onToggleUpvote={handleToggleUpvote}
-            upvotePending={Boolean(pendingUpvotes[project.id])}
-          />
+          <div key={project.id} className="w-full max-w-3xl self-center">
+            <ProjectFeedCard
+              project={project}
+              onToggleUpvote={handleToggleUpvote}
+              upvotePending={Boolean(pendingUpvotes[project.id])}
+            />
+          </div>
         ))}
         {loadingMore && <FeedSkeletonList count={2} />}
         {isSwitching && (
@@ -407,69 +417,134 @@ export default function ProjectFeedPage() {
     )
   }, [error, handleRetry, handleToggleUpvote, isSwitching, loading, loadingMore, pendingUpvotes, projects])
 
-    return (
-      <div className="mx-auto flex min-h-screen w-full max-w-3xl flex-col gap-10 px-4 py-12 sm:px-8 lg:px-10">
-        <div className="mx-auto flex w-full max-w-xl flex-col gap-3">
-          <header className="flex flex-col gap-2 text-left">
-            <h1 className="text-3xl font-semibold text-foreground md:text-4xl">Discover DevFolio Projects</h1>
-          </header>
+  return (
+    <>
+      <FeedTopNav />
+      <div className="mx-auto grid min-h-screen w-full max-w-6xl grid-cols-1 gap-8 px-4 pb-12 pt-10 sm:px-6 sm:pt-12 lg:h-[calc(100vh-3rem)] lg:grid-cols-[240px_minmax(0,1fr)_320px] lg:items-start lg:gap-10 lg:overflow-hidden lg:pb-10 lg:pt-6">
+        <aside className="sticky top-24 hidden h-fit lg:block lg:w-[240px] lg:top-6 xl:w-[260px]">
+          <Card className="flex flex-col gap-4 rounded-3xl border border-border/60 bg-background p-6">
+          <FeedBrandMark />
+            <nav className="space-y-3 text-sm font-semibold text-muted-foreground">
+            <Link
+              href="/feed/shiplog"
+              className="group flex items-center mt-2 gap-3 rounded-2xl border border-transparent px-4 py-3 hover:border-border/70 hover:bg-muted/40"
+            >
+              <PenSquare className="h-4 w-4 text-foreground" />
+              <span className="text-foreground">Shiplogs</span>
+            </Link>
+            <Link
+              href="/feed/projects"
+              className="group flex mt-1 items-center gap-3 rounded-2xl border border-border/70 bg-foreground px-4 py-3 text-background"
+            >
+              <FolderOpen className="h-4 w-4" />
+              Projects
+            </Link>
+          </nav>
+        </Card>
+        </aside>
 
-
-          <section className="space-y-3 rounded-2xl border border-border/30 bg-background/80 p-4 sm:p-5">
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
-              {SORT_OPTIONS.map((option) => (
-                <Button
-                  key={option.value}
-                  type="button"
-                  variant={sort === option.value ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => handleSortChange(option.value)}
-                  disabled={isSwitching}
-                  aria-pressed={sort === option.value}
-                  className={cn(
-                    "min-w-[80px] flex-shrink-0 rounded-full px-4 border border-gray-200  text-xs font-semibold transition",
-                    sort === option.value
-                      ? "bg-foreground text-background border-foreground"
-                      : "border border-gray-200 bg-background text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  {option.label}
-                </Button>
-              ))}
+        <div className="flex flex-col gap-10 lg:col-start-2 lg:mx-auto lg:h-full lg:w-full lg:max-w-3xl lg:overflow-y-auto lg:pr-2 lg:scroll-smooth lg:[scrollbar-width:none] lg:[-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+          <div className="flex flex-col gap-3 text-left">
+            <div className="flex flex-wrap items-center gap-3">
+              <h1 className="text-2xl font-bold text-foreground md:text-3xl">Discover DevFolio Projects</h1>
             </div>
-            <div className="flex flex-col gap-1 text-left">
-            <h2 className="text-lg font-semibold text-foreground sm:text-xl">{feedHeadline.title}</h2>
-            <p className="text-sm text-muted-foreground">{feedHeadline.subtitle}</p>
           </div>
-          </section>
-      </div>
 
-      {content}
+          <div className="flex flex-col gap-6">
+            <div className="space-y-6">
+            <section className="space-y-3 rounded-2xl border border-border/30 bg-background/80 p-4 sm:p-5">
+              <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
+                {SORT_OPTIONS.map((option) => (
+                  <Button
+                    key={option.value}
+                    type="button"
+                    variant={sort === option.value ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => handleSortChange(option.value)}
+                    disabled={isSwitching}
+                    aria-pressed={sort === option.value}
+                    className={cn(
+                      "min-w-[80px] flex-shrink-0 rounded-full border border-gray-200 px-4 text-xs font-semibold transition",
+                      sort === option.value
+                        ? "border-foreground bg-foreground text-background"
+                        : "border border-gray-200 bg-background text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    {option.label}
+                  </Button>
+                ))}
+              </div>
+              <div className="flex flex-col gap-1 text-left">
+                <h2 className="text-lg font-semibold text-foreground sm:text-xl">{feedHeadline.title}</h2>
+                <p className="text-sm text-muted-foreground">{feedHeadline.subtitle}</p>
+              </div>
+            </section>
 
-      {hasMore && !error && projects.length > 0 && !isSwitching && (
-        <div className="flex justify-center">
-          <Button
-            variant="outline"
-            onClick={handleLoadMore}
-            disabled={loadingMore}
-            className="rounded-full border border-border/60 px-6 text-sm font-semibold"
-          >
-            {loadingMore ? "Loading..." : "Load more projects"}
-          </Button>
+            {!isAuthenticated && showLoginPrompt ? (
+              <Card className="flex flex-col gap-2 rounded-2xl border border-border/60 bg-muted/20 p-5 text-sm text-muted-foreground">
+                <div className="flex items-center gap-2 text-foreground">
+                  <Sparkles className="h-4 w-4" />
+                  <span className="font-semibold">Log in to upvote projects</span>
+                </div>
+                <p>Sign in to cheer on other builders and save your favourite projects.</p>
+                <Button asChild className="mt-2 self-start rounded-full px-4 text-xs font-semibold">
+                  <Link href="/auth?redirect=/feed/projects">Log in to upvote</Link>
+                </Button>
+              </Card>
+            ) : null}
+
+            {content}
+
+            {hasMore && !error && projects.length > 0 && !isSwitching && (
+              <div className="flex justify-center">
+                <Button
+                  variant="outline"
+                  onClick={handleLoadMore}
+                  disabled={loadingMore}
+                  className="rounded-full border border-border/60 px-6 text-sm font-semibold"
+                >
+                  {loadingMore ? "Loading..." : "Load more projects"}
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
-      )}
+        </div>
 
-      {showScrollTop && (
-        <button
-          type="button"
-          onClick={handleScrollTop}
-          className="fixed bottom-6 right-6 z-30 inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white/85 px-3 py-1 text-xs font-semibold text-gray-700 shadow-sm backdrop-blur transition hover:border-gray-300 hover:text-gray-900"
-        >
-          <ArrowUp className="h-3.5 w-3.5" />
-          Top
-        </button>
-      )}
-    </div>
+        <div className="sticky top-24 hidden space-y-4 lg:col-start-3 lg:block lg:w-[320px] lg:top-6 xl:w-[340px]">
+          <Card className="rounded-2xl border border-border/60 bg-muted/20 p-5">
+            <h2 className="text-sm font-semibold text-foreground">
+              {isAuthenticated ? "Share your latest build" : "Log in to publish projects"}
+            </h2>
+            <p className="mt-2 text-xs text-muted-foreground">
+              {isAuthenticated
+                ? "Keep your portfolio fresh with new launches and community-ready updates."
+                : "Sign in to add projects to your portfolio and gain visibility across DevFolio."}
+            </p>
+            {isAuthenticated ? (
+              <Button asChild className="mt-4 w-full rounded-full bg-foreground text-background hover:bg-foreground/90">
+                <Link href="/dashboard">Open dashboard</Link>
+              </Button>
+            ) : (
+              <Button asChild className="mt-4 w-full rounded-full">
+                <Link href="/auth?redirect=/feed/projects">Log in</Link>
+              </Button>
+            )}
+          </Card>
+        </div>
+
+        {showScrollTop && (
+          <button
+            type="button"
+            onClick={handleScrollTop}
+            className="fixed bottom-6 right-6 z-30 inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white/85 px-3 py-1 text-xs font-semibold text-gray-700 shadow-sm backdrop-blur transition hover:border-gray-300 hover:text-gray-900"
+          >
+            <ArrowUp className="h-3.5 w-3.5" />
+            Top
+          </button>
+        )}
+      </div>
+    </>
   )
 }
 

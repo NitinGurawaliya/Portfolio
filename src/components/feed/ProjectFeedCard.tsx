@@ -44,7 +44,7 @@ export function ProjectFeedCard({ project, onToggleUpvote, upvotePending = false
       : "No description has been provided for this project yet."
 
   return (
-    <div className="group relative mx-auto w-full max-w-xl rounded-xl border border-gray-200 bg-card/90 p-2 text-card-foreground  sm:px-6 sm:py-6">
+    <div className="group relative w-full rounded-xl border border-gray-200 bg-card/90 p-2 text-card-foreground sm:px-6 sm:py-6">
       <div className="flex items-start justify-between gap-3">
         <div className="flex flex-1 items-center gap-3">
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted/40 sm:h-9 sm:w-9">
