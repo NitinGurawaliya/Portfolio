@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -8,7 +8,11 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { useToast } from "@/hooks/use-toast"
 import { ShiplogCard } from "@/components/shiplog/ShiplogCard"
 import { ShiplogComposerDialog } from "@/components/shiplog/ShiplogComposerDialog"
+import { FeedBrandMark } from "@/components/feed/FeedBrandMark"
+import { FeedTopNav } from "@/components/feed/FeedTopNav"
 import type { Shiplog, ShiplogReactionType } from "@/types/shiplog"
+import { useSession } from "@/hooks/useSession"
+import { PenSquare, FolderOpen } from "lucide-react"
 
 interface ShiplogFeedResponse {
   shiplogs: Shiplog[]
@@ -31,6 +35,8 @@ export default function ShiplogFeedPage() {
   const [composerOpen, setComposerOpen] = useState(false)
   const [pendingReactions, setPendingReactions] = useState<Record<number, boolean>>({})
   const [pendingFollows, setPendingFollows] = useState<Record<number, boolean>>({})
+  const { user: sessionUser, loading: sessionLoading } = useSession()
+  const isAuthenticated = Boolean(sessionUser)
 
   const fetchShiplogs = useCallback(
     async (targetPage: number, append = false) => {
@@ -205,101 +211,113 @@ export default function ShiplogFeedPage() {
 
   const showEmptyState = !loading && shiplogs.length === 0
 
-  const infoBanner = useMemo(() => {
-    if (mode !== "global") return null
-    return (
-      <Card className="rounded-xl border border-dashed border-border/50 bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
-        You're seeing the global stream. Follow builders to prioritize their updates here.
-      </Card>
-    )
-  }, [mode])
 
   return (
-    <div className="mx-auto flex min-h-screen w-full max-w-3xl flex-col gap-8 px-4 py-12 sm:px-8 lg:px-10">
-      <div className="flex flex-col gap-4">
+    <>
+      <FeedTopNav />
+      <div className="mx-auto grid min-h-screen w-full max-w-6xl grid-cols-1 gap-8 px-4 pb-12 pt-10 sm:px-6 sm:pt-12 lg:h-[calc(100vh-3rem)] lg:grid-cols-[240px_minmax(0,1fr)_320px] lg:items-start lg:gap-10 lg:overflow-hidden lg:pb-10 lg:pt-6">
+        <aside className="sticky top-24 hidden h-fit lg:block lg:w-[240px] lg:top-6 xl:w-[260px]">
+         
+          <Card className="flex flex-col gap-4 rounded-3xl border border-border/60 bg-background p-6">
+          <FeedBrandMark />
+            <nav className="space-y-3 text-sm font-semibold text-muted-foreground">
+              <Link
+                href="/feed/shiplog"
+                className="group mt-1 flex items-center gap-3 rounded-2xl border border-border/70 bg-foreground px-4 py-3 text-background"
+              >
+                <PenSquare className="h-4 w-4" />
+                Shiplogs
+              </Link>
+              <Link
+                href="/feed/projects"
+                className="group flex items-center gap-3 rounded-2xl border border-transparent px-4 py-3 hover:border-border/70 hover:bg-muted/40"
+              >
+                <FolderOpen className="h-4 w-4 text-foreground" />
+                <span className="text-foreground">Projects</span>
+              </Link>
+            </nav>
+          </Card>
+        </aside>
+
+        <div className="flex flex-col gap-10 lg:col-start-2 lg:mx-auto lg:h-full lg:w-full lg:max-w-3xl lg:overflow-y-auto lg:pr-2 lg:scroll-smooth lg:[scrollbar-width:none] lg:[-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
           <div className="flex flex-col gap-3 text-left">
-            <h1 className="text-3xl font-semibold text-foreground md:text-4xl">Shiplog Feed</h1>
+            <div className="flex flex-wrap items-center gap-3">
+              <h1 className="text-2xl font-bold text-foreground md:text-3xl">Shiplog Feed</h1>
+            </div>
             <p className="text-sm text-muted-foreground">
               Catch the freshest progress updates and cheer on fellow builders.
             </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Button
-            asChild
-            variant="default"
-            className="rounded-full px-4 text-xs font-semibold"
-          >
-            <Link href="/feed/shiplog">Shiplogs</Link>
-          </Button>
-          <Button
-            asChild
-            variant="outline"
-            className="rounded-full px-4 text-xs font-semibold"
-          >
-            <Link href="/feed/projects">Projects</Link>
-          </Button>
-          <Button
-            type="button"
-            onClick={() => setComposerOpen(true)}
-            className="ml-auto rounded-full bg-foreground px-4 text-xs font-semibold text-background hover:bg-foreground/90"
-          >
-            Create shiplog
-          </Button>
-        </div>
-        {infoBanner}
-      </div>
+          </div>
 
-      {loading ? (
-        <ShiplogFeedSkeleton />
-      ) : error ? (
-          <div className="flex flex-col items-center justify-center gap-4 rounded-2xl border border-border/60 bg-muted/30 p-8 text-center">
-            <p className="text-base font-medium text-foreground">{error}</p>
-            <Button variant="outline" className="rounded-full px-4 text-sm" onClick={() => fetchShiplogs(1, false)}>
-              Try again
-            </Button>
+          {loading ? (
+            <ShiplogFeedSkeleton />
+          ) : error ? (
+            <div className="flex flex-col items-center justify-center gap-4 rounded-2xl border border-border/60 bg-muted/30 p-8 text-center">
+              <p className="text-base font-medium text-foreground">{error}</p>
+              <Button variant="outline" className="rounded-full px-4 text-sm" onClick={() => fetchShiplogs(1, false)}>
+                Try again
+              </Button>
+            </div>
+          ) : showEmptyState ? (
+            <Card className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-border/60 bg-background/60 p-10 text-center shadow-none">
+              <p className="text-lg font-semibold text-foreground">No shiplogs yet.</p>
+              <p className="max-w-sm text-sm text-muted-foreground">
+                Share your first update to let the community know what you're building.
+              </p>
+              <Button onClick={() => setComposerOpen(true)} className="rounded-full px-5 text-sm font-semibold">
+                Post an update
+              </Button>
+            </Card>
+          ) : (
+            <div className="space-y-6">
+              {shiplogs.map((shiplog) => (
+                <div key={shiplog.id} className="w-full max-w-3xl self-center">
+                  <ShiplogCard
+                    shiplog={shiplog}
+                    onReact={handleReaction}
+                    onToggleFollow={!shiplog.isAuthorSelf && shiplog.author.id ? handleFollowToggle : undefined}
+                    reactionPending={Boolean(pendingReactions[shiplog.id])}
+                    followPending={shiplog.author.id ? Boolean(pendingFollows[shiplog.author.id]) : false}
+                    showFollowButton={!shiplog.isAuthorSelf}
+                  />
+                </div>
+              ))}
+              {loadingMore ? <ShiplogFeedSkeleton count={2} /> : null}
+            </div>
+          )}
+
+          {hasMore && !loading && !loadingMore && shiplogs.length > 0 && (
+            <div className="flex justify-center">
+              <Button
+                variant="outline"
+                className="rounded-full border border-border/60 px-6 text-sm font-semibold"
+                onClick={handleLoadMore}
+                disabled={loadingMore}
+              >
+                Load more
+              </Button>
+            </div>
+          )}
+
+          <ShiplogComposerDialog open={composerOpen} onOpenChange={setComposerOpen} onCreated={handleShiplogCreated} />
         </div>
-      ) : showEmptyState ? (
-          <Card className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-border/60 bg-background/60 p-10 text-center shadow-none">
-            <p className="text-lg font-semibold text-foreground">No shiplogs yet.</p>
-            <p className="max-w-sm text-sm text-muted-foreground">
-              Share your first update to let the community know what you're building.
+
+        <div className="sticky top-24 hidden space-y-4 lg:col-start-3 lg:block lg:w-[320px] lg:top-6 xl:w-[340px]">
+          <Card className="rounded-2xl border border-border/60 bg-muted/20 p-5">
+            <h2 className="text-sm font-semibold text-foreground">Share a shiplog update</h2>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Keep everyone in the loop with your latest progress. Post a shiplog to document what you shipped or fixed.
             </p>
-            <Button onClick={() => setComposerOpen(true)} className="rounded-full px-5 text-sm font-semibold">
+            <Button
+              className="mt-4 w-full rounded-full"
+              onClick={() => setComposerOpen(true)}
+            >
               Post an update
             </Button>
-        </Card>
-      ) : (
-        <div className="flex flex-col gap-4">
-          {shiplogs.map((shiplog) => (
-            <ShiplogCard
-              key={shiplog.id}
-              shiplog={shiplog}
-              onReact={handleReaction}
-              onToggleFollow={!shiplog.isAuthorSelf && shiplog.author.id ? handleFollowToggle : undefined}
-              reactionPending={Boolean(pendingReactions[shiplog.id])}
-              followPending={shiplog.author.id ? Boolean(pendingFollows[shiplog.author.id]) : false}
-              showFollowButton={!shiplog.isAuthorSelf}
-            />
-          ))}
-          {loadingMore ? <ShiplogFeedSkeleton count={2} /> : null}
+          </Card>
         </div>
-      )}
-
-      {hasMore && !loading && !loadingMore && shiplogs.length > 0 && (
-        <div className="flex justify-center">
-          <Button
-            variant="outline"
-            className="rounded-full border border-border/60 px-6 text-sm font-semibold"
-            onClick={handleLoadMore}
-            disabled={loadingMore}
-            >
-              Load more
-          </Button>
-        </div>
-      )}
-
-      <ShiplogComposerDialog open={composerOpen} onOpenChange={setComposerOpen} onCreated={handleShiplogCreated} />
-    </div>
+      </div>
+    </>
   )
 }
 

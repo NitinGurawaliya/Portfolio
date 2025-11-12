@@ -3,6 +3,7 @@ import type {
   ShiplogReactionType,
   PortfolioRepository,
   Repository,
+  Portfolio,
   User,
 } from "@prisma/client"
 
@@ -15,12 +16,15 @@ export interface ShiplogAuthor {
   name: string
   githubUsername: string | null
   avatarUrl: string | null
+  portfolioSlug: string | null
 }
 
 export interface ShiplogProject {
   id: number
   name: string
   repositoryId: number
+  deployUrl: string | null
+  repositoryUrl: string | null
 }
 
 export interface ShiplogViewModel {
@@ -42,10 +46,14 @@ export interface ShiplogViewModel {
 }
 
 type ShiplogWithRelations = Shiplog & {
-  author: Pick<User, "id" | "name" | "githubUsername" | "avatarUrl"> | null
+  author:
+    | (Pick<User, "id" | "name" | "githubUsername" | "avatarUrl"> & {
+        portfolio: Pick<Portfolio, "customUsername"> | null
+      })
+    | null
   project:
     | (PortfolioRepository & {
-        repository: Pick<Repository, "name"> | null
+        repository: Pick<Repository, "name" | "githubUrl" | "htmlUrl"> | null
       })
     | null
 }
@@ -104,6 +112,9 @@ export function formatShiplog(
           id: shiplog.project.id,
           name: shiplog.project.customName ?? shiplog.project.repository?.name ?? "",
           repositoryId: shiplog.project.repositoryId,
+          deployUrl: shiplog.project.deployedUrl ?? null,
+          repositoryUrl:
+            shiplog.project.repository?.githubUrl ?? shiplog.project.repository?.htmlUrl ?? null,
         }
       : null,
     author: {
@@ -111,6 +122,10 @@ export function formatShiplog(
       name: authorName,
       githubUsername: shiplog.author?.githubUsername ?? null,
       avatarUrl: shiplog.author?.avatarUrl ?? null,
+      portfolioSlug:
+        shiplog.author?.portfolio?.customUsername ??
+        shiplog.author?.githubUsername ??
+        null,
     },
     reactions: {
       shipped: counts.SHIPPED ?? 0,

@@ -36,6 +36,11 @@ export async function GET(req: NextRequest) {
               name: true,
               githubUsername: true,
               avatarUrl: true,
+              portfolio: {
+                select: {
+                  customUsername: true,
+                },
+              },
             },
           },
           project: {
@@ -43,9 +48,12 @@ export async function GET(req: NextRequest) {
               id: true,
               customName: true,
               repositoryId: true,
+              deployedUrl: true,
               repository: {
                 select: {
                   name: true,
+                  githubUrl: true,
+                  htmlUrl: true,
                 },
               },
             },
@@ -186,6 +194,11 @@ export async function POST(req: NextRequest) {
             name: true,
             githubUsername: true,
             avatarUrl: true,
+            portfolio: {
+              select: {
+                customUsername: true,
+              },
+            },
           },
         },
         project: {
@@ -193,9 +206,12 @@ export async function POST(req: NextRequest) {
             id: true,
             customName: true,
             repositoryId: true,
+            deployedUrl: true,
             repository: {
               select: {
                 name: true,
+                githubUrl: true,
+                htmlUrl: true,
               },
             },
           },

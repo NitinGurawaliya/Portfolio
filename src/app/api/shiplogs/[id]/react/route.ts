@@ -4,12 +4,6 @@ import { resolveCurrentUserId } from "@/app/api/feed/utils"
 import { SHIPLOG_REACTION_TYPES, createEmptyReactionCounts } from "@/app/api/shiplogs/helpers"
 import type { ShiplogReactionType } from "@prisma/client"
 
-interface RouteParams {
-  params: {
-    id: string
-  }
-}
-
 function parseShiplogId(rawId: string) {
   const parsed = Number(rawId)
   if (!Number.isFinite(parsed) || parsed <= 0) {
@@ -22,14 +16,17 @@ function isValidReactionType(value: unknown): value is ShiplogReactionType {
   return typeof value === "string" && SHIPLOG_REACTION_TYPES.includes(value as ShiplogReactionType)
 }
 
-export async function POST(req: NextRequest, { params }: RouteParams) {
+type RouteContext = { params: Promise<{ id: string }> }
+
+export async function POST(req: NextRequest, context: RouteContext) {
   try {
     const userId = await resolveCurrentUserId(req)
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const shiplogId = parseShiplogId(params.id)
+    const { id } = await context.params
+    const shiplogId = parseShiplogId(id)
     if (!shiplogId) {
       return NextResponse.json({ error: "Invalid shiplog" }, { status: 400 })
     }

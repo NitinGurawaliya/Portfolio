@@ -4,6 +4,8 @@ export interface ShiplogProject {
   id: number
   name: string
   repositoryId: number
+  deployUrl: string | null
+  repositoryUrl: string | null
 }
 
 export interface ShiplogAuthor {
@@ -11,6 +13,7 @@ export interface ShiplogAuthor {
   name: string
   githubUsername: string | null
   avatarUrl: string | null
+  portfolioSlug: string | null
 }
 
 export interface Shiplog {

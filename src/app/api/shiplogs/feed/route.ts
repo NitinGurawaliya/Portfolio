@@ -28,6 +28,11 @@ async function fetchShiplogsBatch(
             name: true,
             githubUsername: true,
             avatarUrl: true,
+            portfolio: {
+              select: {
+                customUsername: true,
+              },
+            },
           },
         },
         project: {
@@ -35,9 +40,12 @@ async function fetchShiplogsBatch(
             id: true,
             customName: true,
             repositoryId: true,
+            deployedUrl: true,
             repository: {
               select: {
                 name: true,
+                githubUrl: true,
+                htmlUrl: true,
               },
             },
           },

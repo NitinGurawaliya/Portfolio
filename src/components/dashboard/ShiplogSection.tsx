@@ -162,16 +162,22 @@ export function ShiplogSection() {
           </Button>
         </Card>
       ) : (
-        <div className="flex flex-col gap-4">
+        <div className="space-y-4 lg:columns-2 lg:gap-x-4">
           {shiplogs.map((shiplog) => (
-            <ShiplogCard
-              key={shiplog.id}
-              shiplog={shiplog}
-              onReact={handleReaction}
-              reactionPending={Boolean(pendingReactions[shiplog.id])}
-            />
+            <div key={shiplog.id} className="break-inside-avoid lg:mb-4">
+              <ShiplogCard
+                shiplog={shiplog}
+                onReact={handleReaction}
+                reactionPending={Boolean(pendingReactions[shiplog.id])}
+                variant="dashboard"
+              />
+            </div>
           ))}
-          {loadingMore ? <ShiplogTimelineSkeleton count={2} /> : null}
+          {loadingMore ? (
+            <div className="break-inside-avoid">
+              <ShiplogTimelineSkeleton count={2} />
+            </div>
+          ) : null}
         </div>
       )}
 
@@ -193,7 +199,7 @@ export function ShiplogSection() {
 
 function ShiplogTimelineSkeleton({ count = 3 }: { count?: number }) {
   return (
-    <div className="flex flex-col gap-4">
+    <div className="grid gap-4 lg:grid-cols-2">
       {Array.from({ length: count }).map((_, index) => (
         <Card key={index} className="rounded-2xl border border-border/30 bg-background/70 p-5 shadow-none">
           <div className="flex items-start gap-3">
@@ -205,11 +211,7 @@ function ShiplogTimelineSkeleton({ count = 3 }: { count?: number }) {
               <Skeleton className="h-3 w-3/4 rounded-full" />
             </div>
           </div>
-          <div className="mt-4 flex items-center gap-2">
-            <Skeleton className="h-8 w-20 rounded-full" />
-            <Skeleton className="h-8 w-20 rounded-full" />
-            <Skeleton className="h-8 w-20 rounded-full" />
-          </div>
+          <Skeleton className="mt-4 h-9 w-24 rounded-full" />
         </Card>
       ))}
     </div>

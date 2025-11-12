@@ -2,11 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
 import { resolveCurrentUserId } from "@/app/api/feed/utils"
 
-interface RouteParams {
-  params: {
-    id: string
-  }
-}
+type RouteContext = { params: Promise<{ id: string }> }
 
 function parseTargetUserId(rawId: string) {
   const parsed = Number(rawId)
@@ -16,14 +12,15 @@ function parseTargetUserId(rawId: string) {
   return parsed
 }
 
-export async function POST(req: NextRequest, { params }: RouteParams) {
+export async function POST(req: NextRequest, context: RouteContext) {
   try {
     const currentUserId = await resolveCurrentUserId(req)
     if (!currentUserId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const targetUserId = parseTargetUserId(params.id)
+    const { id } = await context.params
+    const targetUserId = parseTargetUserId(id)
     if (!targetUserId) {
       return NextResponse.json({ error: "Invalid user" }, { status: 400 })
     }
@@ -62,14 +59,15 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   }
 }
 
-export async function DELETE(req: NextRequest, { params }: RouteParams) {
+export async function DELETE(req: NextRequest, context: RouteContext) {
   try {
     const currentUserId = await resolveCurrentUserId(req)
     if (!currentUserId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const targetUserId = parseTargetUserId(params.id)
+    const { id } = await context.params
+    const targetUserId = parseTargetUserId(id)
     if (!targetUserId) {
       return NextResponse.json({ error: "Invalid user" }, { status: 400 })
     }

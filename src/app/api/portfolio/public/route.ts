@@ -147,33 +147,6 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Portfolio not found" }, { status: 404 })
     }
 
-      const shiplogs = await prisma.shiplog.findMany({
-        where: {
-          userId: portfolio.user.id,
-        },
-        orderBy: {
-          createdAt: "desc",
-        },
-        take: 5,
-        select: {
-          id: true,
-          content: true,
-          imageUrl: true,
-          createdAt: true,
-          project: {
-            select: {
-              id: true,
-              customName: true,
-              repository: {
-                select: {
-                  name: true,
-                },
-              },
-            },
-          },
-        },
-      })
-
     // Serialize BigInt values and ensure repositories are properly formatted
     const serializeStart = performance.now()
     const serializedPortfolio = JSON.parse(JSON.stringify(portfolio, (key, value) =>
@@ -192,20 +165,6 @@ export async function GET(req: NextRequest) {
     } else {
       console.warn(`⚠️ No repositories found for portfolio ${serializedPortfolio.id}`)
     }
-
-      const serializedShiplogs = shiplogs.map((log) => ({
-        id: log.id,
-        content: log.content,
-        imageUrl: log.imageUrl,
-        createdAt: log.createdAt.toISOString(),
-        project: log.project
-          ? {
-              id: log.project.id,
-              name: log.project.customName ?? log.project.repository?.name ?? "",
-            }
-          : null,
-      }))
-      serializedPortfolio.shiplogs = serializedShiplogs
     const serializeTime = performance.now() - serializeStart
 
     const responseData = {

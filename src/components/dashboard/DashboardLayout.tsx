@@ -394,7 +394,7 @@ export function DashboardLayout({
                   <div className="flex flex-1 flex-col items-start">
                     <span className="text-sm font-semibold text-foreground">Community Feed</span>
                     <span className="text-[11px] font-medium text-muted-foreground">
-                      Discover published projects
+                      Discover projects & Devs
                     </span>
                   </div>
                 </Button>
