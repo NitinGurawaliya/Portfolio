@@ -5,6 +5,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
+import { ToastAction } from "@/components/ui/toast"
 import { useToast } from "@/hooks/use-toast"
 import { ShiplogCard } from "@/components/shiplog/ShiplogCard"
 import { ShiplogComposerDialog } from "@/components/shiplog/ShiplogComposerDialog"
@@ -103,6 +104,20 @@ export default function ShiplogFeedPage() {
 
   const handleReaction = useCallback(
     async (shiplogId: number, reactionType: ShiplogReactionType) => {
+      if (!isAuthenticated) {
+        toast({
+          title: "Sign in required",
+          description: "Log in to leave a reaction.",
+          action: (
+            <ToastAction altText="Sign in" asChild>
+              <Link href="/auth?redirect=/feed/shiplog" className="px-3 py-1 text-xs font-semibold">
+                Sign in
+              </Link>
+            </ToastAction>
+          ),
+        })
+        return
+      }
       if (pendingReactions[shiplogId]) return
       setPendingReactions((prev) => ({ ...prev, [shiplogId]: true }))
       try {
@@ -116,6 +131,13 @@ export default function ShiplogFeedPage() {
           toast({
             title: "Sign in required",
             description: "Log in to leave a reaction.",
+            action: (
+              <ToastAction altText="Sign in" asChild>
+                <Link href="/auth?redirect=/feed/shiplog" className="px-3 py-1 text-xs font-semibold">
+                  Sign in
+                </Link>
+              </ToastAction>
+            ),
           })
           return
         }
@@ -159,6 +181,20 @@ export default function ShiplogFeedPage() {
 
   const handleFollowToggle = useCallback(
     async (authorId: number, shouldFollow: boolean) => {
+      if (!isAuthenticated) {
+        toast({
+          title: "Sign in required",
+          description: "Log in to follow creators.",
+          action: (
+            <ToastAction altText="Sign in" asChild>
+              <Link href="/auth?redirect=/feed/shiplog" className="px-3 py-1 text-xs font-semibold">
+                Sign in
+              </Link>
+            </ToastAction>
+          ),
+        })
+        return
+      }
       if (pendingFollows[authorId]) return
       setPendingFollows((prev) => ({ ...prev, [authorId]: true }))
       try {
@@ -170,6 +206,13 @@ export default function ShiplogFeedPage() {
           toast({
             title: "Sign in required",
             description: "Log in to follow creators.",
+            action: (
+              <ToastAction altText="Sign in" asChild>
+                <Link href="/auth?redirect=/feed/shiplog" className="px-3 py-1 text-xs font-semibold">
+                  Sign in
+                </Link>
+              </ToastAction>
+            ),
           })
           return
         }
@@ -275,7 +318,9 @@ export default function ShiplogFeedPage() {
                   <ShiplogCard
                     shiplog={shiplog}
                     onReact={handleReaction}
-                    onToggleFollow={!shiplog.isAuthorSelf && shiplog.author.id ? handleFollowToggle : undefined}
+                    onToggleFollow={
+                      !shiplog.isAuthorSelf && shiplog.author.id ? handleFollowToggle : undefined
+                    }
                     reactionPending={Boolean(pendingReactions[shiplog.id])}
                     followPending={shiplog.author.id ? Boolean(pendingFollows[shiplog.author.id]) : false}
                     showFollowButton={!shiplog.isAuthorSelf}

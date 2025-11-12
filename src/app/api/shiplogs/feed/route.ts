@@ -61,35 +61,44 @@ async function fetchShiplogsBatch(
 export async function GET(req: NextRequest) {
   try {
     const userId = await resolveCurrentUserId(req)
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
 
     const { searchParams } = new URL(req.url)
     const { page, pageSize } = parsePagination(searchParams)
     const skip = (page - 1) * pageSize
 
-    const followees = await prisma.userFollow.findMany({
-      where: { followerId: userId },
-      select: { followingId: true },
-    })
+    let followedAuthorIds = new Set<number>()
+    let mode: FeedMode = "global"
 
-    const followedAuthorIds = new Set<number>([userId])
-    followees.forEach((row) => followedAuthorIds.add(row.followingId))
+    let shiplogs: Awaited<ReturnType<typeof fetchShiplogsBatch>>["items"] = []
+    let total = 0
 
-    const hasNetwork = followedAuthorIds.size > 1
-    const networkWhere: Prisma.ShiplogWhereInput | undefined = hasNetwork
-      ? { userId: { in: Array.from(followedAuthorIds) } }
-      : undefined
+    if (userId) {
+      const followees = await prisma.userFollow.findMany({
+        where: { followerId: userId },
+        select: { followingId: true },
+      })
 
-    let mode: FeedMode = hasNetwork ? "network" : "global"
-    let { items: shiplogs, count: total } = await fetchShiplogsBatch(networkWhere, skip, pageSize)
+      followedAuthorIds = new Set<number>([userId])
+      followees.forEach((row) => followedAuthorIds.add(row.followingId))
 
-    if (shiplogs.length === 0 && hasNetwork) {
-      const fallback = await fetchShiplogsBatch(undefined, skip, pageSize)
-      shiplogs = fallback.items
-      total = fallback.count
-      mode = "global"
+      const hasNetwork = followedAuthorIds.size > 1
+      const networkWhere: Prisma.ShiplogWhereInput | undefined = hasNetwork
+        ? { userId: { in: Array.from(followedAuthorIds) } }
+        : undefined
+
+      mode = hasNetwork ? "network" : "global"
+      ;({ items: shiplogs, count: total } = await fetchShiplogsBatch(networkWhere, skip, pageSize))
+
+      if (shiplogs.length === 0 && hasNetwork) {
+        const fallback = await fetchShiplogsBatch(undefined, skip, pageSize)
+        shiplogs = fallback.items
+        total = fallback.count
+        mode = "global"
+      }
+    } else {
+      const result = await fetchShiplogsBatch(undefined, skip, pageSize)
+      shiplogs = result.items
+      total = result.count
     }
 
     if (shiplogs.length === 0) {
@@ -111,23 +120,27 @@ export async function GET(req: NextRequest) {
         where: { shiplogId: { in: shiplogIds } },
         _count: { _all: true },
       }),
-      prisma.shiplogReaction.findMany({
-        where: {
-          shiplogId: { in: shiplogIds },
-          userId,
-        },
-        select: {
-          shiplogId: true,
-          type: true,
-        },
-      }),
+      userId
+        ? prisma.shiplogReaction.findMany({
+            where: {
+              shiplogId: { in: shiplogIds },
+              userId,
+            },
+            select: {
+              shiplogId: true,
+              type: true,
+            },
+          })
+        : Promise.resolve([]),
     ])
 
     const reactionCounts = buildReactionCountMap(reactionRows)
     const viewerReactionMap = new Map<number, ShiplogReactionType>()
-    viewerReactions.forEach((reaction) => {
-      viewerReactionMap.set(reaction.shiplogId, reaction.type)
-    })
+    if (userId) {
+      viewerReactions.forEach((reaction) => {
+        viewerReactionMap.set(reaction.shiplogId, reaction.type)
+      })
+    }
 
     return NextResponse.json({
       page,
@@ -136,7 +149,7 @@ export async function GET(req: NextRequest) {
       hasMore: page * pageSize < total,
       mode,
       shiplogs: shiplogs.map((shiplog) =>
-        formatShiplog(shiplog, reactionCounts, viewerReactionMap, followedAuthorIds, userId)
+        formatShiplog(shiplog, reactionCounts, viewerReactionMap, followedAuthorIds, userId ?? undefined)
       ),
     })
   } catch (error) {

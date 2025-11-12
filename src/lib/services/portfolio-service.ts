@@ -129,73 +129,92 @@ export const checkUsernameAvailability = async (username: string, currentUsernam
 /**
  * GitHub user data fetch करता है
  */
-export const fetchGitHubData = async () => {
-  const [userRes, reposRes] = await Promise.all([
-    fetch("/api/github/user", { cache: "no-store" }),
-    fetch("/api/github/repos", { cache: "no-store" }),
-  ])
-  
-  if (!userRes.ok || !reposRes.ok) {
-    throw new Error("GitHub fetch failed")
+export const fetchGitHubData = async (): Promise<User | null> => {
+  try {
+    const [userRes, reposRes] = await Promise.all([
+      fetch("/api/github/user", { cache: "no-store" }),
+      fetch("/api/github/repos", { cache: "no-store" }),
+    ])
+    
+    if (userRes.status === 401 || reposRes.status === 401) {
+      return null
+    }
+    
+    if (!userRes.ok || !reposRes.ok) {
+      console.warn("⚠️ GitHub fetch failed", { userStatus: userRes.status, repoStatus: reposRes.status })
+      return null
+    }
+    
+    const userData = await userRes.json()
+    const reposData = await reposRes.json()
+
+    const repositories = reposData.map((repo: any) => ({
+      id: repo.id,
+      name: repo.name,
+      fullName: repo.full_name,
+      description: repo.description || "",
+      htmlUrl: repo.html_url,
+      homepage: repo.homepage || "",
+      language: repo.language || "",
+      languages: repo.languages || [],
+      stargazersCount: repo.stargazers_count,
+      forksCount: repo.forks_count,
+      isPrivate: repo.private,
+      isFork: repo.fork,
+      size: repo.size || 0,
+      createdAt: repo.created_at,
+      updatedAt: repo.updated_at,
+      pushedAt: repo.pushed_at,
+    }))
+
+    const user: User = {
+      id: userData.id,
+      name: userData.name || userData.login,
+      email: userData.email || "",
+      githubUsername: userData.login,
+      avatarUrl: userData.avatar_url,
+      bio: userData.bio || "",
+      location: userData.location || "",
+      websiteUrl: userData.blog || "",
+      twitterUsername: userData.twitter_username || "",
+      company: userData.company || "",
+      publicRepos: userData.public_repos,
+      followers: userData.followers,
+      following: userData.following,
+      repositories,
+    }
+
+    return user
+  } catch (error) {
+    console.warn("⚠️ GitHub fetch failed", error)
+    return null
   }
-  
-  const userData = await userRes.json()
-  const reposData = await reposRes.json()
-
-  const repositories = reposData.map((repo: any) => ({
-    id: repo.id,
-    name: repo.name,
-    fullName: repo.full_name,
-    description: repo.description || "",
-    htmlUrl: repo.html_url,
-    homepage: repo.homepage || "",
-    language: repo.language || "",
-    languages: repo.languages || [],
-    stargazersCount: repo.stargazers_count,
-    forksCount: repo.forks_count,
-    isPrivate: repo.private,
-    isFork: repo.fork,
-    size: repo.size || 0,
-    createdAt: repo.created_at,
-    updatedAt: repo.updated_at,
-    pushedAt: repo.pushed_at,
-  }))
-
-  const user: User = {
-    id: userData.id,
-    name: userData.name || userData.login,
-    email: userData.email || "",
-    githubUsername: userData.login,
-    avatarUrl: userData.avatar_url,
-    bio: userData.bio || "",
-    location: userData.location || "",
-    websiteUrl: userData.blog || "",
-    twitterUsername: userData.twitter_username || "",
-    company: userData.company || "",
-    publicRepos: userData.public_repos,
-    followers: userData.followers,
-    following: userData.following,
-    repositories,
-  }
-
-  return user
 }
 
 /**
  * Session data fetch करता है - with secure validation
  */
-export const fetchSession = async () => {
-  const res = await fetch("/api/session", { cache: "no-store" })
-  
-  if (!res.ok) {
-    throw new Error("No session or session invalid")
+export const fetchSession = async (): Promise<any | null> => {
+  try {
+    const res = await fetch("/api/session", { cache: "no-store" })
+    
+    if (res.status === 401) {
+      return null
+    }
+    
+    if (!res.ok) {
+      console.warn("⚠️ Session fetch failed", res.status)
+      return null
+    }
+    
+    const data = await res.json()
+    if (data.success && data.session) {
+      return data.session
+    }
+    return null
+  } catch (error) {
+    console.warn("⚠️ Session fetch threw error", error)
+    return null
   }
-  
-  const data = await res.json()
-  // Return session only if it's verified
-  if (data.success && data.session) {
-    return data.session
-  }
-  throw new Error("Session validation failed")
 }
 

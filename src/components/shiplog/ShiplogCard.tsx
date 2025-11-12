@@ -4,8 +4,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
+import { ToastAction } from "@/components/ui/toast"
+import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
 import type { Shiplog, ShiplogReactionType } from "@/types/shiplog"
+import { X } from "lucide-react"
 
 const REACTIONS: Array<{
   type: ShiplogReactionType
@@ -118,8 +122,10 @@ export function ShiplogCard({
   className,
   variant = "default",
 }: ShiplogCardProps) {
+  const { toast } = useToast()
   const relativeTime = useMemo(() => formatRelativeTime(shiplog.createdAt), [shiplog.createdAt])
   const [expanded, setExpanded] = useState(false)
+  const [isImageOpen, setIsImageOpen] = useState(false)
   const isTruncated = useMemo(() => shouldTruncate(shiplog.content), [shiplog.content])
   const displayContent = useMemo(() => {
     const source = expanded || !isTruncated ? shiplog.content : truncateContent(shiplog.content)
@@ -167,12 +173,42 @@ export function ShiplogCard({
   const totalReactions = shiplog.reactions.shipped + shiplog.reactions.fixed + shiplog.reactions.support
 
   const handleReactionClick = (type: ShiplogReactionType) => {
-    if (reactionPending || !onReact) return
+    if (reactionPending) return
+    if (!onReact) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to add a reaction.",
+        duration: 3000,
+        action: (
+          <ToastAction altText="Sign in" asChild>
+            <Link href="/auth?redirect=/feed/shiplog" className="px-3 py-1 text-sm font-semibold">
+              Sign in
+            </Link>
+          </ToastAction>
+        ),
+      })
+      return
+    }
     onReact(shiplog.id, type)
   }
 
   const handleFollowClick = () => {
-    if (!onToggleFollow || followPending) return
+    if (followPending) return
+    if (!onToggleFollow) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to follow creators.",
+        duration: 3000,
+        action: (
+          <ToastAction altText="Sign in" asChild>
+            <Link href="/auth?redirect=/feed/shiplog" className="px-3 py-1 text-sm font-semibold">
+              Sign in
+            </Link>
+          </ToastAction>
+        ),
+      })
+      return
+    }
     if (shiplog.author.id == null) return
     onToggleFollow(shiplog.author.id, !shiplog.isAuthorFollowed)
   }
@@ -324,14 +360,35 @@ export function ShiplogCard({
             ) : null}
 
             {shiplog.imageUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <div className="flex w-full justify-center overflow-hidden rounded-2xl border border-border/40 bg-muted/30">
-                <img
-                  src={shiplog.imageUrl}
-                  alt="Shiplog attachment"
-                  className="h-full max-h-[420px] w-full object-contain bg-background p-2"
-                />
-              </div>
+              <Dialog open={isImageOpen} onOpenChange={setIsImageOpen}>
+                <button
+                  type="button"
+                  onClick={() => setIsImageOpen(true)}
+                  className="flex w-full justify-center overflow-hidden rounded-2xl border border-border/40 bg-muted/30 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={shiplog.imageUrl}
+                    alt="Shiplog attachment"
+                    className="h-full max-h-[420px] w-full cursor-zoom-in object-contain bg-background p-2"
+                  />
+                </button>
+                <DialogContent className="max-w-5xl border-none bg-transparent p-0 shadow-none">
+                  <DialogTitle className="sr-only">Shiplog image preview</DialogTitle>
+                  <DialogDescription className="sr-only">Enlarged shiplog attachment</DialogDescription>
+                  <div className="relative flex w-full max-h-[85vh] items-center justify-center overflow-hidden rounded-3xl border border-border/60 bg-background/95 p-2 sm:p-4">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={shiplog.imageUrl}
+                      alt="Shiplog attachment enlarged"
+                      className="max-h-[80vh] w-full object-contain"
+                    />
+                    <DialogClose className="absolute right-3 top-3 inline-flex h-8 w-8 items-center justify-center rounded-full border border-border/60 bg-background/90 text-foreground shadow-sm transition hover:bg-background">
+                      <X className="h-4 w-4" />
+                    </DialogClose>
+                  </div>
+                </DialogContent>
+              </Dialog>
             ) : null}
           </div>
         </div>
