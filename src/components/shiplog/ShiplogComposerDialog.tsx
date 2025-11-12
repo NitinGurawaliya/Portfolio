@@ -179,7 +179,7 @@ export function ShiplogComposerDialog({ open, onOpenChange, onCreated }: Shiplog
                 }
               }}
               placeholder="What did you ship or fix today?"
-              className="min-h-[140px] resize-none rounded-xl border border-border/60 bg-background/70 text-sm focus-visible:ring-2 focus-visible:ring-primary"
+              className="min-h-[140px] resize-none rounded-xl border border-border/60 bg-background/70 text-sm focus-visible:ring-2 focus-visible:ring-primary break-words [overflow-wrap:anywhere]"
             />
             <div className="flex items-center justify-between text-xs text-muted-foreground">
               <span>{charactersRemaining} characters remaining</span>

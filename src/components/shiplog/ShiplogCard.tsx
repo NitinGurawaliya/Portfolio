@@ -19,6 +19,9 @@ const REACTIONS: Array<{
 
 const MAX_PREVIEW_WORDS = 130
 const WORD_MATCHER = /\S+/g
+const MAX_PROJECT_BADGE_WORDS = 7
+const MAX_PROJECT_BADGE_LENGTH = 60
+const MAX_INLINE_WORD_LENGTH = 80
 
 function countWords(content: string) {
   if (!content) return 0
@@ -44,6 +47,23 @@ function truncateContent(content: string) {
   }
 
   return content.slice(0, endIndex).replace(/\s+$/, "") + "…"
+}
+
+function formatProjectBadgeLabel(name: string) {
+  if (!name) return ""
+  const words = name.trim().split(/\s+/)
+  let truncated =
+    words.length > MAX_PROJECT_BADGE_WORDS ? words.slice(0, MAX_PROJECT_BADGE_WORDS).join(" ") : words.join(" ")
+
+  if (truncated.length > MAX_PROJECT_BADGE_LENGTH) {
+    truncated = truncated.slice(0, MAX_PROJECT_BADGE_LENGTH).trimEnd()
+  }
+
+  if (truncated !== name) {
+    truncated = `${truncated}…`
+  }
+
+  return truncated
 }
 
 function formatRelativeTime(dateInput: string) {
@@ -101,10 +121,18 @@ export function ShiplogCard({
   const relativeTime = useMemo(() => formatRelativeTime(shiplog.createdAt), [shiplog.createdAt])
   const [expanded, setExpanded] = useState(false)
   const isTruncated = useMemo(() => shouldTruncate(shiplog.content), [shiplog.content])
-  const displayContent = useMemo(
-    () => (expanded || !isTruncated ? shiplog.content : truncateContent(shiplog.content)),
-    [expanded, isTruncated, shiplog.content]
-  )
+  const displayContent = useMemo(() => {
+    const source = expanded || !isTruncated ? shiplog.content : truncateContent(shiplog.content)
+    return source.split(/(\s+)/).map((token) => {
+      if (token.trim().length === 0) return token
+      if (token.length <= MAX_INLINE_WORD_LENGTH) return token
+      const chunks = []
+      for (let i = 0; i < token.length; i += MAX_INLINE_WORD_LENGTH) {
+        chunks.push(token.slice(i, i + MAX_INLINE_WORD_LENGTH))
+      }
+      return chunks.join(" ")
+    }).join("")
+  }, [expanded, isTruncated, shiplog.content])
   const contentLength = useMemo(() => shiplog.content.trim().split(/\s+/).length, [shiplog.content])
   const isCompact = useMemo(() => {
     if (shiplog.imageUrl) return false
@@ -151,13 +179,17 @@ export function ShiplogCard({
 
   const authorProfileUrl = shiplog.author.portfolioSlug ? `/${shiplog.author.portfolioSlug}` : null
   const projectLink = shiplog.project?.deployUrl ?? shiplog.project?.repositoryUrl ?? null
+  const projectBadgeLabel = useMemo(
+    () => (shiplog.project?.name ? formatProjectBadgeLabel(shiplog.project.name) : null),
+    [shiplog.project?.name]
+  )
 
   const shouldShowFollow = showFollowButton && !shiplog.isAuthorSelf && shiplog.author.id !== null
 
   return (
     <Card
       className={cn(
-        "group w-full rounded-lg border border-border/70 bg-background",
+        "group w-full max-w-full overflow-hidden rounded-lg border border-border/70 bg-background",
         cardPaddingClass,
         isCompact && !isDashboardVariant && "sm:p-4",
         isDashboardVariant && "rounded-2xl border-border bg-background",
@@ -166,7 +198,7 @@ export function ShiplogCard({
     >
       <div
         className={cn(
-          "flex items-start",
+          "flex w-full items-start",
           isDashboardVariant ? "gap-3" : "gap-3 sm:gap-4"
         )}
       >
@@ -205,12 +237,12 @@ export function ShiplogCard({
 
         <div
           className={cn(
-            "flex-1 space-y-3",
+            "flex-1 min-w-0 space-y-3",
             (isCompact || isDashboardVariant) && "space-y-2.5"
           )}
         >
           <div className="flex items-start justify-between gap-2">
-            <div className="flex flex-1 flex-wrap items-center gap-x-2 gap-y-1 text-[13px] sm:text-sm">
+            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1 text-[13px] sm:text-sm">
               {authorProfileUrl ? (
                 <Link
                   href={authorProfileUrl}
@@ -253,7 +285,7 @@ export function ShiplogCard({
           >
             <p
               className={cn(
-                "whitespace-pre-wrap text-[15px] leading-7 text-foreground",
+                "whitespace-pre-wrap break-words text-[15px] leading-7 text-foreground [overflow-wrap:anywhere] [word-break:break-word]",
                 (isCompact || isDashboardVariant) && "leading-6"
               )}
             >
@@ -269,34 +301,35 @@ export function ShiplogCard({
               </button>
             ) : null}
 
-            {shiplog.project ? (
-              projectLink ? (
-                <Badge
-                  asChild
-                  variant="outline"
-                  className="inline-flex items-center gap-2 rounded-full border-border/50 bg-muted/30 px-3 py-1 text-xs font-medium text-muted-foreground"
-                >
-                  <a href={projectLink} target="_blank" rel="noopener noreferrer">
-                    View project: <span className="text-foreground">{shiplog.project.name}</span>
+            {shiplog.project && projectBadgeLabel ? (
+              <Badge
+                variant="outline"
+                className="inline-flex max-w-full items-center gap-2 overflow-hidden rounded-full border-border/50 bg-muted/30 px-3 py-1 text-xs font-medium text-muted-foreground [overflow-wrap:anywhere] [word-break:break-word]"
+                title={shiplog.project.name}
+              >
+                <span className="shrink-0 text-muted-foreground/80">View project:</span>
+                {projectLink ? (
+                  <a
+                    href={projectLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="min-w-0 flex-1 truncate text-foreground hover:underline"
+                  >
+                    {projectBadgeLabel}
                   </a>
-                </Badge>
-              ) : (
-                <Badge
-                  variant="outline"
-                  className="inline-flex items-center gap-2 rounded-full border-border/50 bg-muted/30 px-3 py-1 text-xs font-medium text-muted-foreground"
-                >
-                  View project: <span className="text-foreground">{shiplog.project.name}</span>
-                </Badge>
-              )
+                ) : (
+                  <span className="min-w-0 flex-1 truncate text-foreground">{projectBadgeLabel}</span>
+                )}
+              </Badge>
             ) : null}
 
             {shiplog.imageUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <div className="overflow-hidden rounded-2xl border border-border/40 bg-muted/30">
+              <div className="flex w-full justify-center overflow-hidden rounded-2xl border border-border/40 bg-muted/30">
                 <img
                   src={shiplog.imageUrl}
                   alt="Shiplog attachment"
-                  className="h-full max-h-[420px] w-full object-cover transition duration-200 group-hover:scale-[1.01]"
+                  className="h-full max-h-[420px] w-full object-contain bg-background p-2"
                 />
               </div>
             ) : null}
