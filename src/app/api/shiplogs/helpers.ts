@@ -52,7 +52,7 @@ type ShiplogWithRelations = Shiplog & {
       })
     | null
   project:
-    | (PortfolioRepository & {
+    | (Pick<PortfolioRepository, "id" | "repositoryId" | "deployedUrl" | "customName"> & {
         repository: Pick<Repository, "name" | "githubUrl" | "htmlUrl"> | null
       })
     | null
