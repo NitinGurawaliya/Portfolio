@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useState, type CSSProperties } from "react"
+import Link from "next/link"
+import { useEffect, useMemo, useState, type CSSProperties } from "react"
 import { motion } from "framer-motion"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -21,6 +22,7 @@ import { ProjectIcon } from "@/components/ui/project-icon"
 import { GitHubActivity } from "@/components/GitHubActivity"
 import { trackProjectClick } from "@/lib/analytics-utils"
 import { PublicShiplogList } from "@/components/shiplog/PublicShiplogList"
+import { getProjectSlugMap } from "@/lib/project-slug"
 
 interface ThemeConfig {
   name: string
@@ -42,6 +44,7 @@ interface PortfolioData {
   jobTitle?: string
   bio: string
   profilePic: string
+  customUsername?: string | null
   skills: any[]
   socials: any[]
   repositories: any[]
@@ -186,6 +189,14 @@ export default function LayoutModern({ theme, portfolio }: LayoutModernProps) {
   const experiences = portfolio.experiences || []
   const hasExperience = experiences.length > 0
   const hasGithub = Boolean(portfolio.user?.githubUsername)
+  const projectSlugMap = useMemo(
+    () => getProjectSlugMap(portfolio.repositories || []),
+    [portfolio.repositories]
+  )
+  const portfolioSlug =
+    portfolio.customUsername ||
+    portfolio.user?.githubUsername ||
+    ""
 
   return (
     <div className="min-h-screen relative" style={{ color: theme.colors.text }}>
@@ -391,106 +402,122 @@ export default function LayoutModern({ theme, portfolio }: LayoutModernProps) {
                     </p>
                   </div>
                   <div className="grid grid-cols-1 gap-3 xs:gap-4 sm:gap-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 auto-rows-fr">
-                    {visibleRepos.map((repo: any, index: number) => (
-                      <motion.article
-                        key={repo.id}
-                        className="group flex h-full w-full min-w-0 flex-col rounded-xl border border-neutral-200 bg-white/90 p-3 xs:p-4 shadow-sm transition hover:-translate-y-1 hover:shadow-md cursor-pointer"
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.4, delay: index * 0.05 }}
-                        viewport={{ once: true }}
-                        onClick={() => {
-                          trackProjectClick(portfolio.id, repo.id, repo.customName || repo.repository.name)
-                          if (repo.deployedUrl) {
-                            window.open(repo.deployedUrl, "_blank")
-                          } else {
-                            const githubUrl = repo.repository.githubUrl || repo.repository.htmlUrl
-                            window.open(githubUrl, "_blank")
-                          }
-                        }}
-                        role="button"
-                        tabIndex={0}
-                        aria-label={`View ${repo.repository.name} project`}
-                      >
-                        <div className="flex items-start justify-between gap-2 xs:gap-3 mb-3 xs:mb-4">
-                          <div className="flex-1 min-w-0 space-y-1.5 xs:space-y-2">
-                            <ProjectIcon
-                              favicon={repo.repository.favicon}
-                              logo={repo.repository.logo}
-                              title={repo.customName || repo.repository.name}
-                              size="md"
-                            />
-                            <h3 className="text-sm xs:text-base sm:text-lg font-semibold text-neutral-900 break-words line-clamp-2">
-                              {repo.customName || repo.repository.name}
-                            </h3>
-                          </div>
-                          <motion.button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              trackProjectClick(portfolio.id, repo.id, repo.customName || repo.repository.name)
-                              const githubUrl = repo.repository.githubUrl || repo.repository.htmlUrl
-                              window.open(githubUrl, "_blank")
-                            }}
-                            className="flex h-8 xs:h-9 w-8 xs:w-9 flex-shrink-0 items-center justify-center rounded-full border border-neutral-300 text-neutral-600 hover:bg-neutral-900 hover:text-white transition"
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            aria-label={`View ${repo.repository.name} on GitHub`}
+                      {visibleRepos.map((repo: any, index: number) => {
+                        const projectSlug = projectSlugMap[repo.id]
+                        const projectHref =
+                          projectSlug && portfolioSlug
+                            ? `/${portfolioSlug}/${projectSlug}`
+                            : undefined
+
+                        const cardContent = (
+                          <motion.article
+                            className="group flex h-full w-full min-w-0 flex-col rounded-xl border border-neutral-200 bg-white/90 p-3 xs:p-4 shadow-sm transition hover:-translate-y-1 hover:shadow-md cursor-pointer"
+                            initial={{ opacity: 0, y: 20 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.4, delay: index * 0.05 }}
+                            viewport={{ once: true }}
                           >
-                            <SiGithub className="h-3.5 xs:h-4 w-3.5 xs:w-4" />
-                          </motion.button>
-                        </div>
-
-                        {repo.repository.logo &&
-                          (/^https?:/i.test(repo.repository.logo) || /^data:image\//i.test(repo.repository.logo)) && (
-                            <div className="mb-3 xs:mb-4 overflow-hidden rounded-xl border border-neutral-200">
-                              <img
-                                src={repo.repository.logo || "/placeholder.svg"}
-                                alt={(repo.customName || repo.repository.name) + " preview"}
-                                className={`w-full aspect-[16/9] ${/^data:image\//i.test(repo.repository.logo) ? "object-cover object-top" : "object-cover"}`}
-                                loading="lazy"
-                              />
+                            <div className="flex items-start justify-between gap-2 xs:gap-3 mb-3 xs:mb-4">
+                              <div className="flex-1 min-w-0 space-y-1.5 xs:space-y-2">
+                                <ProjectIcon
+                                  favicon={repo.repository.favicon}
+                                  logo={repo.repository.logo}
+                                  title={repo.customName || repo.repository.name}
+                                  size="md"
+                                />
+                                <h3 className="text-sm xs:text-base sm:text-lg font-semibold text-neutral-900 break-words line-clamp-2">
+                                  {repo.customName || repo.repository.name}
+                                </h3>
+                              </div>
+                              <motion.button
+                                onClick={(e) => {
+                                  e.preventDefault()
+                                  e.stopPropagation()
+                                  trackProjectClick(portfolio.id, repo.id, repo.customName || repo.repository.name)
+                                  const githubUrl = repo.repository.githubUrl || repo.repository.htmlUrl
+                                  window.open(githubUrl, "_blank")
+                                }}
+                                className="flex h-8 xs:h-9 w-8 xs:w-9 flex-shrink-0 items-center justify-center rounded-full border border-neutral-300 text-neutral-600 hover:bg-neutral-900 hover:text-white transition"
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                aria-label={`View ${repo.repository.name} on GitHub`}
+                              >
+                                <SiGithub className="h-3.5 xs:h-4 w-3.5 xs:w-4" />
+                              </motion.button>
                             </div>
-                          )}
 
-                        <div
-                          className="text-xs xs:text-sm text-neutral-600 leading-relaxed line-clamp-3 flex-1"
-                          dangerouslySetInnerHTML={{
-                            __html:
-                              repo.customDescription ||
-                              repo.repository.description ||
-                              "No description available for this project.",
-                          }}
-                        />
+                            {repo.repository.logo &&
+                              (/^https?:/i.test(repo.repository.logo) || /^data:image\//i.test(repo.repository.logo)) && (
+                                <div className="mb-3 xs:mb-4 overflow-hidden rounded-xl border border-neutral-200">
+                                  <img
+                                    src={repo.repository.logo || "/placeholder.svg"}
+                                    alt={(repo.customName || repo.repository.name) + " preview"}
+                                    className={`w-full aspect-[16/9] ${/^data:image\//i.test(repo.repository.logo) ? "object-cover object-top" : "object-cover"}`}
+                                    loading="lazy"
+                                  />
+                                </div>
+                              )}
 
-                        <div className="mt-3 xs:mt-4 flex flex-wrap gap-1.5 xs:gap-2">
-                          {(() => {
-                            let languages: string[] = []
-                            if (repo.repository.languages) {
-                              try {
-                                languages = JSON.parse(repo.repository.languages)
-                              } catch (e) {
-                                if (repo.repository.language) {
+                            <div
+                              className="text-xs xs:text-sm text-neutral-600 leading-relaxed line-clamp-3 flex-1"
+                              dangerouslySetInnerHTML={{
+                                __html:
+                                  repo.customDescription ||
+                                  repo.repository.description ||
+                                  "No description available for this project.",
+                              }}
+                            />
+
+                            <div className="mt-3 xs:mt-4 flex flex-wrap gap-1.5 xs:gap-2">
+                              {(() => {
+                                let languages: string[] = []
+                                if (repo.repository.languages) {
+                                  try {
+                                    languages = JSON.parse(repo.repository.languages)
+                                  } catch (e) {
+                                    if (repo.repository.language) {
+                                      languages = [repo.repository.language]
+                                    }
+                                  }
+                                } else if (repo.repository.language) {
                                   languages = [repo.repository.language]
                                 }
-                              }
-                            } else if (repo.repository.language) {
-                              languages = [repo.repository.language]
-                            }
-                            return languages
-                              .filter((lang) => lang.toLowerCase() !== "web")
-                              .slice(0, 3)
-                              .map((lang, idx) => (
-                                <span
-                                  key={idx}
-                                  className="rounded-full border border-neutral-200 bg-neutral-100 px-2.5 xs:px-3 py-0.5 xs:py-1 text-xs font-medium uppercase tracking-widest text-neutral-600"
-                                >
-                                  {lang}
-                                </span>
-                              ))
-                          })()}
-                        </div>
-                      </motion.article>
-                    ))}
+                                return languages
+                                  .filter((lang) => lang.toLowerCase() !== "web")
+                                  .slice(0, 3)
+                                  .map((lang, idx) => (
+                                    <span
+                                      key={idx}
+                                      className="rounded-full border border-neutral-200 bg-neutral-100 px-2.5 xs:px-3 py-0.5 xs:py-1 text-xs font-medium uppercase tracking-widest text-neutral-600"
+                                    >
+                                      {lang}
+                                    </span>
+                                  ))
+                              })()}
+                            </div>
+                          </motion.article>
+                        )
+
+                        if (projectHref) {
+                          return (
+                            <Link
+                              key={repo.id}
+                              href={projectHref}
+                              className="group flex h-full w-full"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              {cardContent}
+                            </Link>
+                          )
+                        }
+
+                        return (
+                          <div key={repo.id} className="group flex h-full w-full">
+                            {cardContent}
+                          </div>
+                        )
+                      })}
                   </div>
                 </div>
               )}

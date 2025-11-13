@@ -1,3 +1,4 @@
+import Link from "next/link"
 import { motion } from "framer-motion"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ProjectIcon } from "@/components/ui/project-icon"
@@ -6,9 +7,10 @@ import { SiGithub, SiX, SiLinkedin, SiInstagram, SiFacebook, SiYoutube, SiGmail,
 import { Globe } from "lucide-react"
 import { SkillIcon } from "@/lib/skill-icons"
 import { PublicShiplogList } from "@/components/shiplog/PublicShiplogList"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { GitHubActivity } from "@/components/GitHubActivity"
 import { trackProjectClick } from "@/lib/analytics-utils"
+import { getProjectSlugMap } from "@/lib/project-slug"
 
 interface ThemeConfig {
   name: string
@@ -29,6 +31,7 @@ interface PortfolioData {
   jobTitle?: string
   bio: string
   profilePic: string
+  customUsername?: string | null
   skills: any[]
   socials: any[]
   repositories: any[]
@@ -117,6 +120,15 @@ export default function LayoutDark({ theme, portfolio }: LayoutDarkProps) {
   const [displayedBio, setDisplayedBio] = useState('')
   const [bioIndex, setBioIndex] = useState(0)
   const [isTypingComplete, setIsTypingComplete] = useState(false)
+  const projectSlugMap = useMemo(
+    () => getProjectSlugMap(portfolio.repositories || []),
+    [portfolio.repositories]
+  )
+  const portfolioSlug =
+    portfolio.customUsername ||
+    portfolio.user?.githubUsername ||
+    portfolio.displayName ||
+    ""
 
   // Typing animation effect for bio
   useEffect(() => {
@@ -436,128 +448,123 @@ export default function LayoutDark({ theme, portfolio }: LayoutDarkProps) {
                     Projects
                   </motion.h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 auto-rows-fr">
-              {portfolio.repositories
-                .filter(repo => repo.isVisible)
-                .map((repo, index) => (
-                <motion.article
-                  key={repo.id}
-                  className="group relative flex h-full w-full cursor-pointer"
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                  viewport={{ once: true }}
-                  whileHover={{ scale: 1.02, y: -4 }}
-                  onClick={() => {
-                    // Track project click using PortfolioRepository ID
-                    // repo.id is now the PortfolioRepository ID
-                    const portfolioRepoId = repo.id
-                    console.log(`🔍 DEBUG: Dark theme - Project click data:`, {
-                      portfolioId: portfolio.id,
-                      projectId: portfolioRepoId,
-                      projectName: repo.customName || repo.repository.name,
-                      projectIdType: typeof portfolioRepoId,
-                      portfolioIdType: typeof portfolio.id,
-                      repoId: repo.id,
-                      repoRepositoryId: repo.repository.id
-                    })
-                    trackProjectClick(portfolio.id, portfolioRepoId, repo.customName || repo.repository.name)
-                    
-                    if (repo.deployedUrl) {
-                      window.open(repo.deployedUrl, '_blank')
-                    } else {
-                      const githubUrl = repo.repository.githubUrl || repo.repository.htmlUrl
-                      window.open(githubUrl, '_blank')
-                    }
-                  }}
-                  role="button"
-                  tabIndex={0}
-                  aria-label={`View ${repo.repository.name} project`}
-                >
-                    <div className="relative bg-transparent border border-orange-500/30 rounded-lg p-4 sm:p-6 hover:border-orange-500/50 transition-all duration-300 h-full min-h-[300px] flex flex-col w-full">
-                    {/* OG image preview for public card only */}
-                    {repo.repository.logo && (/^https?:/i.test(repo.repository.logo) || /^data:image\//i.test(repo.repository.logo)) && (
-                      <div className="mb-4 -mt-1 overflow-hidden rounded-md">
-                        <img
-                          src={repo.repository.logo}
-                          alt={(repo.customName || repo.repository.name) + ' preview'}
-                          className={`w-full aspect-[16/9] ${/^data:image\//i.test(repo.repository.logo) ? 'object-cover object-top' : 'object-cover'}`}
-                          loading="lazy"
-                        />
-                      </div>
-                    )}
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex-1 mr-4 min-w-0">
-                        {/* Project Icon at the top */}
-                        <div className="mb-3">
-                          <ProjectIcon
-                            favicon={repo.repository.favicon}
-                            logo={repo.repository.logo}
-                            title={repo.customName || repo.repository.name}
-                            size="md"
-                          />
-                        </div>
-                        
-                        {/* Project Name */}
-                        <h3 className="text-lg sm:text-xl font-bold text-white group-hover:text-orange-300 transition-colors duration-300 break-words mb-2">
-                          {repo.customName || repo.repository.name}
-                        </h3>
-                        <div 
-                          className="text-gray-400 text-sm sm:text-base leading-relaxed mb-3 break-words prose prose-sm max-w-none prose-invert"
-                          dangerouslySetInnerHTML={{
-                            __html: repo.customDescription || repo.repository.description || "No description available for this project."
-                          }}
-                        />
-                        
-                      </div>
-                      <motion.button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          // Track project click (GitHub button) using PortfolioRepository ID
-                          const portfolioRepoId = repo.id
-                          trackProjectClick(portfolio.id, portfolioRepoId, repo.customName || repo.repository.name)
-                          const githubUrl = repo.repository.githubUrl || repo.repository.htmlUrl
-                          window.open(githubUrl, '_blank')
-                        }}
-                        className="flex-shrink-0 p-2 rounded-lg bg-transparent border border-orange-500/40 text-orange-300 hover:bg-orange-500/10 hover:border-orange-500/60 hover:text-white transition-all duration-300"
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                        aria-label={`View ${repo.repository.name} on GitHub`}
-                      >
-                        <SiGithub className="h-4 w-4" />
-                      </motion.button>
-                    </div>
-                    
-                    {/* All Languages badges */}
-                    <div className="flex items-center flex-wrap gap-2 mb-3 mt-auto">
-                      {(() => {
-                        // Parse languages from JSON string
-                        let languages: string[] = []
-                        if (repo.repository.languages) {
-                          try {
-                            languages = JSON.parse(repo.repository.languages)
-                          } catch (e) {
-                            // Fallback to single language
-                            if (repo.repository.language) {
-                              languages = [repo.repository.language]
-                            }
-                          }
-                        } else if (repo.repository.language) {
-                          languages = [repo.repository.language]
-                        }
-                        
-                        return languages
-                          .filter(lang => lang.toLowerCase() !== 'web') // Filter out "Web" tag
-                          .map((lang, idx) => (
-                            <span key={idx} className="text-orange-300 text-xs sm:text-sm font-medium px-2 py-1 bg-orange-500/10 rounded border border-orange-500/30">
-                              {lang}
-                            </span>
-                          ))
-                      })()}
-                    </div>
+                {portfolio.repositories
+                  .filter(repo => repo.isVisible)
+                  .map((repo, index) => {
+                    const projectSlug = projectSlugMap[repo.id]
+                    const projectHref =
+                      projectSlug && portfolioSlug
+                        ? `/${portfolioSlug}/${projectSlug}`
+                        : undefined
 
-                  </div>
-                </motion.article>
-              ))}
+                    const cardContent = (
+                      <motion.article
+                        className="group relative flex h-full w-full cursor-pointer"
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5, delay: index * 0.1 }}
+                        viewport={{ once: true }}
+                        whileHover={{ scale: 1.02, y: -4 }}
+                      >
+                        <div className="relative bg-transparent border border-orange-500/30 rounded-lg p-4 sm:p-6 hover:border-orange-500/50 transition-all duration-300 h-full min-h-[300px] flex flex-col w-full">
+                          {repo.repository.logo && (/^https?:/i.test(repo.repository.logo) || /^data:image\//i.test(repo.repository.logo)) && (
+                            <div className="mb-4 -mt-1 overflow-hidden rounded-md">
+                              <img
+                                src={repo.repository.logo}
+                                alt={(repo.customName || repo.repository.name) + ' preview'}
+                                className={`w-full aspect-[16/9] ${/^data:image\//i.test(repo.repository.logo) ? 'object-cover object-top' : 'object-cover'}`}
+                                loading="lazy"
+                              />
+                            </div>
+                          )}
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex-1 mr-4 min-w-0">
+                              <div className="mb-3">
+                                <ProjectIcon
+                                  favicon={repo.repository.favicon}
+                                  logo={repo.repository.logo}
+                                  title={repo.customName || repo.repository.name}
+                                  size="md"
+                                />
+                              </div>
+
+                              <h3 className="text-lg sm:text-xl font-bold text-white group-hover:text-orange-300 transition-colors duration-300 break-words mb-2">
+                                {repo.customName || repo.repository.name}
+                              </h3>
+                              <div
+                                className="text-gray-400 text-sm sm:text-base leading-relaxed mb-3 break-words prose prose-sm max-w-none prose-invert"
+                                dangerouslySetInnerHTML={{
+                                  __html: repo.customDescription || repo.repository.description || "No description available for this project."
+                                }}
+                              />
+
+                            </div>
+                            <motion.button
+                              onClick={(e) => {
+                                e.preventDefault()
+                                e.stopPropagation()
+                                const portfolioRepoId = repo.id
+                                trackProjectClick(portfolio.id, portfolioRepoId, repo.customName || repo.repository.name)
+                                const githubUrl = repo.repository.githubUrl || repo.repository.htmlUrl
+                                window.open(githubUrl, '_blank')
+                              }}
+                              className="flex-shrink-0 p-2 rounded-lg bg-transparent border border-orange-500/40 text-orange-300 hover:bg-orange-500/10 hover:border-orange-500/60 hover:text-white transition-all duration-300"
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.9 }}
+                              aria-label={`View ${repo.repository.name} on GitHub`}
+                            >
+                              <SiGithub className="h-4 w-4" />
+                            </motion.button>
+                          </div>
+
+                          <div className="flex items-center flex-wrap gap-2 mb-3 mt-auto">
+                            {(() => {
+                              let languages: string[] = []
+                              if (repo.repository.languages) {
+                                try {
+                                  languages = JSON.parse(repo.repository.languages)
+                                } catch (e) {
+                                  if (repo.repository.language) {
+                                    languages = [repo.repository.language]
+                                  }
+                                }
+                              } else if (repo.repository.language) {
+                                languages = [repo.repository.language]
+                              }
+
+                              return languages
+                                .filter(lang => lang.toLowerCase() !== 'web')
+                                .map((lang, idx) => (
+                                  <span key={idx} className="text-orange-300 text-xs sm:text-sm font-medium px-2 py-1 bg-orange-500/10 rounded border border-orange-500/30">
+                                    {lang}
+                                  </span>
+                                ))
+                            })()}
+                          </div>
+                        </div>
+                      </motion.article>
+                    )
+
+                    if (projectHref) {
+                      return (
+                        <Link
+                          key={repo.id}
+                          href={projectHref}
+                          className="group relative flex h-full w-full"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          {cardContent}
+                        </Link>
+                      )
+                    }
+
+                    return (
+                      <div key={repo.id} className="group relative flex h-full w-full">
+                        {cardContent}
+                      </div>
+                    )
+                  })}
                   </div>
                 </motion.section>
               )}
