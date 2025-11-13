@@ -127,7 +127,7 @@ export default function LayoutDark({ theme, portfolio }: LayoutDarkProps) {
   const portfolioSlug =
     portfolio.customUsername ||
     portfolio.user?.githubUsername ||
-    portfolio.user?.name ||
+    portfolio.displayName ||
     ""
 
   // Typing animation effect for bio
