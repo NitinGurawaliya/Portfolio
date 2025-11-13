@@ -42,16 +42,17 @@ function parseDifficulty(
   )
 }
 
-export default function OpenSourcePage({
+export default async function OpenSourcePage({
   searchParams,
 }: {
-  searchParams: Record<string, string | string[] | undefined>
+  searchParams: Promise<Record<string, string | string[] | undefined>>
 }) {
-  const stacks = toArray(searchParams.stack).map((entry) => entry.toLowerCase())
-  const sort = parseSort(searchParams.sort)
-  const difficulty = parseDifficulty(searchParams.difficulty)
-  const search =
-    typeof searchParams.search === "string" ? searchParams.search : undefined
+  const params = await searchParams
+
+  const stacks = toArray(params.stack).map((entry) => entry.toLowerCase())
+  const sort = parseSort(params.sort)
+  const difficulty = parseDifficulty(params.difficulty)
+  const search = typeof params.search === "string" ? params.search : undefined
 
   const initialRepos = queryOpenSourceRepos({
     stacks,

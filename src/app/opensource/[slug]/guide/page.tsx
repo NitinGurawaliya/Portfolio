@@ -35,8 +35,11 @@ interface GuidePageProps {
 
 export async function generateMetadata({
   params,
-}: GuidePageProps): Promise<Metadata> {
-  const repo = getRepoBySlug(params.slug)
+}: {
+  params: Promise<{ slug: string }>
+}): Promise<Metadata> {
+  const resolvedParams = await params
+  const repo = getRepoBySlug(resolvedParams.slug)
   if (!repo) {
     return {
       title: "Open Source Guide",
@@ -52,8 +55,13 @@ export async function generateMetadata({
   }
 }
 
-export default function GuidePage({ params }: GuidePageProps) {
-  const repo = getRepoBySlug(params.slug)
+export default async function GuidePage({
+  params,
+}: {
+  params: Promise<{ slug: string }>
+}) {
+  const resolvedParams = await params
+  const repo = getRepoBySlug(resolvedParams.slug)
 
   if (!repo) {
     notFound()
@@ -67,7 +75,7 @@ export default function GuidePage({ params }: GuidePageProps) {
         <Button variant="ghost" className="gap-2 px-0" asChild>
           <Link href="/open-source">
             <ArrowLeft className="size-4" />
-            सभी रेपो पर वापस जाएँ
+            Back to all repositories
           </Link>
         </Button>
       </div>
@@ -211,7 +219,7 @@ export default function GuidePage({ params }: GuidePageProps) {
           </section>
         </>
       ) : (
-        <ComingSoonTimeline message="हम इस रेपो के लिए विस्तृत योगदान मार्गदर्शिका तैयार कर रहे हैं। अपडेट्स जल्द ही जोड़ दिए जाएंगे।" />
+        <ComingSoonTimeline message="We're preparing a detailed contribution guide for this repository. Updates will be available soon." />
       )}
     </div>
   )

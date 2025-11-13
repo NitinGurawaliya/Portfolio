@@ -2,14 +2,14 @@ import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 
 /**
- * Tailwind CSS classes को merge करता है
+ * Merges Tailwind CSS classes
  */
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
 /**
- * Toast configuration - Success toast के लिए default style
+ * Toast configuration - default styling for success notifications
  */
 export const successToastConfig = {
   duration: 3000,
@@ -28,7 +28,7 @@ export const successToastConfig = {
 }
 
 /**
- * Toast configuration - Error toast के लिए default style
+ * Toast configuration - default styling for error notifications
  */
 export const errorToastConfig = {
   duration: 3000,

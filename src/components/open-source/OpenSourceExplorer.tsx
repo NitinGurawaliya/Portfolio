@@ -432,7 +432,7 @@ export function OpenSourceExplorer({
           <div className="col-span-full flex flex-col items-center gap-4 rounded-2xl border bg-card/60 p-10 text-center">
             <Sparkles className="size-10 text-primary" />
             <div className="space-y-2">
-              <h2 className="text-xl font-semibold">कुछ गड़बड़ हो गई</h2>
+              <h2 className="text-xl font-semibold">Something went wrong</h2>
               <p className="text-sm text-muted-foreground">{error}</p>
             </div>
             <Button onClick={handleResetFilters}>Retry</Button>

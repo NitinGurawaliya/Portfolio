@@ -6,7 +6,7 @@ import { AddSkills } from "@/components/onboarding/steps/AddSkills";
 import { SharePortfolio } from "@/components/onboarding/steps/SharePortofolio";
 import { Github } from "lucide-react";
 
-// GithubAuthStep definition, props typing ठीक करो
+// TODO: tidy up GithubAuthStep definition and prop typing
 type GithubAuthStepProps = {
   onSuccess: () => void;
   onBack: () => void;

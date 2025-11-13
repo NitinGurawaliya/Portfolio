@@ -9,9 +9,9 @@ export default function OnboardingPage() {
   const router = useRouter();
   const [open, setOpen] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  // कोई भी redirectOnAuthFailure Option pass मत करो (default: false)
+  // Do not pass redirectOnAuthFailure (default: false)
   const { user, session, loading } = useSession();
-  // flag: क्या url में onboarding-auth-success है?
+  // Flag indicating whether the URL includes the onboarding callback param
   const [isOnboardingCallback, setIsOnboardingCallback] = useState<boolean>(false);
 
   useEffect(() => {
@@ -24,7 +24,7 @@ export default function OnboardingPage() {
 
   useEffect(() => {
     console.log("[Onboarding] useEffect:", { loading, user, isOnboardingCallback });
-    // अगर user पुराना है और ये onboarding callback नहीं है, तबही डैशबोर्ड भेजो
+    // Redirect to dashboard only if this is an existing user (not the onboarding callback)
     if (!loading && user && user.id && user.repositories && user.repositories.length > 0 && !isOnboardingCallback) {
       console.log("[Onboarding] Redirecting to dashboard because user is old and not from onboarding callback");
       router.replace("/dashboard");
@@ -33,7 +33,7 @@ export default function OnboardingPage() {
     }
   }, [user, loading, router, isOnboardingCallback]);
 
-  // अब अगर user null भी हो तो onboarding modal चलता रहेगा
+  // Keep onboarding modal running even if user data is temporarily null
   const handleComplete = async (data: any) => {
     console.log("[Onboarding] handleComplete payload:", { data, user });
     if (!user || !user.id) {
@@ -42,7 +42,7 @@ export default function OnboardingPage() {
         description: "Please login with Github before continuing onboarding.",
         variant: "destructive",
       });
-      // onboarding modal में Auth Step रहेगा — redirect की जरूरत नहीं
+      // Keep the onboarding modal auth step active—no redirect needed
       return;
     }
     setSubmitting(true);
@@ -99,7 +99,7 @@ export default function OnboardingPage() {
       <OnboardingModal open={open} onComplete={handleComplete} />
       {submitting && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-zinc-900 rounded-xl p-8 text-xl shadow-lg">पोर्टफोलियो सेव किया जा रहा है...</div>
+          <div className="bg-white dark:bg-zinc-900 rounded-xl p-8 text-xl shadow-lg">Saving your portfolio...</div>
         </div>
       )}
     </div>

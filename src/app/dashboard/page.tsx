@@ -50,7 +50,7 @@ export default function DashboardPage() {
   const [summaryProjects, setSummaryProjects] = useState<SummaryProject[]>([])
   const [summarySinceLabel, setSummarySinceLabel] = useState<string | null>(null)
   
-  // Handlers hook - portfolio data को original data के रूप में pass करें
+  // Handler hook - pass portfolio data as the original baseline
   const handlers = usePortfolioHandlers(
     portfolio.setPortfolioData,
     portfolio.setSelectedRepos,
@@ -93,9 +93,9 @@ export default function DashboardPage() {
     }
   }, [user]) // Only depend on user, not portfolio object
 
-  // DashboardPage में useEffect डालो:
+  // DashboardPage effect to handle onboarding redirect cleanup
   useEffect(() => {
-    // onboarding से redirect आया है तो resetAfterPublish
+    // If the user just completed onboarding, reset local publish state
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
       if (params.get("just-onboarded")) {

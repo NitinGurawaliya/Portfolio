@@ -1,7 +1,7 @@
 import { Repository, Skill, Social } from "@/interface"
 
 /**
- * Data को normalize करता है - null/undefined values remove करता है
+ * Normalizes data by removing null/undefined values
  */
 export const normalizeData = (data: any) => {
   console.log("🔍 DEBUG: normalizeData input:", data)
@@ -24,7 +24,7 @@ export const normalizeData = (data: any) => {
 }
 
 /**
- * Imported projects को normalize करता है - languages field ensure करता है
+ * Normalizes imported projects by ensuring the languages field exists
  */
 export const normalizeImportedProjects = (projects: Repository[]) => {
   return projects.map(project => ({
@@ -34,7 +34,7 @@ export const normalizeImportedProjects = (projects: Repository[]) => {
 }
 
 /**
- * Success notification के लिए sound play करता है
+ * Plays a success notification sound
  */
 export const playNotificationSound = () => {
   try {
@@ -65,7 +65,7 @@ export const playNotificationSound = () => {
 }
 
 /**
- * Repository languages को parse करता है
+ * Parses repository languages
  */
 export const parseRepositoryLanguages = (repo: any): string[] => {
   let languages: string[] = []
@@ -82,7 +82,7 @@ export const parseRepositoryLanguages = (repo: any): string[] => {
 }
 
 /**
- * Portfolio repositories को map करता है database format से
+ * Maps portfolio repositories from the database format
  */
 export const mapPortfolioRepositories = (portfolioRepos: any[]) => {
   const urls: Record<number, string> = {}
@@ -111,7 +111,7 @@ export const mapPortfolioRepositories = (portfolioRepos: any[]) => {
 }
 
 /**
- * Imported projects को format करता है database data से
+ * Formats imported projects from database data
  */
 export const formatImportedProjects = (portfolioRepos: any[]): Repository[] => {
   return portfolioRepos
@@ -147,7 +147,7 @@ export const formatImportedProjects = (portfolioRepos: any[]): Repository[] => {
 }
 
 /**
- * Portfolio data को build करता है live preview के लिए
+ * Builds portfolio data for the live preview
  */
 export const buildLivePortfolio = (
   user: any,
