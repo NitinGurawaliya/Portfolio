@@ -67,5 +67,32 @@ export const matchProjectBySlug = <T extends ProjectSlugSource>(
   slug: string
 ) => {
   const slugIndex = createProjectSlugIndex(projects)
-  return slugIndex.get(slug)
+  if (!slug) return undefined
+
+  // direct match
+  const direct = slugIndex.get(slug)
+  if (direct) return direct
+
+  const normalizedInput = slugifyProjectName(slug)
+  if (normalizedInput) {
+    const normalizedMatch = slugIndex.get(normalizedInput)
+    if (normalizedMatch) return normalizedMatch
+  }
+
+  // handle slug-with-id pattern (e.g. slug-123)
+  const matchWithId = slug.match(/^(.*?)-(\d+)$/)
+  if (matchWithId) {
+    const projectById = projects.find(
+      (project) => String(project.id) === matchWithId[2]
+    )
+    if (projectById) return projectById
+  }
+
+  // final fallback: compare generated base slugs
+  const fallback = projects.find((project) => {
+    const base = buildProjectSlug(project)
+    return base === slug || base === normalizedInput
+  })
+
+  return fallback
 }

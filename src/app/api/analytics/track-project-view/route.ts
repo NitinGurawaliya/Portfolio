@@ -3,21 +3,35 @@ import { prisma } from "@/lib/prisma"
 
 export async function POST(request: NextRequest) {
   try {
-    const { portfolioId, projectId } = await request.json()
-
-    if (!portfolioId || !projectId) {
+    let body: unknown
+    try {
+      body = await request.json()
+    } catch {
       return NextResponse.json(
-        { error: "portfolioId और projectId आवश्यक हैं" },
+        { error: "Invalid or empty request payload" },
         { status: 400 }
       )
     }
 
-    const numericPortfolioId = Number(portfolioId)
-    const numericProjectId = Number(projectId)
+    const payload =
+      typeof body === "object" && body !== null ? (body as Record<string, unknown>) : {}
+
+    const rawPortfolioId = payload.portfolioId as string | number | undefined
+    const rawProjectId = payload.projectId as string | number | undefined
+
+    if (!rawPortfolioId || !rawProjectId) {
+      return NextResponse.json(
+        { error: "portfolioId and projectId are required" },
+        { status: 400 }
+      )
+    }
+
+    const numericPortfolioId = Number(rawPortfolioId)
+    const numericProjectId = Number(rawProjectId)
 
     if (!Number.isFinite(numericPortfolioId) || !Number.isFinite(numericProjectId)) {
       return NextResponse.json(
-        { error: "अमान्य पहचानकर्ता" },
+        { error: "Invalid identifiers" },
         { status: 400 }
       )
     }
@@ -42,7 +56,7 @@ export async function POST(request: NextRequest) {
 
     if (!portfolioRepository) {
       return NextResponse.json(
-        { error: "प्रोजेक्ट उपलब्ध नहीं है या प्रकाशित नहीं है" },
+        { error: "Project is not available or not published" },
         { status: 404 }
       )
     }
@@ -100,7 +114,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("❌ Project view ट्रैक करते समय त्रुटि:", error)
     return NextResponse.json(
-      { error: "प्रोजेक्ट व्यू ट्रैक नहीं कर पाए" },
+      { error: "Unable to track project view" },
       { status: 500 }
     )
   }

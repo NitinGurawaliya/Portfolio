@@ -1,74 +1,32 @@
 'use client'
 
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
+  ArrowBigUp,
   ArrowLeft,
-  ArrowUpRight,
-  CheckCircle2,
+  CalendarDays,
+  MousePointerClick,
   ExternalLink,
+  Eye,
   Github,
   Globe,
   MapPin,
+  Sparkles,
+  AlertTriangle,
+  ArrowUpRight,
   Share2,
-  TrendingUp,
-  Users,
+  Download,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ProjectIcon } from "@/components/ui/project-icon"
-import { ProjectViewsChart } from "@/components/ProjectViewsChart"
-import { PublicShiplogList } from "@/components/shiplog/PublicShiplogList"
-import { PortfolioShiplog } from "@/interface"
+import { ShiplogCard } from "@/components/shiplog/ShiplogCard"
 import { cn } from "@/lib/utils"
-
-export interface PublicProjectPageData {
-  slug: string
-  project: {
-    id: number
-    title: string
-    description: string
-    deployedUrl: string | null
-    githubUrl: string | null
-    favicon: string | null
-    logo: string | null
-    technologies: string | null
-    languages: string[]
-    createdAt: string
-    updatedAt: string
-  }
-  portfolio: {
-    id: number
-    name: string
-    jobTitle: string | null
-    bio: string
-    profilePic: string | null
-    slug: string
-    githubUsername: string | null
-    websiteUrl: string | null
-    company: string | null
-    location: string | null
-  }
-  stats: {
-    totalViews: number
-    views7Days: number
-    views30Days: number
-    upvotes: number
-    stars: number
-    forks: number
-  }
-  shiplogs: Array<{
-    id: number
-    content: string
-    imageUrl: string | null
-    createdAt: string
-    project: {
-      id: number
-      name: string
-    } | null
-  }>
-}
+import { useToast } from "@/hooks/use-toast"
+import type { PublicProjectPageData } from "@/types/public-project"
+import type { Shiplog } from "@/types/shiplog"
 
 const formatNumber = (value: number) => {
   if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`
@@ -110,7 +68,7 @@ const sanitizeDescription = (value: string) => {
   return value.replace(/<script.*?>.*?<\/script>/gi, "")
 }
 
-const StatBadge = ({
+const MetricCard = ({
   icon: Icon,
   label,
   value,
@@ -121,55 +79,51 @@ const StatBadge = ({
   value: string
   helper?: string
 }) => (
-  <div className="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-sm backdrop-blur">
-    <div className="flex items-center gap-3">
-      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-white/10 to-transparent text-white/80">
-        <Icon className="h-4 w-4" />
-      </div>
+  <div className="flex flex-col rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_20px_50px_-32px_rgba(15,23,42,0.35)]">
+    <div className="flex items-center gap-4">
+      <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-slate-100 to-white text-slate-600">
+        <Icon className="h-5 w-5" />
+      </span>
       <div>
-        <p className="text-xs uppercase tracking-wide text-white/60">{label}</p>
-        <p className="text-xl font-semibold text-white">{value}</p>
-        {helper ? <p className="text-xs text-white/50">{helper}</p> : null}
+        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+          {label}
+        </p>
+        <p className="text-2xl font-semibold text-slate-900">{value}</p>
+        {helper ? (
+          <p className="text-xs font-medium text-slate-500">{helper}</p>
+        ) : null}
       </div>
     </div>
   </div>
 )
 
-const CTAButton = ({
-  icon: Icon,
-  label,
+const SocialIconLink = ({
   href,
-  variant = "default",
+  label,
+  icon: Icon,
 }: {
-  icon: React.ComponentType<{ className?: string }>
-  label: string
   href: string
-  variant?: "default" | "secondary"
+  label: string
+  icon: React.ComponentType<{ className?: string }>
 }) => (
-  <Button
-    asChild
-    size="lg"
-    variant={variant === "secondary" ? "outline" : "default"}
-    className={cn(
-      "h-11 w-full justify-between rounded-xl border border-white/10 px-4 text-base font-medium transition",
-      variant === "secondary"
-        ? "bg-transparent text-white hover:bg-white/10"
-        : "bg-white text-black hover:bg-white/90"
-    )}
+  <Link
+    href={href}
+    target="_blank"
+    rel="noopener noreferrer"
+    aria-label={label}
+    className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition hover:border-slate-300 hover:text-slate-900"
   >
-    <Link href={href} target="_blank" rel="noopener noreferrer">
-      <span className="flex items-center gap-3">
-        <Icon className="h-4 w-4" />
-        {label}
-      </span>
-      <ArrowUpRight className="h-4 w-4" />
-    </Link>
-  </Button>
+    <Icon className="h-4 w-4" />
+  </Link>
 )
 
-export default function ProjectPageClient({ data }: { data: PublicProjectPageData }) {
+export default function ProjectPageClient({
+  data,
+}: {
+  data: PublicProjectPageData
+}) {
   const pathname = usePathname()
-  const [copied, setCopied] = useState(false)
+  const { toast } = useToast()
 
   const techStack = useMemo(
     () => parseTechList(data.project.technologies, data.project.languages),
@@ -184,6 +138,40 @@ export default function ProjectPageClient({ data }: { data: PublicProjectPageDat
     () => formatDate(data.project.updatedAt),
     [data.project.updatedAt]
   )
+
+  const [copied, setCopied] = useState(false)
+  const [upvoteCount, setUpvoteCount] = useState(data.stats.upvotes)
+  const [hasUpvoted, setHasUpvoted] = useState(data.viewerHasUpvoted)
+  const [upvotePending, setUpvotePending] = useState(false)
+
+  const highlightStats = useMemo(() => {
+    const rankValue = (metric: number) => {
+      if (!metric || metric <= 0) return "#—"
+      const computed = Math.max(1, 100 - Math.min(metric, 99))
+      return `#${computed}`
+    }
+
+    return [
+      {
+        icon: MousePointerClick,
+        label: "Project click position",
+        value: rankValue(data.stats.views30Days),
+        helper: "Based on the last 30 days",
+      },
+      {
+        icon: AlertTriangle,
+        label: "Project upvote position",
+        value: rankValue(data.stats.upvotes),
+        helper: "Relative community ranking",
+      },
+      {
+        icon: Eye,
+        label: "Project visits",
+        value: formatNumber(data.stats.totalViews),
+        helper: "Lifetime traffic",
+      },
+    ]
+  }, [data.stats.totalViews, data.stats.upvotes, data.stats.views30Days])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -202,7 +190,7 @@ export default function ProjectPageClient({ data }: { data: PublicProjectPageDat
     return () => controller.abort()
   }, [data.portfolio.id, data.project.id])
 
-  const handleShare = async () => {
+  const handleShare = useCallback(async () => {
     const shareUrl =
       typeof window !== "undefined"
         ? window.location.origin + pathname
@@ -220,270 +208,430 @@ export default function ProjectPageClient({ data }: { data: PublicProjectPageDat
       }
     } catch (error) {
       console.error("Failed to share project", error)
+      toast({
+        title: "Share failed",
+        description: "Please try again in a moment.",
+        variant: "destructive",
+      })
     }
-  }
+  }, [data.project.title, pathname, toast])
 
-  const shiplogs = useMemo<PortfolioShiplog[]>(
+  const handleToggleUpvote = useCallback(async () => {
+    setUpvotePending(true)
+    try {
+      const response = await fetch(
+        `/api/feed/projects/${data.project.id}/upvote`,
+        {
+          method: "POST",
+        }
+      )
+
+      const result = await response.json().catch(() => ({}))
+
+      if (response.status === 401) {
+        toast({
+          title: "Sign in required",
+          description: "Log in to upvote this project.",
+          variant: "destructive",
+        })
+        return
+      }
+
+      if (!response.ok) {
+        throw new Error(result?.error || "Unable to update upvote.")
+      }
+
+      setHasUpvoted(result.upvoted)
+      setUpvoteCount(result.totalUpvotes)
+    } catch (error) {
+      console.error("Failed to toggle upvote", error)
+      toast({
+        title: "Upvote failed",
+        description: "Please retry in a few seconds.",
+        variant: "destructive",
+      })
+    } finally {
+      setUpvotePending(false)
+    }
+  }, [data.project.id, toast])
+
+  const badgeTechs = techStack.slice(0, 6)
+  const heroTags = useMemo(() => badgeTechs.slice(0, 4), [badgeTechs])
+  const shiplogEntries = useMemo<Shiplog[]>(
     () =>
       data.shiplogs.map((shiplog) => ({
-        ...shiplog,
+        id: shiplog.id,
+        content: shiplog.content,
+        imageUrl: shiplog.imageUrl,
         createdAt: shiplog.createdAt,
+        updatedAt: shiplog.createdAt,
+        project: shiplog.project
+          ? {
+              id: shiplog.project.id,
+              name: shiplog.project.name,
+              repositoryId: shiplog.project.id,
+              deployUrl: null,
+              repositoryUrl: null,
+            }
+          : null,
+        author: {
+          id: data.portfolio.id,
+          name: data.portfolio.name,
+          githubUsername: data.portfolio.githubUsername,
+          avatarUrl: data.portfolio.profilePic,
+          portfolioSlug: data.portfolio.slug,
+        },
+        reactions: {
+          shipped: 0,
+          fixed: 0,
+          support: 0,
+        },
+        viewerReaction: null,
+        isAuthorSelf: true,
+        isAuthorFollowed: true,
       })),
-    [data.shiplogs]
+    [
+      data.shiplogs,
+      data.portfolio.id,
+      data.portfolio.name,
+      data.portfolio.githubUsername,
+      data.portfolio.profilePic,
+      data.portfolio.slug,
+    ]
   )
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#060606] via-[#0c0c0f] to-[#050505] text-white">
-      <div className="mx-auto w-full max-w-6xl px-4 pb-16 pt-10 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between gap-3 text-sm text-white/60">
-          <Link
-            href={`/${data.portfolio.slug}`}
-            className="inline-flex items-center gap-2 rounded-full border border-white/10 px-4 py-2 text-xs font-medium uppercase tracking-wide text-white/60 transition hover:border-white/30 hover:text-white/90"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" />
-            Back to Portfolio
-          </Link>
-          <button
-            onClick={handleShare}
-            className="inline-flex items-center gap-2 rounded-full border border-white/10 px-4 py-2 text-xs font-medium uppercase tracking-wide text-white/70 transition hover:border-white/30 hover:text-white"
-          >
-            <Share2 className="h-3.5 w-3.5" />
-            {copied ? "Copied!" : "Share"}
-          </button>
-        </div>
+    <div
+      className="min-h-screen bg-[#f6f7fb] text-slate-900"
+      style={{
+        backgroundImage:
+          "radial-gradient(circle at 1px 1px, rgba(86, 145, 226, 0.12) 1px, transparent 0)",
+        backgroundSize: "28px 28px",
+      }}
+    >
+      <div className="p-2">
+      <div className="mx-auto w-full bg-white max-w-6xl px-4 py-6 pb-16 sm:px-6 lg:px-8">
 
-        <header className="mt-10 flex flex-col gap-6 lg:flex-row lg:items-start">
-          <div className="flex-1 space-y-6">
-            <div className="relative overflow-hidden rounded-3xl border border-white/5 bg-white/[0.03] shadow-2xl shadow-black/40">
-              <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent" />
-              <div className="relative flex flex-col items-start gap-6 px-6 py-8 sm:px-10 sm:py-12">
+        <section className="bg-white">
+          <div className="flex flex-col gap-4">
+            <div className="flex items-start gap-3 sm:gap-4">
+              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-3xl bg-slate-100 sm:h-20 sm:w-20">
                 <ProjectIcon
                   favicon={data.project.favicon || undefined}
                   logo={data.project.logo || undefined}
                   title={data.project.title}
                   size="lg"
                 />
-                <div>
-                  <p className="text-xs uppercase tracking-[0.3em] text-white/50">
-                    {data.portfolio.name}
-                  </p>
-                  <h1 className="mt-2 text-3xl font-semibold leading-tight sm:text-4xl">
-                    {data.project.title}
-                  </h1>
-                  <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-white/60">
-                    <div className="inline-flex items-center gap-2 rounded-full border border-white/10 px-3 py-1 text-xs">
-                      <TrendingUp className="h-3.5 w-3.5" />
-                      {formatNumber(data.stats.totalViews)} lifetime views
-                    </div>
-                    <div className="inline-flex items-center gap-2 rounded-full border border-white/10 px-3 py-1 text-xs">
-                      <CheckCircle2 className="h-3.5 w-3.5" />
-                      Updated {updatedAt}
-                    </div>
+              </div>
+              <div className="space-y-3 sm:space-y-4">
+                <h1 className="text-3xl font-semibold leading-tight text-black sm:text-4xl">
+                  {data.project.title}
+                </h1>
+                {heroTags.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {heroTags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="inline-flex items-center rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600"
+                      >
+                        {tag}
+                      </span>
+                    ))}
                   </div>
-                </div>
-                {data.project.logo ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={data.project.logo}
-                    alt={`${data.project.title} preview`}
-                    className="mt-4 w-full rounded-2xl border border-white/10 bg-black/30 object-cover shadow-inner"
-                  />
                 ) : null}
               </div>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              <StatBadge
-                icon={TrendingUp}
-                label="Total Views"
-                value={formatNumber(data.stats.totalViews)}
-                helper={`${formatNumber(data.stats.views30Days)} in last 30 days`}
-              />
-              <StatBadge
-                icon={Users}
-                label="Weekly Views"
-                value={formatNumber(data.stats.views7Days)}
-                helper="Last 7 days"
-              />
-              <StatBadge
-                icon={Share2}
-                label="Upvotes"
-                value={formatNumber(data.stats.upvotes)}
-                helper="From DevFolio community"
-              />
-              <StatBadge
-                icon={Github}
-                label="GitHub Stars"
-                value={formatNumber(data.stats.stars)}
-              />
-              <StatBadge
-                icon={ExternalLink}
-                label="Repository Forks"
-                value={formatNumber(data.stats.forks)}
-              />
-              <StatBadge
-                icon={ArrowUpRight}
-                label="Launched"
-                value={createdAt}
-                helper="First published"
-              />
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={handleShare}
+                className="flex h-10 items-center gap-2 rounded-full border-slate-200 bg-white px-4 text-xs font-semibold uppercase tracking-wide text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                aria-label="Share project"
+              >
+                <Share2 className="h-4 w-4" />
+                {copied ? "Link copied" : "Share"}
+              </Button>
+              {data.project.deployedUrl ? (
+                <Button
+                  asChild
+                  size="sm"
+                  variant="outline"
+                  className="flex h-10 items-center gap-2 rounded-full border-slate-200 bg-white px-4 text-xs font-semibold uppercase tracking-wide text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                >
+                  <Link
+                    href={data.project.deployedUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <ArrowUpRight className="h-4 w-4" />
+                    Visit
+                  </Link>
+                </Button>
+              ) : null}
+              {data.project.githubUrl ? (
+                <Button
+                  asChild
+                  size="sm"
+                  variant="outline"
+                  className="flex h-10 items-center gap-2 rounded-full border-slate-200 bg-white px-4 text-xs font-semibold uppercase tracking-wide text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                >
+                  <Link
+                    href={data.project.githubUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Github className="h-4 w-4" />
+                    GitHub
+                  </Link>
+                </Button>
+              ) : null}
+              <Button
+                type="button"
+                size="sm"
+                onClick={handleToggleUpvote}
+                disabled={upvotePending}
+                className={cn(
+                  "flex h-10 items-center gap-2 rounded-full px-5 text-xs font-semibold uppercase tracking-wide transition",
+                  hasUpvoted
+                    ? "bg-gradient-to-r from-orange-600 to-orange-700 text-white"
+                    : "bg-orange-400 text-black hover:bg-orange-500",
+                  upvotePending && "opacity-80"
+                )}
+              >
+                <ArrowBigUp className="h-4 w-4" />
+                {upvotePending ? "Updating..." : `Upvote ${upvoteCount}`}
+              </Button>
             </div>
 
-            <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-6 shadow-lg shadow-black/30 sm:p-8">
-              <div className="flex flex-col gap-6 lg:flex-row">
-                <div className="lg:w-2/3">
-                  <h2 className="text-lg font-semibold text-white">About</h2>
-                  <div className="mt-3 text-sm leading-relaxed text-white/70">
-                    {data.project.description ? (
-                      <div
-                        className="prose prose-invert max-w-none prose-p:mb-3 prose-p:leading-relaxed prose-strong:text-white prose-a:text-white"
-                        dangerouslySetInnerHTML={{
-                          __html: sanitizeDescription(data.project.description),
-                        }}
-                      />
-                    ) : (
-                      <p>
-                        This project showcases what{" "}
-                        <span className="font-medium text-white">
-                          {data.portfolio.name}
-                        </span>{" "}
-                        has been building recently.
-                      </p>
-                    )}
-                  </div>
-                  {techStack.length > 0 ? (
-                    <div className="mt-5">
-                      <h3 className="text-xs uppercase tracking-[0.3em] text-white/50">
-                        Tech Stack
-                      </h3>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {techStack.map((tech) => (
-                          <Badge
-                            key={tech}
-                            variant="secondary"
-                            className="rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs text-white/80"
-                          >
-                            {tech}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  ) : null}
-                </div>
-                <div className="lg:w-1/3">
-                  <div className="space-y-3">
-                    {data.project.deployedUrl ? (
-                      <CTAButton
-                        icon={Globe}
-                        label="Visit Live Project"
-                        href={data.project.deployedUrl}
-                      />
-                    ) : null}
-                    {data.project.githubUrl ? (
-                      <CTAButton
-                        icon={Github}
-                        label="Explore on GitHub"
-                        href={data.project.githubUrl}
-                        variant={data.project.deployedUrl ? "secondary" : "default"}
-                      />
-                    ) : null}
-                  </div>
-                  <div className="mt-6 rounded-2xl border border-white/10 bg-black/30 p-4 text-sm">
-                    <p className="font-semibold text-white">
-                      Built by {data.portfolio.name}
-                    </p>
-                    {data.portfolio.jobTitle ? (
-                      <p className="text-white/60">{data.portfolio.jobTitle}</p>
-                    ) : null}
-                    {data.portfolio.location ? (
-                      <p className="mt-2 flex items-center gap-2 text-white/50">
-                        <MapPin className="h-4 w-4" />
-                        {data.portfolio.location}
-                      </p>
-                    ) : null}
-                    <div className="mt-4 flex flex-wrap gap-3 text-xs text-white/50">
-                      {data.portfolio.githubUsername ? (
-                        <Link
-                          href={`https://github.com/${data.portfolio.githubUsername}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-2 rounded-full border border-white/10 px-3 py-1 transition hover:border-white/30 hover:text-white/80"
-                        >
-                          <Github className="h-3.5 w-3.5" />
-                          @{data.portfolio.githubUsername}
-                        </Link>
-                      ) : null}
-                      {data.portfolio.websiteUrl ? (
-                        <Link
-                          href={data.portfolio.websiteUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-2 rounded-full border border-white/10 px-3 py-1 transition hover:border-white/30 hover:text-white/80"
-                        >
-                          <ExternalLink className="h-3.5 w-3.5" />
-                          Portfolio Website
-                        </Link>
-                      ) : null}
-                      {data.portfolio.company ? (
-                        <span className="flex items-center gap-2 rounded-full border border-white/10 px-3 py-1">
-                          <Users className="h-3.5 w-3.5" />
-                          {data.portfolio.company}
-                        </span>
-                      ) : null}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </section>
-          </div>
-        </header>
-
-        <section className="mt-12 rounded-3xl border border-white/10 bg-white/[0.03] p-6 shadow-lg shadow-black/30 sm:p-8">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <h2 className="text-lg font-semibold text-white">
-                Audience Insights
-              </h2>
-              <p className="mt-1 text-sm text-white/60">
-                Daily views for this project, tracked automatically as visitors
-                explore.
-              </p>
-            </div>
-          </div>
-          <div className="mt-6 overflow-hidden rounded-3xl border border-white/5 bg-black/20 p-4 sm:p-6">
-            <ProjectViewsChart
-              portfolioId={data.portfolio.id}
-              projectId={data.project.id}
-              days={14}
-            />
+            {data.project.description ? (
+              <div
+                className="prose max-w-none text-sm leading-relaxed text-slate-600 prose-p:mb-3 prose-p:text-slate-600"
+                dangerouslySetInnerHTML={{
+                  __html: sanitizeDescription(data.project.description),
+                }}
+              />
+            ) : null}
           </div>
         </section>
 
-        {shiplogs.length > 0 ? (
-          <section className="mt-12 rounded-3xl border border-white/10 bg-white/[0.03] p-6 shadow-lg shadow-black/30 sm:p-8">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <h2 className="text-lg font-semibold text-white">
-                  Live Shiplogs
-                </h2>
-                <p className="text-sm text-white/60">
-                  Build-in-public updates from {data.portfolio.name} for this
-                  project.
+        <section className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {highlightStats.map((item) => (
+            <div
+              key={item.label}
+              className="rounded-3xl border border-slate-200 bg-white p-6"
+            >
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    {item.label}
+                  </p>
+                  <p className="mt-3 text-3xl font-semibold text-slate-900">
+                    {item.value}
+                  </p>
+                  <p className="mt-2 text-xs text-slate-500">{item.helper}</p>
+                </div>
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-600">
+                  <item.icon className="h-4 w-4" />
+                </span>
+              </div>
+            </div>
+          ))}
+        </section>
+
+        <section className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:items-stretch">
+          <div className="relative overflow-hidden rounded-3xl  bg-white/80 p-0  md:h-full">
+            <div className="absolute inset-0 bg-white/80 backdrop-blur-xl" />
+            <div className="relative flex h-full items-center justify-center p-5">
+            {data.project.logo ? (
+              <div className="relative flex w-full max-w-[520px] items-center justify-center overflow-hidden rounded-2xl bg-white/70 shadow-inner">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={data.project.logo}
+                  alt=""
+                  aria-hidden="true"
+                  className="absolute inset-0 h-full w-full scale-125 blur-[36px] object-cover opacity-85"
+                />
+                <img
+                  src={data.project.logo}
+                  alt={`${data.project.title} preview`}
+                  className="relative z-10 w-full rounded-2xl border border-white/60 shadow-xl object-cover"
+                  style={{ aspectRatio: "16 / 9" }}
+                />
+              </div>
+            ) : (
+              <div className="flex min-h-[200px] w-full max-w-[520px] flex-col items-center justify-center gap-4 rounded-2xl bg-gradient-to-br from-slate-100 via-white to-slate-200 p-6 text-center shadow-inner">
+                <ProjectIcon
+                  favicon={data.project.favicon || undefined}
+                  logo={data.project.logo || undefined}
+                  title={data.project.title}
+                  size="lg"
+                />
+                <p className="text-sm font-medium text-slate-600">
+                  Preview image coming soon
                 </p>
               </div>
-              <Link
-                href={`/${data.portfolio.slug}/#shiplogs`}
-                className="hidden rounded-full border border-white/10 px-4 py-2 text-xs uppercase tracking-wide text-white/70 transition hover:border-white/30 hover:text-white/90 sm:inline-flex"
-              >
-                View all
-              </Link>
+            )}
             </div>
-            <div className="mt-6">
-              <PublicShiplogList shiplogs={shiplogs} />
+          </div>
+
+          <div className="rounded-3xl border border-slate-200 bg-white p-4 text-sm g sm:p-6 md:h-full flex flex-col">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-slate-100">
+                  {data.portfolio.profilePic ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={data.portfolio.profilePic}
+                      alt={data.portfolio.name}
+                      className="h-full w-full rounded-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-lg font-semibold uppercase text-slate-500">
+                      {data.portfolio.name.slice(0, 2)}
+                    </span>
+                  )}
+                </div>
+                <div className="space-y-0">
+                  <h2 className="text-base font-semibold text-slate-900">
+                    {data.portfolio.name}
+                  </h2>
+                  {data.portfolio.githubUsername ? (
+                    <Link
+                      href={`https://github.com/${data.portfolio.githubUsername}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs font-medium text-slate-500 hover:text-slate-900"
+                    >
+                      @{data.portfolio.githubUsername}
+                    </Link>
+                  ) : null}
+                </div>
+              </div>
+              {data.portfolio.websiteUrl ? (
+                <Button
+                  asChild
+                  size="sm"
+                  variant="outline"
+                  className="rounded-full border border-black bg-white px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-black hover:border-slate-300 hover:bg-slate-50"
+                >
+                  <Link
+                    href={data.portfolio.websiteUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                    Download CV
+                  </Link>
+                </Button>
+              ) : null}
             </div>
-          </section>
-        ) : null}
+
+            <div className="mt-5 space-y-4 flex-1">
+              {data.portfolio.jobTitle ? (
+                <div className="flex items-center justify-between border-b border-slate-100 pb-0">
+                  <span className="text-xs font-medium text-slate-500">
+                    Role
+                  </span>
+                  <span className="text-xs font-semibold text-slate-900">
+                    {data.portfolio.jobTitle}
+                  </span>
+                </div>
+              ) : null}
+
+              <div className="flex items-center justify-between border-b border-slate-100 pb-0">
+                <span className="text-xs font-medium text-slate-500">
+                  Project launch date
+                </span>
+                <span className="text-xs font-semibold text-slate-900">
+                  {createdAt}
+                </span>
+              </div>
+
+              {data.portfolio.location ? (
+                <div className="flex items-center justify-between border-b border-slate-100 pb-0">
+                  <span className="text-xs font-medium text-slate-500">
+                    Location
+                  </span>
+                  <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-900">
+                    <MapPin className="h-3.5 w-3.5 text-slate-400" />
+                    {data.portfolio.location}
+                  </span>
+                </div>
+              ) : null}
+
+              <div className="flex items-center justify-between border-b border-slate-100 pb-0">
+                <span className="text-xs font-medium text-slate-500">
+                  Socials
+                </span>
+                <span className="flex items-center gap-2">
+                  {data.portfolio.githubUsername ? (
+                    <SocialIconLink
+                      href={`https://github.com/${data.portfolio.githubUsername}`}
+                      label="GitHub"
+                      icon={Github}
+                    />
+                  ) : null}
+                  {data.portfolio.websiteUrl ? (
+                    <SocialIconLink
+                      href={data.portfolio.websiteUrl}
+                      label="Website"
+                      icon={Globe}
+                    />
+                  ) : null}
+                  {data.project.deployedUrl ? (
+                    <SocialIconLink
+                      href={data.project.deployedUrl}
+                      label="Live project"
+                      icon={ExternalLink}
+                    />
+                  ) : null}
+                </span>
+              </div>
+
+              {techStack.length > 0 ? (
+                <div className="flex items-center justify-between border-b border-slate-100 pb-0">
+                  <span className="text-xs font-medium text-slate-500">
+                    Skills
+                  </span>
+                  <div className="flex flex-wrap justify-end gap-2">
+                    {techStack.slice(0, 6).map((tech) => (
+                      <span
+                        key={tech}
+                        className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600"
+                      >
+                        {tech}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
+              <div className="flex items-center justify-between border-b border-slate-100 pb-0">
+                <span className="text-xs font-medium text-slate-500">
+                  Times visited
+                </span>
+                <span className="text-xs font-semibold text-slate-900">
+                  {formatNumber(data.stats.totalViews)}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-slate-500">
+                  Projects shipped
+                </span>
+                <span className="text-xs font-semibold text-slate-900">
+                  {data.portfolio.projectCount}
+                </span>
+              </div>
+            </div>
+          </div>
+        </section>
+
       </div>
+    </div>
     </div>
   )
 }

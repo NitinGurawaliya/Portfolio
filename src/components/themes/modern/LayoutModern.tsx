@@ -504,6 +504,8 @@ export default function LayoutModern({ theme, portfolio }: LayoutModernProps) {
                               key={repo.id}
                               href={projectHref}
                               className="group flex h-full w-full"
+                              target="_blank"
+                              rel="noopener noreferrer"
                             >
                               {cardContent}
                             </Link>

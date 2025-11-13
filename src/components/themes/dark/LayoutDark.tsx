@@ -551,6 +551,8 @@ export default function LayoutDark({ theme, portfolio }: LayoutDarkProps) {
                           key={repo.id}
                           href={projectHref}
                           className="group relative flex h-full w-full"
+                          target="_blank"
+                          rel="noopener noreferrer"
                         >
                           {cardContent}
                         </Link>
