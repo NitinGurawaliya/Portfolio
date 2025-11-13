@@ -324,7 +324,7 @@ export default function ProjectPageClient({
                 />
               </div>
               <div className="space-y-3 sm:space-y-4">
-                <h1 className="text-3xl font-semibold leading-tight text-black sm:text-4xl">
+                <h1 className="text-2xl font-semibold mt-3 leading-tight text-black sm:text-4xl">
                   {data.project.title}
                 </h1>
                 {heroTags.length > 0 ? (
@@ -342,7 +342,7 @@ export default function ProjectPageClient({
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+            <div className="flex flex-wrap items-center gap-8 sm:gap-3">
               <Button
                 type="button"
                 size="sm"
@@ -371,30 +371,13 @@ export default function ProjectPageClient({
                   </Link>
                 </Button>
               ) : null}
-              {data.project.githubUrl ? (
-                <Button
-                  asChild
-                  size="sm"
-                  variant="outline"
-                  className="flex h-10 items-center gap-2 rounded-full border-slate-200 bg-white px-4 text-xs font-semibold uppercase tracking-wide text-slate-600 hover:border-slate-300 hover:bg-slate-50"
-                >
-                  <Link
-                    href={data.project.githubUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <Github className="h-4 w-4" />
-                    GitHub
-                  </Link>
-                </Button>
-              ) : null}
               <Button
                 type="button"
                 size="sm"
                 onClick={handleToggleUpvote}
                 disabled={upvotePending}
                 className={cn(
-                  "flex h-10 items-center gap-2 rounded-full px-5 text-xs font-semibold uppercase tracking-wide transition",
+                  "flex h-10 items-center gap-2 p-4 rounded-full px-5 text-xs font-semibold uppercase tracking-wide transition",
                   hasUpvoted
                     ? "bg-gradient-to-r from-orange-600 to-orange-700 text-white"
                     : "bg-orange-400 text-black hover:bg-orange-500",
