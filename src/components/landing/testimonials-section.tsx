@@ -49,7 +49,7 @@ export function TestimonialsSection() {
   }
 
   return (
-    <section className="py-16 sm:py-20 lg:py-24">
+    <section className="py-12 sm:py-16 lg:py-20">
       <div className="container mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <motion.div
           className="mx-auto mb-12 max-w-2xl text-center sm:mb-16"
@@ -67,28 +67,25 @@ export function TestimonialsSection() {
 
         </motion.div>
 
-       <div className="grid gap-6 md:grid-cols-2">
-  {testimonialEmbeds.map((embed, index) => (
-    <motion.article
-      key={index}
-      className="h-full rounded-3xl border border-border/60 p-4 shadow-lg transition-all duration-300 hover:shadow-xl sm:p-5 
-                 bg-white dark:bg-card/60 dark:border-border/40 dark:hover:bg-card/80 dark:shadow-md"
-      initial={{ opacity: 0, y: 24 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay: index * 0.1 }}
-      viewport={{ once: true }}
-    >
-      <div
-        className="[&_iframe]:w-full [&_iframe]:max-w-full [&_iframe]:rounded-2xl [&_.twitter-tweet]:mx-auto [&_.twitter-tweet]:max-w-full 
-                   bg-white dark:bg-card/60"
-        dangerouslySetInnerHTML={{ __html: embed }}
-      />
-    </motion.article>
-  ))}
-</div>
+        <div className="grid gap-4 md:grid-cols-2 md:gap-5">
+          {testimonialEmbeds.map((embed, index) => (
+            <motion.article
+              key={index}
+              className="h-full rounded-2xl border border-border/50 bg-white/90 p-3 shadow-md transition-all duration-300 hover:shadow-lg dark:bg-card/70 dark:border-border/30 dark:hover:bg-card/80 sm:p-4"
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: index * 0.1 }}
+              viewport={{ once: true }}
+            >
+              <div
+                className="[&_iframe]:w-full [&_iframe]:max-w-full [&_iframe]:rounded-2xl [&_.twitter-tweet]:mx-auto [&_.twitter-tweet]:max-w-full [&_.twitter-tweet]:!text-sm [&_.twitter-tweet]:scale-[0.96] bg-white dark:bg-card/60"
+                dangerouslySetInnerHTML={{ __html: embed }}
+              />
+            </motion.article>
+          ))}
+        </div>
 
-
-        <div className="mt-6 text-center text-xs text-muted-foreground sm:mt-8">
+        <div className="mt-5 text-center text-xs text-muted-foreground sm:mt-6">
           Tip: generate embed code at{" "}
           <a
             href="https://publish.twitter.com/"

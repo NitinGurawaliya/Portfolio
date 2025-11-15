@@ -529,18 +529,7 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
                         viewport={{ once: true }}
                         whileHover={{ y: -2 }}
                       >
-                        <div className="relative flex h-full w-full min-h-[300px] flex-col rounded-2xl border border-gray-200 bg-white p-3 xs:p-4 sm:p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
-                          {repo.repository.logo && (/^https?:/i.test(repo.repository.logo) || /^data:image\//i.test(repo.repository.logo)) && (
-                            <div className="mb-2 -mt-1 overflow-hidden rounded-md">
-                              <img
-                                src={repo.repository.logo}
-                                alt={(repo.customName || repo.repository.name) + ' preview'}
-                                className={`w-full aspect-[16/9] ${/^data:image\//i.test(repo.repository.logo) ? 'object-cover object-top' : 'object-cover'}`}
-                                loading="lazy"
-                              />
-                            </div>
-                          )}
-
+                          <div className="relative flex h-full w-full min-h-[300px] flex-col rounded-2xl border border-gray-200 bg-white p-3 xs:p-4 sm:p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
                           <div className="flex items-start justify-between mb-3">
                             <div className="flex-1 min-w-0">
                               <div className="mb-2">

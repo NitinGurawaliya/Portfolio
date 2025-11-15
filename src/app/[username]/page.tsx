@@ -8,6 +8,7 @@ import { DevFolioLoader } from "@/components/ui/DevFolioLoader"
 import { getTheme, ThemeKey } from "@/lib/theme-config"
 import { getLayoutComponent } from "@/lib/theme-layouts"
 import { Portfolio } from "@/interface"
+import { PortfolioShareButton } from "@/components/portfolio/PortfolioShareButton"
 
 export default function PublicPortfolioPage() {
   const params = useParams()
@@ -15,6 +16,7 @@ export default function PublicPortfolioPage() {
   const [portfolio, setPortfolio] = useState<Portfolio | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [shareUrl, setShareUrl] = useState("")
   
   // Prevent conflicts with app routes
   const reservedRoutes = ['dashboard', 'auth', 'api', '_next', 'favicon.ico']
@@ -111,6 +113,12 @@ export default function PublicPortfolioPage() {
     fetchPortfolio()
   }, [username])
 
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setShareUrl(window.location.href)
+    }
+  }, [username])
+
   // Update favicon once when portfolio data is available - OPTIMIZED: Single update
   useEffect(() => {
     if (portfolio?.profilePic && typeof window !== 'undefined') {
@@ -199,8 +207,8 @@ export default function PublicPortfolioPage() {
   const theme = getTheme(themeKey)
   const Layout = getLayoutComponent(theme.layout)
 
-  return (
-    <div className="scroll-smooth" style={{ scrollBehavior: 'smooth' }}>
+    return (
+      <div className="scroll-smooth" style={{ scrollBehavior: 'smooth' }}>
       {/* Structured Data for SEO */}
         <StructuredData
           type="Person"
@@ -223,6 +231,7 @@ export default function PublicPortfolioPage() {
       <Suspense fallback={<div className="min-h-screen bg-black flex items-center justify-center"><DevFolioLoader size="lg" /></div>}>
         <Layout theme={theme} portfolio={portfolio} />
       </Suspense>
+        <PortfolioShareButton url={shareUrl} portfolioName={portfolio.displayName ?? undefined} />
     </div>
   )
 }

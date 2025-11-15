@@ -1,22 +1,23 @@
 import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
 import { resolveCurrentUserId } from "@/app/api/feed/utils"
+import { getProjectSlugMap } from "@/lib/project-slug"
 
 type SortOption = "newest" | "most_upvoted" | "most_viewed"
 
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url)
-    const sort = (searchParams.get("sort") as SortOption) ?? "newest"
-    const pageParam = searchParams.get("page")
-    const limitParam = searchParams.get("limit")
+      const sort = (searchParams.get("sort") as SortOption) ?? "newest"
+      const pageParam = searchParams.get("page")
+      const limitParam = searchParams.get("limit")
 
-    const page = Math.max(parseInt(pageParam ?? "1", 10) || 1, 1)
-    const pageSize = Math.min(Math.max(parseInt(limitParam ?? "10", 10) || 10, 1), 50)
+      const page = Math.max(parseInt(pageParam ?? "1", 10) || 1, 1)
+      const pageSize = Math.min(Math.max(parseInt(limitParam ?? "10", 10) || 10, 1), 50)
 
-    const currentUserId = await resolveCurrentUserId(req)
+      const currentUserId = await resolveCurrentUserId(req)
 
-    const projects = await prisma.portfolioRepository.findMany({
+      const projects = await prisma.portfolioRepository.findMany({
       where: {
         deletedAt: null,
         isVisible: true,
@@ -52,14 +53,30 @@ export async function GET(req: NextRequest) {
           },
         },
       },
-      orderBy: {
-        createdAt: "desc",
-      },
-    })
+        orderBy: {
+          createdAt: "desc",
+        },
+      })
 
-    const projectIds = projects.map((project) => project.id)
+      const projectIds = projects.map((project) => project.id)
     const viewsMap = new Map<number, number>()
     const upvotesMap = new Map<number, number>()
+
+      type PortfolioProject = (typeof projects)[number]
+      const projectsByPortfolio = projects.reduce<Record<number, PortfolioProject[]>>(
+        (acc, project) => {
+          const list = acc[project.portfolioId] ?? []
+          list.push(project)
+          acc[project.portfolioId] = list
+          return acc
+        },
+        {}
+      )
+
+      const slugMaps = new Map<number, Record<number, string>>()
+      for (const [portfolioId, portfolioProjects] of Object.entries(projectsByPortfolio)) {
+        slugMaps.set(Number(portfolioId), getProjectSlugMap(portfolioProjects))
+      }
 
     if (projectIds.length > 0) {
       const dailyViews = await prisma.dailyProjectViews.groupBy({
@@ -116,12 +133,12 @@ export async function GET(req: NextRequest) {
       const description = project.customDescription ?? project.repository.description ?? ""
       const totalViews = viewsMap.get(project.id) ?? 0
       const upvotes = upvotesMap.get(project.id) ?? 0
-      const profileSlug =
-        project.portfolio.customUsername ||
-        project.portfolio.user?.githubUsername ||
-        ""
+        const profileSlug =
+          project.portfolio.customUsername ||
+          project.portfolio.user?.githubUsername ||
+          ""
 
-      return {
+        return {
         id: project.id,
         portfolioId: project.portfolioId,
         repositoryId: project.repositoryId,
@@ -135,8 +152,9 @@ export async function GET(req: NextRequest) {
         updatedAt: project.updatedAt,
         upvotes,
         views: totalViews,
-        hasUpvoted: userUpvoteSet.has(project.id),
-        author: {
+          hasUpvoted: userUpvoteSet.has(project.id),
+          projectSlug: slugMaps.get(project.portfolioId)?.[project.id] ?? null,
+          author: {
           id: project.portfolio.user?.id ?? null,
           name:
             project.portfolio.displayName ||

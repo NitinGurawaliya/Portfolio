@@ -446,18 +446,6 @@ export default function LayoutModern({ theme, portfolio }: LayoutModernProps) {
                               </motion.button>
                             </div>
 
-                            {repo.repository.logo &&
-                              (/^https?:/i.test(repo.repository.logo) || /^data:image\//i.test(repo.repository.logo)) && (
-                                <div className="mb-3 xs:mb-4 overflow-hidden rounded-xl border border-neutral-200">
-                                  <img
-                                    src={repo.repository.logo || "/placeholder.svg"}
-                                    alt={(repo.customName || repo.repository.name) + " preview"}
-                                    className={`w-full aspect-[16/9] ${/^data:image\//i.test(repo.repository.logo) ? "object-cover object-top" : "object-cover"}`}
-                                    loading="lazy"
-                                  />
-                                </div>
-                              )}
-
                             <div
                               className="text-xs xs:text-sm text-neutral-600 leading-relaxed line-clamp-3 flex-1"
                               dangerouslySetInnerHTML={{
