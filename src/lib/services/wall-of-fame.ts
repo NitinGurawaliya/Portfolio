@@ -38,7 +38,8 @@ const fetchCommunityPortfolios = unstable_cache(
       },
     })
 
-    return portfolios.map((portfolio) => {
+    return portfolios
+      .map((portfolio) => {
       const username =
         portfolio.customUsername ||
         portfolio.user?.githubUsername ||
@@ -53,6 +54,7 @@ const fetchCommunityPortfolios = unstable_cache(
         portfolioUrl: `/${username}`,
       }
     })
+      .filter((portfolio) => portfolio.projectsCount > 0)
   },
   ["wall-of-fame-community-portfolios"],
   { revalidate: 60 * 60 }

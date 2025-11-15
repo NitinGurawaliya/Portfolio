@@ -59,8 +59,10 @@ export function WallOfFameClient({ portfolios, loading = false, error = null }: 
     )
   }
 
-  const visiblePortfolios = portfolios.slice(0, 9)
-
+  const filteredPortfolios = portfolios.filter((portfolio) => portfolio.projectsCount > 0)
+  if (filteredPortfolios.length === 0) {
+    return null
+  }
   return (
     <section className="py-16 sm:py-20 lg:py-24">
       <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
@@ -71,16 +73,21 @@ export function WallOfFameClient({ portfolios, loading = false, error = null }: 
               <span>DevFolio community</span>
             </div>
             <h2 className="mb-3 text-3xl font-semibold tracking-tight text-balance sm:text-4xl">Builders on display</h2>
-            <p className="text-sm text-muted-foreground sm:text-base">
-              सभी लाइव पोर्टफोलियो — तीन कतारों में देखें और तुरंत प्रोफ़ाइल खोलें।
+              <p className="text-sm text-muted-foreground sm:text-base">
+                सभी लाइव पोर्टफोलियो — कार्ड सूची को क्षैतिज रूप से स्क्रॉल करें और तुरंत प्रोफ़ाइल खोलें।
             </p>
           </motion.div>
         </div>
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {visiblePortfolios.map((portfolio) => (
-              <Link key={portfolio.id} href={portfolio.portfolioUrl} target="_blank" className="block h-full">
+          <div className="flex gap-3 overflow-x-auto pb-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {filteredPortfolios.map((portfolio) => (
+              <Link
+                key={portfolio.id}
+                href={portfolio.portfolioUrl}
+                target="_blank"
+                className="block w-[220px] flex-shrink-0"
+              >
                 <article className="flex h-full flex-col rounded-2xl border border-gray-200 bg-white p-4 text-gray-900 transition hover:border-gray-300">
                   <div className="flex items-center gap-3">
                     <Avatar className="h-12 w-12 border-2 border-gray-600">
@@ -90,13 +97,13 @@ export function WallOfFameClient({ portfolios, loading = false, error = null }: 
                       </AvatarFallback>
                     </Avatar>
                     <div className="min-w-0">
-                      <p className="text-base font-semibold leading-tight">{portfolio.displayName}</p>
+                      <p className="text-sm font-semibold leading-tight">{portfolio.displayName}</p>
                       <p className="text-xs text-gray-500">@{portfolio.username}</p>
                     </div>
                   </div>
-                  <div className="mt-4 flex items-center justify-between text-sm text-gray-600">
+                  <div className="mt-3 flex items-center justify-between text-xs text-gray-600">
                     <span>{portfolio.projectsCount === 1 ? "1 project" : `${portfolio.projectsCount} projects`}</span>
-                    <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">View →</span>
+                    <span className="font-semibold uppercase tracking-wider text-gray-500">View →</span>
                   </div>
                 </article>
               </Link>

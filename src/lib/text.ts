@@ -1,4 +1,4 @@
-export const truncateWords = (input?: string | null, limit = 24) => {
+export const truncateWords = (input?: string | null, limit = 30) => {
   if (!input) return ""
 
   // remove html tags and normalize whitespace
