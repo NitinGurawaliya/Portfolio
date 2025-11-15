@@ -1,62 +1,26 @@
 "use client"
 
-import { Card, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { motion } from "framer-motion"
 import Link from "next/link"
-import {
-  ArrowRight,
-  ExternalLink,
-  Heart,
-  Loader2,
-  TrendingUp,
-  Zap,
-} from "lucide-react"
-import { Sparkles } from "lucide-react"
-
-export interface FeaturedPortfolio {
-  id: number
-  username: string
-  displayName: string
-  jobTitle?: string | null
-  bio?: string | null
-  profilePic?: string | null
-  selectedTheme: string
-  skills: Array<{
-    name: string
-    category: string | null
-  }>
-  repositories: Array<{
-    name: string
-    language: string | null
-    stargazersCount: number
-  }>
-  updatedAt: string
-  portfolioUrl: string
-  totalViews: number
-}
+import { Loader2, Sparkles, ArrowRight } from "lucide-react"
+import { CommunityPortfolio } from "@/lib/services/wall-of-fame"
 
 interface WallOfFameClientProps {
-  portfolios: FeaturedPortfolio[] | null
+  portfolios: CommunityPortfolio[] | null
   loading?: boolean
   error?: string | null
 }
 
-export function WallOfFameClient({
-  portfolios,
-  loading = false,
-  error = null,
-}: WallOfFameClientProps) {
+export function WallOfFameClient({ portfolios, loading = false, error = null }: WallOfFameClientProps) {
   if (loading) {
     return (
       <section className="py-16 sm:py-20 lg:py-24">
         <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <span className="ml-2 text-muted-foreground">
-              Loading portfolios...
-            </span>
+            <span className="ml-2 text-muted-foreground">Loading portfolios…</span>
           </div>
         </div>
       </section>
@@ -75,16 +39,13 @@ export function WallOfFameClient({
           >
             <div className="mb-4 inline-flex items-center rounded-full border border-border/40 bg-muted/50 px-3 py-1 text-xs sm:text-sm">
               <span className="mr-2">🚀</span>
-              <span>Ready for liftoff</span>
+              <span>Community launchpad</span>
             </div>
 
-            <h2 className="mb-4 text-2xl font-bold tracking-tight sm:text-3xl">
-              Be the first on the wall of fame
-            </h2>
-            <p className="mb-8 text-sm text-muted-foreground sm:text-base">
-              Publish your DevFolio portfolio to claim a top spot when the wall
-              refreshes.
-            </p>
+              <h2 className="mb-4 text-2xl font-bold tracking-tight sm:text-3xl">Add your portfolio</h2>
+              <p className="mb-8 text-sm text-muted-foreground sm:text-base">
+                Publish on DevFolio and join the gallery of builders.
+              </p>
             <Button size="lg" asChild>
               <Link href="/auth">
                 <Sparkles className="mr-2 h-4 w-4" />
@@ -98,157 +59,57 @@ export function WallOfFameClient({
     )
   }
 
-  const statCards = [
-    {
-      label: `${portfolios.reduce(
-        (acc, current) => acc + (current.totalViews || 0),
-        0
-      )} total views`,
-      icon: TrendingUp,
-      accent: "text-green-500",
-    },
-    {
-      label: `${portfolios[0]?.totalViews ?? 0} views today`,
-      icon: Zap,
-      accent: "text-orange-500",
-    },
-    {
-      label: "Loved by developers",
-      icon: Heart,
-      accent: "text-rose-500",
-    },
-  ]
-
+  const filteredPortfolios = portfolios.filter((portfolio) => portfolio.projectsCount > 0)
+  if (filteredPortfolios.length === 0) {
+    return null
+  }
   return (
     <section className="py-16 sm:py-20 lg:py-24">
       <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
-        <div className="mx-auto mb-12 max-w-3xl text-center sm:mb-16">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            <div className="mb-6 inline-flex items-center rounded-full border border-border/40 bg-muted/50 px-3 py-1 text-xs sm:text-sm">
-              <span className="mr-2">🔥</span>
-              <span>Top portfolios this week</span>
+        <div className="mx-auto mb-10 max-w-3xl text-center sm:mb-12">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
+            <div className="mb-4 inline-flex items-center rounded-full border border-border/40 bg-muted/50 px-3 py-1 text-xs sm:text-sm">
+              <span className="mr-2">🌍</span>
+              <span>DevFolio community</span>
             </div>
-
-            <h2 className="mb-4 text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
-              Wall of fame
-            </h2>
-            <p className="text-sm text-muted-foreground sm:text-base">
-              A curated showcase of the three most viewed DevFolio portfolios.
-            </p>
+            <h2 className="mb-3 text-3xl font-semibold tracking-tight text-balance sm:text-4xl">Builders on display</h2>
+              <p className="text-sm text-muted-foreground sm:text-base">
+                Explore every live portfolio—arranged as three rows with horizontal scrolling for overflow.
+              </p>
           </motion.div>
         </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.1 }}
-          className="mb-10 flex flex-wrap justify-center gap-3 text-xs text-muted-foreground sm:text-sm"
-        >
-          {statCards.map(({ label, icon: Icon, accent }, index) => (
-            <div key={index} className="flex items-center">
-              <Icon className={`mr-2 h-4 w-4 ${accent}`} />
-              <span>{label}</span>
-            </div>
-          ))}
-        </motion.div>
-
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-          {portfolios.map((portfolio, index) => (
-            <motion.div
-              key={portfolio.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.15 * index }}
-            >
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+            <div className="grid grid-flow-col auto-cols-[220px] grid-rows-3 gap-3 overflow-x-auto pb-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {filteredPortfolios.map((portfolio) => (
               <Link
+                key={portfolio.id}
                 href={portfolio.portfolioUrl}
                 target="_blank"
-                className="block h-full"
+                  className="block h-full"
               >
-                <Card className="group h-full border-border/40 bg-card/70 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
-                  <CardContent className="flex h-full flex-col p-6">
-                    <div className="mb-5 flex items-start justify-between">
-                      <div className="flex items-start gap-3">
-                        <Avatar className="h-12 w-12 border-2 border-primary/20">
-                          <AvatarImage
-                            src={portfolio.profilePic ?? undefined}
-                            alt={portfolio.displayName}
-                          />
-                          <AvatarFallback className="bg-primary/10 text-primary font-semibold">
-                            {portfolio.displayName?.charAt(0) ?? "U"}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          
-                          <h3 className="font-semibold text-foreground">
-                            {portfolio.displayName}
-                          </h3>
-                          <p className="text-xs text-muted-foreground">
-                            @{portfolio.username}
-                          </p>
-                          {portfolio.jobTitle ? (
-                            <p className="text-xs text-muted-foreground/80">
-                              {portfolio.jobTitle}
-                            </p>
-                          ) : null}
-                        </div>
-                      </div>
-                      <ExternalLink className="h-4 w-4 text-muted-foreground opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
+                <article className="flex h-full flex-col rounded-2xl border border-gray-200 bg-white p-4 text-gray-900 transition hover:border-gray-300">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-12 w-12 border-2 border-gray-600">
+                      <AvatarImage src={portfolio.profilePic ?? undefined} alt={portfolio.displayName} />
+                      <AvatarFallback className="bg-gray-50 text-gray-900">
+                        {portfolio.displayName.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold leading-tight">{portfolio.displayName}</p>
+                      <p className="text-xs text-gray-500">@{portfolio.username}</p>
                     </div>
-
-                    <div className="mb-5 min-h-[3rem]">
-                      {portfolio.bio ? (
-                        <p className="line-clamp-3 text-sm text-muted-foreground leading-relaxed">
-                          {portfolio.bio}
-                        </p>
-                      ) : (
-                        <p className="text-sm text-muted-foreground/60 italic">
-                          Developer creating amazing projects
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="mb-6 flex-1">
-                      {portfolio.repositories.length > 0 ? (
-                        <div className="space-y-3">
-                          <h4 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                            Featured projects
-                          </h4>
-                          <ul className="space-y-2">
-                            {portfolio.repositories.map((repo, repoIndex) => (
-                              <li
-                                key={repoIndex}
-                                className="flex items-center gap-2"
-                              >
-                                <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-                                <span className="text-sm font-medium text-foreground">
-                                  {repo.name}
-                                </span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      ) : (
-                        <div className="space-y-3">
-                          <h4 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                            Featured projects
-                          </h4>
-                          <p className="text-sm text-muted-foreground/60 italic">
-                            Projects coming soon
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                  <div className="mt-3 flex items-center justify-between text-xs text-gray-600">
+                    <span>{portfolio.projectsCount === 1 ? "1 project" : `${portfolio.projectsCount} projects`}</span>
+                    <span className="font-semibold uppercase tracking-wider text-gray-500">View →</span>
+                  </div>
+                </article>
               </Link>
-            </motion.div>
-          ))}
-        </div>
+            ))}
+          </div>
+        </motion.div>
       </div>
     </section>
   )

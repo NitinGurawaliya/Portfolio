@@ -30,7 +30,7 @@ export default function HomePage() {
         <HeroSection />
         {/* <FeaturesSection /> */}
         <FeatureShowcase />
-        <WallOfFame limit={3} />
+        <WallOfFame />
         <TestimonialsSection />
         {/* <DemoSection /> */}
         {/* <CTASection /> */}

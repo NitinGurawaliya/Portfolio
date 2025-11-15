@@ -99,7 +99,7 @@ export default function OnboardingPage() {
       <OnboardingModal open={open} onComplete={handleComplete} />
       {submitting && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-zinc-900 rounded-xl p-8 text-xl shadow-lg">पोर्टफोलियो सेव किया जा रहा है...</div>
+          <div className="bg-white dark:bg-zinc-900 rounded-xl p-8 text-xl shadow-lg">Saving your portfolio...</div>
         </div>
       )}
     </div>

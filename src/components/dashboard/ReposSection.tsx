@@ -43,6 +43,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { EditProjectModal as EditModal } from "./EditProjectModal"
 import { Skeleton } from "@/components/ui/skeleton"
+import toast from "react-hot-toast"
 interface Repository {
   id: number
   portfolioRepositoryId?: number // PortfolioRepository ID for analytics
@@ -165,6 +166,7 @@ export function ReposSection({
   const [isEditOpen, setIsEditOpen] = useState(false)
   const [editInitial, setEditInitial] = useState<{ id: number; url: string; name: string; description: string; logo?: string | null } | null>(null)
   const [logoOverrides, setLogoOverrides] = useState<Record<number, string>>(initialLogoOverrides || {})
+  const [deletingRepoIds, setDeletingRepoIds] = useState<Record<number, boolean>>({})
   
   // Sync logoOverrides from parent
   useEffect(() => {
@@ -386,22 +388,34 @@ export function ReposSection({
     }
   }
 
-  const handleRemoveRepo = async (repoId: number) => {
-    
+  const handleRemoveRepo = async (repoId: number, portfolioRepoId?: number) => {
+    setDeletingRepoIds(prev => ({ ...prev, [repoId]: true }))
+
     try {
+      if (portfolioRepoId) {
+        const response = await fetch(`/api/portfolio/projects/${portfolioRepoId}`, {
+          method: "DELETE",
+        })
+        if (!response.ok) {
+          const data = await response.json().catch(() => ({}))
+          throw new Error(data?.error || "Failed to delete project")
+        }
+      }
+
       const newSelectedRepos = selectedRepos.filter(id => id !== repoId)
       const newDeployedUrls = { ...deployedUrls }
       delete newDeployedUrls[repoId]
-      
+
       onToggleRepo(repoId)
-      
-      // Remove from order
+
       setLocalRepoOrder(prev => {
         const newOrder = prev.filter(id => id !== repoId)
         onUpdateRepoOrder(newOrder)
         return newOrder
       })
-      
+
+      setDeployedUrls(newDeployedUrls)
+
       setCustomNames(prev => {
         const newNames = { ...prev }
         delete newNames[repoId]
@@ -412,8 +426,24 @@ export function ReposSection({
         delete newDescriptions[repoId]
         return newDescriptions
       })
+      setGithubUrls(prev => {
+        const next = { ...prev }
+        delete next[repoId]
+        return next
+      })
+      setLogoOverrides(prev => {
+        const next = { ...prev }
+        delete next[repoId]
+        return next
+      })
     } catch (error) {
       console.error("Error removing repository:", error)
+      toast.error(error instanceof Error ? error.message : "Failed to remove project")
+    } finally {
+      setDeletingRepoIds(prev => {
+        const { [repoId]: _removed, ...rest } = prev
+        return rest
+      })
     }
   }
 
@@ -696,19 +726,24 @@ export function ReposSection({
                           <div className="flex flex-col h-full px-3 py-2 relative">
 
                             {/* Delete Button - Appears on hover */}
-                            <motion.div
+                              <motion.div
                               className="absolute top-2 left-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
                               initial={{ opacity: 0 }}
                               whileHover={{ scale: 1.1 }}
                               whileTap={{ scale: 0.9 }}
                             >
                               <Button
-                                onClick={() => handleRemoveRepo(repo.id)}
+                                  onClick={() => handleRemoveRepo(repo.id, repo.portfolioRepositoryId)}
                                 variant="destructive"
                                 size="sm"
-                                className="h-7 w-7 p-0 rounded-full shadow-md hover:shadow-lg"
+                                  className="h-7 w-7 p-0 rounded-full shadow-md hover:shadow-lg"
+                                  disabled={Boolean(deletingRepoIds[repo.id])}
                               >
-                                <Trash2 className="h-3.5 w-3.5" />
+                                  {deletingRepoIds[repo.id] ? (
+                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                  ) : (
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                  )}
                               </Button>
                             </motion.div>
 
@@ -754,7 +789,12 @@ export function ReposSection({
                                       setEditInitial({ id: repo.id, url: url || '', name: customName || repo.name, description: customDescription || repo.description, logo: logoOverrides[repo.id] ?? repo.repository.logo })
                                       setIsEditOpen(true)
                                     }}>Edit Project</DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => handleRemoveRepo(repo.id)}>Remove</DropdownMenuItem>
+                                      <DropdownMenuItem
+                                        disabled={Boolean(deletingRepoIds[repo.id])}
+                                        onClick={() => handleRemoveRepo(repo.id, repo.portfolioRepositoryId)}
+                                      >
+                                        Remove
+                                      </DropdownMenuItem>
                                   </DropdownMenuContent>
                                 </DropdownMenu>
                               </div>
