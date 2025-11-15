@@ -60,6 +60,11 @@ export async function getPublicProjectPageData(
           technologies: true,
           updatedAt: true,
           createdAt: true,
+            projectCategory: true,
+            projectStatus: true,
+            projectRevenue: true,
+            projectMrr: true,
+            projectUsers: true,
           repository: {
             select: {
               id: true,
@@ -237,6 +242,11 @@ export async function getPublicProjectPageData(
       languages,
       createdAt: project.createdAt.toISOString(),
       updatedAt: project.updatedAt.toISOString(),
+        category: project.projectCategory || null,
+        status: project.projectStatus || null,
+        revenue: project.projectRevenue ?? null,
+        mrr: project.projectMrr ?? null,
+        users: project.projectUsers ?? null,
     },
     portfolio: {
       id: portfolio.id,

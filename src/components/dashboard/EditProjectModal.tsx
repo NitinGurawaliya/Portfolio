@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
+import { Label } from "@/components/ui/label"
 import { Link as LinkIcon, Loader2 } from "lucide-react"
 
 interface EditProjectModalProps {
@@ -15,6 +16,11 @@ interface EditProjectModalProps {
     name: string
     description: string
     logo?: string | null
+    category?: string | null
+    status?: string | null
+    revenue?: number | null
+    mrr?: number | null
+    users?: number | null
   }
   onSave: (payload: {
     id: number
@@ -22,6 +28,11 @@ interface EditProjectModalProps {
     name: string
     description: string
     logo?: string | null
+    category?: string | null
+    status?: string | null
+    revenue?: number | null
+    mrr?: number | null
+    users?: number | null
   }) => void
 }
 
@@ -30,6 +41,11 @@ export function EditProjectModal({ open, onOpenChange, initial, onSave }: EditPr
   const [name, setName] = useState(initial.name)
   const [description, setDescription] = useState(initial.description)
   const [logo, setLogo] = useState<string | null>(initial.logo || null)
+  const [category, setCategory] = useState(initial.category || "")
+  const [status, setStatus] = useState(initial.status || "")
+  const [revenue, setRevenue] = useState(initial.revenue ? String(initial.revenue) : "")
+  const [mrr, setMrr] = useState(initial.mrr ? String(initial.mrr) : "")
+  const [users, setUsers] = useState(initial.users ? String(initial.users) : "")
   const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
@@ -38,6 +54,11 @@ export function EditProjectModal({ open, onOpenChange, initial, onSave }: EditPr
     setName(initial.name)
     setDescription(initial.description)
     setLogo(initial.logo || null)
+    setCategory(initial.category || "")
+    setStatus(initial.status || "")
+    setRevenue(initial.revenue ? String(initial.revenue) : "")
+    setMrr(initial.mrr ? String(initial.mrr) : "")
+    setUsers(initial.users ? String(initial.users) : "")
   }, [open])
 
   // Debounced metadata fetch on URL change
@@ -65,6 +86,13 @@ export function EditProjectModal({ open, onOpenChange, initial, onSave }: EditPr
     return () => clearTimeout(t)
   }, [url, open])
 
+  const parseNumber = (value: string) => {
+    if (!value.trim()) return null
+    const parsed = Number(value)
+    if (!Number.isFinite(parsed) || parsed < 0) return null
+    return Math.round(parsed)
+  }
+
   if (!open) return null
 
   return (
@@ -90,7 +118,29 @@ export function EditProjectModal({ open, onOpenChange, initial, onSave }: EditPr
                 {isLoading && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-gray-400" />}
               </div>
               <Input value={name} onChange={e => setName(e.target.value)} placeholder="Name" className="h-11 rounded-lg" />
-              <Textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Description" className="rounded-lg min-h-[120px]" />
+                <Textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Description" className="rounded-lg min-h-[120px]" />
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs text-gray-500 mb-1 block">Category</Label>
+                    <Input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="e.g. SaaS" className="h-11 rounded-lg" />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-500 mb-1 block">Status</Label>
+                    <Input value={status} onChange={(e) => setStatus(e.target.value)} placeholder="e.g. Live" className="h-11 rounded-lg" />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-500 mb-1 block">Annual revenue ($)</Label>
+                    <Input type="number" min={0} value={revenue} onChange={(e) => setRevenue(e.target.value)} placeholder="e.g. 50000" className="h-11 rounded-lg" />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-500 mb-1 block">MRR ($)</Label>
+                    <Input type="number" min={0} value={mrr} onChange={(e) => setMrr(e.target.value)} placeholder="e.g. 4500" className="h-11 rounded-lg" />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-500 mb-1 block">Active users</Label>
+                    <Input type="number" min={0} value={users} onChange={(e) => setUsers(e.target.value)} placeholder="e.g. 1200" className="h-11 rounded-lg" />
+                  </div>
+                </div>
             </div>
 
             {/* Right: favicon/preview + uploader */}
@@ -128,7 +178,27 @@ export function EditProjectModal({ open, onOpenChange, initial, onSave }: EditPr
           <div className="px-6 pb-5 flex items-center justify-end gap-2">
             <div className="mr-auto text-xs text-gray-500">{isLoading ? 'Fetching metadata…' : ' '}</div>
             <Button variant="secondary" onClick={() => onOpenChange(false)} className="rounded-lg">Cancel</Button>
-            <Button onClick={() => { onSave({ id: initial.id, url, name, description, logo }); onOpenChange(false) }} disabled={isLoading || !name.trim() || !url.trim()} className="bg-black text-white rounded-lg disabled:opacity-60">Save changes</Button>
+              <Button
+                onClick={() => {
+                  onSave({
+                    id: initial.id,
+                    url,
+                    name,
+                    description,
+                    logo,
+                    category: category || null,
+                    status: status || null,
+                    revenue: parseNumber(revenue),
+                    mrr: parseNumber(mrr),
+                    users: parseNumber(users),
+                  })
+                  onOpenChange(false)
+                }}
+                disabled={isLoading || !name.trim() || !url.trim()}
+                className="bg-black text-white rounded-lg disabled:opacity-60"
+              >
+                Save changes
+              </Button>
           </div>
         </div>
       </div>

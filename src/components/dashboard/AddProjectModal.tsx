@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
+import { Label } from "@/components/ui/label"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Github, Link as LinkIcon, Search, Loader2 } from "lucide-react"
 
@@ -28,20 +29,37 @@ interface RepositoryLike {
   homepage?: string
 }
 
+export interface ProjectInsightsPayload {
+  category?: string | null
+  status?: string | null
+  revenue?: number | null
+  mrr?: number | null
+  users?: number | null
+}
+
 interface AddProjectModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   repositories: RepositoryLike[]
   onAddImportedProject: (project: RepositoryLike) => void
+  onCaptureInsights?: (repoId: number, insights: ProjectInsightsPayload) => void
 }
 
-export function AddProjectModal({ open, onOpenChange, repositories, onAddImportedProject }: AddProjectModalProps) {
+const CATEGORY_OPTIONS = ["SaaS", "AI/ML", "Developer Tool", "Marketing", "E-commerce", "Open Source", "Consumer", "Community"]
+const STATUS_OPTIONS = ["Building", "Live", "On Hold", "Sunsetting", "Idea"]
+
+export function AddProjectModal({ open, onOpenChange, repositories, onAddImportedProject, onCaptureInsights }: AddProjectModalProps) {
   const [projectUrl, setProjectUrl] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [favicon, setFavicon] = useState<string | null>(null)
   const [logo, setLogo] = useState<string | null>(null)
+  const [category, setCategory] = useState("")
+  const [status, setStatus] = useState("")
+  const [revenueInput, setRevenueInput] = useState("")
+  const [mrrInput, setMrrInput] = useState("")
+  const [usersInput, setUsersInput] = useState("")
 
   // Simple debounce for URL metadata fetch
   useEffect(() => {
@@ -78,6 +96,32 @@ export function AddProjectModal({ open, onOpenChange, repositories, onAddImporte
     onOpenChange(false)
   }
 
+  const parseNumberValue = (value: string) => {
+    if (!value.trim()) return null
+    const parsed = Number(value)
+    if (!Number.isFinite(parsed) || parsed < 0) return null
+    return Math.round(parsed)
+  }
+
+  const resetForm = () => {
+    setProjectUrl("")
+    setTitle("")
+    setDescription("")
+    setFavicon(null)
+    setLogo(null)
+    setCategory("")
+    setStatus("")
+    setRevenueInput("")
+    setMrrInput("")
+    setUsersInput("")
+  }
+
+  useEffect(() => {
+    if (!open) {
+      resetForm()
+    }
+  }, [open])
+
   const handleDone = () => {
     if (!title.trim() || !projectUrl.trim()) return
     const now = new Date().toISOString()
@@ -102,13 +146,17 @@ export function AddProjectModal({ open, onOpenChange, repositories, onAddImporte
       logo: logo || undefined,
     }
     onAddImportedProject(newProject)
+    const insights: ProjectInsightsPayload = {
+      category: category || null,
+      status: status || null,
+      revenue: parseNumberValue(revenueInput),
+      mrr: parseNumberValue(mrrInput),
+      users: parseNumberValue(usersInput),
+    }
+    onCaptureInsights?.(newProject.id, insights)
     onOpenChange(false)
     // reset
-    setProjectUrl("")
-    setTitle("")
-    setDescription("")
-    setFavicon(null)
-    setLogo(null)
+    resetForm()
   }
 
   if (!open) return null
@@ -172,7 +220,72 @@ export function AddProjectModal({ open, onOpenChange, repositories, onAddImporte
                   )}
               </div>
               <Input placeholder="Name" value={title} onChange={(e) => setTitle(e.target.value)} className="h-11 rounded-lg" />
-              <Textarea placeholder="Description" value={description} onChange={(e) => setDescription(e.target.value)} className="rounded-lg min-h-[120px]" />
+                <Textarea placeholder="Description" value={description} onChange={(e) => setDescription(e.target.value)} className="rounded-lg min-h-[120px]" />
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs text-gray-500 mb-1 block">Category</Label>
+                    <select
+                      value={category}
+                      onChange={(e) => setCategory(e.target.value)}
+                      className="h-11 w-full rounded-lg border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-gray-200"
+                    >
+                      <option value="">Select category</option>
+                      {CATEGORY_OPTIONS.map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-500 mb-1 block">Status</Label>
+                    <select
+                      value={status}
+                      onChange={(e) => setStatus(e.target.value)}
+                      className="h-11 w-full rounded-lg border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-gray-200"
+                    >
+                      <option value="">Select status</option>
+                      {STATUS_OPTIONS.map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-500 mb-1 block">Annual revenue ($)</Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={revenueInput}
+                      onChange={(e) => setRevenueInput(e.target.value)}
+                      placeholder="e.g. 50000"
+                      className="h-11 rounded-lg"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-500 mb-1 block">MRR ($)</Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={mrrInput}
+                      onChange={(e) => setMrrInput(e.target.value)}
+                      placeholder="e.g. 4500"
+                      className="h-11 rounded-lg"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-500 mb-1 block">Active users</Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={usersInput}
+                      onChange={(e) => setUsersInput(e.target.value)}
+                      placeholder="e.g. 1200"
+                      className="h-11 rounded-lg"
+                    />
+                  </div>
+                </div>
             </div>
 
             {/* Right column: visuals */}

@@ -108,6 +108,11 @@ export async function GET(req: NextRequest) {
             customDescription: true,
             displayOrder: true,
             isVisible: true,
+              projectCategory: true,
+              projectStatus: true,
+              projectRevenue: true,
+              projectMrr: true,
+              projectUsers: true,
             repository: {
               select: {
                 id: true,

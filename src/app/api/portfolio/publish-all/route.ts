@@ -11,6 +11,18 @@ const normalizeValue = (value?: string | null) => {
   return String(value).trim()
 }
 
+const normalizeOptionalString = (value?: string | null) => {
+  const normalized = normalizeValue(value)
+  return normalized.length > 0 ? normalized : null
+}
+
+const normalizeNumericMetric = (value: any): number | null => {
+  if (value === null || value === undefined || value === "") return null
+  const parsed = Number(value)
+  if (!Number.isFinite(parsed)) return null
+  return Math.max(0, Math.trunc(parsed))
+}
+
 const safeDate = (value: any): Date | null => {
   if (!value) return null
   const date = new Date(value)
@@ -109,7 +121,12 @@ export async function POST(req: NextRequest) {
       experiences,
       backgroundColor,
       backgroundPattern,
-      cvUrl
+        cvUrl,
+        projectCategories,
+        projectStatuses,
+        projectRevenues,
+        projectMrrs,
+        projectUsers,
     } = body
 
     devLog("👤 User ID:", userId)
@@ -243,6 +260,11 @@ export async function POST(req: NextRequest) {
     const safeDeployedUrls = deployedUrls || {}
     const safeCustomNames = customNames || {}
     const safeCustomDescriptions = customDescriptions || {}
+  const safeProjectCategories = projectCategories || {}
+  const safeProjectStatuses = projectStatuses || {}
+  const safeProjectRevenues = projectRevenues || {}
+  const safeProjectMrrs = projectMrrs || {}
+  const safeProjectUsers = projectUsers || {}
 
     const incomingRepoPayload = Array.isArray(repositories) ? repositories : []
     const selectedRepoPayload = incomingRepoPayload.filter((repo) => {
@@ -277,6 +299,31 @@ export async function POST(req: NextRequest) {
       return existingValue !== (incomingValue || null)
     })
 
+  const projectInsightsChanged = selectedRepoPayload.some((repo) => {
+    const repoId = normalizeRepoId(repo?.id)
+    if (repoId === null) return false
+    const existing = existingRepoMap.get(repoId)
+    const existingCategory = existing?.projectCategory || null
+    const existingStatus = existing?.projectStatus || null
+    const existingRevenue = existing?.projectRevenue ?? null
+    const existingMrr = existing?.projectMrr ?? null
+    const existingUsers = existing?.projectUsers ?? null
+
+    const incomingCategory = normalizeOptionalString(safeProjectCategories[repoId])
+    const incomingStatus = normalizeOptionalString(safeProjectStatuses[repoId])
+    const incomingRevenue = normalizeNumericMetric(safeProjectRevenues[repoId])
+    const incomingMrr = normalizeNumericMetric(safeProjectMrrs[repoId])
+    const incomingUsers = normalizeNumericMetric(safeProjectUsers[repoId])
+
+    return (
+      (existingCategory || null) !== (incomingCategory || null) ||
+      (existingStatus || null) !== (incomingStatus || null) ||
+      (existingRevenue ?? null) !== (incomingRevenue ?? null) ||
+      (existingMrr ?? null) !== (incomingMrr ?? null) ||
+      (existingUsers ?? null) !== (incomingUsers ?? null)
+    )
+  })
+
     const hasLogoOverrides = logoOverrides && Object.keys(logoOverrides).length > 0
 
     const repoMetadataPayloadChanged = selectedRepoPayload.some((repo) => {
@@ -290,7 +337,7 @@ export async function POST(req: NextRequest) {
       return logoChanged || faviconChanged
     })
 
-    const shouldProcessRepositories = repoIdsDiffer || orderDiffers || deployedChanged || customNameChanged || customDescriptionChanged || hasLogoOverrides || repoMetadataPayloadChanged
+  const shouldProcessRepositories = repoIdsDiffer || orderDiffers || deployedChanged || customNameChanged || customDescriptionChanged || hasLogoOverrides || repoMetadataPayloadChanged || projectInsightsChanged
 
     // Only process repositories if selectedRepos has changed or repo data was modified
     if (shouldProcessRepositories && incomingSelectedRepoIds.length > 0 && selectedRepoPayload.length > 0) {
@@ -549,9 +596,14 @@ export async function POST(req: NextRequest) {
           customDescription: string | null
           displayOrder: number
           isVisible: boolean
+          projectCategory: string | null
+          projectStatus: string | null
+          projectRevenue: number | null
+          projectMrr: number | null
+          projectUsers: number | null
         }
 
-        const portfolioRepos = orderToUse.map((githubIdStr: string, index: number) => {
+          const portfolioRepos = orderToUse.map((githubIdStr: string, index: number) => {
           const repo = repoMap.get(githubIdStr)
           if (!repo) {
             devLog(`⚠️ Repository with GitHub ID ${githubIdStr} not found in repoMap`)
@@ -570,7 +622,12 @@ export async function POST(req: NextRequest) {
             customName: safeCustomNames[githubIdStr] || null,
             customDescription: safeCustomDescriptions[githubIdStr] || null,
             displayOrder: index + 1,
-            isVisible: true,
+              isVisible: true,
+              projectCategory: normalizeOptionalString(safeProjectCategories[githubIdStr]),
+              projectStatus: normalizeOptionalString(safeProjectStatuses[githubIdStr]),
+              projectRevenue: normalizeNumericMetric(safeProjectRevenues[githubIdStr]),
+              projectMrr: normalizeNumericMetric(safeProjectMrrs[githubIdStr]),
+              projectUsers: normalizeNumericMetric(safeProjectUsers[githubIdStr]),
           }
         }).filter((repoData): repoData is PortfolioRepoPayload => Boolean(repoData))
 
@@ -586,6 +643,11 @@ export async function POST(req: NextRequest) {
               customDescription: repoData.customDescription as string | null,
               displayOrder: repoData.displayOrder as number,
               isVisible: repoData.isVisible as boolean,
+                projectCategory: repoData.projectCategory,
+                projectStatus: repoData.projectStatus,
+                projectRevenue: repoData.projectRevenue,
+                projectMrr: repoData.projectMrr,
+                projectUsers: repoData.projectUsers,
             }
 
             const needsUpdate =
@@ -593,7 +655,12 @@ export async function POST(req: NextRequest) {
               (existing.customName || null) !== (portfolioRepoUpdate.customName || null) ||
               (existing.customDescription || null) !== (portfolioRepoUpdate.customDescription || null) ||
               (existing.displayOrder || null) !== (portfolioRepoUpdate.displayOrder || null) ||
-              existing.isVisible !== portfolioRepoUpdate.isVisible
+                existing.isVisible !== portfolioRepoUpdate.isVisible ||
+                (existing.projectCategory || null) !== (portfolioRepoUpdate.projectCategory || null) ||
+                (existing.projectStatus || null) !== (portfolioRepoUpdate.projectStatus || null) ||
+                (existing.projectRevenue ?? null) !== (portfolioRepoUpdate.projectRevenue ?? null) ||
+                (existing.projectMrr ?? null) !== (portfolioRepoUpdate.projectMrr ?? null) ||
+                (existing.projectUsers ?? null) !== (portfolioRepoUpdate.projectUsers ?? null)
 
             if (needsUpdate) {
               await tx.portfolioRepository.update({
@@ -613,7 +680,12 @@ export async function POST(req: NextRequest) {
                 customName: repoData.customName,
                 customDescription: repoData.customDescription,
                 displayOrder: repoData.displayOrder,
-                isVisible: repoData.isVisible,
+                  isVisible: repoData.isVisible,
+                  projectCategory: repoData.projectCategory,
+                  projectStatus: repoData.projectStatus,
+                  projectRevenue: repoData.projectRevenue,
+                  projectMrr: repoData.projectMrr,
+                  projectUsers: repoData.projectUsers,
               }
             })
             devLog(`✅ Created new portfolio repo for repositoryId ${repoData.repositoryId}`)

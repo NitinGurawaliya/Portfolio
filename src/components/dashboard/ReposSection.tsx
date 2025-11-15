@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, Dispatch, SetStateAction } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -34,7 +34,7 @@ import {
   BarChart3
 } from "lucide-react"
 import { IndividualProjectChart } from "@/components/IndividualProjectChart"
-import { AddProjectModal } from "./AddProjectModal"
+import { AddProjectModal, ProjectInsightsPayload } from "./AddProjectModal"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -113,12 +113,22 @@ interface ReposSectionProps {
   customNames?: Record<number, string>
   customDescriptions?: Record<number, string>
   githubUrls?: Record<number, string>
+  projectCategories?: Record<number, string>
+  projectStatuses?: Record<number, string>
+  projectRevenues?: Record<number, number>
+  projectMrrs?: Record<number, number>
+  projectUsers?: Record<number, number>
   repoOrder?: number[]
   onToggleRepo: (repoId: number) => void
   onUpdateDeployedUrl: (repoId: number, url: string) => void
   onUpdateCustomName: (repoId: number, name: string) => void
   onUpdateCustomDescription: (repoId: number, description: string) => void
   onUpdateGithubUrl?: (repoId: number, url: string) => void
+  onUpdateProjectCategory?: (repoId: number, category: string | null) => void
+  onUpdateProjectStatus?: (repoId: number, status: string | null) => void
+  onUpdateProjectRevenue?: (repoId: number, value: number | null) => void
+  onUpdateProjectMrr?: (repoId: number, value: number | null) => void
+  onUpdateProjectUsers?: (repoId: number, value: number | null) => void
   onUpdateRepoOrder: (newOrder: number[]) => void
   onAddImportedProject?: (project: Repository) => void
   analytics?: any
@@ -136,12 +146,22 @@ export function ReposSection({
   customNames: initialCustomNames,
   customDescriptions: initialCustomDescriptions,
   githubUrls: initialGithubUrls,
+  projectCategories: initialProjectCategories,
+  projectStatuses: initialProjectStatuses,
+  projectRevenues: initialProjectRevenues,
+  projectMrrs: initialProjectMrrs,
+  projectUsers: initialProjectUsers,
   repoOrder: initialRepoOrder,
   onToggleRepo,
   onUpdateDeployedUrl,
   onUpdateCustomName,
   onUpdateCustomDescription,
   onUpdateGithubUrl,
+  onUpdateProjectCategory,
+  onUpdateProjectStatus,
+  onUpdateProjectRevenue,
+  onUpdateProjectMrr,
+  onUpdateProjectUsers,
   onUpdateRepoOrder,
   onAddImportedProject,
   analytics,
@@ -158,15 +178,92 @@ export function ReposSection({
   const [editingField, setEditingField] = useState<string | null>(null)
   const [customNames, setCustomNames] = useState<Record<number, string>>(initialCustomNames || {})
   const [customDescriptions, setCustomDescriptions] = useState<Record<number, string>>(initialCustomDescriptions || {})
+  const [projectCategoriesState, setProjectCategoriesState] = useState<Record<number, string>>(initialProjectCategories || {})
+  const [projectStatusesState, setProjectStatusesState] = useState<Record<number, string>>(initialProjectStatuses || {})
+  const [projectRevenuesState, setProjectRevenuesState] = useState<Record<number, number>>(initialProjectRevenues || {})
+  const [projectMrrsState, setProjectMrrsState] = useState<Record<number, number>>(initialProjectMrrs || {})
+  const [projectUsersState, setProjectUsersState] = useState<Record<number, number>>(initialProjectUsers || {})
   const [customTechnologies, setCustomTechnologies] = useState<Record<number, string>>({})
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [projectUrl, setProjectUrl] = useState("")
   const [isImportingUrl, setIsImportingUrl] = useState(false)
   const [isAddProjectOpen, setIsAddProjectOpen] = useState(false)
   const [isEditOpen, setIsEditOpen] = useState(false)
-  const [editInitial, setEditInitial] = useState<{ id: number; url: string; name: string; description: string; logo?: string | null } | null>(null)
+  const [editInitial, setEditInitial] = useState<{
+    id: number
+    url: string
+    name: string
+    description: string
+    logo?: string | null
+    category?: string | null
+    status?: string | null
+    revenue?: number | null
+    mrr?: number | null
+    users?: number | null
+  } | null>(null)
   const [logoOverrides, setLogoOverrides] = useState<Record<number, string>>(initialLogoOverrides || {})
   const [deletingRepoIds, setDeletingRepoIds] = useState<Record<number, boolean>>({})
+
+  const updateCategory = (repoId: number, value: string | null) => {
+    setProjectCategoriesState(prev => {
+      const next = { ...prev }
+      if (!value) {
+        delete next[repoId]
+      } else {
+        next[repoId] = value
+      }
+      return next
+    })
+    onUpdateProjectCategory?.(repoId, value && value.trim() ? value.trim() : null)
+  }
+
+  const updateStatus = (repoId: number, value: string | null) => {
+    setProjectStatusesState(prev => {
+      const next = { ...prev }
+      if (!value) {
+        delete next[repoId]
+      } else {
+        next[repoId] = value
+      }
+      return next
+    })
+    onUpdateProjectStatus?.(repoId, value && value.trim() ? value.trim() : null)
+  }
+
+  const updateNumericInsight = (
+    repoId: number,
+    value: number | null,
+    setter: Dispatch<SetStateAction<Record<number, number>>>,
+    callback?: (repoId: number, value: number | null) => void
+  ) => {
+    setter(prev => {
+      const next = { ...prev }
+      if (value === null || value === undefined || Number.isNaN(value)) {
+        delete next[repoId]
+      } else {
+        next[repoId] = value
+      }
+      return next
+    })
+    callback?.(repoId, value ?? null)
+  }
+
+  const updateRevenue = (repoId: number, value: number | null) =>
+    updateNumericInsight(repoId, value, setProjectRevenuesState, onUpdateProjectRevenue)
+
+  const updateMrr = (repoId: number, value: number | null) =>
+    updateNumericInsight(repoId, value, setProjectMrrsState, onUpdateProjectMrr)
+
+  const updateUsers = (repoId: number, value: number | null) =>
+    updateNumericInsight(repoId, value, setProjectUsersState, onUpdateProjectUsers)
+
+  const handleCapturedInsights = (repoId: number, insights: ProjectInsightsPayload) => {
+    updateCategory(repoId, insights.category ?? null)
+    updateStatus(repoId, insights.status ?? null)
+    updateRevenue(repoId, insights.revenue ?? null)
+    updateMrr(repoId, insights.mrr ?? null)
+    updateUsers(repoId, insights.users ?? null)
+  }
   
   // Sync logoOverrides from parent
   useEffect(() => {
@@ -626,6 +723,13 @@ export function ReposSection({
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
   }
 
+  const formatMoney = (value?: number | null) => {
+    if (value === null || value === undefined) return null
+    if (value >= 1000000) return `$${(value / 1000000).toFixed(1)}M`
+    if (value >= 1000) return `$${(value / 1000).toFixed(1)}k`
+    return `$${value.toLocaleString()}`
+  }
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -701,10 +805,19 @@ export function ReposSection({
             
               <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 xl:grid-cols-3 md:gap-3">
               <AnimatePresence mode="popLayout">
-                {selectedRepositories.map((repo, index) => {
+                  {selectedRepositories.map((repo, index) => {
                   const isEditing = editingRepo === repo.id
                   const customName = customNames[repo.id] || repo.name
-                  const customDescription = customDescriptions[repo.id] || repo.description
+                    const customDescription = customDescriptions[repo.id] || repo.description
+                    const categoryValue = projectCategoriesState[repo.id]
+                    const statusValue = projectStatusesState[repo.id]
+                    const revenueValue = projectRevenuesState[repo.id]
+                    const mrrValue = projectMrrsState[repo.id]
+                    const usersValue = projectUsersState[repo.id]
+                    const hasRevenue = typeof revenueValue === "number"
+                    const hasMrr = typeof mrrValue === "number"
+                    const hasUsers = typeof usersValue === "number"
+                    const shouldShowInsights = Boolean(categoryValue || statusValue || hasRevenue || hasMrr || hasUsers)
                   
                   return (
                     <motion.div
@@ -761,9 +874,38 @@ export function ReposSection({
                                   <h3 className="text-[13px] font-semibold text-gray-900 truncate dark:text-white">
                                     {customName}
                                   </h3>
-                                  <p className="text-[11px] text-gray-500 truncate">
-                                    {customDescription}
-                                  </p>
+                                    <p className="text-[11px] text-gray-500 truncate">
+                                      {customDescription}
+                                    </p>
+                                    {shouldShowInsights && (
+                                      <div className="flex flex-wrap gap-1.5 mt-1.5">
+                                        {categoryValue && (
+                                          <Badge variant="secondary" className="text-[10px] uppercase tracking-wide rounded-full bg-orange-500/10 text-orange-600 border border-orange-200 px-2 py-0.5">
+                                            {categoryValue}
+                                          </Badge>
+                                        )}
+                                        {statusValue && (
+                                          <Badge variant="secondary" className="text-[10px] uppercase tracking-wide rounded-full bg-green-500/10 text-green-600 border border-green-200 px-2 py-0.5">
+                                            {statusValue}
+                                          </Badge>
+                                        )}
+                                        {hasRevenue && (
+                                          <Badge variant="outline" className="text-[10px] rounded-full px-2 py-0.5">
+                                            Rev {formatMoney(revenueValue)}
+                                          </Badge>
+                                        )}
+                                        {hasMrr && (
+                                          <Badge variant="outline" className="text-[10px] rounded-full px-2 py-0.5">
+                                            MRR {formatMoney(mrrValue)}
+                                          </Badge>
+                                        )}
+                                        {hasUsers && (
+                                          <Badge variant="outline" className="text-[10px] rounded-full px-2 py-0.5">
+                                            {usersValue.toLocaleString()} users
+                                          </Badge>
+                                        )}
+                                      </div>
+                                    )}
                                 </div>
                               </div>
                               <div className="flex items-start gap-2 flex-shrink-0">
@@ -786,7 +928,18 @@ export function ReposSection({
                                   <DropdownMenuContent className="w-36">
                                     <DropdownMenuItem onClick={() => {
                                       const url = deployedUrls[repo.id] || repo.htmlUrl
-                                      setEditInitial({ id: repo.id, url: url || '', name: customName || repo.name, description: customDescription || repo.description, logo: logoOverrides[repo.id] ?? repo.repository.logo })
+                                        setEditInitial({
+                                          id: repo.id,
+                                          url: url || '',
+                                          name: customName || repo.name,
+                                          description: customDescription || repo.description,
+                                          logo: logoOverrides[repo.id] ?? repo.repository.logo,
+                                          category: projectCategoriesState[repo.id] || "",
+                                          status: projectStatusesState[repo.id] || "",
+                                          revenue: projectRevenuesState[repo.id] ?? null,
+                                          mrr: projectMrrsState[repo.id] ?? null,
+                                          users: projectUsersState[repo.id] ?? null,
+                                        })
                                       setIsEditOpen(true)
                                     }}>Edit Project</DropdownMenuItem>
                                       <DropdownMenuItem
@@ -933,7 +1086,8 @@ export function ReposSection({
         open={isAddProjectOpen}
         onOpenChange={setIsAddProjectOpen}
         repositories={repositories}
-        onAddImportedProject={(p) => onAddImportedProject?.(p as any)}
+          onAddImportedProject={(p) => onAddImportedProject?.(p as any)}
+          onCaptureInsights={handleCapturedInsights}
       />
 
       {editInitial && (
@@ -959,6 +1113,11 @@ export function ReposSection({
             onUpdateDeployedUrl(payload.id, payload.url)
             onUpdateCustomName(payload.id, payload.name)
             onUpdateCustomDescription(payload.id, payload.description)
+              updateCategory(payload.id, payload.category ?? null)
+              updateStatus(payload.id, payload.status ?? null)
+              updateRevenue(payload.id, payload.revenue ?? null)
+              updateMrr(payload.id, payload.mrr ?? null)
+              updateUsers(payload.id, payload.users ?? null)
             // Update logo override in local state
             if (payload.logo) {
               setLogoOverrides(prev => ({ ...prev, [payload.id]: payload.logo! }))

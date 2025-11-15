@@ -19,6 +19,11 @@ export type FeedProject = {
   hasUpvoted: boolean
   createdAt: string
   tags?: string[]
+  category?: string | null
+  status?: string | null
+  revenue?: number | null
+  mrr?: number | null
+  users?: number | null
   author: {
     id: number | null
     name: string
@@ -44,6 +49,12 @@ export function ProjectFeedCard({ project, onToggleUpvote, upvotePending = false
       : null
   const portfolioHref = project.author.portfolioSlug ? `/${project.author.portfolioSlug}` : undefined
   const description = project.description?.trim() ?? ""
+  const formatCurrency = (value?: number | null) => {
+    if (value === null || value === undefined) return null
+    if (value >= 1000000) return `$${(value / 1000000).toFixed(1)}M`
+    if (value >= 1000) return `$${(value / 1000).toFixed(1)}k`
+    return `$${value.toLocaleString()}`
+  }
 
   const isInteractiveElement = (target: EventTarget | null) => {
     if (!(target instanceof HTMLElement)) return false
@@ -113,6 +124,35 @@ export function ProjectFeedCard({ project, onToggleUpvote, upvotePending = false
       {description && (
         <p className="mt-3 text-[13px] leading-relaxed text-muted-foreground sm:text-[14.5px]">{description}</p>
       )}
+        {(project.category || project.status || project.revenue || project.mrr || project.users) && (
+          <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-muted-foreground sm:text-xs">
+            {project.category && (
+              <span className="rounded-full bg-orange-500/10 px-2 py-0.5 font-semibold text-orange-600">
+                {project.category}
+              </span>
+            )}
+            {project.status && (
+              <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 font-semibold text-emerald-600">
+                {project.status}
+              </span>
+            )}
+            {typeof project.revenue === "number" && (
+              <span className="rounded-full border border-border/60 px-2 py-0.5 font-semibold text-foreground">
+                Rev {formatCurrency(project.revenue)}
+              </span>
+            )}
+            {typeof project.mrr === "number" && (
+              <span className="rounded-full border border-border/60 px-2 py-0.5 font-semibold text-foreground">
+                MRR {formatCurrency(project.mrr)}
+              </span>
+            )}
+            {typeof project.users === "number" && (
+              <span className="rounded-full border border-border/60 px-2 py-0.5 font-semibold text-foreground">
+                {project.users.toLocaleString()} users
+              </span>
+            )}
+          </div>
+        )}
 
       <div className="mt-4 flex items-center justify-between gap-3 text-[11px] text-muted-foreground sm:text-xs">
         <div className="flex min-w-0 items-center gap-2 sm:gap-4">

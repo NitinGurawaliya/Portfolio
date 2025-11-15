@@ -34,6 +34,13 @@ const formatNumber = (value: number) => {
   return value.toString()
 }
 
+const formatCurrency = (value?: number | null) => {
+  if (value === null || value === undefined) return null
+  if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(1)}M`
+  if (value >= 1_000) return `$${(value / 1_000).toFixed(1)}k`
+  return `$${value.toLocaleString()}`
+}
+
 const formatDate = (iso: string) => {
   const date = new Date(iso)
   return date.toLocaleDateString(undefined, {
@@ -397,6 +404,35 @@ export default function ProjectPageClient({
                 }}
               />
             ) : null}
+              {(data.project.category || data.project.status || data.project.revenue || data.project.mrr || data.project.users) && (
+                <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold text-slate-600">
+                  {data.project.category && (
+                    <span className="rounded-full bg-orange-50 px-3 py-1 text-orange-700 border border-orange-200">
+                      {data.project.category}
+                    </span>
+                  )}
+                  {data.project.status && (
+                    <span className="rounded-full bg-emerald-50 px-3 py-1 text-emerald-700 border border-emerald-200">
+                      {data.project.status}
+                    </span>
+                  )}
+                  {typeof data.project.revenue === "number" && (
+                    <span className="rounded-full border border-slate-200 px-3 py-1 text-slate-700">
+                      Rev {formatCurrency(data.project.revenue)}
+                    </span>
+                  )}
+                  {typeof data.project.mrr === "number" && (
+                    <span className="rounded-full border border-slate-200 px-3 py-1 text-slate-700">
+                      MRR {formatCurrency(data.project.mrr)}
+                    </span>
+                  )}
+                  {typeof data.project.users === "number" && (
+                    <span className="rounded-full border border-slate-200 px-3 py-1 text-slate-700">
+                      {data.project.users.toLocaleString()} users
+                    </span>
+                  )}
+                </div>
+              )}
           </div>
         </section>
 

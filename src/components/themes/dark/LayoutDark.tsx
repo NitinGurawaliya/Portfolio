@@ -13,6 +13,13 @@ import { trackProjectClick } from "@/lib/analytics-utils"
 import { getProjectSlugMap } from "@/lib/project-slug"
 import { truncateWords } from "@/lib/text"
 
+const formatCurrency = (value?: number | null) => {
+  if (value === null || value === undefined) return null
+  if (value >= 1000000) return `$${(value / 1000000).toFixed(1)}M`
+  if (value >= 1000) return `$${(value / 1000).toFixed(1)}k`
+  return `$${value.toLocaleString()}`
+}
+
 interface ThemeConfig {
   name: string
   colors: {
@@ -488,6 +495,35 @@ export default function LayoutDark({ theme, portfolio }: LayoutDarkProps) {
                                     {descriptionText}
                                   </p>
                                 )}
+                                  {(repo.projectCategory || repo.projectStatus || typeof repo.projectRevenue === "number" || typeof repo.projectMrr === "number" || typeof repo.projectUsers === "number") && (
+                                    <div className="flex flex-wrap gap-2 mb-3">
+                                      {repo.projectCategory && (
+                                        <span className="text-xs font-semibold rounded-full px-2 py-0.5 bg-orange-500/10 text-orange-300 border border-orange-500/30">
+                                          {repo.projectCategory}
+                                        </span>
+                                      )}
+                                      {repo.projectStatus && (
+                                        <span className="text-xs font-semibold rounded-full px-2 py-0.5 bg-emerald-500/10 text-emerald-200 border border-emerald-400/30">
+                                          {repo.projectStatus}
+                                        </span>
+                                      )}
+                                      {typeof repo.projectRevenue === "number" && (
+                                        <span className="text-xs font-semibold rounded-full px-2 py-0.5 border border-white/20 text-white/80">
+                                          Rev {formatCurrency(repo.projectRevenue)}
+                                        </span>
+                                      )}
+                                      {typeof repo.projectMrr === "number" && (
+                                        <span className="text-xs font-semibold rounded-full px-2 py-0.5 border border-white/20 text-white/80">
+                                          MRR {formatCurrency(repo.projectMrr)}
+                                        </span>
+                                      )}
+                                      {typeof repo.projectUsers === "number" && (
+                                        <span className="text-xs font-semibold rounded-full px-2 py-0.5 border border-white/20 text-white/80">
+                                          {repo.projectUsers.toLocaleString()} users
+                                        </span>
+                                      )}
+                                    </div>
+                                  )}
                             </div>
                             <motion.button
                               onClick={(e) => {

@@ -267,15 +267,20 @@ export async function GET(req: NextRequest) {
         experiences: {
           orderBy: { createdAt: 'desc' }
         },
-        repositories: {
-          select: {
-            id: true,
-            deployedUrl: true,
-            customName: true,
-            customDescription: true,
-            displayOrder: true,
-            isVisible: true,
-            repository: {
+            repositories: {
+              select: {
+                id: true,
+                deployedUrl: true,
+                customName: true,
+                customDescription: true,
+                displayOrder: true,
+                isVisible: true,
+                projectCategory: true,
+                projectStatus: true,
+                projectRevenue: true,
+                projectMrr: true,
+                projectUsers: true,
+                repository: {
               select: {
                 id: true,
                 githubId: true,
@@ -376,6 +381,11 @@ export async function GET(req: NextRequest) {
               customDescription: true,
               displayOrder: true,
               isVisible: true,
+                projectCategory: true,
+                projectStatus: true,
+                projectRevenue: true,
+                projectMrr: true,
+                projectUsers: true,
               repository: {
                 select: {
                   id: true,

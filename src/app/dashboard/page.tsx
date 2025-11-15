@@ -60,6 +60,11 @@ export default function DashboardPage() {
     portfolio.setCustomNames,
     portfolio.setCustomDescriptions,
     portfolio.setGithubUrls,
+    portfolio.setProjectCategories,
+    portfolio.setProjectStatuses,
+    portfolio.setProjectRevenues,
+    portfolio.setProjectMrrs,
+    portfolio.setProjectUsers,
     portfolio.setImportedProjects,
     portfolio.setRepoOrder,
     portfolio.setSelectedTheme,
@@ -455,6 +460,11 @@ export default function DashboardPage() {
         customNames: portfolio.customNames,
         customDescriptions: portfolio.customDescriptions,
         githubUrls: portfolio.githubUrls,
+          projectCategories: portfolio.projectCategories,
+          projectStatuses: portfolio.projectStatuses,
+          projectRevenues: portfolio.projectRevenues,
+          projectMrrs: portfolio.projectMrrs,
+          projectUsers: portfolio.projectUsers,
         selectedTheme: portfolio.selectedTheme,
         repoOrder: portfolio.repoOrder,
         repositories: allRepositories,
@@ -603,12 +613,22 @@ export default function DashboardPage() {
               customNames={portfolio.customNames}
               customDescriptions={portfolio.customDescriptions}
               githubUrls={portfolio.githubUrls}
+                projectCategories={portfolio.projectCategories}
+                projectStatuses={portfolio.projectStatuses}
+                projectRevenues={portfolio.projectRevenues}
+                projectMrrs={portfolio.projectMrrs}
+                projectUsers={portfolio.projectUsers}
               repoOrder={portfolio.repoOrder}
               onToggleRepo={handlers.handleToggleRepo}
               onUpdateDeployedUrl={handlers.handleUpdateDeployedUrl}
               onUpdateCustomName={handlers.handleUpdateCustomName}
               onUpdateCustomDescription={handlers.handleUpdateCustomDescription}
               onUpdateGithubUrl={handlers.handleUpdateGithubUrl}
+                onUpdateProjectCategory={handlers.handleUpdateProjectCategory}
+                onUpdateProjectStatus={handlers.handleUpdateProjectStatus}
+                onUpdateProjectRevenue={handlers.handleUpdateProjectRevenue}
+                onUpdateProjectMrr={handlers.handleUpdateProjectMrr}
+                onUpdateProjectUsers={handlers.handleUpdateProjectUsers}
               onUpdateRepoOrder={handlers.handleUpdateRepoOrder}
               onAddImportedProject={handlers.handleAddImportedProject}
               analytics={portfolio.analytics}

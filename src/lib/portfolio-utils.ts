@@ -89,6 +89,11 @@ export const mapPortfolioRepositories = (portfolioRepos: any[]) => {
   const names: Record<number, string> = {}
   const descriptions: Record<number, string> = {}
   const githubUrls: Record<number, string> = {}
+  const categories: Record<number, string> = {}
+  const statuses: Record<number, string> = {}
+  const revenues: Record<number, number> = {}
+  const mrrs: Record<number, number> = {}
+  const users: Record<number, number> = {}
   
   portfolioRepos.forEach((repo: any) => {
     const githubId = parseInt(repo.repository.githubId)
@@ -105,9 +110,24 @@ export const mapPortfolioRepositories = (portfolioRepos: any[]) => {
     if (repo.repository.githubUrl) {
       githubUrls[githubId] = repo.repository.githubUrl
     }
+    if (repo.projectCategory) {
+      categories[githubId] = repo.projectCategory
+    }
+    if (repo.projectStatus) {
+      statuses[githubId] = repo.projectStatus
+    }
+    if (typeof repo.projectRevenue === "number") {
+      revenues[githubId] = repo.projectRevenue
+    }
+    if (typeof repo.projectMrr === "number") {
+      mrrs[githubId] = repo.projectMrr
+    }
+    if (typeof repo.projectUsers === "number") {
+      users[githubId] = repo.projectUsers
+    }
   })
   
-  return { urls, names, descriptions, githubUrls }
+  return { urls, names, descriptions, githubUrls, categories, statuses, revenues, mrrs, users }
 }
 
 /**
@@ -160,6 +180,11 @@ export const buildLivePortfolio = (
   selectedTheme: string,
   customNames: Record<number, string>,
   customDescriptions: Record<number, string>,
+  projectCategories: Record<number, string> = {},
+  projectStatuses: Record<number, string> = {},
+  projectRevenues: Record<number, number> = {},
+  projectMrrs: Record<number, number> = {},
+  projectUsers: Record<number, number> = {},
   repoOrder: number[],
   backgroundColor?: string | null,
   backgroundPattern?: string | null
@@ -200,6 +225,11 @@ export const buildLivePortfolio = (
     isVisible: true,
     customName: customNames[repo.id] || null,
     customDescription: customDescriptions[repo.id] || null,
+    projectCategory: projectCategories[repo.id] || null,
+    projectStatus: projectStatuses[repo.id] || null,
+    projectRevenue: projectRevenues[repo.id] ?? null,
+    projectMrr: projectMrrs[repo.id] ?? null,
+    projectUsers: projectUsers[repo.id] ?? null,
     repository: {
       id: repo.githubId || repo.id, // Use GitHub ID if available, otherwise use repo.id (which should be GitHub ID from formatImportedProjects)
       githubId: repo.githubId || repo.id, // Add GitHub ID
