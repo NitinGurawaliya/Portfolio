@@ -59,6 +59,8 @@ export function WallOfFameClient({ portfolios, loading = false, error = null }: 
     )
   }
 
+  const visiblePortfolios = portfolios.slice(0, 9)
+
   return (
     <section className="py-16 sm:py-20 lg:py-24">
       <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
@@ -70,45 +72,33 @@ export function WallOfFameClient({ portfolios, loading = false, error = null }: 
             </div>
             <h2 className="mb-3 text-3xl font-semibold tracking-tight text-balance sm:text-4xl">Builders on display</h2>
             <p className="text-sm text-muted-foreground sm:text-base">
-              सभी लाइव पोर्टफोलियो — swipe करें और किसी भी क्रिएटर के पेज पर सीधे जाएँ।
+              सभी लाइव पोर्टफोलियो — तीन कतारों में देखें और तुरंत प्रोफ़ाइल खोलें।
             </p>
           </motion.div>
         </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="relative"
-        >
-          <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {portfolios.map((portfolio) => (
-              <Link
-                href={portfolio.portfolioUrl}
-                key={portfolio.id}
-                className="min-w-[180px] snap-start sm:min-w-[220px]"
-                target="_blank"
-              >
-                <motion.article
-                  whileHover={{ y: -4, scale: 1.02 }}
-                  className="rounded-2xl bg-gradient-to-br from-neutral-900 via-neutral-800 to-neutral-900 p-4 text-white shadow-lg transition"
-                >
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {visiblePortfolios.map((portfolio) => (
+              <Link key={portfolio.id} href={portfolio.portfolioUrl} target="_blank" className="block h-full">
+                <article className="flex h-full flex-col rounded-2xl border border-gray-200 bg-white p-4 text-gray-900 transition hover:border-gray-300">
                   <div className="flex items-center gap-3">
-                    <Avatar className="h-12 w-12 border border-white/20">
+                    <Avatar className="h-12 w-12 border-2 border-gray-600">
                       <AvatarImage src={portfolio.profilePic ?? undefined} alt={portfolio.displayName} />
-                      <AvatarFallback className="bg-white/10 text-white">
+                      <AvatarFallback className="bg-gray-50 text-gray-900">
                         {portfolio.displayName.charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     <div className="min-w-0">
                       <p className="text-base font-semibold leading-tight">{portfolio.displayName}</p>
-                      <p className="text-xs text-white/70">@{portfolio.username}</p>
-                      <p className="text-[11px] text-white/60">
-                        {portfolio.projectsCount === 1 ? "1 project" : `${portfolio.projectsCount} projects`}
-                      </p>
+                      <p className="text-xs text-gray-500">@{portfolio.username}</p>
                     </div>
                   </div>
-                </motion.article>
+                  <div className="mt-4 flex items-center justify-between text-sm text-gray-600">
+                    <span>{portfolio.projectsCount === 1 ? "1 project" : `${portfolio.projectsCount} projects`}</span>
+                    <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">View →</span>
+                  </div>
+                </article>
               </Link>
             ))}
           </div>

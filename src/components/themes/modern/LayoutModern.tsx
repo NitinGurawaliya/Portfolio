@@ -23,6 +23,7 @@ import { GitHubActivity } from "@/components/GitHubActivity"
 import { trackProjectClick } from "@/lib/analytics-utils"
 import { PublicShiplogList } from "@/components/shiplog/PublicShiplogList"
 import { getProjectSlugMap } from "@/lib/project-slug"
+import { truncateWords } from "@/lib/text"
 
 interface ThemeConfig {
   name: string
@@ -446,15 +447,11 @@ export default function LayoutModern({ theme, portfolio }: LayoutModernProps) {
                               </motion.button>
                             </div>
 
-                            <div
-                              className="text-xs xs:text-sm text-neutral-600 leading-relaxed line-clamp-3 flex-1"
-                              dangerouslySetInnerHTML={{
-                                __html:
-                                  repo.customDescription ||
-                                  repo.repository.description ||
-                                  "No description available for this project.",
-                              }}
-                            />
+                              {truncateWords(repo.customDescription || repo.repository.description) && (
+                                <p className="text-xs xs:text-sm text-neutral-600 leading-relaxed flex-1">
+                                  {truncateWords(repo.customDescription || repo.repository.description)}
+                                </p>
+                              )}
 
                             <div className="mt-3 xs:mt-4 flex flex-wrap gap-1.5 xs:gap-2">
                               {(() => {

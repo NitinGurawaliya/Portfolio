@@ -11,6 +11,7 @@ import { useState, useEffect, useMemo } from "react"
 import { GitHubActivity } from "@/components/GitHubActivity"
 import { trackProjectClick } from "@/lib/analytics-utils"
 import { getProjectSlugMap } from "@/lib/project-slug"
+import { truncateWords } from "@/lib/text"
 
 interface ThemeConfig {
   name: string
@@ -529,8 +530,8 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
                         viewport={{ once: true }}
                         whileHover={{ y: -2 }}
                       >
-                          <div className="relative flex h-full w-full min-h-[300px] flex-col rounded-2xl border border-gray-200 bg-white p-3 xs:p-4 sm:p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
-                          <div className="flex items-start justify-between mb-3">
+                          <div className="relative flex h-full w-full min-h-[220px] flex-col rounded-2xl border border-gray-200 bg-white p-3 xs:p-4 sm:p-5 transition-all duration-300 hover:border-gray-300">
+                            <div className="flex items-start justify-between mb-2.5">
                             <div className="flex-1 min-w-0">
                               <div className="mb-2">
                                 <ProjectIcon
@@ -541,15 +542,14 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
                                 />
                               </div>
 
-                              <h3 className="text-sm xs:text-base sm:text-lg md:text-lg lg:text-base font-bold text-gray-800 break-words mb-1 xs:mb-2">
+                                <h3 className="text-base font-semibold text-gray-900 break-words mb-1.5">
                                 {repo.customName || repo.repository.name}
                               </h3>
-                              <div
-                                className="text-xs xs:text-sm sm:text-base lg:text-sm text-gray-600 leading-relaxed break-words prose prose-sm max-w-none"
-                                dangerouslySetInnerHTML={{
-                                  __html: repo.customDescription || repo.repository.description || "No description available for this project."
-                                }}
-                              />
+                                {truncateWords(repo.customDescription || repo.repository.description) && (
+                                  <p className="text-sm text-gray-600 leading-relaxed">
+                                    {truncateWords(repo.customDescription || repo.repository.description)}
+                                  </p>
+                                )}
                             </div>
                             <motion.button
                               onClick={(e) => {
@@ -568,7 +568,7 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
                             </motion.button>
                           </div>
 
-                          <div className="flex items-center flex-wrap gap-2 mt-auto">
+                            <div className="flex items-center flex-wrap gap-2 mt-auto pt-2">
                             {(() => {
                               let languages: string[] = []
                               if (repo.repository.languages) {
