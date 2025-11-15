@@ -521,7 +521,8 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
                         ? `/${portfolioSlug}/${projectSlug}`
                         : undefined
 
-                    const cardContent = (
+                      const descriptionText = truncateWords(repo.customDescription || repo.repository.description, 20)
+                      const cardContent = (
                       <motion.article
                         className="group relative flex h-full w-full cursor-pointer"
                         initial={{ opacity: 0, y: 20 }}
@@ -530,24 +531,24 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
                         viewport={{ once: true }}
                         whileHover={{ y: -2 }}
                       >
-                          <div className="relative flex h-full w-full min-h-[220px] flex-col rounded-2xl border border-gray-200 bg-white p-3 xs:p-4 sm:p-5 transition-all duration-300 hover:border-gray-300">
-                            <div className="flex items-start justify-between mb-2.5">
+                          <div className="relative flex h-full w-full min-h-[190px] flex-col rounded-2xl border border-gray-200 bg-white p-3 xs:p-4 sm:p-4 transition-all duration-300 hover:border-gray-300">
+                            <div className="flex items-start justify-between mb-2">
                             <div className="flex-1 min-w-0">
                               <div className="mb-2">
                                 <ProjectIcon
                                   favicon={repo.repository.favicon}
                                   logo={repo.repository.logo}
                                   title={repo.customName || repo.repository.name}
-                                  size="md"
+                                    size="sm"
                                 />
                               </div>
 
-                                <h3 className="text-base font-semibold text-gray-900 break-words mb-1.5">
+                                <h3 className="text-sm xs:text-base font-semibold text-gray-900 break-words mb-1">
                                 {repo.customName || repo.repository.name}
                               </h3>
-                                {truncateWords(repo.customDescription || repo.repository.description) && (
-                                  <p className="text-sm text-gray-600 leading-relaxed">
-                                    {truncateWords(repo.customDescription || repo.repository.description)}
+                                {descriptionText && (
+                                  <p className="text-xs xs:text-sm text-gray-600 leading-relaxed">
+                                    {descriptionText}
                                   </p>
                                 )}
                             </div>
@@ -568,7 +569,7 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
                             </motion.button>
                           </div>
 
-                            <div className="flex items-center flex-wrap gap-2 mt-auto pt-2">
+                            <div className="flex items-center flex-wrap gap-1.5 mt-auto pt-1.5">
                             {(() => {
                               let languages: string[] = []
                               if (repo.repository.languages) {

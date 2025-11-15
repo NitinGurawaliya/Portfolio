@@ -1,4 +1,4 @@
-export const truncateWords = (input?: string | null, limit = 30) => {
+export const truncateWords = (input?: string | null, limit = 20) => {
   if (!input) return ""
 
   // remove html tags and normalize whitespace
@@ -10,5 +10,5 @@ export const truncateWords = (input?: string | null, limit = 30) => {
     return plain
   }
 
-  return `${words.slice(0, limit).join(" ")}…`
+  return `${words.slice(0, limit).join(" ")}...`
 }

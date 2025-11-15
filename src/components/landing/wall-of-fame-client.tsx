@@ -20,7 +20,7 @@ export function WallOfFameClient({ portfolios, loading = false, error = null }: 
         <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <span className="ml-2 text-muted-foreground">Portfolios लोड हो रहे हैं…</span>
+            <span className="ml-2 text-muted-foreground">Loading portfolios…</span>
           </div>
         </div>
       </section>
@@ -42,10 +42,10 @@ export function WallOfFameClient({ portfolios, loading = false, error = null }: 
               <span>Community launchpad</span>
             </div>
 
-            <h2 className="mb-4 text-2xl font-bold tracking-tight sm:text-3xl">अपना पोर्टफोलियो जोड़ें</h2>
-            <p className="mb-8 text-sm text-muted-foreground sm:text-base">
-              DevFolio पर पोर्टफोलियो पब्लिश करें और हज़ारों बिल्डर्स की सूची में जुड़ें।
-            </p>
+              <h2 className="mb-4 text-2xl font-bold tracking-tight sm:text-3xl">Add your portfolio</h2>
+              <p className="mb-8 text-sm text-muted-foreground sm:text-base">
+                Publish on DevFolio and join the gallery of builders.
+              </p>
             <Button size="lg" asChild>
               <Link href="/auth">
                 <Sparkles className="mr-2 h-4 w-4" />
@@ -67,26 +67,26 @@ export function WallOfFameClient({ portfolios, loading = false, error = null }: 
     <section className="py-16 sm:py-20 lg:py-24">
       <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
         <div className="mx-auto mb-10 max-w-3xl text-center sm:mb-12">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
             <div className="mb-4 inline-flex items-center rounded-full border border-border/40 bg-muted/50 px-3 py-1 text-xs sm:text-sm">
               <span className="mr-2">🌍</span>
               <span>DevFolio community</span>
             </div>
             <h2 className="mb-3 text-3xl font-semibold tracking-tight text-balance sm:text-4xl">Builders on display</h2>
               <p className="text-sm text-muted-foreground sm:text-base">
-                सभी लाइव पोर्टफोलियो — कार्ड सूची को क्षैतिज रूप से स्क्रॉल करें और तुरंत प्रोफ़ाइल खोलें।
-            </p>
+                Explore every live portfolio—arranged as three rows with horizontal scrolling for overflow.
+              </p>
           </motion.div>
         </div>
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-          <div className="flex gap-3 overflow-x-auto pb-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="grid grid-flow-col auto-cols-[220px] grid-rows-3 gap-3 overflow-x-auto pb-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {filteredPortfolios.map((portfolio) => (
               <Link
                 key={portfolio.id}
                 href={portfolio.portfolioUrl}
                 target="_blank"
-                className="block w-[220px] flex-shrink-0"
+                  className="block h-full"
               >
                 <article className="flex h-full flex-col rounded-2xl border border-gray-200 bg-white p-4 text-gray-900 transition hover:border-gray-300">
                   <div className="flex items-center gap-3">

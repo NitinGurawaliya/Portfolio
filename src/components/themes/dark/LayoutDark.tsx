@@ -458,7 +458,8 @@ export default function LayoutDark({ theme, portfolio }: LayoutDarkProps) {
                         ? `/${portfolioSlug}/${projectSlug}`
                         : undefined
 
-                    const cardContent = (
+                      const descriptionText = truncateWords(repo.customDescription || repo.repository.description, 20)
+                      const cardContent = (
                       <motion.article
                         className="group relative flex h-full w-full cursor-pointer"
                         initial={{ opacity: 0, y: 20 }}
@@ -467,24 +468,24 @@ export default function LayoutDark({ theme, portfolio }: LayoutDarkProps) {
                         viewport={{ once: true }}
                         whileHover={{ scale: 1.02, y: -4 }}
                       >
-                          <div className="relative bg-transparent border border-orange-500/30 rounded-lg p-4 sm:p-5 hover:border-orange-500/40 transition-all duration-300 h-full min-h-[220px] flex flex-col w-full">
+                          <div className="relative bg-transparent border border-orange-500/30 rounded-lg p-4 sm:p-4 hover:border-orange-500/40 transition-all duration-300 h-full min-h-[190px] flex flex-col w-full">
                             <div className="flex items-start justify-between mb-2">
                             <div className="flex-1 mr-4 min-w-0">
                                 <div className="mb-2">
                                 <ProjectIcon
                                   favicon={repo.repository.favicon}
-                                  logo={repo.repository.logo}
+                                    logo={repo.repository.logo}
                                   title={repo.customName || repo.repository.name}
-                                  size="md"
+                                    size="sm"
                                 />
                               </div>
 
-                                <h3 className="text-lg sm:text-xl font-bold text-white group-hover:text-orange-300 transition-colors duration-300 break-words mb-1.5">
+                                <h3 className="text-base sm:text-lg font-semibold text-white group-hover:text-orange-300 transition-colors duration-300 break-words mb-1.5">
                                 {repo.customName || repo.repository.name}
                               </h3>
-                                {truncateWords(repo.customDescription || repo.repository.description) && (
-                                  <p className="text-gray-400 text-sm sm:text-base leading-relaxed mb-3 break-words">
-                                    {truncateWords(repo.customDescription || repo.repository.description)}
+                                {descriptionText && (
+                                  <p className="text-gray-400 text-sm leading-relaxed mb-3 break-words">
+                                    {descriptionText}
                                   </p>
                                 )}
                             </div>

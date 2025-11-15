@@ -410,23 +410,24 @@ export default function LayoutModern({ theme, portfolio }: LayoutModernProps) {
                             ? `/${portfolioSlug}/${projectSlug}`
                             : undefined
 
-                        const cardContent = (
+                          const descriptionText = truncateWords(repo.customDescription || repo.repository.description, 20)
+                          const cardContent = (
                           <motion.article
-                            className="group flex h-full w-full min-w-0 flex-col rounded-xl border border-neutral-200 bg-white/90 p-3 xs:p-4 shadow-sm transition hover:-translate-y-1 hover:shadow-md cursor-pointer"
+                              className="group flex h-full w-full min-w-0 flex-col rounded-xl border border-neutral-200 bg-white p-3 shadow-sm transition hover:-translate-y-1 hover:shadow-md cursor-pointer"
                             initial={{ opacity: 0, y: 20 }}
                             whileInView={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.4, delay: index * 0.05 }}
                             viewport={{ once: true }}
                           >
-                            <div className="flex items-start justify-between gap-2 xs:gap-3 mb-3 xs:mb-4">
-                              <div className="flex-1 min-w-0 space-y-1.5 xs:space-y-2">
+                              <div className="flex items-start justify-between gap-2 xs:gap-3 mb-3">
+                                <div className="flex-1 min-w-0 space-y-1.5">
                                 <ProjectIcon
                                   favicon={repo.repository.favicon}
                                   logo={repo.repository.logo}
                                   title={repo.customName || repo.repository.name}
-                                  size="md"
+                                    size="sm"
                                 />
-                                <h3 className="text-sm xs:text-base sm:text-lg font-semibold text-neutral-900 break-words line-clamp-2">
+                                  <h3 className="text-sm xs:text-base font-semibold text-neutral-900 break-words line-clamp-2">
                                   {repo.customName || repo.repository.name}
                                 </h3>
                               </div>
@@ -447,9 +448,9 @@ export default function LayoutModern({ theme, portfolio }: LayoutModernProps) {
                               </motion.button>
                             </div>
 
-                              {truncateWords(repo.customDescription || repo.repository.description) && (
-                                <p className="text-xs xs:text-sm text-neutral-600 leading-relaxed flex-1">
-                                  {truncateWords(repo.customDescription || repo.repository.description)}
+                              {descriptionText && (
+                                <p className="text-xs text-neutral-600 leading-relaxed flex-1">
+                                  {descriptionText}
                                 </p>
                               )}
 

@@ -38,8 +38,8 @@ export function PortfolioShareButton({ url, portfolioName, className }: Portfoli
 
   const shareTitle = portfolioName ? `${portfolioName} on DevFolio` : "DevFolio portfolio"
   const shareText = portfolioName
-    ? `देखिए ${portfolioName} का पोर्टफोलियो DevFolio पर`
-    : "देखिए यह DevFolio पोर्टफोलियो"
+    ? `Check out ${portfolioName}'s portfolio on DevFolio`
+    : "Check out this DevFolio portfolio"
 
   const shareLinks = useMemo(() => {
     if (!url) return null
@@ -112,9 +112,7 @@ export function PortfolioShareButton({ url, portfolioName, className }: Portfoli
         <DialogContent className="w-[92vw] max-w-md rounded-3xl border-0 p-0 shadow-2xl">
           <DialogHeader className="px-6 pb-0 pt-6 text-left">
             <DialogTitle className="text-lg font-semibold">Share this portfolio</DialogTitle>
-            <p className="mt-1 text-sm text-muted-foreground">
-              लिंक भेजें या सीधे अपने पसंदीदा नेटवर्क पर शेयर करें।
-            </p>
+            <p className="mt-1 text-sm text-muted-foreground">Send the link or share it directly to your favourite network.</p>
           </DialogHeader>
 
           <div className="grid grid-cols-3 gap-4 px-6 pb-2 pt-4">
