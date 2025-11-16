@@ -16,6 +16,7 @@ export const usePortfolioHandlers = (
   setProjectRevenues: React.Dispatch<React.SetStateAction<Record<number, number>>>,
   setProjectMrrs: React.Dispatch<React.SetStateAction<Record<number, number>>>,
   setProjectUsers: React.Dispatch<React.SetStateAction<Record<number, number>>>,
+  setProjectTechnologies: React.Dispatch<React.SetStateAction<Record<number, string>>>,
   setImportedProjects: React.Dispatch<React.SetStateAction<Repository[]>>,
   setRepoOrder: React.Dispatch<React.SetStateAction<number[]>>,
   setSelectedTheme: React.Dispatch<React.SetStateAction<string>>,
@@ -123,7 +124,7 @@ export const usePortfolioHandlers = (
     setCustomDescriptions(prev => ({ ...prev, [repoId]: description }))
   }
 
-  const handleUpdateProjectCategory = (repoId: number, category?: string) => {
+  const handleUpdateProjectCategory = (repoId: number, category: string | null) => {
     setProjectCategories(prev => {
       const next = { ...prev }
       const normalized = category?.trim() || ""
@@ -136,7 +137,7 @@ export const usePortfolioHandlers = (
     })
   }
 
-  const handleUpdateProjectStatus = (repoId: number, status?: string) => {
+  const handleUpdateProjectStatus = (repoId: number, status: string | null) => {
     setProjectStatuses(prev => {
       const next = { ...prev }
       const normalized = status?.trim() || ""
@@ -175,6 +176,19 @@ export const usePortfolioHandlers = (
 
   const handleUpdateProjectUsers = (repoId: number, users?: number | null) => {
     handleUpdateNumericInsight(repoId, users ?? null, setProjectUsers)
+  }
+
+  const handleUpdateProjectTechnologies = (repoId: number, technologies?: string | null) => {
+    setProjectTechnologies(prev => {
+      const next = { ...prev }
+      const normalized = technologies?.trim() || ""
+      if (!normalized) {
+        delete next[repoId]
+        return next
+      }
+      next[repoId] = normalized
+      return next
+    })
   }
 
   const handleUpdateGithubUrl = (repoId: number, url: string) => {
@@ -264,6 +278,7 @@ export const usePortfolioHandlers = (
       handleUpdateProjectRevenue,
       handleUpdateProjectMrr,
       handleUpdateProjectUsers,
+      handleUpdateProjectTechnologies,
     handleUpdateGithubUrl,
     handleUpdateRepoOrder,
     handleAddSkill,

@@ -65,6 +65,7 @@ export default function DashboardPage() {
     portfolio.setProjectRevenues,
     portfolio.setProjectMrrs,
     portfolio.setProjectUsers,
+    portfolio.setProjectTechnologies,
     portfolio.setImportedProjects,
     portfolio.setRepoOrder,
     portfolio.setSelectedTheme,
@@ -465,6 +466,7 @@ export default function DashboardPage() {
           projectRevenues: portfolio.projectRevenues,
           projectMrrs: portfolio.projectMrrs,
           projectUsers: portfolio.projectUsers,
+          projectTechnologies: portfolio.projectTechnologies,
         selectedTheme: portfolio.selectedTheme,
         repoOrder: portfolio.repoOrder,
         repositories: allRepositories,
@@ -618,6 +620,7 @@ export default function DashboardPage() {
                 projectRevenues={portfolio.projectRevenues}
                 projectMrrs={portfolio.projectMrrs}
                 projectUsers={portfolio.projectUsers}
+                projectTechnologies={portfolio.projectTechnologies}
               repoOrder={portfolio.repoOrder}
               onToggleRepo={handlers.handleToggleRepo}
               onUpdateDeployedUrl={handlers.handleUpdateDeployedUrl}
@@ -629,6 +632,7 @@ export default function DashboardPage() {
                 onUpdateProjectRevenue={handlers.handleUpdateProjectRevenue}
                 onUpdateProjectMrr={handlers.handleUpdateProjectMrr}
                 onUpdateProjectUsers={handlers.handleUpdateProjectUsers}
+                onUpdateProjectTechnologies={handlers.handleUpdateProjectTechnologies}
               onUpdateRepoOrder={handlers.handleUpdateRepoOrder}
               onAddImportedProject={handlers.handleAddImportedProject}
               analytics={portfolio.analytics}

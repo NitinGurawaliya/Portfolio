@@ -127,11 +127,13 @@ export async function POST(req: NextRequest) {
         projectRevenues,
         projectMrrs,
         projectUsers,
+        projectTechnologies,
     } = body
 
     devLog("👤 User ID:", userId)
     devLog("📊 Portfolio data:", portfolioData)
     devLog("📸 Logo overrides received:", logoOverrides)
+    devLog("🔧 Project Technologies received:", projectTechnologies)
 
     // Validate required fields
     if (!userId) {
@@ -261,10 +263,11 @@ export async function POST(req: NextRequest) {
     const safeCustomNames = customNames || {}
     const safeCustomDescriptions = customDescriptions || {}
   const safeProjectCategories = projectCategories || {}
-  const safeProjectStatuses = projectStatuses || {}
-  const safeProjectRevenues = projectRevenues || {}
-  const safeProjectMrrs = projectMrrs || {}
-  const safeProjectUsers = projectUsers || {}
+        const safeProjectStatuses = projectStatuses || {}
+        const safeProjectRevenues = projectRevenues || {}
+        const safeProjectMrrs = projectMrrs || {}
+        const safeProjectUsers = projectUsers || {}
+        const safeProjectTechnologies = projectTechnologies || {}
 
     const incomingRepoPayload = Array.isArray(repositories) ? repositories : []
     const selectedRepoPayload = incomingRepoPayload.filter((repo) => {
@@ -601,6 +604,7 @@ export async function POST(req: NextRequest) {
           projectRevenue: number | null
           projectMrr: number | null
           projectUsers: number | null
+          technologies: string | null
         }
 
           const portfolioRepos = orderToUse.map((githubIdStr: string, index: number) => {
@@ -615,6 +619,9 @@ export async function POST(req: NextRequest) {
             return null
           }
 
+          const techValue = normalizeOptionalString(safeProjectTechnologies[githubIdStr])
+          devLog(`📦 Project ${githubIdStr} (${repo.name}) - Technologies:`, techValue)
+          
           return {
             portfolioId: portfolio.id,
             repositoryId: repo.id,
@@ -628,6 +635,7 @@ export async function POST(req: NextRequest) {
               projectRevenue: normalizeNumericMetric(safeProjectRevenues[githubIdStr]),
               projectMrr: normalizeNumericMetric(safeProjectMrrs[githubIdStr]),
               projectUsers: normalizeNumericMetric(safeProjectUsers[githubIdStr]),
+              technologies: techValue,
           }
         }).filter((repoData): repoData is PortfolioRepoPayload => Boolean(repoData))
 
@@ -648,6 +656,7 @@ export async function POST(req: NextRequest) {
                 projectRevenue: repoData.projectRevenue,
                 projectMrr: repoData.projectMrr,
                 projectUsers: repoData.projectUsers,
+                technologies: repoData.technologies,
             }
 
             const needsUpdate =
@@ -660,9 +669,11 @@ export async function POST(req: NextRequest) {
                 (existing.projectStatus || null) !== (portfolioRepoUpdate.projectStatus || null) ||
                 (existing.projectRevenue ?? null) !== (portfolioRepoUpdate.projectRevenue ?? null) ||
                 (existing.projectMrr ?? null) !== (portfolioRepoUpdate.projectMrr ?? null) ||
-                (existing.projectUsers ?? null) !== (portfolioRepoUpdate.projectUsers ?? null)
+                (existing.projectUsers ?? null) !== (portfolioRepoUpdate.projectUsers ?? null) ||
+                (existing.technologies || null) !== (portfolioRepoUpdate.technologies || null)
 
             if (needsUpdate) {
+              devLog(`📝 Updating portfolio repo ${existing.id} with technologies:`, portfolioRepoUpdate.technologies)
               await tx.portfolioRepository.update({
                 where: { id: existing.id },
                 data: portfolioRepoUpdate
@@ -672,6 +683,7 @@ export async function POST(req: NextRequest) {
               devLog(`⏭️ Skipped update for portfolio repo ${existing.id} (no changes)`)
             }
           } else {
+            devLog(`📝 Creating new portfolio repo for ${repoData.repositoryId} with technologies:`, repoData.technologies)
             await tx.portfolioRepository.create({
               data: {
                 portfolioId: repoData.portfolioId,
@@ -686,6 +698,7 @@ export async function POST(req: NextRequest) {
                   projectRevenue: repoData.projectRevenue,
                   projectMrr: repoData.projectMrr,
                   projectUsers: repoData.projectUsers,
+                  technologies: repoData.technologies,
               }
             })
             devLog(`✅ Created new portfolio repo for repositoryId ${repoData.repositoryId}`)

@@ -17,6 +17,7 @@ export const publishPortfolio = async (data: {
   projectRevenues?: Record<number, number>
   projectMrrs?: Record<number, number>
   projectUsers?: Record<number, number>
+  projectTechnologies?: Record<number, string>
   selectedTheme: string
   repoOrder: number[]
   repositories: Repository[]

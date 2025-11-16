@@ -17,19 +17,31 @@ import {
   SiStackoverflow,
   SiReddit,
 } from "react-icons/si"
-import { SkillIcon } from "@/lib/skill-icons"
+import { SkillIcon, getSkillIcon } from "@/lib/skill-icons"
 import { ProjectIcon } from "@/components/ui/project-icon"
 import { GitHubActivity } from "@/components/GitHubActivity"
 import { trackProjectClick } from "@/lib/analytics-utils"
 import { PublicShiplogList } from "@/components/shiplog/PublicShiplogList"
 import { getProjectSlugMap } from "@/lib/project-slug"
 import { truncateWords } from "@/lib/text"
+import { Code2, TrendingUp, Users as UsersIcon } from "lucide-react"
 
 const formatCurrency = (value?: number | null) => {
   if (value === null || value === undefined) return null
   if (value >= 1000000) return `$${(value / 1000000).toFixed(1)}M`
   if (value >= 1000) return `$${(value / 1000).toFixed(1)}k`
   return `$${value.toLocaleString()}`
+}
+
+// Helper function to check if a URL is a GitHub repository URL
+const isGitHubUrl = (url?: string | null) => {
+  if (!url) return false
+  try {
+    const urlObj = new URL(url)
+    return urlObj.hostname === 'github.com' && urlObj.pathname.split('/').filter(Boolean).length >= 2
+  } catch {
+    return false
+  }
 }
 
 interface ThemeConfig {
@@ -417,7 +429,7 @@ export default function LayoutModern({ theme, portfolio }: LayoutModernProps) {
                             ? `/${portfolioSlug}/${projectSlug}`
                             : undefined
 
-                          const descriptionText = truncateWords(repo.customDescription || repo.repository.description, 20)
+                          const descriptionText = truncateWords(repo.customDescription || repo.repository.description, 18)
                           const cardContent = (
                           <motion.article
                               className="group flex h-full w-full min-w-0 flex-col rounded-xl border border-neutral-200 bg-white p-3 shadow-sm transition hover:-translate-y-1 hover:shadow-md cursor-pointer"
@@ -426,69 +438,80 @@ export default function LayoutModern({ theme, portfolio }: LayoutModernProps) {
                             transition={{ duration: 0.4, delay: index * 0.05 }}
                             viewport={{ once: true }}
                           >
-                              <div className="flex items-start justify-between gap-2 xs:gap-3 mb-3">
-                                <div className="flex-1 min-w-0 space-y-1.5">
-                                <ProjectIcon
-                                  favicon={repo.repository.favicon}
-                                  logo={repo.repository.logo}
-                                  title={repo.customName || repo.repository.name}
-                                    size="sm"
-                                />
-                                  <h3 className="text-sm xs:text-base font-semibold text-neutral-900 break-words line-clamp-2">
-                                  {repo.customName || repo.repository.name}
-                                </h3>
-                              </div>
-                              <motion.button
-                                onClick={(e) => {
-                                  e.preventDefault()
-                                  e.stopPropagation()
-                                  trackProjectClick(portfolio.id, repo.id, repo.customName || repo.repository.name)
-                                  const githubUrl = repo.repository.githubUrl || repo.repository.htmlUrl
-                                  window.open(githubUrl, "_blank")
-                                }}
-                                className="flex h-8 xs:h-9 w-8 xs:w-9 flex-shrink-0 items-center justify-center rounded-full border border-neutral-300 text-neutral-600 hover:bg-neutral-900 hover:text-white transition"
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                                aria-label={`View ${repo.repository.name} on GitHub`}
-                              >
-                                <SiGithub className="h-3.5 xs:h-4 w-3.5 xs:w-4" />
-                              </motion.button>
-                            </div>
+                              {/* Top Right: Status + Users */}
+                              {(repo.projectStatus || typeof repo.projectUsers === "number") && (
+                                <div className="absolute top-3 right-3 flex items-center gap-1.5">
+                                  {repo.projectStatus && (
+                                    <span className="inline-flex items-center text-[10px] font-semibold rounded-full px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                      <span className="mr-1">●</span>
+                                      {repo.projectStatus}
+                                    </span>
+                                  )}
+                                  {typeof repo.projectUsers === "number" && (
+                                    <span className="inline-flex items-center text-[10px] font-semibold rounded-full px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-200">
+                                      <UsersIcon className="h-2.5 w-2.5 mr-1" />
+                                      {repo.projectUsers.toLocaleString()}
+                                    </span>
+                                  )}
+                                </div>
+                              )}
 
-                                {descriptionText && (
-                                  <p className="text-xs text-neutral-600 leading-relaxed flex-1">
-                                    {descriptionText}
-                                  </p>
-                                )}
-                                {(repo.projectCategory || repo.projectStatus || typeof repo.projectRevenue === "number" || typeof repo.projectMrr === "number" || typeof repo.projectUsers === "number") && (
-                                  <div className="mt-2 flex flex-wrap gap-2">
-                                    {repo.projectCategory && (
-                                      <span className="text-[10px] font-semibold rounded-full px-2 py-0.5 bg-indigo-50 text-indigo-700 border border-indigo-200">
-                                        {repo.projectCategory}
-                                      </span>
-                                    )}
-                                    {repo.projectStatus && (
-                                      <span className="text-[10px] font-semibold rounded-full px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                        {repo.projectStatus}
-                                      </span>
-                                    )}
-                                    {typeof repo.projectRevenue === "number" && (
-                                      <span className="text-[10px] font-semibold rounded-full px-2 py-0.5 border border-neutral-200 text-neutral-700">
-                                        Rev {formatCurrency(repo.projectRevenue)}
-                                      </span>
-                                    )}
-                                    {typeof repo.projectMrr === "number" && (
-                                      <span className="text-[10px] font-semibold rounded-full px-2 py-0.5 border border-neutral-200 text-neutral-700">
-                                        MRR {formatCurrency(repo.projectMrr)}
-                                      </span>
-                                    )}
-                                    {typeof repo.projectUsers === "number" && (
-                                      <span className="text-[10px] font-semibold rounded-full px-2 py-0.5 border border-neutral-200 text-neutral-700">
-                                        {repo.projectUsers.toLocaleString()} users
-                                      </span>
-                                    )}
+                              {/* Header: Icon/Name */}
+                              <div className="flex items-start gap-2 xs:gap-3 mb-3 pr-24">
+                                <div className="flex-1 min-w-0 space-y-1.5">
+                                  <ProjectIcon
+                                    favicon={repo.repository.favicon}
+                                    logo={repo.repository.logo}
+                                    title={repo.customName || repo.repository.name}
+                                    size="sm"
+                                  />
+                                  <h3 className="text-sm xs:text-base font-semibold text-neutral-900 break-words line-clamp-2">
+                                    {repo.customName || repo.repository.name}
+                                  </h3>
+                                </div>
+                              </div>
+
+                              {/* Description */}
+                              {descriptionText && (
+                                <p className="text-xs text-neutral-600 leading-relaxed mb-2 line-clamp-2">
+                                  {descriptionText}
+                                </p>
+                              )}
+
+                              {/* Categories */}
+                              {repo.projectCategory && (
+                                <div className="flex flex-wrap gap-1.5 mb-2">
+                                  {repo.projectCategory.split(',').map((cat: string, idx: number) => (
+                                    <span key={idx} className="inline-flex items-center text-[10px] font-semibold rounded-full px-2 py-0.5 bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                      {cat.trim()}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+
+                              {/* Tech Stack */}
+                              {repo.technologies && (
+                                <div className="mt-2">
+                                  <div className="flex items-center gap-1 mb-1.5">
+                                    <Code2 className="h-3 w-3 text-neutral-500" />
+                                    <span className="text-[9px] font-medium text-neutral-500 uppercase tracking-wide">Tech Stack</span>
                                   </div>
-                                )}
+                                  <div className="flex flex-wrap gap-1.5">
+                                    {repo.technologies.split(',').map((tech: string, idx: number) => {
+                                      const techName = tech.trim()
+                                      const IconComponent = getSkillIcon(techName)
+                                      return (
+                                        <span key={idx} className="inline-flex items-center gap-1 text-[10px] font-medium rounded-md px-1.5 py-1 bg-neutral-100 text-neutral-700 border border-neutral-200">
+                                          {IconComponent ? (
+                                            <SkillIcon skillName={techName} className="h-3 w-3" />
+                                          ) : null}
+                                          <span>{techName}</span>
+                                        </span>
+                                      )
+                                    })}
+                                  </div>
+                                </div>
+                              )}
 
                             <div className="mt-3 xs:mt-4 flex flex-wrap gap-1.5 xs:gap-2">
                               {(() => {

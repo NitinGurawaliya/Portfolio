@@ -386,6 +386,7 @@ export async function GET(req: NextRequest) {
                 projectRevenue: true,
                 projectMrr: true,
                 projectUsers: true,
+                technologies: true,
               repository: {
                 select: {
                   id: true,

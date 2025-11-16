@@ -118,6 +118,7 @@ interface ReposSectionProps {
   projectRevenues?: Record<number, number>
   projectMrrs?: Record<number, number>
   projectUsers?: Record<number, number>
+  projectTechnologies?: Record<number, string>
   repoOrder?: number[]
   onToggleRepo: (repoId: number) => void
   onUpdateDeployedUrl: (repoId: number, url: string) => void
@@ -129,6 +130,7 @@ interface ReposSectionProps {
   onUpdateProjectRevenue?: (repoId: number, value: number | null) => void
   onUpdateProjectMrr?: (repoId: number, value: number | null) => void
   onUpdateProjectUsers?: (repoId: number, value: number | null) => void
+  onUpdateProjectTechnologies?: (repoId: number, value: string | null) => void
   onUpdateRepoOrder: (newOrder: number[]) => void
   onAddImportedProject?: (project: Repository) => void
   analytics?: any
@@ -151,6 +153,7 @@ export function ReposSection({
   projectRevenues: initialProjectRevenues,
   projectMrrs: initialProjectMrrs,
   projectUsers: initialProjectUsers,
+  projectTechnologies: initialProjectTechnologies,
   repoOrder: initialRepoOrder,
   onToggleRepo,
   onUpdateDeployedUrl,
@@ -162,6 +165,7 @@ export function ReposSection({
   onUpdateProjectRevenue,
   onUpdateProjectMrr,
   onUpdateProjectUsers,
+  onUpdateProjectTechnologies,
   onUpdateRepoOrder,
   onAddImportedProject,
   analytics,
@@ -183,7 +187,7 @@ export function ReposSection({
   const [projectRevenuesState, setProjectRevenuesState] = useState<Record<number, number>>(initialProjectRevenues || {})
   const [projectMrrsState, setProjectMrrsState] = useState<Record<number, number>>(initialProjectMrrs || {})
   const [projectUsersState, setProjectUsersState] = useState<Record<number, number>>(initialProjectUsers || {})
-  const [customTechnologies, setCustomTechnologies] = useState<Record<number, string>>({})
+  const [customTechnologies, setCustomTechnologies] = useState<Record<number, string>>(initialProjectTechnologies || {})
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [projectUrl, setProjectUrl] = useState("")
   const [isImportingUrl, setIsImportingUrl] = useState(false)
@@ -200,6 +204,7 @@ export function ReposSection({
     revenue?: number | null
     mrr?: number | null
     users?: number | null
+    technologies?: string | null
   } | null>(null)
   const [logoOverrides, setLogoOverrides] = useState<Record<number, string>>(initialLogoOverrides || {})
   const [deletingRepoIds, setDeletingRepoIds] = useState<Record<number, boolean>>({})
@@ -263,6 +268,10 @@ export function ReposSection({
     updateRevenue(repoId, insights.revenue ?? null)
     updateMrr(repoId, insights.mrr ?? null)
     updateUsers(repoId, insights.users ?? null)
+    if (insights.technologies) {
+      setCustomTechnologies(prev => ({ ...prev, [repoId]: insights.technologies! }))
+      onUpdateProjectTechnologies?.(repoId, insights.technologies)
+    }
   }
   
   // Sync logoOverrides from parent
@@ -622,6 +631,7 @@ export function ReposSection({
       onUpdateDeployedUrl(repoId, value)
     } else if (field === 'technologies') {
       setCustomTechnologies(prev => ({ ...prev, [repoId]: value }))
+      onUpdateProjectTechnologies?.(repoId, value || null)
     }
   }
 
@@ -877,35 +887,6 @@ export function ReposSection({
                                     <p className="text-[11px] text-gray-500 truncate">
                                       {customDescription}
                                     </p>
-                                    {shouldShowInsights && (
-                                      <div className="flex flex-wrap gap-1.5 mt-1.5">
-                                        {categoryValue && (
-                                          <Badge variant="secondary" className="text-[10px] uppercase tracking-wide rounded-full bg-orange-500/10 text-orange-600 border border-orange-200 px-2 py-0.5">
-                                            {categoryValue}
-                                          </Badge>
-                                        )}
-                                        {statusValue && (
-                                          <Badge variant="secondary" className="text-[10px] uppercase tracking-wide rounded-full bg-green-500/10 text-green-600 border border-green-200 px-2 py-0.5">
-                                            {statusValue}
-                                          </Badge>
-                                        )}
-                                        {hasRevenue && (
-                                          <Badge variant="outline" className="text-[10px] rounded-full px-2 py-0.5">
-                                            Rev {formatMoney(revenueValue)}
-                                          </Badge>
-                                        )}
-                                        {hasMrr && (
-                                          <Badge variant="outline" className="text-[10px] rounded-full px-2 py-0.5">
-                                            MRR {formatMoney(mrrValue)}
-                                          </Badge>
-                                        )}
-                                        {hasUsers && (
-                                          <Badge variant="outline" className="text-[10px] rounded-full px-2 py-0.5">
-                                            {usersValue.toLocaleString()} users
-                                          </Badge>
-                                        )}
-                                      </div>
-                                    )}
                                 </div>
                               </div>
                               <div className="flex items-start gap-2 flex-shrink-0">
@@ -939,6 +920,7 @@ export function ReposSection({
                                           revenue: projectRevenuesState[repo.id] ?? null,
                                           mrr: projectMrrsState[repo.id] ?? null,
                                           users: projectUsersState[repo.id] ?? null,
+                                          technologies: customTechnologies[repo.id] || null,
                                         })
                                       setIsEditOpen(true)
                                     }}>Edit Project</DropdownMenuItem>
@@ -1095,7 +1077,19 @@ export function ReposSection({
           open={isEditOpen}
           onOpenChange={setIsEditOpen}
           initial={editInitial}
-          onSave={(payload: { id: number; url: string; name: string; description: string; logo?: string | null }) => {
+          onSave={(payload: { 
+            id: number; 
+            url: string; 
+            name: string; 
+            description: string; 
+            logo?: string | null;
+            category?: string | null;
+            status?: string | null;
+            revenue?: number | null;
+            mrr?: number | null;
+            users?: number | null;
+            technologies?: string | null;
+          }) => {
             // payload.id is the GitHub ID
             console.log('🔄 EditProjectModal save called:', { 
               id: payload.id, 
@@ -1118,6 +1112,11 @@ export function ReposSection({
               updateRevenue(payload.id, payload.revenue ?? null)
               updateMrr(payload.id, payload.mrr ?? null)
               updateUsers(payload.id, payload.users ?? null)
+            // Update technologies
+            if (payload.technologies) {
+              setCustomTechnologies(prev => ({ ...prev, [payload.id]: payload.technologies! }))
+              onUpdateProjectTechnologies?.(payload.id, payload.technologies)
+            }
             // Update logo override in local state
             if (payload.logo) {
               setLogoOverrides(prev => ({ ...prev, [payload.id]: payload.logo! }))

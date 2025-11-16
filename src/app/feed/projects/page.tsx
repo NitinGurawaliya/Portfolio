@@ -307,26 +307,26 @@ export default function ProjectFeedPage() {
     [sort]
   )
 
-  const feedHeadline = useMemo(() => {
-    switch (sort) {
-      case "most_upvoted":
-        return {
-          title: "Most liked projects",
-          subtitle: "Community favourites bubbling to the top right now.",
-        }
-      case "most_viewed":
-        return {
-          title: "Most popular projects",
-          subtitle: "Standout builds getting the most attention across DevFolio.",
-        }
-      case "newest":
-      default:
-        return {
-          title: "Latest projects",
-          subtitle: "Fresh drops from creators you can support right away.",
-        }
-    }
-  }, [sort])
+  // const feedHeadline = useMemo(() => {
+  //   switch (sort) {
+  //     case "most_upvoted":
+  //       return {
+  //         title: "Most liked projects",
+  //         subtitle: "Community favourites bubbling to the top right now.",
+  //       }
+  //     case "most_viewed":
+  //       return {
+  //         title: "Most popular projects",
+  //         subtitle: "Standout builds getting the most attention across DevFolio.",
+  //       }
+  //     case "newest":
+  //     default:
+  //       return {
+  //         title: "Latest projects",
+  //         subtitle: "Fresh drops from creators you can support right away.",
+  //       }
+  //   }
+  // }, [sort])
 
   const handleLoadMore = useCallback(() => {
     if (!hasMore || loadingMore) return
@@ -399,9 +399,9 @@ export default function ProjectFeedPage() {
     }
 
     return (
-      <div className="relative flex flex-col gap-6">
+      <div className="relative flex flex-col gap-4 sm:gap-3">
         {projects.map((project) => (
-          <div key={project.id} className="w-full max-w-3xl self-center">
+          <div key={project.id} className="w-full self-center">
             <ProjectFeedCard
               project={project}
               onToggleUpvote={handleToggleUpvote}
@@ -420,7 +420,7 @@ export default function ProjectFeedPage() {
   return (
     <>
       <FeedTopNav />
-      <div className="mx-auto grid min-h-screen w-full max-w-6xl grid-cols-1 gap-8 px-4 pb-12 pt-10 sm:px-6 sm:pt-12 lg:h-[calc(100vh-3rem)] lg:grid-cols-[240px_minmax(0,1fr)_320px] lg:items-start lg:gap-10 lg:overflow-hidden lg:pb-10 lg:pt-6">
+      <div className="mx-auto grid min-h-screen w-full max-w-4xl grid-cols-1 gap-6 px-3 pb-10 pt-8 sm:px-4 sm:pt-10 lg:h-[calc(100vh-3rem)] lg:grid-cols-[240px_minmax(0,1fr)] lg:items-start lg:gap-8 lg:overflow-hidden lg:pb-8 lg:pt-5">
         <aside className="sticky top-24 hidden h-fit lg:block lg:w-[240px] lg:top-6 xl:w-[260px]">
           <Card className="flex flex-col gap-4 rounded-3xl border border-border/60 bg-background p-6">
           <FeedBrandMark />
@@ -443,7 +443,7 @@ export default function ProjectFeedPage() {
         </Card>
         </aside>
 
-        <div className="flex flex-col gap-10 lg:col-start-2 lg:mx-auto lg:h-full lg:w-full lg:max-w-3xl lg:overflow-y-auto lg:pr-2 lg:scroll-smooth lg:[scrollbar-width:none] lg:[-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex flex-col gap-5 lg:col-start-2 lg:mx-auto lg:h-full lg:w-full lg:max-w-4xl lg:overflow-y-auto lg:pr-2 lg:scroll-smooth lg:[scrollbar-width:none] lg:[-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
           <div className="flex flex-col gap-3 text-left">
             <div className="flex flex-wrap items-center gap-3">
               <h1 className="text-2xl font-bold text-foreground md:text-3xl">Discover DevFolio Projects</h1>
@@ -474,10 +474,10 @@ export default function ProjectFeedPage() {
                   </Button>
                 ))}
               </div>
-              <div className="flex flex-col gap-1 text-left">
+              {/* <div className="flex flex-col gap-1 text-left">
                 <h2 className="text-lg font-semibold text-foreground sm:text-xl">{feedHeadline.title}</h2>
                 <p className="text-sm text-muted-foreground">{feedHeadline.subtitle}</p>
-              </div>
+              </div> */}
             </section>
 
             {!isAuthenticated && showLoginPrompt ? (
@@ -509,28 +509,6 @@ export default function ProjectFeedPage() {
             )}
           </div>
         </div>
-        </div>
-
-        <div className="sticky top-24 hidden space-y-4 lg:col-start-3 lg:block lg:w-[320px] lg:top-6 xl:w-[340px]">
-          <Card className="rounded-2xl border border-border/60 bg-muted/20 p-5">
-            <h2 className="text-sm font-semibold text-foreground">
-              {isAuthenticated ? "Share your latest build" : "Log in to publish projects"}
-            </h2>
-            <p className="mt-2 text-xs text-muted-foreground">
-              {isAuthenticated
-                ? "Keep your portfolio fresh with new launches and community-ready updates."
-                : "Sign in to add projects to your portfolio and gain visibility across DevFolio."}
-            </p>
-            {isAuthenticated ? (
-              <Button asChild className="mt-4 w-full rounded-full bg-foreground text-background hover:bg-foreground/90">
-                <Link href="/dashboard">Open dashboard</Link>
-              </Button>
-            ) : (
-              <Button asChild className="mt-4 w-full rounded-full">
-                <Link href="/auth?redirect=/feed/projects">Log in</Link>
-              </Button>
-            )}
-          </Card>
         </div>
 
         {showScrollTop && (

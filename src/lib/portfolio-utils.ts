@@ -94,6 +94,7 @@ export const mapPortfolioRepositories = (portfolioRepos: any[]) => {
   const revenues: Record<number, number> = {}
   const mrrs: Record<number, number> = {}
   const users: Record<number, number> = {}
+  const technologies: Record<number, string> = {}
   
   portfolioRepos.forEach((repo: any) => {
     const githubId = parseInt(repo.repository.githubId)
@@ -125,9 +126,12 @@ export const mapPortfolioRepositories = (portfolioRepos: any[]) => {
     if (typeof repo.projectUsers === "number") {
       users[githubId] = repo.projectUsers
     }
+    if (repo.technologies) {
+      technologies[githubId] = repo.technologies
+    }
   })
   
-  return { urls, names, descriptions, githubUrls, categories, statuses, revenues, mrrs, users }
+  return { urls, names, descriptions, githubUrls, categories, statuses, revenues, mrrs, users, technologies }
 }
 
 /**

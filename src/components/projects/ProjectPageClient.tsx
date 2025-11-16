@@ -18,15 +18,25 @@ import {
   ArrowUpRight,
   Share2,
   Download,
+  Users,
+  Code2,
+  TrendingUp,
+  Tags,
+  DollarSign,
+  Banknote,
+  CurrencyIcon,
+  BanknoteArrowUpIcon,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ProjectIcon } from "@/components/ui/project-icon"
 import { ShiplogCard } from "@/components/shiplog/ShiplogCard"
+import { SkillIcon, getSkillIcon } from "@/lib/skill-icons"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 import type { PublicProjectPageData } from "@/types/public-project"
 import type { Shiplog } from "@/types/shiplog"
+import { MdCurrencyBitcoin } from "react-icons/md"
 
 const formatNumber = (value: number) => {
   if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`
@@ -163,19 +173,16 @@ export default function ProjectPageClient({
         icon: MousePointerClick,
         label: "Project click position",
         value: rankValue(data.stats.views30Days),
-        helper: "Based on the last 30 days",
       },
       {
         icon: AlertTriangle,
         label: "Project upvote position",
         value: rankValue(data.stats.upvotes),
-        helper: "Relative community ranking",
       },
       {
         icon: Eye,
         label: "Project visits",
         value: formatNumber(data.stats.totalViews),
-        helper: "Lifetime traffic",
       },
     ]
   }, [data.stats.totalViews, data.stats.upvotes, data.stats.views30Days])
@@ -316,133 +323,166 @@ export default function ProjectPageClient({
         backgroundSize: "28px 28px",
       }}
     >
-      <div className="p-2">
-      <div className="mx-auto w-full bg-white max-w-6xl px-4 py-6 pb-16 sm:px-6 lg:px-8">
-
-        <section className="bg-white">
+      <div className="px-2">
+        <div className="mx-auto w-full bg-white max-w-6xl px-3 py-6 pb-16 sm:px-6 lg:px-8">
+          {/* Hero Section: Logo, Title, Buttons, Description */}
           <div className="flex flex-col gap-4">
-            <div className="flex items-start gap-3 sm:gap-4">
-              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-3xl bg-slate-100 sm:h-20 sm:w-20">
-                <ProjectIcon
-                  favicon={data.project.favicon || undefined}
-                  logo={data.project.logo || undefined}
-                  title={data.project.title}
-                  size="lg"
-                />
+            {/* Layout: Logo + Title + Buttons */}
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+              {/* Logo + Title (Left side on large screens) */}
+              <div className="flex items-start gap-3 sm:gap-4">
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center bg-white  overflow-hidden">
+                  <ProjectIcon
+                    favicon={data.project.favicon || undefined}
+                    logo={data.project.logo || undefined}
+                    title={data.project.title}
+                    size="lg"
+                  />
+                </div>
+                <div className="space-y-2 sm:space-y-3">
+                  <h1 className="text-2xl font-semibold mt-2 leading-tight text-black sm:text-2xl lg:text-3xl">
+                    {data.project.title}
+                  </h1>
+                  
+                </div>
               </div>
-              <div className="space-y-3 sm:space-y-4">
-                <h1 className="text-2xl font-semibold mt-3 leading-tight text-black sm:text-4xl">
-                  {data.project.title}
-                </h1>
-                {heroTags.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {heroTags.map((tag) => (
-                      <span
-                        key={tag}
-                        className="inline-flex items-center rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                ) : null}
-              </div>
-            </div>
 
-            <div className="flex flex-wrap items-center gap-8 sm:gap-3">
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                onClick={handleShare}
-                className="flex h-10 items-center gap-2 rounded-full border-slate-200 bg-white px-4 text-xs font-semibold uppercase tracking-wide text-slate-600 hover:border-slate-300 hover:bg-slate-50"
-                aria-label="Share project"
-              >
-                <Share2 className="h-4 w-4" />
-                {copied ? "Link copied" : "Share"}
-              </Button>
-              {data.project.deployedUrl ? (
+              {/* Action Buttons (Right side on large screens) */}
+              <div className="flex flex-wrap items-center gap-2 md:gap-6">
                 <Button
-                  asChild
+                  type="button"
                   size="sm"
                   variant="outline"
+                  onClick={handleShare}
                   className="flex h-10 items-center gap-2 rounded-full border-slate-200 bg-white px-4 text-xs font-semibold uppercase tracking-wide text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                  aria-label="Share project"
                 >
-                  <Link
-                    href={data.project.deployedUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <ArrowUpRight className="h-4 w-4" />
-                    Visit
-                  </Link>
+                  <Share2 className="h-4 w-4" />
+                  {copied ? "Link copied" : "Share"}
                 </Button>
-              ) : null}
-              <Button
-                type="button"
-                size="sm"
-                onClick={handleToggleUpvote}
-                disabled={upvotePending}
-                className={cn(
-                  "flex h-10 items-center gap-2 p-4 rounded-full px-5 text-xs font-semibold uppercase tracking-wide transition",
-                  hasUpvoted
-                    ? "bg-gradient-to-r from-orange-600 to-orange-700 text-white"
-                    : "bg-orange-400 text-black hover:bg-orange-500",
-                  upvotePending && "opacity-80"
-                )}
-              >
-                <ArrowBigUp className="h-4 w-4" />
-                {upvotePending ? "Updating..." : `Upvote ${upvoteCount}`}
-              </Button>
+                {data.project.deployedUrl ? (
+                  <Button
+                    asChild
+                    size="sm"
+                    variant="outline"
+                    className="flex h-10 items-center gap-2 rounded-full border-slate-200 bg-white px-4 text-xs font-semibold uppercase tracking-wide text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                  >
+                    <Link
+                      href={data.project.deployedUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <ArrowUpRight className="h-4 w-4" />
+                      Visit
+                    </Link>
+                  </Button>
+                ) : null}
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={handleToggleUpvote}
+                  disabled={upvotePending}
+                  className={cn(
+                    "flex h-10 items-center gap-2 p-4 rounded-full px-5 text-xs font-semibold uppercase tracking-wide transition",
+                    hasUpvoted
+                      ? "bg-gradient-to-r from-orange-600 to-orange-700 text-white"
+                      : "bg-orange-400 text-black hover:bg-orange-500",
+                    upvotePending && "opacity-80"
+                  )}
+                >
+                  <ArrowBigUp className="h-4 w-4" />
+                  { hasUpvoted ? "Upvoted" : upvotePending ? "Updating..." : `Upvote ${upvoteCount}`}
+                </Button>
+              </div>
             </div>
 
+            {/* Description */}
             {data.project.description ? (
               <div
-                className="prose max-w-none text-sm leading-relaxed text-slate-600 prose-p:mb-3 prose-p:text-slate-600"
+                className="prose max-w-none text-md ml-2 leading-snug text-gray-600  font-semibold line-clamp-2"
                 dangerouslySetInnerHTML={{
                   __html: sanitizeDescription(data.project.description),
                 }}
               />
             ) : null}
-              {(data.project.category || data.project.status || data.project.revenue || data.project.mrr || data.project.users) && (
-                <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold text-slate-600">
-                  {data.project.category && (
-                    <span className="rounded-full bg-orange-50 px-3 py-1 text-orange-700 border border-orange-200">
-                      {data.project.category}
-                    </span>
-                  )}
-                  {data.project.status && (
-                    <span className="rounded-full bg-emerald-50 px-3 py-1 text-emerald-700 border border-emerald-200">
-                      {data.project.status}
-                    </span>
-                  )}
-                  {typeof data.project.revenue === "number" && (
-                    <span className="rounded-full border border-slate-200 px-3 py-1 text-slate-700">
-                      Rev {formatCurrency(data.project.revenue)}
-                    </span>
-                  )}
-                  {typeof data.project.mrr === "number" && (
-                    <span className="rounded-full border border-slate-200 px-3 py-1 text-slate-700">
-                      MRR {formatCurrency(data.project.mrr)}
-                    </span>
-                  )}
-                  {typeof data.project.users === "number" && (
-                    <span className="rounded-full border border-slate-200 px-3 py-1 text-slate-700">
-                      {data.project.users.toLocaleString()} users
-                    </span>
-                  )}
-                </div>
-              )}
-          </div>
-        </section>
 
-        <section className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {highlightStats.map((item) => (
-            <div
-              key={item.label}
-              className="rounded-3xl border border-slate-200 bg-white p-6"
-            >
-              <div className="flex items-start justify-between">
+            {/* Status, Users, Revenue, MRR */}
+            {(data.project.status || typeof data.project.users === "number" || typeof data.project.revenue === "number" || typeof data.project.mrr === "number") && (
+              <div className="flex flex-wrap items-center ml-2 gap-2">
+                {/* {data.project.status && (
+                  <span className="inline-flex items-center text-sm font-semibold rounded-md px-3 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <span className="mr-1.5">●</span>
+                    {data.project.status}
+                  </span>
+                )}
+                {typeof data.project.users === "number" && (
+                  <span className="inline-flex items-center text-sm font-semibold rounded-md px-3 py-1.5 bg-blue-50 text-blue-700 border border-blue-200">
+                    <Users className="h-3.5 w-3.5 mr-1.5" />
+                    {data.project.users.toLocaleString()}
+                  </span>
+                )} */}
+                {typeof data.project.revenue === "number" && (
+                  <span className="inline-flex items-center text-sm font-semibold rounded-md px-3 py-1.5 bg-purple-50 text-purple-700 border border-purple-200">
+                    <Banknote className="h-3.5 w-3.5 mr-1.5" />
+                    Rev {formatCurrency(data.project.revenue)}
+                  </span>
+                )}
+                {typeof data.project.mrr === "number" && (
+                  <span className="inline-flex items-center text-sm font-semibold rounded-md px-3 py-1.5 bg-orange-50 text-orange-700 border border-orange-200">
+                    <BanknoteArrowUpIcon className="h-3.5 w-3.5 mr-1.5" />
+                    MRR {formatCurrency(data.project.mrr)}
+                  </span>
+                )}
+              </div>
+            )}
+
+
+
+            {/* Categories */}
+            {data.project.category && (
+              <div className="flex items-center mt-2 gap-2">
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500"></h3>
+                <div className="flex flex-wrap gap-2">
+                <Tags className="h-4 w-4 text-slate-500 mt-2" />
+                  {data.project.category.split(',').map((cat: string, idx: number) => (
+                    <span key={idx} className="inline-flex items-center text-xs font-semibold rounded-md px-3 py-1 hover:bg-indigo-50 text-black border border-orange-200">
+                      {cat.trim()}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Tech Stack */}
+            {/* {techStack.length > 0 && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Code2 className="h-4 w-4 text-slate-500" />
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Tech Stack</h3>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {techStack.map((tech: string) => {
+                    const IconComponent = getSkillIcon(tech)
+                    return (
+                      <span key={tech} className="inline-flex items-center gap-1.5 text-xs font-medium rounded-md px-2.5 py-1.5 bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-200 transition-colors">
+                        {IconComponent && <SkillIcon skillName={tech} className="h-4 w-4" />}
+                        {tech}
+                      </span>
+                    )
+                  })}
+                </div>
+              </div>
+            )} */}
+          </div>
+
+          {/* Stats Section */}
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {highlightStats.map((item) => (
+              <div
+                key={item.label}
+                className="rounded-3xl border border-slate-200 bg-white p-6"
+              >
+                <div className="flex items-start justify-between">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                     {item.label}
@@ -450,7 +490,6 @@ export default function ProjectPageClient({
                   <p className="mt-3 text-3xl font-semibold text-slate-900">
                     {item.value}
                   </p>
-                  <p className="mt-2 text-xs text-slate-500">{item.helper}</p>
                 </div>
                 <span className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-600">
                   <item.icon className="h-4 w-4" />
@@ -458,9 +497,10 @@ export default function ProjectPageClient({
               </div>
             </div>
           ))}
-        </section>
+          </div>
 
-        <section className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:items-stretch">
+          {/* Image and Portfolio Info Section */}
+          <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:items-stretch">
           <div className="relative overflow-hidden rounded-3xl  bg-white/80 p-0  md:h-full">
             <div className="absolute inset-0 bg-white/80 backdrop-blur-xl" />
             <div className="relative flex h-full items-center justify-center p-5">
@@ -647,10 +687,10 @@ export default function ProjectPageClient({
               </div>
             </div>
           </div>
-        </section>
+          </div>
 
+        </div>
       </div>
-    </div>
     </div>
   )
 }

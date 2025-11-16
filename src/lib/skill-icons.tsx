@@ -230,6 +230,7 @@ const skillColorMap: Record<string, string> = {
   'expo': '#000020'
 }
 
+// Export the getSkillIcon function for use in other components
 export const getSkillIcon = (skillName: string) => {
   const normalizedName = skillName.toLowerCase().trim()
   
