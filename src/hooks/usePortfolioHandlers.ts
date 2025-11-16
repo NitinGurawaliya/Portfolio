@@ -1,6 +1,6 @@
 import { Skill, Social, Repository, UsernameAvailability, PortfolioData } from "@/interface"
 import { checkUsernameAvailability } from "@/lib/services/portfolio-service"
-import { useState } from "react"
+import { useState, Dispatch, SetStateAction } from "react"
 
 export const usePortfolioHandlers = (
   setPortfolioData: React.Dispatch<React.SetStateAction<PortfolioData>>,
@@ -11,6 +11,12 @@ export const usePortfolioHandlers = (
   setCustomNames: React.Dispatch<React.SetStateAction<Record<number, string>>>,
   setCustomDescriptions: React.Dispatch<React.SetStateAction<Record<number, string>>>,
   setGithubUrls: React.Dispatch<React.SetStateAction<Record<number, string>>>,
+  setProjectCategories: React.Dispatch<React.SetStateAction<Record<number, string>>>,
+  setProjectStatuses: React.Dispatch<React.SetStateAction<Record<number, string>>>,
+  setProjectRevenues: React.Dispatch<React.SetStateAction<Record<number, number>>>,
+  setProjectMrrs: React.Dispatch<React.SetStateAction<Record<number, number>>>,
+  setProjectUsers: React.Dispatch<React.SetStateAction<Record<number, number>>>,
+  setProjectTechnologies: React.Dispatch<React.SetStateAction<Record<number, string>>>,
   setImportedProjects: React.Dispatch<React.SetStateAction<Repository[]>>,
   setRepoOrder: React.Dispatch<React.SetStateAction<number[]>>,
   setSelectedTheme: React.Dispatch<React.SetStateAction<string>>,
@@ -118,6 +124,73 @@ export const usePortfolioHandlers = (
     setCustomDescriptions(prev => ({ ...prev, [repoId]: description }))
   }
 
+  const handleUpdateProjectCategory = (repoId: number, category: string | null) => {
+    setProjectCategories(prev => {
+      const next = { ...prev }
+      const normalized = category?.trim() || ""
+      if (!normalized) {
+        delete next[repoId]
+        return next
+      }
+      next[repoId] = normalized
+      return next
+    })
+  }
+
+  const handleUpdateProjectStatus = (repoId: number, status: string | null) => {
+    setProjectStatuses(prev => {
+      const next = { ...prev }
+      const normalized = status?.trim() || ""
+      if (!normalized) {
+        delete next[repoId]
+        return next
+      }
+      next[repoId] = normalized
+      return next
+    })
+  }
+
+  const handleUpdateNumericInsight = (
+    repoId: number,
+    value: number | null | undefined,
+    setter: Dispatch<SetStateAction<Record<number, number>>>
+  ) => {
+    setter(prev => {
+      const next = { ...prev }
+      if (value === null || value === undefined || Number.isNaN(value)) {
+        delete next[repoId]
+        return next
+      }
+      next[repoId] = value
+      return next
+    })
+  }
+
+  const handleUpdateProjectRevenue = (repoId: number, revenue?: number | null) => {
+    handleUpdateNumericInsight(repoId, revenue ?? null, setProjectRevenues)
+  }
+
+  const handleUpdateProjectMrr = (repoId: number, mrr?: number | null) => {
+    handleUpdateNumericInsight(repoId, mrr ?? null, setProjectMrrs)
+  }
+
+  const handleUpdateProjectUsers = (repoId: number, users?: number | null) => {
+    handleUpdateNumericInsight(repoId, users ?? null, setProjectUsers)
+  }
+
+  const handleUpdateProjectTechnologies = (repoId: number, technologies?: string | null) => {
+    setProjectTechnologies(prev => {
+      const next = { ...prev }
+      const normalized = technologies?.trim() || ""
+      if (!normalized) {
+        delete next[repoId]
+        return next
+      }
+      next[repoId] = normalized
+      return next
+    })
+  }
+
   const handleUpdateGithubUrl = (repoId: number, url: string) => {
     setGithubUrls(prev => ({
       ...prev,
@@ -200,6 +273,12 @@ export const usePortfolioHandlers = (
     handleUpdateDeployedUrl,
     handleUpdateCustomName,
     handleUpdateCustomDescription,
+      handleUpdateProjectCategory,
+      handleUpdateProjectStatus,
+      handleUpdateProjectRevenue,
+      handleUpdateProjectMrr,
+      handleUpdateProjectUsers,
+      handleUpdateProjectTechnologies,
     handleUpdateGithubUrl,
     handleUpdateRepoOrder,
     handleAddSkill,

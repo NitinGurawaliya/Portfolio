@@ -2,16 +2,34 @@ import Link from "next/link"
 import { motion } from "framer-motion"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ProjectIcon } from "@/components/ui/project-icon"
-import { Building, Download } from "lucide-react"
+import { Building, Download, Code2, TrendingUp, Users as UsersIcon } from "lucide-react"
 import { SiGithub, SiX, SiLinkedin, SiInstagram, SiFacebook, SiYoutube, SiGmail, SiStackoverflow, SiReddit } from "react-icons/si"
 import { Globe } from "lucide-react"
-import { SkillIcon } from "@/lib/skill-icons"
+import { SkillIcon, getSkillIcon } from "@/lib/skill-icons"
 import { PublicShiplogList } from "@/components/shiplog/PublicShiplogList"
 import { useState, useEffect, useMemo } from "react"
 import { GitHubActivity } from "@/components/GitHubActivity"
 import { trackProjectClick } from "@/lib/analytics-utils"
 import { getProjectSlugMap } from "@/lib/project-slug"
 import { truncateWords } from "@/lib/text"
+
+const formatCurrency = (value?: number | null) => {
+  if (value === null || value === undefined) return null
+  if (value >= 1000000) return `$${(value / 1000000).toFixed(1)}M`
+  if (value >= 1000) return `$${(value / 1000).toFixed(1)}k`
+  return `$${value.toLocaleString()}`
+}
+
+// Helper function to check if a URL is a GitHub repository URL
+const isGitHubUrl = (url?: string | null) => {
+  if (!url) return false
+  try {
+    const urlObj = new URL(url)
+    return urlObj.hostname === 'github.com' && urlObj.pathname.split('/').filter(Boolean).length >= 2
+  } catch {
+    return false
+  }
+}
 
 interface ThemeConfig {
   name: string
@@ -458,7 +476,7 @@ export default function LayoutDark({ theme, portfolio }: LayoutDarkProps) {
                         ? `/${portfolioSlug}/${projectSlug}`
                         : undefined
 
-                      const descriptionText = truncateWords(repo.customDescription || repo.repository.description, 20)
+                      const descriptionText = truncateWords(repo.customDescription || repo.repository.description, 18)
                       const cardContent = (
                       <motion.article
                         className="group relative flex h-full w-full cursor-pointer"
@@ -469,69 +487,108 @@ export default function LayoutDark({ theme, portfolio }: LayoutDarkProps) {
                         whileHover={{ scale: 1.02, y: -4 }}
                       >
                           <div className="relative bg-transparent border border-orange-500/30 rounded-lg p-4 sm:p-4 hover:border-orange-500/40 transition-all duration-300 h-full min-h-[190px] flex flex-col w-full">
-                            <div className="flex items-start justify-between mb-2">
-                            <div className="flex-1 mr-4 min-w-0">
-                                <div className="mb-2">
-                                <ProjectIcon
-                                  favicon={repo.repository.favicon}
-                                    logo={repo.repository.logo}
-                                  title={repo.customName || repo.repository.name}
-                                    size="sm"
-                                />
-                              </div>
-
-                                <h3 className="text-base sm:text-lg font-semibold text-white group-hover:text-orange-300 transition-colors duration-300 break-words mb-1.5">
-                                {repo.customName || repo.repository.name}
-                              </h3>
-                                {descriptionText && (
-                                  <p className="text-gray-400 text-sm leading-relaxed mb-3 break-words">
-                                    {descriptionText}
-                                  </p>
+                            {/* Top Right: Status + Users */}
+                            {(repo.projectStatus || typeof repo.projectUsers === "number") && (
+                              <div className="absolute top-4 right-4 sm:top-4 sm:right-4 flex items-center gap-1.5">
+                                {repo.projectStatus && (
+                                  <span className="inline-flex items-center text-[10px] font-semibold rounded-full px-2 py-0.5 bg-emerald-500/10 text-emerald-200 border border-emerald-400/30">
+                                    <span className="mr-1">●</span>
+                                    {repo.projectStatus}
+                                  </span>
                                 )}
+                                {typeof repo.projectUsers === "number" && (
+                                  <span className="inline-flex items-center text-[10px] font-semibold rounded-full px-2 py-0.5 bg-blue-500/10 text-blue-300 border border-blue-500/30">
+                                    <UsersIcon className="h-2.5 w-2.5 mr-1" />
+                                    {repo.projectUsers.toLocaleString()}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+
+                            {/* Header: Icon/Name */}
+                            <div className="flex items-start mb-2 pr-24">
+                              <div className="flex-1 min-w-0">
+                                <div className="mb-2">
+                                  <ProjectIcon
+                                    favicon={repo.repository.favicon}
+                                    logo={repo.repository.logo}
+                                    title={repo.customName || repo.repository.name}
+                                    size="sm"
+                                  />
+                                </div>
+                                <h3 className="text-base sm:text-lg font-semibold text-white group-hover:text-orange-300 transition-colors duration-300 break-words mb-1.5">
+                                  {repo.customName || repo.repository.name}
+                                </h3>
+                              </div>
                             </div>
-                            <motion.button
-                              onClick={(e) => {
-                                e.preventDefault()
-                                e.stopPropagation()
-                                const portfolioRepoId = repo.id
-                                trackProjectClick(portfolio.id, portfolioRepoId, repo.customName || repo.repository.name)
-                                const githubUrl = repo.repository.githubUrl || repo.repository.htmlUrl
-                                window.open(githubUrl, '_blank')
-                              }}
-                              className="flex-shrink-0 p-2 rounded-lg bg-transparent border border-orange-500/40 text-orange-300 hover:bg-orange-500/10 hover:border-orange-500/60 hover:text-white transition-all duration-300"
-                              whileHover={{ scale: 1.1 }}
-                              whileTap={{ scale: 0.9 }}
-                              aria-label={`View ${repo.repository.name} on GitHub`}
-                            >
-                              <SiGithub className="h-4 w-4" />
-                            </motion.button>
-                          </div>
+
+                            {/* Description */}
+                            {descriptionText && (
+                              <p className="text-gray-400 text-sm leading-relaxed mb-2 break-words line-clamp-2">
+                                {descriptionText}
+                              </p>
+                            )}
+
+                            {/* Categories */}
+                            {repo.projectCategory && (
+                              <div className="flex flex-wrap gap-2 mb-2">
+                                {repo.projectCategory.split(',').map((cat: string, idx: number) => (
+                                  <span key={idx} className="inline-flex items-center text-xs font-semibold rounded-full px-2 py-0.5 bg-orange-500/10 text-orange-300 border border-orange-500/30">
+                                    {cat.trim()}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Tech Stack */}
+                            {repo.technologies && (
+                              <div className="mb-3">
+                                <div className="flex items-center gap-1 mb-2">
+                                  <Code2 className="h-3 w-3 text-white/50" />
+                                  <span className="text-[9px] font-medium text-white/50 uppercase tracking-wide">Tech Stack</span>
+                                </div>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {repo.technologies.split(',').map((tech: string, idx: number) => {
+                                    const techName = tech.trim()
+                                    const IconComponent = getSkillIcon(techName)
+                                    return (
+                                      <span key={idx} className="inline-flex items-center gap-1 text-xs font-medium rounded-md px-2 py-1 bg-white/5 text-white/80 border border-white/10 hover:bg-white/10 transition-colors">
+                                        {IconComponent ? (
+                                          <SkillIcon skillName={techName} className="h-3.5 w-3.5" />
+                                        ) : null}
+                                        <span>{techName}</span>
+                                      </span>
+                                    )
+                                  })}
+                                </div>
+                              </div>
+                            )}
 
                             <div className="flex items-center flex-wrap gap-2 mt-auto pt-2">
-                            {(() => {
-                              let languages: string[] = []
-                              if (repo.repository.languages) {
-                                try {
-                                  languages = JSON.parse(repo.repository.languages)
-                                } catch (e) {
-                                  if (repo.repository.language) {
-                                    languages = [repo.repository.language]
+                              {(() => {
+                                let languages: string[] = []
+                                if (repo.repository.languages) {
+                                  try {
+                                    languages = JSON.parse(repo.repository.languages)
+                                  } catch (e) {
+                                    if (repo.repository.language) {
+                                      languages = [repo.repository.language]
+                                    }
                                   }
+                                } else if (repo.repository.language) {
+                                  languages = [repo.repository.language]
                                 }
-                              } else if (repo.repository.language) {
-                                languages = [repo.repository.language]
-                              }
 
-                              return languages
-                                .filter(lang => lang.toLowerCase() !== 'web')
-                                .map((lang, idx) => (
-                                  <span key={idx} className="text-orange-300 text-xs sm:text-sm font-medium px-2 py-1 bg-orange-500/10 rounded border border-orange-500/30">
-                                    {lang}
-                                  </span>
-                                ))
-                            })()}
+                                return languages
+                                  .filter(lang => lang.toLowerCase() !== 'web')
+                                  .map((lang, idx) => (
+                                    <span key={idx} className="text-orange-300 text-xs sm:text-sm font-medium px-2 py-1 bg-orange-500/10 rounded border border-orange-500/30">
+                                      {lang}
+                                    </span>
+                                  ))
+                              })()}
+                            </div>
                           </div>
-                        </div>
                       </motion.article>
                     )
 

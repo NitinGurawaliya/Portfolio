@@ -33,8 +33,8 @@ export default function HomePage() {
         <WallOfFame />
         <TestimonialsSection />
         {/* <DemoSection /> */}
-        {/* <CTASection /> */}
-        <TopContributors />
+        <CTASection />
+        {/* <TopContributors /> */}
       </main>
       <Footer />
     </div>

@@ -130,6 +130,11 @@ model PortfolioRepository {
   customName        String?
   customDescription String?
   technologies      String?
+  projectCategory   String?
+  projectStatus     String?    @default("building")
+  projectRevenue    Int?
+  projectMrr        Int?
+  projectUsers      Int?
   portfolio         Portfolio  @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
   repository        Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
   upvotes           ProjectUpvote[]

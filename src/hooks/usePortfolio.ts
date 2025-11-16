@@ -60,6 +60,12 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
   const [customNames, setCustomNames] = useState<Record<number, string>>({})
   const [customDescriptions, setCustomDescriptions] = useState<Record<number, string>>({})
   const [githubUrls, setGithubUrls] = useState<Record<number, string>>({})
+  const [projectCategories, setProjectCategories] = useState<Record<number, string>>({})
+  const [projectStatuses, setProjectStatuses] = useState<Record<number, string>>({})
+  const [projectRevenues, setProjectRevenues] = useState<Record<number, number>>({})
+  const [projectMrrs, setProjectMrrs] = useState<Record<number, number>>({})
+  const [projectUsers, setProjectUsers] = useState<Record<number, number>>({})
+  const [projectTechnologies, setProjectTechnologies] = useState<Record<number, string>>({})
   const [selectedTheme, setSelectedTheme] = useState<string>('light')
   const [backgroundColor, setBackgroundColor] = useState<string | null>(null)
   const [backgroundPattern, setBackgroundPattern] = useState<string | null>(null)
@@ -96,6 +102,12 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
       customNames: data.customNames,
       customDescriptions: data.customDescriptions,
       githubUrls: data.githubUrls,
+        projectCategories: data.projectCategories,
+        projectStatuses: data.projectStatuses,
+        projectRevenues: data.projectRevenues,
+        projectMrrs: data.projectMrrs,
+        projectUsers: data.projectUsers,
+        projectTechnologies: data.projectTechnologies,
       selectedTheme: data.selectedTheme,
       backgroundColor: data.backgroundColor,
       backgroundPattern: data.backgroundPattern,
@@ -116,10 +128,15 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
     selectedTheme,
     customNames,
     customDescriptions,
+    projectCategories,
+    projectStatuses,
+    projectRevenues,
+    projectMrrs,
+    projectUsers,
     repoOrder,
     backgroundColor,
     backgroundPattern
-  ), [user, portfolioData, skills, socials, selectedRepos, deployedUrls, importedProjects, selectedTheme, customNames, customDescriptions, repoOrder, backgroundColor, backgroundPattern])
+  ), [user, portfolioData, skills, socials, selectedRepos, deployedUrls, importedProjects, selectedTheme, customNames, customDescriptions, projectCategories, projectStatuses, projectRevenues, projectMrrs, projectUsers, projectTechnologies, repoOrder, backgroundColor, backgroundPattern])
 
   // Track changes
   useEffect(() => {
@@ -166,6 +183,12 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
       customNames,
       customDescriptions,
       githubUrls,
+        projectCategories,
+        projectStatuses,
+        projectRevenues,
+        projectMrrs,
+        projectUsers,
+        projectTechnologies,
       importedProjects: normalizedImportedProjects.sort((a, b) => a.id - b.id),
       selectedTheme,
       backgroundColor,
@@ -183,6 +206,12 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
       customNames: currentData.customNames,
       customDescriptions: currentData.customDescriptions,
       githubUrls: currentData.githubUrls,
+        projectCategories: currentData.projectCategories || {},
+        projectStatuses: currentData.projectStatuses || {},
+        projectRevenues: currentData.projectRevenues || {},
+        projectMrrs: currentData.projectMrrs || {},
+        projectUsers: currentData.projectUsers || {},
+        projectTechnologies: currentData.projectTechnologies || {},
       importedProjects: [...(currentData.importedProjects || [])].sort((a, b) => a.id - b.id),
       selectedTheme: currentData.selectedTheme || 'light',
       backgroundColor: currentData.backgroundColor || null,
@@ -205,6 +234,12 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
       customNames: originalData.customNames,
       customDescriptions: originalData.customDescriptions,
       githubUrls: originalData.githubUrls,
+        projectCategories: (originalData as any).projectCategories || {},
+        projectStatuses: (originalData as any).projectStatuses || {},
+        projectRevenues: (originalData as any).projectRevenues || {},
+        projectMrrs: (originalData as any).projectMrrs || {},
+        projectUsers: (originalData as any).projectUsers || {},
+        projectTechnologies: (originalData as any).projectTechnologies || {},
       importedProjects: normalizedOriginalImportedProjects.sort((a, b) => a.id - b.id),
       selectedTheme: originalData.selectedTheme || 'light',
       backgroundColor: (originalData as any).backgroundColor || null,
@@ -263,7 +298,7 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
     // Normal change detection
     console.log("📊 Setting hasUnsavedChanges to:", hasChanges)
     setHasUnsavedChanges(hasChanges)
-  }, [portfolioData, selectedRepos, skills, socials, deployedUrls, customNames, customDescriptions, githubUrls, importedProjects, selectedTheme, backgroundColor, backgroundPattern, repoOrder, experiences, cvUrl, originalData, isInitialLoad, isPublishComplete])
+    }, [portfolioData, selectedRepos, skills, socials, deployedUrls, customNames, customDescriptions, githubUrls, projectCategories, projectStatuses, projectRevenues, projectMrrs, projectUsers, projectTechnologies, importedProjects, selectedTheme, backgroundColor, backgroundPattern, repoOrder, experiences, cvUrl, originalData, isInitialLoad, isPublishComplete])
 
   // Track if we're currently loading to prevent multiple simultaneous calls
   const isLoadingRef = useRef(false)
@@ -348,13 +383,19 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
           })))
         }
         
-        if (sectionsData.repositories) {
-          const { urls, names, descriptions, githubUrls: gUrls } = mapPortfolioRepositories(sectionsData.repositories)
-          
-          setDeployedUrls(urls)
-          setCustomNames(names)
-          setCustomDescriptions(descriptions)
-          setGithubUrls(gUrls)
+          if (sectionsData.repositories) {
+            const { urls, names, descriptions, githubUrls: gUrls, categories, statuses, revenues, mrrs, users: usersMap, technologies: techsMap } = mapPortfolioRepositories(sectionsData.repositories)
+            
+            setDeployedUrls(urls)
+            setCustomNames(names)
+            setCustomDescriptions(descriptions)
+            setGithubUrls(gUrls)
+            setProjectCategories(categories)
+            setProjectStatuses(statuses)
+            setProjectRevenues(revenues)
+            setProjectMrrs(mrrs)
+            setProjectUsers(usersMap)
+            setProjectTechnologies(techsMap)
           
           const imported = formatImportedProjects(sectionsData.repositories)
           setImportedProjects(imported)
@@ -447,15 +488,21 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
         }
         
         // Load repository data
-        if (portfolio.repositories && portfolio.repositories.length > 0) {
-          devLog("Portfolio repositories from DB:", portfolio.repositories)
-          
-          const { urls, names, descriptions, githubUrls: gUrls } = mapPortfolioRepositories(portfolio.repositories)
-          
-          setDeployedUrls(urls)
-          setCustomNames(names)
-          setCustomDescriptions(descriptions)
-          setGithubUrls(gUrls)
+          if (portfolio.repositories && portfolio.repositories.length > 0) {
+            devLog("Portfolio repositories from DB:", portfolio.repositories)
+            
+            const { urls, names, descriptions, githubUrls: gUrls, categories, statuses, revenues, mrrs, users: usersMap, technologies: techsMap } = mapPortfolioRepositories(portfolio.repositories)
+            
+            setDeployedUrls(urls)
+            setCustomNames(names)
+            setCustomDescriptions(descriptions)
+            setGithubUrls(gUrls)
+            setProjectCategories(categories)
+            setProjectStatuses(statuses)
+            setProjectRevenues(revenues)
+            setProjectMrrs(mrrs)
+            setProjectUsers(usersMap)
+            setProjectTechnologies(techsMap)
           
           // Set imported projects
           const imported = formatImportedProjects(portfolio.repositories)
@@ -497,7 +544,8 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
           setCvUrl((portfolio as any).cvUrl)
         }
         
-        const originalDataToSet = normalizeData(createOrderedData({
+          const mappedRepoData = mapPortfolioRepositories(portfolio.repositories || [])
+          const originalDataToSet = normalizeData(createOrderedData({
           id: portfolio.id, // Add portfolio ID
           portfolioData: {
             displayName: portfolio.displayName || "",
@@ -519,10 +567,16 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
             url: social.url,
             isPinned: social.isPinned
           })).sort((a: Social, b: Social) => a.id - b.id) : [],
-          deployedUrls: mapPortfolioRepositories(portfolio.repositories || []).urls,
-          customNames: mapPortfolioRepositories(portfolio.repositories || []).names,
-          customDescriptions: mapPortfolioRepositories(portfolio.repositories || []).descriptions,
-          githubUrls: mapPortfolioRepositories(portfolio.repositories || []).githubUrls,
+            deployedUrls: mappedRepoData.urls,
+            customNames: mappedRepoData.names,
+            customDescriptions: mappedRepoData.descriptions,
+            githubUrls: mappedRepoData.githubUrls,
+            projectCategories: mappedRepoData.categories,
+            projectStatuses: mappedRepoData.statuses,
+            projectRevenues: mappedRepoData.revenues,
+            projectMrrs: mappedRepoData.mrrs,
+            projectUsers: mappedRepoData.users,
+            projectTechnologies: mappedRepoData.technologies,
           selectedTheme: currentSelectedTheme,
           backgroundColor: (portfolio as any).backgroundColor || null,
           backgroundPattern: (portfolio as any).backgroundPattern || null,
@@ -573,7 +627,8 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
       } else if (basicData || sectionsData) {
         // Optimized API path - set original data from split APIs
         const currentTheme = selectedTheme || 'light'
-        const originalDataToSet = normalizeData(createOrderedData({
+          const sectionsRepoMap = sectionsData?.repositories ? mapPortfolioRepositories(sectionsData.repositories) : { urls: {}, names: {}, descriptions: {}, githubUrls: {}, categories: {}, statuses: {}, revenues: {}, mrrs: {}, users: {}, technologies: {} }
+          const originalDataToSet = normalizeData(createOrderedData({
           id: basicData?.id || 0,
           portfolioData: {
             displayName: basicData?.displayName || "",
@@ -595,10 +650,16 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
             url: social.url,
             isPinned: social.isPinned
           })).sort((a: Social, b: Social) => a.id - b.id) : [],
-          deployedUrls: sectionsData?.repositories ? mapPortfolioRepositories(sectionsData.repositories).urls : {},
-          customNames: sectionsData?.repositories ? mapPortfolioRepositories(sectionsData.repositories).names : {},
-          customDescriptions: sectionsData?.repositories ? mapPortfolioRepositories(sectionsData.repositories).descriptions : {},
-          githubUrls: sectionsData?.repositories ? mapPortfolioRepositories(sectionsData.repositories).githubUrls : {},
+            deployedUrls: sectionsRepoMap.urls,
+            customNames: sectionsRepoMap.names,
+            customDescriptions: sectionsRepoMap.descriptions,
+            githubUrls: sectionsRepoMap.githubUrls,
+            projectCategories: sectionsRepoMap.categories,
+            projectStatuses: sectionsRepoMap.statuses,
+            projectRevenues: sectionsRepoMap.revenues,
+            projectMrrs: sectionsRepoMap.mrrs,
+            projectUsers: sectionsRepoMap.users,
+            projectTechnologies: sectionsRepoMap.technologies,
           selectedTheme: currentTheme,
           backgroundColor: backgroundColor || null,
           backgroundPattern: backgroundPattern || null,
@@ -653,6 +714,12 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
           customNames: { ...customNames },
           customDescriptions: { ...customDescriptions },
           githubUrls: { ...githubUrls },
+        projectCategories: { ...projectCategories },
+        projectStatuses: { ...projectStatuses },
+        projectRevenues: { ...projectRevenues },
+        projectMrrs: { ...projectMrrs },
+        projectUsers: { ...projectUsers },
+        projectTechnologies: { ...projectTechnologies },
           selectedTheme: currentTheme,
           backgroundColor: backgroundColor || null,
           backgroundPattern: backgroundPattern || null,
@@ -701,6 +768,12 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
          customNames: { ...customNames },
          customDescriptions: { ...customDescriptions },
          githubUrls: { ...githubUrls },
+        projectCategories: { ...projectCategories },
+        projectStatuses: { ...projectStatuses },
+        projectRevenues: { ...projectRevenues },
+        projectMrrs: { ...projectMrrs },
+        projectUsers: { ...projectUsers },
+        projectTechnologies: { ...projectTechnologies },
          selectedTheme: currentTheme,
          backgroundColor: backgroundColor || null,
          backgroundPattern: backgroundPattern || null,
@@ -749,6 +822,12 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
       customNames: { ...customNames },
       customDescriptions: { ...customDescriptions },
       githubUrls: { ...githubUrls },
+        projectCategories: { ...projectCategories },
+        projectStatuses: { ...projectStatuses },
+        projectRevenues: { ...projectRevenues },
+        projectMrrs: { ...projectMrrs },
+        projectUsers: { ...projectUsers },
+        projectTechnologies: { ...projectTechnologies },
       selectedTheme,
       backgroundColor,
       backgroundPattern,
@@ -786,6 +865,12 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
     customNames,
     customDescriptions,
     githubUrls,
+      projectCategories,
+      projectStatuses,
+      projectRevenues,
+      projectMrrs,
+      projectUsers,
+      projectTechnologies,
     selectedTheme,
     backgroundColor,
     backgroundPattern,
@@ -809,6 +894,12 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
     setCustomNames,
     setCustomDescriptions,
     setGithubUrls,
+      setProjectCategories,
+      setProjectStatuses,
+      setProjectRevenues,
+      setProjectMrrs,
+      setProjectUsers,
+      setProjectTechnologies,
     setSelectedTheme,
     setBackgroundColor,
     setBackgroundPattern,

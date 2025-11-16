@@ -12,6 +12,12 @@ export const publishPortfolio = async (data: {
   customNames: Record<number, string>
   customDescriptions: Record<number, string>
   githubUrls: Record<number, string>
+  projectCategories?: Record<number, string>
+  projectStatuses?: Record<number, string>
+  projectRevenues?: Record<number, number>
+  projectMrrs?: Record<number, number>
+  projectUsers?: Record<number, number>
+  projectTechnologies?: Record<number, string>
   selectedTheme: string
   repoOrder: number[]
   repositories: Repository[]

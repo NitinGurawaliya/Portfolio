@@ -12,6 +12,11 @@ export type PublicProjectPageData = {
     languages: string[]
     createdAt: string
     updatedAt: string
+      category: string | null
+      status: string | null
+      revenue: number | null
+      mrr: number | null
+      users: number | null
   }
   portfolio: {
     id: number

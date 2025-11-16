@@ -34,7 +34,7 @@ export function ProjectIcon({
   return (
     <div className={cn(
       sizeClasses[size],
-      "rounded-full bg-white overflow-hidden ring-1 ring-black/5 shadow-sm",
+      " bg-white overflow-hidden ",
       className
     )}>
       {imageSrc ? (
@@ -42,9 +42,9 @@ export function ProjectIcon({
           src={imageSrc} 
           alt={`${title} icon`}
           className="w-full h-full object-contain p-0.5"
-          style={{
-            imageRendering: 'crisp-edges'
-          }}
+          // style={{
+          //   imageRendering: 'crisp-edges'
+          // }}
           onError={(e) => {
             // If favicon fails to load, try to use the logo as fallback
             if (favicon && logo && e.currentTarget.src === favicon) {

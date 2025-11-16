@@ -91,6 +91,11 @@ export interface PortfolioState {
   customNames: Record<number, string>
   customDescriptions: Record<number, string>
   githubUrls: Record<number, string>
+  projectCategories?: Record<number, string>
+  projectStatuses?: Record<number, string>
+  projectRevenues?: Record<number, number>
+  projectMrrs?: Record<number, number>
+  projectUsers?: Record<number, number>
   importedProjects: Repository[]
   selectedTheme: string
   repoOrder: number[]
@@ -132,6 +137,11 @@ export interface Portfolio {
     customName?: string
     customDescription?: string
     isVisible: boolean
+  projectCategory?: string | null
+  projectStatus?: string | null
+  projectRevenue?: number | null
+  projectMrr?: number | null
+  projectUsers?: number | null
     repository: {
       id: number
       name: string
