@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, Suspense, useCallback, useRef, useMemo } from "react"
+import { useEffect, useState, Suspense, useCallback, useRef, useMemo, type ComponentType } from "react"
 import { useParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { StructuredData } from "@/components/StructuredData"
@@ -254,15 +254,11 @@ export default function PublicPortfolioPage() {
       ? "LayoutDark"
       : baseTheme.layout
 
-  const Layout = getLayoutComponent(activeLayoutName)
-  const layoutProps: Record<string, any> = {
-    theme,
-    portfolio,
-  }
-
-  if (activeLayoutName === "LayoutModern") {
-    layoutProps.appearance = effectiveAppearance
-  }
+  const LayoutComponent = getLayoutComponent(activeLayoutName) as ComponentType<any>
+  const layoutProps =
+    activeLayoutName === "LayoutModern"
+      ? { theme, portfolio, appearance: effectiveAppearance }
+      : { theme, portfolio }
 
     return (
     <div className="scroll-smooth" style={{ scrollBehavior: 'smooth' }}>
@@ -316,7 +312,7 @@ export default function PublicPortfolioPage() {
       
         {/* Dynamic Theme Layout */}
         <Suspense fallback={<div className="min-h-screen bg-black flex items-center justify-center"><DevFolioLoader size="lg" /></div>}>
-          <Layout {...layoutProps} />
+          <LayoutComponent {...layoutProps} />
         </Suspense>
         <PortfolioShareButton url={shareUrl} portfolioName={portfolio.displayName ?? undefined} />
     </div>
