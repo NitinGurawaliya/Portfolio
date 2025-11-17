@@ -117,13 +117,15 @@ export const cache = new MemoryCache()
 // Cache key generators
 export const CacheKeys = {
   // GitHub data cache keys
-  githubUser: (username: string) => `github_user_${username}`,
-  githubRepos: (username: string) => `github_repos_${username}`,
-  githubActivity: (username: string) => `github_activity_${username}`,
+  // SECURITY: Always use user ID (not username) for authenticated user caches
+  githubUser: (identifier: string) => `github_user_${identifier}`,
+  githubRepos: (identifier: string) => `github_repos_${identifier}`,
+  githubActivity: (identifier: string) => `github_activity_${identifier}`,
   
   // Portfolio data cache keys
-  portfolio: (username: string) => `portfolio_${username}`,
-  portfolioData: (username: string) => `portfolio_data_${username}`,
+  // Note: Public portfolios can use username, but authenticated should use user ID
+  portfolio: (identifier: string) => `portfolio_${identifier}`,
+  portfolioData: (identifier: string) => `portfolio_data_${identifier}`,
   
   // API response cache keys
   apiResponse: (endpoint: string, params?: Record<string, any>) => {
@@ -153,11 +155,27 @@ export const setCachedData = <T>(key: string, data: T, ttlMinutes: number): void
 
 export const invalidateCache = (pattern: string): void => {
   // For simple pattern matching (contains)
+  let deletedCount = 0
   for (const key of cache['cache'].keys()) {
     if (key.includes(pattern)) {
       cache.delete(key)
+      deletedCount++
     }
   }
+  if (deletedCount > 0) {
+    console.log(`🗑️ Cache invalidated: ${deletedCount} entries matching pattern "${pattern}"`)
+  }
+}
+
+/**
+ * Invalidate all caches for a specific user (by user ID)
+ * Use this when a user logs out or their data changes
+ */
+export const invalidateUserCache = (userId: string): void => {
+  console.log(`🗑️ Invalidating all caches for user: ${userId}`)
+  invalidateCache(`user_${userId}`)
+  invalidateCache(`basic_${userId}`)
+  invalidateCache(`sections_${userId}`)
 }
 
 // Cleanup expired items every 5 minutes

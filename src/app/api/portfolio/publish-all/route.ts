@@ -5,6 +5,7 @@ import type { Prisma } from "@prisma/client"
 import { sendEmail } from "@/lib/sendEmail"
 import { invalidateCache, CacheKeys } from "@/lib/cache"
 import { generatePortfolioPublishedEmail } from "@/lib/templates/welcomeEmail"
+import { validateSession } from "@/lib/session-validator"
 
 const normalizeValue = (value?: string | null) => {
   if (value === null || value === undefined) return ""
@@ -100,6 +101,20 @@ export async function POST(req: NextRequest) {
   try {
     devLog("🚀 Starting publish-all request...")
     
+    // SECURITY FIX: Validate session FIRST before processing any data
+    const sessionValidation = await validateSession(req)
+    
+    if (!sessionValidation.valid) {
+      console.error("❌ Unauthorized: Session validation failed:", sessionValidation.error)
+      return NextResponse.json(
+        { error: "Unauthorized: " + sessionValidation.error },
+        { status: 401 }
+      )
+    }
+    
+    const { user: authenticatedUser, userId: sessionUserId } = sessionValidation
+    devLog("✅ Session validated for user:", sessionUserId)
+    
     const body = await req.json()
     devLog("📦 Request body received:",   JSON.stringify(body, null, 2))
     
@@ -115,7 +130,7 @@ export async function POST(req: NextRequest) {
       selectedTheme,
       repoOrder,
       repositories,
-      userId,
+      userId: requestedUserId,
       userData,
       logoOverrides,
       experiences,
@@ -130,25 +145,30 @@ export async function POST(req: NextRequest) {
         projectTechnologies,
     } = body
 
-    devLog("👤 User ID:", userId)
+    // SECURITY FIX: Verify that the user is modifying their own portfolio
+    if (requestedUserId && requestedUserId.toString() !== sessionUserId) {
+      console.error("❌ Authorization failed: User attempting to modify another user's portfolio")
+      console.error("  Session User ID:", sessionUserId)
+      console.error("  Requested User ID:", requestedUserId)
+      return NextResponse.json(
+        { error: "Unauthorized: You can only modify your own portfolio" },
+        { status: 403 }
+      )
+    }
+    
+    // Use the authenticated user ID (not the one from request body)
+    // TypeScript: sessionUserId is guaranteed to exist from validateSession
+    const userId: string = sessionUserId!
+    devLog("👤 Authenticated User ID:", userId)
     devLog("📊 Portfolio data:", portfolioData)
     devLog("📸 Logo overrides received:", logoOverrides)
     devLog("🔧 Project Technologies received:", projectTechnologies)
 
-    // Validate required fields
-    if (!userId) {
-      console.error("❌ No user ID provided")
-      return NextResponse.json(
-        { error: "User ID is required" },
-        { status: 400 }
-      )
-    }
-
     // First, get existing user from database (to preserve email from auth)
-    devLog("👤 Fetching user from database with GitHub ID:", userId.toString())
+    devLog("👤 Fetching user from database with GitHub ID:", userId!.toString())
     
     let existingUser = await prisma.user.findUnique({
-      where: { githubId: userId.toString() }
+      where: { githubId: userId!.toString() }
     })
     
     // Determine email: prefer existing DB email (from auth), fallback to userData, then placeholder
@@ -170,7 +190,7 @@ export async function POST(req: NextRequest) {
     devLog("📧 Final email to use:", userEmail)
     
     const user = await prisma.user.upsert({
-      where: { githubId: userId.toString() },
+      where: { githubId: userId!.toString() },
       update: {
         name: userData?.name || existingUser?.name || "",
         // DON'T overwrite email if we have a real one from auth
@@ -187,7 +207,7 @@ export async function POST(req: NextRequest) {
         following: userData?.following || existingUser?.following || 0,
       },
       create: {
-        githubId: userId.toString(),
+        githubId: userId!.toString(),
         name: userData?.name || "",
         email: userEmail,
         githubUsername: userData?.githubUsername || "",

@@ -1,20 +1,22 @@
 import { NextRequest, NextResponse } from "next/server"
 import { cache, CacheKeys, CacheTTL, getCachedData, setCachedData } from "@/lib/cache"
+import { validateSession } from "@/lib/session-validator"
 
 export async function GET(req: NextRequest) {
   try {
-    const sessionCookie = req.cookies.get("github-session")?.value
-    if (!sessionCookie) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+    // SECURITY FIX: Use centralized session validation
+    const sessionValidation = await validateSession(req)
+    
+    if (!sessionValidation.valid) {
+      return NextResponse.json({ error: sessionValidation.error }, { status: 401 })
     }
-    const session = JSON.parse(sessionCookie)
-    const accessToken = session.accessToken as string | undefined
-    if (!accessToken) {
-      return NextResponse.json({ error: "No access token" }, { status: 401 })
-    }
+    
+    const { session, userId } = sessionValidation
+    const accessToken = session.accessToken as string
 
-    // Check cache first
-    const cacheKey = CacheKeys.githubRepos(session.user?.login || 'unknown')
+    // SECURITY FIX: Use user ID from validated session for cache key
+    // This prevents cache poisoning if username gets corrupted in session
+    const cacheKey = CacheKeys.githubRepos(`user_${userId}`)
     const cachedData = getCachedData(cacheKey)
     
     if (cachedData) {

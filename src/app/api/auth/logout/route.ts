@@ -1,7 +1,23 @@
 import { NextRequest, NextResponse } from "next/server"
+import { invalidateUserCache } from "@/lib/cache"
 
 export async function POST(req: NextRequest) {
   try {
+    // SECURITY FIX: Clear user's cache on logout
+    const sessionCookie = req.cookies.get("github-session")?.value
+    if (sessionCookie) {
+      try {
+        const session = JSON.parse(sessionCookie)
+        const userId = session.user?.id
+        if (userId) {
+          // Invalidate all caches for this user
+          invalidateUserCache(userId.toString())
+        }
+      } catch (error) {
+        // Ignore parsing errors during logout
+      }
+    }
+    
     const response = NextResponse.json({ success: true, message: "Logged out successfully" })
     
     // Clear session cookie by setting it to expire immediately

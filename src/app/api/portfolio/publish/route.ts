@@ -5,6 +5,7 @@ import type { Prisma } from "@prisma/client"
 import { sendEmail } from "@/lib/sendEmail"
 import { generatePortfolioPublishedEmail } from "@/lib/templates/welcomeEmail"
 import { cache, CacheKeys, CacheTTL, getCachedData, setCachedData, invalidateCache } from "@/lib/cache"
+import { validateSessionOptional } from "@/lib/session-validator"
 
 export async function POST(req: NextRequest) {
   try {
@@ -221,24 +222,12 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url)
     const username = searchParams.get("username")
     
-    // Check for session (optional - for dashboard access)
-    const sessionCookie = req.cookies.get("github-session")?.value
-    let loggedInUser = null
+    // SECURITY FIX: Use centralized session validation (optional)
+    const sessionValidation = await validateSessionOptional(req)
+    const loggedInUser = sessionValidation.valid ? sessionValidation.user : null
     
-    if (sessionCookie) {
-      try {
-        const session = JSON.parse(sessionCookie)
-        const loggedInUserId = session.user?.id
-        
-        if (loggedInUserId) {
-          loggedInUser = await prisma.user.findUnique({
-            where: { githubId: loggedInUserId.toString() }
-          })
-        }
-      } catch (error) {
-        // Invalid session, continue as public access
-        console.log("Invalid session, treating as public access")
-      }
+    if (!sessionValidation.valid && sessionValidation.error) {
+      console.log(`Session validation failed: ${sessionValidation.error}, treating as public access`)
     }
 
     // PUBLIC ACCESS: If username is provided and no valid session, fetch published portfolio

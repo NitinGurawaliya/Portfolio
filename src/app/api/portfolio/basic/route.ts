@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { CacheKeys, CacheTTL, getCachedData, setCachedData } from "@/lib/cache"
+import { validateSession } from "@/lib/session-validator"
 
 /**
  * Lightweight API - Only basic portfolio data (for instant dashboard loading)
@@ -9,32 +10,15 @@ import { CacheKeys, CacheTTL, getCachedData, setCachedData } from "@/lib/cache"
 export async function GET(req: NextRequest) {
   const startTime = performance.now()
   try {
-    const sessionCookie = req.cookies.get("github-session")?.value
-    if (!sessionCookie) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+    // SECURITY FIX: Use centralized session validation
+    const sessionValidation = await validateSession(req)
+    
+    if (!sessionValidation.valid) {
+      return NextResponse.json({ error: sessionValidation.error }, { status: 401 })
     }
 
-    let session
-    try {
-      session = JSON.parse(sessionCookie)
-    } catch (error) {
-      return NextResponse.json({ error: "Invalid session" }, { status: 401 })
-    }
-
-    const loggedInUserId = session.user?.id
-    if (!loggedInUserId) {
-      return NextResponse.json({ error: "Session invalid" }, { status: 401 })
-    }
-
-    const userQueryStart = performance.now()
-    const loggedInUser = await prisma.user.findUnique({
-      where: { githubId: loggedInUserId.toString() }
-    })
-    const userQueryTime = performance.now() - userQueryStart
-
-    if (!loggedInUser) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 })
-    }
+    const { user: loggedInUser, userId } = sessionValidation
+    const userQueryTime = 0 // Already validated in validateSession
 
     // Check cache
     const cacheCheckStart = performance.now()
