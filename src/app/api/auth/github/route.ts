@@ -13,6 +13,7 @@ export async function GET(req: NextRequest) {
 
   if (!code) {
     // --- OAUTH INIT: encode context in state param!
+    const username = searchParams.get("username")
     const baseUrl = `${requestUrl.protocol}//${requestUrl.host}`;
     const githubAuthUrl = new URL("https://github.com/login/oauth/authorize");
     githubAuthUrl.searchParams.set("client_id", process.env.GITHUB_CLIENT_ID!);
@@ -32,6 +33,18 @@ export async function GET(req: NextRequest) {
       path: "/api/auth/github",
       maxAge: 10 * 60,
     });
+    
+    // Store username in cookie for onboarding
+    if (username) {
+      response.cookies.set("onboarding_username", username, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 10 * 60,
+      });
+      devLog("[GITHUB AUTH] Storing username for onboarding:", username)
+    }
+    
     return response;
   }
 
@@ -221,15 +234,23 @@ export async function GET(req: NextRequest) {
     // Get the current request URL to determine the correct base URL
     const baseUrl = `${requestUrl.protocol}//${requestUrl.host}`;
     
-    // REMOVED: Onboarding flow - all users go directly to dashboard after auth
-    // Always redirect to dashboard after authentication
-    const redirectUrl = `${baseUrl}/dashboard`
-    devLog("[GITHUB AUTH] Redirecting authenticated user to dashboard")
+    // Check if we have an onboarding username from the cookie
+    const onboardingUsername = req.cookies.get("onboarding_username")?.value
+    
+    // Redirect to onboarding if we have a username, otherwise dashboard
+    let redirectUrl = `${baseUrl}/dashboard`
+    if (onboardingUsername) {
+      redirectUrl = `${baseUrl}/onboarding?username=${encodeURIComponent(onboardingUsername)}`
+      devLog("[GITHUB AUTH] Redirecting to onboarding with username:", onboardingUsername)
+    } else {
+      devLog("[GITHUB AUTH] Redirecting authenticated user to dashboard")
+    }
     devLog("[GITHUB AUTH] Will redirect to:", redirectUrl);
 
     const response = NextResponse.redirect(redirectUrl)
-    // Clear state cookie
+    // Clear state and onboarding cookies
     response.cookies.set("oauth_state", "", { path: "/api/auth/github", maxAge: 0 })
+    response.cookies.set("onboarding_username", "", { maxAge: 0 })
     response.cookies.set("github-session", JSON.stringify(sessionData), {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",

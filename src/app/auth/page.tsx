@@ -2,25 +2,55 @@
 
 import { Github } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { DevFolioLoader } from "@/components/ui/DevFolioLoader";
 import { Card, CardContent } from "@/components/ui/card";
 
 export default function AuthPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const username = searchParams.get("username")
   const [isChecking, setIsChecking] = useState(true)
+  const [usernameValid, setUsernameValid] = useState(true)
 
   useEffect(() => {
-    // REMOVED: Onboarding flow - all authenticated users go to dashboard
-    // Session detection - if user is authenticated, redirect to dashboard
+    // If username is provided, validate it first
+    const validateUsername = async () => {
+      if (username) {
+        try {
+          const response = await fetch("/api/portfolio/check-username", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username })
+          })
+          const data = await response.json()
+          if (!data.available) {
+            setUsernameValid(false)
+            return
+          }
+        } catch (error) {
+          console.error("Error validating username:", error)
+        }
+      }
+    }
+    
+    validateUsername()
+  }, [username])
+
+  useEffect(() => {
+    // Session detection - if user is authenticated, redirect to onboarding or dashboard
     const checkSession = async () => {
       try {
         const response = await fetch("/api/session", { cache: "no-store" });
         if (response.ok) {
           const data = await response.json();
           if (data.session) {
-            // User is authenticated - redirect to dashboard
-            router.push("/dashboard");
+            // User is authenticated - redirect to onboarding with username
+            if (username && usernameValid) {
+              router.push(`/onboarding?username=${encodeURIComponent(username)}`);
+            } else {
+              router.push("/dashboard");
+            }
             return;
           }
         }
@@ -31,13 +61,42 @@ export default function AuthPage() {
       }
     }
     checkSession()
-  }, [router])
+  }, [router, username, usernameValid])
 
   // Show loader while checking session
   if (isChecking) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-muted/30 to-background">
         <DevFolioLoader size="lg" />
+      </div>
+    )
+  }
+
+  // Show error if username is taken
+  if (username && !usernameValid) {
+    return (
+      <div className="relative flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-muted/40 to-background px-4 py-10">
+        <Card className="relative z-10 w-full max-w-md border border-border/60 bg-card/80 shadow-2xl backdrop-blur">
+          <CardContent className="space-y-6 p-6 sm:space-y-8 sm:p-8">
+            <div className="space-y-4 text-center">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-red-500 text-2xl font-bold text-white shadow-lg">
+                ✗
+              </div>
+              <div className="space-y-1">
+                <h1 className="text-2xl font-semibold text-foreground">Username Not Available</h1>
+                <p className="text-sm text-muted-foreground">
+                  The username <strong>{username}</strong> is already taken. Please choose a different one.
+                </p>
+              </div>
+            </div>
+            <a
+              href="/"
+              className="flex w-full items-center justify-center gap-3 rounded-xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
+            >
+              Back to Home
+            </a>
+          </CardContent>
+        </Card>
       </div>
     )
   }
@@ -52,16 +111,21 @@ export default function AuthPage() {
               D
             </div>
             <div className="space-y-1">
-                <h1 className="text-2xl font-semibold text-foreground sm:text-3xl">Welcome to DevFolio</h1>
+                <h1 className="text-2xl font-semibold text-foreground sm:text-3xl">
+                  {username ? `Claim ${username}` : "Welcome to DevFolio"}
+                </h1>
                 <p className="text-sm text-muted-foreground sm:text-base">
-                Import your GitHub projects, customize your theme, and publish in minutes.
+                {username 
+                  ? `Sign in with GitHub to claim devfolio.com/${username}`
+                  : "Import your GitHub projects, customize your theme, and publish in minutes."
+                }
               </p>
             </div>
           </div>
 
           <div className="space-y-4">
             <a
-              href="/api/auth/github"
+              href={username ? `/api/auth/github?username=${encodeURIComponent(username)}` : "/api/auth/github"}
                 className="flex w-full items-center justify-center gap-3 rounded-xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 sm:py-3.5 sm:text-base"
             >
               <Github className="h-5 w-5" />

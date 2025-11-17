@@ -5,10 +5,12 @@ import { ArrowRight, Github, Play } from "lucide-react"
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { PortfolioMobilePreview } from "./portfolio-mobile-preview";
+import { ClaimPageModal } from "./ClaimPageModal";
 
 export function HeroSection() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
+  const [showClaimModal, setShowClaimModal] = useState(false);
   const router = useRouter();
   
   useEffect(() => {
@@ -95,12 +97,10 @@ export function HeroSection() {
                       <Button
                         size="lg"
                         className="inline-flex w-full max-w-[18rem] border-0 bg-gradient-to-r from-orange-500 to-orange-600 px-4 text-xs text-white shadow-md hover:from-orange-600 hover:to-orange-700 sm:w-auto sm:max-w-none sm:px-6 sm:text-sm lg:px-8 lg:text-base"
-                        asChild
+                        onClick={() => setShowClaimModal(true)}
                       >
-                        <a href="/auth">
-                          Claim your page
-                          <ArrowRight className="ml-2 h-3 w-3 sm:h-4 sm:w-4" />
-                        </a>
+                        Claim your page
+                        <ArrowRight className="ml-2 h-3 w-3 sm:h-4 sm:w-4" />
                       </Button>
                     )}
                     <Button
@@ -145,6 +145,9 @@ export function HeroSection() {
           <PortfolioMobilePreview />
         </div>
       </div>
+
+      {/* Claim Page Modal */}
+      <ClaimPageModal open={showClaimModal} onOpenChange={setShowClaimModal} />
     </section>
   )
 }
