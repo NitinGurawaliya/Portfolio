@@ -325,7 +325,7 @@ const getPatternStyle = (pattern: string | null) => {
 export function FeatureShowcase() {
   return (
     <section className="py-6 sm:py-8 lg:py-10 bg-background">
-      <div className="container mx-auto max-w-[1400px] px-6 sm:px-8 lg:px-12">
+      <div className="container mx-auto max-w-[1400px] px-3 sm:px-8 lg:px-12">
         {/* Header */}
         <div className="text-center mb-6">
           <h2 className="text-lg md:text-xl lg:text-2xl font-bold text-foreground mb-1">
@@ -337,126 +337,126 @@ export function FeatureShowcase() {
         </div>
 
         {/* Feature Images Grid */}
-        <div className="space-y-3">
+        <div className="space-y-4 sm:space-y-3">
 
           {/* Analytics Dashboard Row */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-3">
             {/* Referrer Analytics */}
             <div className="group relative flex flex-col overflow-hidden rounded-lg border border-border bg-white dark:bg-card shadow-sm hover:shadow-md transition-shadow lg:col-span-1">
-              <div className="flex-1 overflow-hidden bg-gray-50 dark:bg-background/50 flex items-center justify-center">
+              <div className="flex-1 overflow-hidden bg-gray-50 dark:bg-background/50 flex items-center justify-center min-h-[250px] sm:min-h-[200px]">
                 <img 
                   src="/landing/topreferers.png" 
                   alt="Top Referrers" 
                   className="w-full h-full object-contain"
                 />
               </div>
-              <div className="p-2.5 text-center bg-white dark:bg-card flex-shrink-0">
-                <h3 className="text-[11px] font-semibold text-gray-900 dark:text-card-foreground mb-0.5">Referrer Analytics</h3>
-                <p className="text-[9px] text-gray-600 dark:text-muted-foreground">See where your traffic comes from.</p>
+              <div className="p-3 sm:p-2.5 text-center bg-white dark:bg-card flex-shrink-0">
+                <h3 className="text-xs sm:text-[11px] font-semibold text-gray-900 dark:text-card-foreground mb-0.5">Referrer Analytics</h3>
+                <p className="text-[10px] sm:text-[9px] text-gray-600 dark:text-muted-foreground">See where your traffic comes from.</p>
               </div>
             </div>
 
             {/* Profile Showcase - Takes 2 columns */}
             <div className="group relative flex flex-col overflow-hidden rounded-lg border border-border bg-white dark:bg-card shadow-sm hover:shadow-md transition-shadow lg:col-span-2">
-              <div className="flex-1 overflow-hidden bg-gray-50 dark:bg-background/50 flex items-center justify-center">
+              <div className="flex-1 overflow-hidden bg-gray-50 dark:bg-background/50 flex items-center justify-center min-h-[250px] sm:min-h-[200px]">
                 <img 
                   src="/landing/ss_portfolio.png" 
                   alt="Profile Showcase" 
                   className="w-full h-full object-contain"
                 />
               </div>
-              <div className="p-2.5 text-center bg-white dark:bg-card flex-shrink-0">
-                <h3 className="text-[11px] font-semibold text-gray-900 dark:text-card-foreground mb-0.5">Profile Showcase</h3>
-                <p className="text-[9px] text-gray-600 dark:text-muted-foreground">Display your projects and social links.</p>
+              <div className="p-3 sm:p-2.5 text-center bg-white dark:bg-card flex-shrink-0">
+                <h3 className="text-xs sm:text-[11px] font-semibold text-gray-900 dark:text-card-foreground mb-0.5">Profile Showcase</h3>
+                <p className="text-[10px] sm:text-[9px] text-gray-600 dark:text-muted-foreground">Display your projects and social links.</p>
               </div>
             </div>
           </div>
 
           {/* Live Analytics Dashboard - Full Width */}
           <div className="group relative overflow-hidden rounded-lg border border-border bg-white dark:bg-card shadow-sm hover:shadow-md transition-shadow">
-            <div className="overflow-hidden bg-gray-50 dark:bg-background/50">
+            <div className="overflow-hidden bg-gray-50 dark:bg-background/50 min-h-[280px] sm:min-h-[200px] flex items-center justify-center">
               <img 
                 src="/landing/analytics_ss.png" 
                 alt="Live Analytics Dashboard" 
                 className="w-full h-auto object-cover"
               />
             </div>
-            <div className="p-2.5 text-center bg-white dark:bg-card">
-              <h3 className="text-[11px] md:text-xs font-semibold text-gray-900 dark:text-card-foreground mb-0.5 flex items-center gap-1 justify-center">
-                <BarChart3 className="h-2.5 w-2.5 text-orange-500" />
+            <div className="p-3 sm:p-2.5 text-center bg-white dark:bg-card">
+              <h3 className="text-xs md:text-[11px] font-semibold text-gray-900 dark:text-card-foreground mb-0.5 flex items-center gap-1 justify-center">
+                <BarChart3 className="h-3 w-3 sm:h-2.5 sm:w-2.5 text-orange-500" />
                 Live Analytics Dashboard
               </h3>
-              <p className="text-[9px] text-gray-600 dark:text-muted-foreground">Track every visit, understand your audience</p>
+              <p className="text-[10px] sm:text-[9px] text-gray-600 dark:text-muted-foreground">Track every visit, understand your audience</p>
             </div>
           </div>
 
           {/* Community Features Row */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-3">
             {/* Customize Layout */}
             <div className="group relative overflow-hidden rounded-lg border border-border bg-white dark:bg-card shadow-sm hover:shadow-md transition-shadow">
-              <div className="overflow-hidden bg-gray-50 dark:bg-background/50">
+              <div className="overflow-hidden bg-gray-50 dark:bg-background/50 min-h-[280px] sm:min-h-[200px] flex items-center justify-center">
                 <img 
                   src="/landing/customize_layout.png" 
                   alt="Customize Layout" 
                   className="w-full h-auto object-cover"
                 />
               </div>
-              <div className="p-2.5 text-center bg-white dark:bg-card">
-                <h3 className="text-[11px] font-semibold text-gray-900 dark:text-card-foreground mb-0.5">Customize Your Layout</h3>
-                <p className="text-[9px] text-gray-600 dark:text-muted-foreground">Choose from multiple themes and customize every detail</p>
+              <div className="p-3 sm:p-2.5 text-center bg-white dark:bg-card">
+                <h3 className="text-xs sm:text-[11px] font-semibold text-gray-900 dark:text-card-foreground mb-0.5">Customize Your Layout</h3>
+                <p className="text-[10px] sm:text-[9px] text-gray-600 dark:text-muted-foreground">Choose from multiple themes and customize every detail</p>
               </div>
             </div>
 
             {/* Community Feed */}
             <div className="group relative overflow-hidden rounded-lg border border-border bg-white dark:bg-card shadow-sm hover:shadow-md transition-shadow">
-              <div className="overflow-hidden bg-gray-50 dark:bg-background/50">
+              <div className="overflow-hidden bg-gray-50 dark:bg-background/50 min-h-[280px] sm:min-h-[200px] flex items-center justify-center">
                 <img 
                   src="/landing/communtiyy_ss.png" 
                   alt="Community Feed" 
                   className="w-full h-auto object-cover"
                 />
               </div>
-              <div className="p-2.5 text-center bg-white dark:bg-card">
-                <h3 className="text-[11px] font-semibold text-gray-900 dark:text-card-foreground mb-0.5">Discover Community</h3>
-                <p className="text-[9px] text-gray-600 dark:text-muted-foreground">Explore portfolios and projects from other developers</p>
+              <div className="p-3 sm:p-2.5 text-center bg-white dark:bg-card">
+                <h3 className="text-xs sm:text-[11px] font-semibold text-gray-900 dark:text-card-foreground mb-0.5">Discover Community</h3>
+                <p className="text-[10px] sm:text-[9px] text-gray-600 dark:text-muted-foreground">Explore portfolios and projects from other developers</p>
               </div>
             </div>
           </div>
 
           {/* Feature Highlight with Image */}
           <div className="group relative overflow-hidden rounded-lg border border-border bg-white dark:bg-card shadow-sm hover:shadow-md transition-shadow">
-            <div className="overflow-hidden bg-gradient-to-br from-purple-50 to-pink-50 dark:from-gray-900 dark:to-gray-800">
+            <div className="overflow-hidden bg-gradient-to-br from-purple-50 to-pink-50 dark:from-gray-900 dark:to-gray-800 min-h-[280px] sm:min-h-[200px] flex items-center justify-center">
               <img 
                 src="/landing/landingphoto1canva.png" 
                 alt="DevFolio Features" 
                 className="w-full h-auto object-cover"
               />
             </div>
-            <div className="p-2.5 text-center bg-white dark:bg-card">
-              <h3 className="text-[11px] md:text-xs font-semibold text-gray-900 dark:text-foreground mb-0.5">Showcase Your Best Work</h3>
-              <p className="text-[9px] text-gray-600 dark:text-muted-foreground">Import projects from GitHub and customize every detail</p>
+            <div className="p-3 sm:p-2.5 text-center bg-white dark:bg-card">
+              <h3 className="text-xs md:text-[11px] font-semibold text-gray-900 dark:text-foreground mb-0.5">Showcase Your Best Work</h3>
+              <p className="text-[10px] sm:text-[9px] text-gray-600 dark:text-muted-foreground">Import projects from GitHub and customize every detail</p>
             </div>
           </div>
 
           {/* Bottom Row - Code Features Display */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-3">
             {/* Theme Customization */}
             <Card className="bg-white dark:bg-card shadow-sm hover:shadow-md transition-shadow border border-border rounded-lg">
-              <CardHeader className="pb-1">
-                <CardTitle className="text-[11px] font-semibold text-gray-900 dark:text-card-foreground flex items-center gap-1">
-                  <Palette className="h-3 w-3 text-pink-500" />
+              <CardHeader className="pb-1 sm:pb-1">
+                <CardTitle className="text-xs sm:text-[11px] font-semibold text-gray-900 dark:text-card-foreground flex items-center gap-1">
+                  <Palette className="h-3.5 w-3.5 sm:h-3 sm:w-3 text-pink-500" />
                   Customization
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-1.5">
+              <CardContent className="space-y-2 sm:space-y-1.5">
                 {/* Background Colors */}
                 <div>
-                  <h3 className="text-[8px] font-semibold text-card-foreground mb-0.5">Background Colors</h3>
-                  <div className="flex gap-1 flex-wrap">
+                  <h3 className="text-[9px] sm:text-[8px] font-semibold text-card-foreground mb-1 sm:mb-0.5">Background Colors</h3>
+                  <div className="flex gap-1.5 sm:gap-1 flex-wrap">
                     {BACKGROUND_COLORS.map((color, idx) => (
                       <div
                         key={idx}
-                        className={`w-7 h-7 rounded-md shadow-sm cursor-pointer relative border-2 ${
+                        className={`w-8 h-8 sm:w-7 sm:h-7 rounded-md shadow-sm cursor-pointer relative border-2 ${
                           idx === 1 ? 'border-orange-500' : 'border-border'
                         }`}
                         style={{ background: color.preview }}
@@ -473,12 +473,12 @@ export function FeatureShowcase() {
 
                 {/* Background Patterns */}
                 <div>
-                  <h3 className="text-[8px] font-semibold text-card-foreground mb-0.5">Background Patterns</h3>
-                  <div className="flex gap-1 flex-wrap">
+                  <h3 className="text-[9px] sm:text-[8px] font-semibold text-card-foreground mb-1 sm:mb-0.5">Background Patterns</h3>
+                  <div className="flex gap-1.5 sm:gap-1 flex-wrap">
                     {BACKGROUND_PATTERNS.map((pattern, idx) => (
                       <div
                         key={idx}
-                        className={`w-10 h-7 rounded-md shadow-sm cursor-pointer relative border-2 ${
+                        className={`w-11 h-8 sm:w-10 sm:h-7 rounded-md shadow-sm cursor-pointer relative border-2 ${
                           idx === 2 ? 'border-orange-500' : 'border-border'
                         }`}
                         style={{
@@ -497,11 +497,11 @@ export function FeatureShowcase() {
                 </div>
 
                 {/* Customization Alert */}
-                <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-md p-1 flex items-start gap-0.5">
-                  <Palette className="h-2.5 w-2.5 text-orange-600 dark:text-orange-500 flex-shrink-0 mt-0.5" />
+                <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-md p-1.5 sm:p-1 flex items-start gap-1 sm:gap-0.5">
+                  <Palette className="h-3 w-3 sm:h-2.5 sm:w-2.5 text-orange-600 dark:text-orange-500 flex-shrink-0 mt-0.5" />
                   <div>
-                    <div className="text-[8px] font-semibold text-orange-900 dark:text-orange-300 mb-0.5">Customization</div>
-                    <div className="text-[7px] text-orange-700 dark:text-orange-400 leading-tight">Changes apply when you click 'Publish 🔥'</div>
+                    <div className="text-[9px] sm:text-[8px] font-semibold text-orange-900 dark:text-orange-300 mb-0.5">Customization</div>
+                    <div className="text-[8px] sm:text-[7px] text-orange-700 dark:text-orange-400 leading-tight">Changes apply when you click 'Publish 🔥'</div>
                   </div>
                 </div>
               </CardContent>
@@ -509,22 +509,22 @@ export function FeatureShowcase() {
 
             {/* Skills Feature Card */}
             <Card className="bg-white dark:bg-card shadow-sm hover:shadow-md transition-shadow border border-border rounded-lg">
-              <CardHeader className="pb-1">
+              <CardHeader className="pb-1 sm:pb-1">
                 <div className="flex items-center gap-1">
-                  <Code className="h-3 w-3 text-blue-500" />
-                  <CardTitle className="text-[11px] font-semibold text-gray-900 dark:text-card-foreground">Skills & Tech</CardTitle>
+                  <Code className="h-3.5 w-3.5 sm:h-3 sm:w-3 text-blue-500" />
+                  <CardTitle className="text-xs sm:text-[11px] font-semibold text-gray-900 dark:text-card-foreground">Skills & Tech</CardTitle>
                 </div>
               </CardHeader>
-              <CardContent className="pt-1">
-                <div className="flex flex-wrap gap-0.5">
+              <CardContent className="pt-1.5 sm:pt-1">
+                <div className="flex flex-wrap gap-1 sm:gap-0.5">
                   {demoSkills.map((skill, idx) => {
                     const IconComponent = skill.icon
                     return (
                       <div 
                         key={idx}
-                        className="flex items-center gap-0.5 px-1 py-0.5 bg-muted border-border rounded text-[8px]"
+                        className="flex items-center gap-1 sm:gap-0.5 px-1.5 sm:px-1 py-0.5 bg-muted border-border rounded text-[9px] sm:text-[8px]"
                       >
-                        <IconComponent className="h-2 w-2" style={{ color: skill.color }} />
+                        <IconComponent className="h-2.5 w-2.5 sm:h-2 sm:w-2" style={{ color: skill.color }} />
                         <span className="text-muted-foreground font-medium">{skill.name}</span>
                       </div>
                     )
@@ -537,8 +537,8 @@ export function FeatureShowcase() {
         </div>
 
         {/* Bottom CTA Text */}
-        <div className="mt-6 text-center">
-          <p className="text-[10px] md:text-xs text-gray-600 dark:text-muted-foreground max-w-xl mx-auto leading-relaxed">
+        <div className="mt-8 sm:mt-6 text-center px-4">
+          <p className="text-xs sm:text-[10px] md:text-xs text-gray-600 dark:text-muted-foreground max-w-xl mx-auto leading-relaxed">
             <span className="font-semibold text-gray-900 dark:text-foreground">Everything you need</span> to showcase your work, track your impact, and grow your developer brand—all in one beautiful portfolio.
           </p>
         </div>
