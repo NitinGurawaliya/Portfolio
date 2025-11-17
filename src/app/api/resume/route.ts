@@ -9,7 +9,40 @@ const sanitize = (value?: string | null) => (value ?? "").trim()
 
 const buildSkillLine = (skills: string[]) => {
   if (!skills.length) return "Not specified"
-  return skills.join(" • ")
+  return skills.join(", ")
+}
+
+const categorizeSkills = (skills: Array<{ name: string; category?: string | null }>) => {
+  const categories: Record<string, string[]> = {
+    Languages: [],
+    Frontend: [],
+    Backend: [],
+    Database: [],
+    Tools: [],
+    Other: []
+  }
+
+  skills.forEach(skill => {
+    const name = skill.name.trim()
+    const category = skill.category?.toLowerCase() || ''
+    
+    // Auto-categorize based on common tech
+    if (category.includes('language') || ['C', 'C++', 'Java', 'Python', 'JavaScript', 'TypeScript', 'Go', 'Rust', 'Ruby'].some(lang => name.toLowerCase().includes(lang.toLowerCase()))) {
+      categories.Languages.push(name)
+    } else if (category.includes('frontend') || ['React', 'Next.js', 'Vue', 'Angular', 'Tailwind', 'CSS', 'HTML', 'Redux', 'Svelte'].some(tech => name.toLowerCase().includes(tech.toLowerCase()))) {
+      categories.Frontend.push(name)
+    } else if (category.includes('backend') || ['Node.js', 'Express', 'Hono', 'Django', 'Flask', 'FastAPI', 'Spring', 'NestJS', 'Worker'].some(tech => name.toLowerCase().includes(tech.toLowerCase()))) {
+      categories.Backend.push(name)
+    } else if (category.includes('database') || ['MongoDB', 'PostgreSQL', 'MySQL', 'Redis', 'Prisma', 'SQL', 'Firebase'].some(db => name.toLowerCase().includes(db.toLowerCase()))) {
+      categories.Database.push(name)
+    } else if (category.includes('tool') || ['Git', 'Docker', 'AWS', 'Azure', 'CI/CD', 'Linux', 'Kubernetes'].some(tool => name.toLowerCase().includes(tool.toLowerCase()))) {
+      categories.Tools.push(name)
+    } else {
+      categories.Other.push(name)
+    }
+  })
+
+  return categories
 }
 
 const safeArray = <T>(value: T[] | null | undefined): T[] => (Array.isArray(value) ? value : [])
@@ -21,8 +54,9 @@ const createResumePdf = async ({
   contactLine,
   experiences,
   projects,
-  skills,
+  categorizedSkills,
   socials,
+  education,
 }: {
   name: string
   headline: string
@@ -39,9 +73,16 @@ const createResumePdf = async ({
     description: string
     metrics?: string
     link?: string
+    technologies?: string
   }>
-  skills: string[]
+  categorizedSkills: Record<string, string[]>
   socials: Array<{ label: string; value: string }>
+  education?: {
+    institution: string
+    degree: string
+    duration: string
+    location?: string
+  }
 }) => {
   try {
     // Dynamic import to handle font loading issues in Next.js
@@ -73,74 +114,186 @@ const createResumePdf = async ({
     }
 
     const writeSectionTitle = (title: string) => {
-      doc.moveDown(0.6)
-      safeFont("Helvetica-Bold").fontSize(12).text(title.toUpperCase(), { characterSpacing: 0.4 })
+      doc.moveDown(0.7)
+      safeFont("Helvetica-Bold")
+        .fontSize(11)
+        .text(title.toUpperCase(), { characterSpacing: 0.8 })
+      // Add underline
+      const y = doc.y
+      doc.moveTo(doc.page.margins.left, y + 2)
+         .lineTo(doc.page.width - doc.page.margins.right, y + 2)
+         .lineWidth(0.5)
+         .stroke()
+      doc.moveDown(0.4)
+    }
+
+    const writeBulletPoint = (text: string) => {
+      const x = doc.x
+      safeFont("Helvetica").fontSize(9).text("• ", x, doc.y, {
+        continued: true,
+        width: doc.page.width - doc.page.margins.left - doc.page.margins.right
+      })
+      doc.text(text, { align: "left", lineGap: 2 })
       doc.moveDown(0.1)
     }
 
-    // Header
-    safeFont("Helvetica-Bold").fontSize(20).text(name)
-    safeFont("Helvetica").fontSize(11).text(headline || "Software Engineer")
-    doc.moveDown(0.3)
-    safeFont("Helvetica").fontSize(9).fillColor("#555555").text(contactLine, { lineGap: 2 })
+    // Header - Name centered and bold
+    safeFont("Helvetica-Bold")
+      .fontSize(24)
+      .text(name.toUpperCase(), { align: "center" })
+    
+    // Contact line centered
+    doc.moveDown(0.2)
+    safeFont("Helvetica")
+      .fontSize(9)
+      .fillColor("#333333")
+      .text(contactLine, { align: "center", lineGap: 1 })
     doc.fillColor("#000000")
+    doc.moveDown(0.3)
 
-    // Professional Summary
-    if (summary) {
-      writeSectionTitle("Professional Summary")
-      safeFont("Helvetica").fontSize(10).text(summary, { lineGap: 4 })
+    // Education Section
+    if (education) {
+      writeSectionTitle("Education")
+      safeFont("Helvetica-Bold").fontSize(10).text(education.institution)
+      if (education.duration || education.location) {
+        const rightText = education.duration || ""
+        const currentY = doc.y
+        safeFont("Helvetica-Oblique").fontSize(9).fillColor("#555555")
+        
+        if (education.location) {
+          const locationWidth = doc.widthOfString(education.location)
+          doc.text(education.location, doc.page.width - doc.page.margins.right - locationWidth, currentY, {
+            width: locationWidth,
+            align: "right"
+          })
+        }
+        
+        doc.text(rightText, doc.page.margins.left, currentY)
+        doc.fillColor("#000000")
+      }
+      if (education.degree) {
+        doc.moveDown(0.1)
+        safeFont("Helvetica").fontSize(9.5).text(education.degree)
+      }
+      doc.moveDown(0.2)
     }
 
-    // Experience
+    // Work Experience
     if (experiences.length) {
-      writeSectionTitle("Experience")
-      experiences.slice(0, 4).forEach((exp) => {
-        safeFont("Helvetica-Bold").fontSize(10).text(`${exp.role} • ${exp.company}`)
-        if (exp.duration) {
-          safeFont("Helvetica-Oblique").fontSize(9).fillColor("#555555").text(exp.duration)
+      writeSectionTitle("Work Experience")
+      experiences.slice(0, 4).forEach((exp, idx) => {
+        // Company name with link icon and duration on right
+        const companyLine = `${exp.company} | ${exp.role}`
+        const duration = exp.duration
+        
+        const currentY = doc.y
+        safeFont("Helvetica-Bold").fontSize(10).text(companyLine, doc.page.margins.left, currentY)
+        
+        if (duration) {
+          const durationWidth = safeFont("Helvetica-Oblique").fontSize(9).widthOfString(duration)
+          safeFont("Helvetica-Oblique")
+            .fontSize(9)
+            .fillColor("#555555")
+            .text(duration, doc.page.width - doc.page.margins.right - durationWidth, currentY)
           doc.fillColor("#000000")
         }
+        
+        doc.moveDown(0.3)
+        
+        // Description as bullet points
         if (exp.description) {
-          safeFont("Helvetica").fontSize(9.5).text(exp.description, { lineGap: 3 })
+          const points = exp.description.split(/[.•]/).filter(p => p.trim().length > 10)
+          if (points.length > 0) {
+            points.slice(0, 4).forEach(point => {
+              writeBulletPoint(point.trim())
+            })
+          } else {
+            writeBulletPoint(exp.description)
+          }
         }
-        doc.moveDown(0.2)
+        
+        if (idx < experiences.length - 1) {
+          doc.moveDown(0.2)
+        }
       })
     }
 
     // Projects
     if (projects.length) {
-      writeSectionTitle("Highlighted Projects")
-      projects.slice(0, 3).forEach((project) => {
-        safeFont("Helvetica-Bold").fontSize(10).text(project.name)
-        if (project.description) {
-          safeFont("Helvetica").fontSize(9.5).text(project.description, { lineGap: 3 })
+      writeSectionTitle("Projects")
+      projects.slice(0, 3).forEach((project, idx) => {
+        // Project name with link
+        const projectTitle = project.link ? `${project.name} ↗` : project.name
+        safeFont("Helvetica-Bold").fontSize(10).text(projectTitle)
+        
+        // Tech Stack
+        if (project.technologies) {
+          doc.moveDown(0.1)
+          safeFont("Helvetica-Bold").fontSize(9).text("Tech Stack: ", { continued: true })
+          safeFont("Helvetica").text(project.technologies)
         }
-        if (project.metrics) {
-          safeFont("Helvetica").fontSize(9).fillColor("#333333").text(project.metrics)
-          doc.fillColor("#000000")
-        }
-        if (project.link) {
-          safeFont("Helvetica-Oblique").fontSize(9).fillColor("#1f2937").text(project.link)
-          doc.fillColor("#000000")
-        }
+        
         doc.moveDown(0.2)
+        
+        // Description and achievements as bullets
+        if (project.description) {
+          const points = project.description.split(/[.•]/).filter(p => p.trim().length > 15)
+          if (points.length > 1) {
+            points.slice(0, 3).forEach(point => {
+              writeBulletPoint(point.trim())
+            })
+          } else {
+            writeBulletPoint(project.description)
+          }
+        }
+        
+        if (project.metrics) {
+          writeBulletPoint(project.metrics)
+        }
+        
+        if (project.link) {
+          doc.moveDown(0.05)
+          safeFont("Helvetica").fontSize(8).fillColor("#555555").text(project.link)
+          doc.fillColor("#000000")
+        }
+        
+        if (idx < projects.length - 1) {
+          doc.moveDown(0.3)
+        }
       })
     }
 
-    // Skills
-    if (skills.length) {
-      writeSectionTitle("Core Skills")
-      safeFont("Helvetica").fontSize(9.5).text(buildSkillLine(skills), { lineGap: 3 })
+    // Technologies & Skills
+    const hasSkills = Object.values(categorizedSkills).some(arr => arr.length > 0)
+    if (hasSkills) {
+      writeSectionTitle("Technologies & Skills")
+      
+      const skillCategories = [
+        { name: 'Languages', key: 'Languages' },
+        { name: 'Frontend', key: 'Frontend' },
+        { name: 'Backend', key: 'Backend' },
+        { name: 'Database', key: 'Database' },
+        { name: 'Tools', key: 'Tools' },
+      ]
+      
+      skillCategories.forEach(({ name, key }) => {
+        const skills = categorizedSkills[key]
+        if (skills && skills.length > 0) {
+          safeFont("Helvetica-Bold").fontSize(9.5).text(`${name}: `, { continued: true })
+          safeFont("Helvetica").text(buildSkillLine(skills))
+          doc.moveDown(0.15)
+        }
+      })
+      
+      // Other skills if any
+      if (categorizedSkills.Other && categorizedSkills.Other.length > 0) {
+        safeFont("Helvetica-Bold").fontSize(9.5).text("Other: ", { continued: true })
+        safeFont("Helvetica").text(buildSkillLine(categorizedSkills.Other))
+      }
     }
 
-    // Links
-    if (socials.length) {
-      writeSectionTitle("Links")
-      socials.slice(0, 5).forEach((link) => {
-        safeFont("Helvetica-Bold").fontSize(9.5).text(`${link.label}: `, { continued: true })
-        safeFont("Helvetica").text(link.value)
-      })
-    }
+    // Keep links minimal or remove as they're in header
+    // Links section removed to keep resume clean
 
     doc.end()
     return await bufferPromise
@@ -257,25 +410,30 @@ export async function GET(req: NextRequest) {
     const description =
       repo.customDescription ||
       repo.repository?.description ||
-      "Key project shipped via DevFolio."
+      "A key project demonstrating technical expertise and problem-solving abilities."
     const metrics = repo.projectUsers
-      ? `${repo.projectUsers.toLocaleString()}+ users`
+      ? `Serves ${repo.projectUsers.toLocaleString()}+ active users`
       : repo.projectRevenue
-        ? `Generated $${repo.projectRevenue.toLocaleString()} revenue`
-        : ""
+        ? `Generated $${repo.projectRevenue.toLocaleString()} in revenue`
+        : repo.projectMrr
+          ? `Achieved $${repo.projectMrr.toLocaleString()} MRR`
+          : ""
     const link = repo.deployedUrl || repo.repository?.htmlUrl || repo.repository?.githubUrl || ""
+    const technologies = repo.technologies || repo.repository?.language || ""
     return {
       name: repoName,
       description,
       metrics,
       link,
+      technologies,
     }
   })
 
-  const skills = safeArray(portfolio.skills)
-    .map((skill) => sanitize(skill.name))
-    .filter(Boolean)
-    .slice(0, 12)
+  const categorizedSkills = categorizeSkills(
+    safeArray(portfolio.skills)
+      .filter((skill) => sanitize(skill.name))
+      .slice(0, 20)
+  )
 
   const socials = safeArray(portfolio.socials)
     .filter((social) => sanitize(social.url))
@@ -288,24 +446,34 @@ export async function GET(req: NextRequest) {
     ? `${PORTFOLIO_BASE_URL.replace(/\/$/, "")}/${portfolio.customUsername}`
     : ""
   const contactParts = [
-    sanitize(userRecord.email),
     sanitize(userRecord.location),
-    sanitize(userRecord.websiteUrl),
-    sanitize(portfolioLink),
-    sanitize(userRecord.twitterUsername ? `https://twitter.com/${userRecord.twitterUsername}` : ""),
-    sanitize(userRecord.githubUsername ? `https://github.com/${userRecord.githubUsername}` : ""),
+    sanitize(userRecord.email),
+    sanitize(userRecord.githubUsername ? `github.com/${userRecord.githubUsername}` : ""),
+    sanitize(userRecord.twitterUsername ? `twitter.com/${userRecord.twitterUsername}` : ""),
+    sanitize(portfolioLink ? portfolioLink.replace('https://', '').replace('http://', '') : ""),
   ].filter(Boolean)
+
+  // Create education section from available data
+  const education = portfolio.bio || userRecord.company
+    ? {
+        institution: userRecord.company || "Self-taught Developer",
+        degree: portfolio.jobTitle || "Computer Science / Software Engineering",
+        duration: "Present",
+        location: sanitize(userRecord.location) || undefined,
+      }
+    : undefined
 
   try {
     const pdfBuffer = await createResumePdf({
       name: sanitize(portfolio.displayName) || sanitize(userRecord.name) || "DevFolio User",
       headline: sanitize(portfolio.jobTitle) || "Software Developer",
-      summary: sanitize(portfolio.bio || userRecord.bio || "Engineer focused on shipping impactful products."),
+      summary: sanitize(portfolio.bio || userRecord.bio || "Passionate software engineer focused on building impactful products and solving complex problems."),
       contactLine: contactParts.join(" • "),
       experiences,
       projects,
-      skills,
+      categorizedSkills,
       socials,
+      education,
     })
 
     const filenameBase =
