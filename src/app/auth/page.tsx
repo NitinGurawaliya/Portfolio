@@ -197,7 +197,7 @@ export default function AuthPage() {
                 disabled={
                   isSubmitting ||
                   usernameStatus === "checking" ||
-                  (normalizedUsername && usernameStatus !== "available")
+                  (!!normalizedUsername && usernameStatus !== "available")
                 }
                 className="flex w-full items-center justify-center gap-3 rounded-xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60 sm:py-3.5 sm:text-base"
               >
