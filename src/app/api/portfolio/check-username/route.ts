@@ -41,15 +41,24 @@ export async function POST(req: NextRequest) {
     // Check if username is already taken by another user (case-insensitive)
     const existingPortfolio = await prisma.portfolio.findFirst({
       where: {
-        customUsername: {
-          equals: cleanUsername,
-          mode: 'insensitive'
-        },
-        user: currentUserId ? {
-          id: {
-            not: parseInt(currentUserId)
+        OR: [
+          {
+            customUsername: {
+              equals: cleanUsername,
+              mode: 'insensitive'
+            },
+            user: currentUserId ? { id: { not: parseInt(currentUserId) } } : undefined
+          },
+          {
+            user: {
+              githubUsername: {
+                equals: cleanUsername,
+                mode: 'insensitive'
+              },
+              id: currentUserId ? { not: parseInt(currentUserId) } : undefined
+            }
           }
-        } : undefined
+        ]
       },
       include: {
         user: {

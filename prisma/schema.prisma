@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -13,17 +7,20 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
 model User {
-  id            Int      @id @default(autoincrement())
-  name          String
-  email         String   @unique
-  githubId      String?  @unique
-  githubUsername String?
-  avatarUrl     String?
-  bio           String?
-  location      String?
-  websiteUrl    String?
+  id              Int          @id @default(autoincrement())
+  name            String
+  email           String       @unique
+  avatarUrl       String?
+  bio             String?
+  company         String?
+  createdAt       DateTime     @default(now())
+  followers       Int?
+  following       Int?
+  githubId        String?      @unique
+  githubUsername  String?
+  location        String?
+  publicRepos     Int?
   twitterUsername String?
   company       String?
   publicRepos   Int?
@@ -34,46 +31,59 @@ model User {
   repositories  Repository[]
   portfolio     Portfolio?
   customDomains CustomDomain[]
+  updatedAt       DateTime     @updatedAt
+  websiteUrl      String?
+  portfolio       Portfolio?
+  repositories    Repository[]
+  projectUpvotes  ProjectUpvote[]
+  shiplogs        Shiplog[]
+  shiplogReactions ShiplogReaction[]
+  followingConnections UserFollow[] @relation("userFollows")
+  followerConnections  UserFollow[] @relation("userFollowed")
+
+  // Index for fast portfolio lookup by githubUsername
+  @@index([githubUsername])
 }
 
 model Repository {
-  id          Int      @id @default(autoincrement())
-  githubId    BigInt   @unique
-  name        String
-  fullName    String
-  description String?
-  htmlUrl     String
-  cloneUrl    String
-  githubUrl   String?  // GitHub URL for URL-imported projects
-  language    String?
-  stargazersCount Int
-  forksCount  Int
-  size        Int
-  isPrivate   Boolean
-  isFork      Boolean
-  isImported  Boolean  @default(false)
-  favicon     String?
-  siteName    String?
-  keywords    String?
-  author      String?
-  createdAt   DateTime
-  updatedAt   DateTime
-  pushedAt    DateTime?
-  userId      Int
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                    Int                   @id @default(autoincrement())
+  githubId              BigInt                @unique
+  name                  String
+  fullName              String
+  description           String?
+  htmlUrl               String
+  cloneUrl              String
+  language              String?
+  stargazersCount       Int
+  forksCount            Int
+  size                  Int
+  isPrivate             Boolean
+  isFork                Boolean
+  createdAt             DateTime
+  updatedAt             DateTime
+  pushedAt              DateTime?
+  userId                Int
+  author                String?
+  favicon               String?
+  isImported            Boolean               @default(false)
+  keywords              String?
+  siteName              String?
+  githubUrl             String?
+  languages             String?
+  logo                  String?
   portfolioRepositories PortfolioRepository[]
+  user                  User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Portfolio {
-  id          Int      @id @default(autoincrement())
-  userId      Int      @unique
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  // Home section
-  displayName String?
-  jobTitle    String?
-  bio         String?
-  profilePic  String?
+  id             Int                   @id @default(autoincrement())
+  userId         Int                   @unique
+  displayName    String?
+  bio            String?
+  profilePic     String?
+  isPublished    Boolean               @default(false)
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
   customUsername String?
   
   // Theme Configuration
@@ -95,42 +105,237 @@ model Portfolio {
   isPublished Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  jobTitle       String?
+  selectedTheme  String                @default("dark")
+  themeConfig    Json?
+  backgroundColor String?              // Background color customization
+  backgroundPattern String?            // Background pattern option
+  cvUrl          String?               // CV/Resume download URL
+  user           User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  repositories   PortfolioRepository[]
+  skills         Skill[]
+  socials        Social[]
+  experiences    Experience[]
+
+  // Indexes for fast public portfolio lookups
+  @@index([customUsername])
+  @@index([isPublished])
+  @@index([customUsername, isPublished]) // Composite index for common query pattern
 }
 
 model Skill {
-  id          Int      @id @default(autoincrement())
+  id          Int       @id @default(autoincrement())
   name        String
-  category    String?  // e.g., "Frontend", "Backend", "Database", "Tools"
+  category    String?
   portfolioId Int
+  createdAt   DateTime  @default(now())
   portfolio   Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
-  createdAt   DateTime @default(now())
 }
 
 model Social {
-  id          Int      @id @default(autoincrement())
+  id          Int       @id @default(autoincrement())
   portfolioId Int
+  platform    String
+  username    String
+  url         String?
+  isPinned    Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
   portfolio   Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
-  platform    String   // "github", "twitter", "linkedin", "instagram", "facebook", "youtube", "stackoverflow", "reddit"
-  username    String   // Username for the platform (e.g., "john_doe")
-  url         String?  // Full URL (optional, can be generated from username)
-  isPinned    Boolean  @default(false) // Show in top section and get in touch
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
 
-  @@unique([portfolioId, platform]) // One account per platform per portfolio
+  @@unique([portfolioId, platform])
 }
 
 model PortfolioRepository {
+  id                Int        @id @default(autoincrement())
+  portfolioId       Int
+  repositoryId      Int
+  deployedUrl       String?
+  isVisible         Boolean    @default(true)
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @default(now()) @updatedAt
+  deletedAt        DateTime?  // Soft delete to preserve analytics integrity
+  displayOrder      Int?
+  customName        String?
+  customDescription String?
+  technologies      String?
+  projectCategory   String?
+  projectStatus     String?    @default("building")
+  projectRevenue    Int?
+  projectMrr        Int?
+  projectUsers      Int?
+  portfolio         Portfolio  @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+  repository        Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  upvotes           ProjectUpvote[]
+  shiplogs          Shiplog[]
+  
+  @@index([portfolioId, isVisible])
+}
+
+model PortfolioView {
   id          Int      @id @default(autoincrement())
   portfolioId Int
-  portfolio   Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
-  repositoryId Int
-  repository  Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
-  deployedUrl String?
-  customName  String?  // Custom name override for this repository
-  customDescription String?  // Custom description override for this repository
-  isVisible   Boolean  @default(true)
+  userId      Int
+  viewedAt    DateTime @default(now())
+  ipAddress   String?
+  userAgent   String?
+  referrer    String?
+  device      String?
+  browser     String?
+
+  @@index([portfolioId])
+  @@index([userId])
+  @@index([viewedAt])
+  @@index([device])
+  @@index([browser])
+}
+
+model PortfolioAnalytics {
+  id           Int       @id @default(autoincrement())
+  portfolioId  Int       @unique
+  totalViews   Int       @default(0)
+  lastViewedAt DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @default(now()) @updatedAt
+
+  @@index([portfolioId])
+}
+
+model ProjectClick {
+  id          Int      @id @default(autoincrement())
+  portfolioId Int
+  projectId   BigInt
+  projectName String
+  clickedAt   DateTime @default(now())
+  ipAddress   String?
+  userAgent   String?
+  referrer    String?
+
+  @@index([portfolioId])
+  @@index([projectId])
+  @@index([clickedAt])
+}
+
+model SocialClick {
+  id          Int      @id @default(autoincrement())
+  portfolioId Int
+  socialType  String   // 'github', 'linkedin', 'twitter', etc.
+  socialUrl   String
+  clickedAt   DateTime @default(now())
+  ipAddress   String?
+  userAgent   String?
+  referrer    String?
+
+  @@index([portfolioId])
+  @@index([socialType])
+  @@index([clickedAt])
+}
+
+model PortfolioSession {
+  id          Int      @id @default(autoincrement())
+  portfolioId Int
+  sessionId   String   @unique
+  startTime   DateTime @default(now())
+  endTime     DateTime?
+  timeSpent   Int?     // in seconds
+  ipAddress   String?
+  userAgent   String?
+  referrer    String?
+
+  @@index([portfolioId])
+  @@index([sessionId])
+  @@index([startTime])
+}
+
+model ProjectView {
+  id          Int      @id @default(autoincrement())
+  portfolioId Int
+  projectId   BigInt
+  projectName String
+  viewedAt    DateTime @default(now())
+  ipAddress   String?
+  userAgent   String?
+  referrer    String?
+
+  @@index([portfolioId])
+  @@index([projectId])
+  @@index([viewedAt])
+}
+
+model DailyProjectViews {
+  id          Int      @id @default(autoincrement())
+  portfolioId Int
+  projectId   BigInt  // PortfolioRepository ID
+  projectName String
+  date        DateTime @db.Date
+  views       Int      @default(0)
   createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([portfolioId, projectId, date])
+  @@index([portfolioId])
+  @@index([projectId])
+  @@index([date])
+  @@index([portfolioId, projectId]) // Composite index for faster lookups
+}
+
+model ProjectUpvote {
+  id                    Int                 @id @default(autoincrement())
+  userId                Int
+  portfolioRepositoryId Int
+  createdAt             DateTime            @default(now())
+  user                  User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  portfolioRepository   PortfolioRepository @relation(fields: [portfolioRepositoryId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, portfolioRepositoryId])
+  @@index([portfolioRepositoryId])
+}
+
+model Experience {
+  id           Int       @id @default(autoincrement())
+  portfolioId  Int
+  companyName  String
+  companyUrl   String?
+  faviconUrl   String?
+  role         String? // SDE, SDE2, etc.
+  duration     String? // e.g., May 2023 - May 2024
+  description  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  portfolio    Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+
+  @@index([portfolioId])
+}
+
+model Shiplog {
+  id                     Int                  @id @default(autoincrement())
+  userId                 Int
+  portfolioRepositoryId  Int?
+  content                String               @db.Text
+  imageUrl               String?
+  createdAt              DateTime              @default(now())
+  updatedAt              DateTime              @updatedAt
+  author                 User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project                PortfolioRepository? @relation(fields: [portfolioRepositoryId], references: [id], onDelete: SetNull)
+  reactions              ShiplogReaction[]
+
+  @@index([userId])
+  @@index([portfolioRepositoryId])
+  @@index([createdAt])
+}
+
+model ShiplogReaction {
+  id         Int                 @id @default(autoincrement())
+  shiplogId  Int
+  userId     Int
+  type       ShiplogReactionType
+  createdAt  DateTime            @default(now())
+  shiplog    Shiplog             @relation(fields: [shiplogId], references: [id], onDelete: Cascade)
+  user       User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([shiplogId, userId])
+  @@index([shiplogId])
+  @@index([userId])
 }
 
 model CustomDomain {
@@ -153,4 +358,22 @@ model CustomDomain {
   @@index([userId])
   @@index([domain])
   @@index([verified])
+}
+model UserFollow {
+  id           Int      @id @default(autoincrement())
+  followerId   Int
+  followingId  Int
+  createdAt    DateTime @default(now())
+  follower     User     @relation("userFollows", fields: [followerId], references: [id], onDelete: Cascade)
+  following    User     @relation("userFollowed", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+}
+
+enum ShiplogReactionType {
+  SHIPPED
+  FIXED
+  SUPPORT
 }

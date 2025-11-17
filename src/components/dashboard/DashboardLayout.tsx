@@ -1,25 +1,31 @@
 "use client"
 
-import { useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
 import { PortfolioPreview } from "./PortfolioPreview"
 import { motion, AnimatePresence } from "framer-motion"
-import { 
-  Home, 
-  Code, 
-  Wrench, 
-  Users, 
-  Monitor,
-  Smartphone,
-  Tablet,
+import {
+  User,
+  Code,
+  Wrench,
+  Users,
   ExternalLink,
-  Loader2,
   LogOut,
   Palette,
   Globe
+  BarChart3,
+  Eye,
+  X,
+  ChevronLeft,
+  ChevronRight,
+  Newspaper,
+  Menu,
+  SlidersHorizontal,
+  Sparkles,
 } from "lucide-react"
 import { DevFolioInlineLoader } from "@/components/ui/DevFolioLoader"
+import { cn } from "@/lib/utils"
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -32,11 +38,12 @@ interface DashboardLayoutProps {
   hasUnsavedChanges?: boolean
   onPublish?: () => Promise<void>
   isPublishing?: boolean
+  notificationBell?: React.ReactNode
 }
 
-export function DashboardLayout({ 
-  children, 
-  user, 
+export function DashboardLayout({
+  children,
+  user,
   activeSection,
   onSectionChange,
   refreshTrigger,
@@ -44,24 +51,87 @@ export function DashboardLayout({
   portfolioData,
   hasUnsavedChanges = false,
   onPublish,
-  isPublishing = false
+  isPublishing = false,
+  notificationBell,
 }: DashboardLayoutProps) {
-  const [previewMode, setPreviewMode] = useState<"desktop" | "tablet" | "mobile">("mobile")
+  const [previewMode, setPreviewMode] = useState<"mobile">("mobile")
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false)
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false)
+  const [isActionsSheetOpen, setIsActionsSheetOpen] = useState(false)
+  const [isSidebarPinned, setIsSidebarPinned] = useState(true)
+  const [isSidebarHovered, setIsSidebarHovered] = useState(false)
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
 
-  const sidebarItems = [
-    { id: "home", label: "Home", icon: Home },
-    { id: "repos", label: "Repos", icon: Code },
+  const isSidebarExpanded = isSidebarPinned || isSidebarHovered
+
+  useEffect(() => {
+    scrollContainerRef.current?.scrollTo({ top: 0, behavior: "auto" })
+  }, [activeSection])
+
+    const sidebarItems = [
+      { id: "home", label: "Bio", icon: User },
+      { id: "shiplog", label: "Shiplog", icon: Sparkles },
+    { id: "repos", label: "Projects", icon: Code },
     { id: "skills", label: "Skills", icon: Wrench },
     { id: "socials", label: "Socials", icon: Users },
+    { id: "analytics", label: "Analytics", icon: BarChart3 },
     { id: "theme", label: "Theme", icon: Palette },
     { id: "domain", label: "Domain", icon: Globe },
   ]
 
-  const handleLogout = () => {
-    // Clear session cookie
-    document.cookie = 'github-session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
-    // Redirect to auth page
-    window.location.href = '/auth'
+    const communityItem = { id: "feed", label: "Community Feed", icon: Newspaper }
+    const CommunityIcon = communityItem.icon
+
+  const handleVisitProfile = useCallback(() => {
+    const currentDomain = typeof window !== "undefined" ? window.location.origin : ""
+    const username =
+      livePortfolio?.customUsername ||
+      portfolioData?.customUsername ||
+      user?.githubUsername ||
+      "username"
+    if (currentDomain) {
+      window.open(`${currentDomain}/${username}`, "_blank", "noopener,noreferrer")
+    }
+  }, [livePortfolio?.customUsername, portfolioData?.customUsername, user?.githubUsername])
+
+  const handleTogglePreview = useCallback(() => {
+    setIsPreviewOpen((prev) => !prev)
+    setIsActionsSheetOpen(false)
+  }, [])
+
+  const handlePublishClick = useCallback(async () => {
+    if (!onPublish || isPublishing) {
+      return
+    }
+    await onPublish()
+    setIsActionsSheetOpen(false)
+  }, [isPublishing, onPublish])
+
+  const handleLogout = async () => {
+    try {
+      // Call logout API to clear session cookie server-side
+      const response = await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include'
+      })
+      
+      if (response.ok) {
+        // Also clear client-side cookie (backup)
+        document.cookie = 'github-session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
+        document.cookie = 'github-session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=' + window.location.hostname
+        // Redirect to auth page
+        window.location.href = '/'
+      } else {
+        // Even if API fails, try to clear and redirect
+        document.cookie = 'github-session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
+        window.location.href = '/auth'
+      }
+    } catch (error) {
+      console.error('Logout error:', error)
+      // Fallback: clear cookies and redirect
+      document.cookie = 'github-session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
+      window.location.href = '/auth'
+    }
   }
 
   const containerVariants = {
@@ -81,268 +151,465 @@ export function DashboardLayout({
   }
 
   return (
-    <div className="h-screen w-full bg-white text-black overflow-hidden min-w-[1024px] flex">
-      {/* Main Content - Using Flex Layout */}
-        {/* Left Sidebar */}
-        <motion.div 
-          className="w-12 bg-gray-50 flex flex-col items-center py-4 overflow-hidden relative z-40 flex-shrink-0"
-          variants={itemVariants}
-          initial="hidden"
-          animate="visible"
-        >
-          {/* DevFolio Logo */}
-          <motion.div
-            className="mb-6"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.4, delay: 0.2 }}
-          >
-            <div className="w-8 h-8 bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">D</span>
+    <>
+      <Sheet open={isActionsSheetOpen} onOpenChange={setIsActionsSheetOpen}>
+        <SheetContent side="left" className="w-[260px] p-2 sm:w-[320px]">
+          <SheetHeader className="border-b border-border/60 px-3 py-3 text-left">
+            <SheetTitle className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Quick actions</SheetTitle>
+            <SheetDescription className="text-xs text-muted-foreground">
+              Manage preview, publishing, and profile access from one place.
+            </SheetDescription>
+          </SheetHeader>
+          <div className="flex flex-col gap-2.5 px-3 py-3 md:hidden">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                handleVisitProfile()
+                setIsActionsSheetOpen(false)
+              }}
+              className="h-8 justify-start rounded-lg text-xs font-medium"
+            >
+              Visit profile
+              <ExternalLink className="ml-2 h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleTogglePreview}
+              className="h-8 justify-start rounded-lg text-xs font-medium"
+            >
+              {isPreviewOpen ? "Hide preview" : "Show preview"}
+              <Eye className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      <Sheet open={isMobileNavOpen} onOpenChange={setIsMobileNavOpen}>
+        <SheetContent side="left" className="w-[280px] p-1 sm:w-[320px]">
+          <SheetHeader className="border-b border-border/60 px-3 py-3 text-left">
+            <SheetTitle className="flex items-center gap-2 text-sm font-semibold">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 text-sm font-semibold text-white shadow-sm">
+                D
+              </div>
+              DevFolio
+            </SheetTitle>
+          </SheetHeader>
+          <div className="flex h-full flex-col gap-3 px-3 py-3">
+            <div className="space-y-2">
+              {sidebarItems.map((item) => {
+                const Icon = item.icon
+                const isActive = activeSection === item.id
+                return (
+                  <Button
+                    key={item.id}
+                    variant={isActive ? "secondary" : "ghost"}
+                    size="lg"
+                    onClick={() => {
+                      onSectionChange(item.id)
+                      setIsMobileNavOpen(false)
+                    }}
+                    className="h-10 w-full justify-start gap-2.5 rounded-lg text-sm font-medium"
+                  >
+                    <Icon className="h-4 w-4" />
+                    {item.label}
+                  </Button>
+                )
+              })}
             </div>
+            <div className="mt-2 border-t border-border/60 pt-3 space-y-2">
+              <Button
+                variant={activeSection === communityItem.id ? "secondary" : "ghost"}
+                size="lg"
+                onClick={() => {
+                  onSectionChange(communityItem.id)
+                  setIsMobileNavOpen(false)
+                }}
+                className="h-10 w-full justify-start gap-2.5 rounded-lg text-sm font-medium"
+              >
+                <CommunityIcon className="h-4 w-4" />
+                {communityItem.label}
+              </Button>
+            </div>
+            <div className="mt-auto border-t border-border/60 pt-3 space-y-2">
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() => {
+                  setIsMobileNavOpen(false)
+                  void handleLogout()
+                }}
+                className="h-10 w-full justify-start gap-2.5 rounded-lg text-sm font-medium"
+              >
+                <LogOut className="h-4 w-4" />
+                Logout
+              </Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      <div className="dashboard-wrapper">
+        <div className="dashboard-zoom">
+          <div
+            className={cn(
+              "relative grid h-screen w-full overflow-hidden bg-background text-foreground text-[0.95rem]",
+              isSidebarExpanded
+                ? "md:grid-cols-[minmax(0,14rem)_1fr]"
+                : "md:grid-cols-[minmax(0,3.5rem)_1fr]"
+            )}
+          >
+        <motion.aside
+          onMouseEnter={() => {
+            if (!isSidebarPinned) {
+              setIsSidebarHovered(true)
+            }
+          }}
+          onMouseLeave={() => {
+            if (!isSidebarPinned) {
+              setIsSidebarHovered(false)
+            }
+          }}
+          variants={itemVariants}
+          initial="visible"
+          animate="visible"
+          className={cn(
+            "relative hidden h-full flex-col border-r border-border/60 bg-card/80 backdrop-blur-sm transition-all duration-200 md:sticky md:top-0 md:z-40 md:flex md:h-screen md:overflow-hidden",
+            isSidebarExpanded ? "md:w-[14rem] md:px-2" : "md:w-14 md:items-center md:px-2"
+          )}
+        >
+          <motion.div
+            className={cn(
+            "sticky top-0 z-10 flex items-center gap-2.5 bg-card/90",
+            isSidebarExpanded ? "justify-start px-1 pt-5 pb-4" : "justify-center pt-5 pb-4"
+            )}
+            initial={{ opacity: 1, scale: 1 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0 }}
+          >
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 text-sm font-semibold text-white shadow-sm">
+              D
+            </div>
+            {isSidebarExpanded && (
+              <span className="text-xs font-semibold tracking-wide text-foreground/80">
+                DevFolio
+              </span>
+            )}
           </motion.div>
 
-          {/* Navigation Items */}
-          <div className="flex flex-col space-y-4 flex-1">
-            {sidebarItems.map((item, index) => {
-            const Icon = item.icon
-            const isActive = activeSection === item.id
-            return (
-              <motion.div
-                key={item.id}
-                className="relative group"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ 
-                  duration: 0.4,
-                  delay: index * 0.1,
-                  ease: "easeOut"
-                }}
-              >
-                <motion.div
-                  whileHover={{ 
-                    scale: 1.1,
-                    y: -2
-                  }}
-                  whileTap={{ scale: 0.95 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <Button
-                    variant={isActive ? "default" : "ghost"}
-                    size="sm"
-                    onClick={() => onSectionChange(item.id)}
-                    className={`h-8 w-8 p-0 relative z-50 cursor-pointer ${
-                      isActive 
-                        ? "bg-black text-white " 
-                        : "text-gray-600 hover:text-orange-600 hover:bg-orange-50 hover:shadow-md"
-                    }`}
-                  >
-                    <Icon className="h-3 w-3" />
-                    {isActive && (
-                      <motion.div
-                        className="absolute -right-1 -top-1 w-2 h-2 bg-orange-500 rounded-full"
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{ duration: 0.3 }}
-                      >
-                        <motion.div
-                          className="w-full h-full bg-white rounded-full"
-                          animate={{ 
-                            scale: [0.5, 0.8, 0.5],
-                          }}
-                          transition={{ 
-                            duration: 2,
-                            repeat: Infinity,
-                            ease: "easeInOut"
-                          }}
-                        />
-                      </motion.div>
-                    )}
-                  </Button>
-                </motion.div>
-                
-                {/* Tooltip - repositioned and clamped to viewport */}
-                <motion.div
-                  className="absolute left-14 top-1/2 -translate-y-1/2 bg-black/95 text-white px-2 py-0.5 rounded-md text-[10px] font-medium whitespace-nowrap z-50 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-150 shadow-md max-w-[200px] truncate"
-                  initial={{ x: -6, opacity: 0 }}
-                  whileHover={{ x: 0, opacity: 1 }}
-                >
-                  {item.label}
-                  <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1 w-0 h-0 border-t-3 border-b-3 border-r-3 border-transparent border-r-black/95" />
-                </motion.div>
-              </motion.div>
-            )
-          })}
+          <div
+            className={cn(
+              "flex w-full",
+              isSidebarExpanded ? "justify-end px-1" : "justify-center"
+            )}
+          >
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                setIsSidebarPinned((prev) => !prev)
+                if (isSidebarPinned) {
+                  setIsSidebarHovered(false)
+                }
+              }}
+              className={cn(
+                "h-8 w-8 rounded-lg text-muted-foreground transition-colors hover:text-foreground",
+                !isSidebarExpanded && "hover:bg-muted/60"
+              )}
+              aria-label={isSidebarPinned ? "Collapse sidebar" : "Expand sidebar"}
+            >
+              {isSidebarPinned ? (
+                <ChevronLeft className="h-4 w-4" />
+              ) : (
+                <ChevronRight className="h-4 w-4" />
+              )}
+            </Button>
           </div>
 
-          {/* Logout Button */}
-          <motion.div
-            className="relative group"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ 
-              duration: 0.4,
-              delay: 0.5,
-              ease: "easeOut"
-            }}
-          >
-            <motion.div
-              whileHover={{ 
-                scale: 1.1,
-                y: -2
-              }}
-              whileTap={{ scale: 0.95 }}
-              transition={{ duration: 0.2 }}
-            >
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleLogout}
-                className="h-8 w-8 p-0 relative z-50 cursor-pointer text-red-600 hover:text-red-700 hover:bg-red-50 hover:shadow-md"
-              >
-                <LogOut className="h-3 w-3" />
-              </Button>
-            </motion.div>
-            
-            {/* Tooltip */}
-            <motion.div
-              className="absolute left-14 top-1/2 -translate-y-1/2 bg-red-600 text-white px-2 py-0.5 rounded-md text-[10px] font-medium whitespace-nowrap z-50 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-150 shadow-md"
-              initial={{ x: -6, opacity: 0 }}
-              whileHover={{ x: 0, opacity: 1 }}
-            >
-              Logout
-              <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1 w-0 h-0 border-t-3 border-b-3 border-r-3 border-transparent border-r-red-600" />
-            </motion.div>
-          </motion.div>
-        </motion.div>
-
-        {/* Left Content - Full Height */}
-        <div 
-          key={`scroll-container-${activeSection}`}
-          className="w-[520px] p-3 md:p-4 overflow-y-auto overflow-x-hidden scrollbar-hide bg-white h-screen relative z-30 flex-shrink-0"
-        >
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeSection}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ 
-                duration: 0.2,
-                ease: "easeOut"
-              }}
-              variants={containerVariants}
-            >
-              {children}
-            </motion.div>
-          </AnimatePresence>
-        </div>
-
-        {/* Right Preview Pane with Controls */}
-        <div className="flex-1 bg-white overflow-hidden flex flex-col">
-          {/* Preview Controls at Top */}
-          <motion.div 
-            className="flex items-center justify-between w-full p-3 bg-white border-b border-gray-100 relative z-50"
-            variants={itemVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            {/* Left - Portfolio URL Component */}
-            <motion.div
-              whileHover={{ scale: 1.01 }}
-              whileTap={{ scale: 0.99 }}
-              className="relative z-10"
-            >
-              <div
-                onClick={() => {
-                  const currentDomain = window.location.origin
-                  window.open(`${currentDomain}/${portfolioData?.customUsername || user?.githubUsername || 'username'}`, '_blank')
-                }}
-                className="flex items-center bg-gray-50 border border-gray-300 rounded-lg px-2 py-1.5 cursor-pointer hover:bg-gray-100 hover:border-gray-400 hover:shadow-md transition-all duration-200 min-w-[180px]"
-              >
-                <div className="flex items-center">
-                  <span className="text-gray-600 text-xs font-medium">
-                    {typeof window !== 'undefined' ? window.location.host : 'localhost:3000'}/
-                  </span>
-                  <span className="text-blue-600 text-xs font-semibold">
-                    {portfolioData?.customUsername || user?.githubUsername || 'username'}
-                  </span>
-                </div>
-                <ExternalLink className="h-3 w-3 text-gray-400 ml-1.5" />
-              </div>
-            </motion.div>
-
-            {/* Center - Preview Mode Toggle */}
-            <motion.div 
-              className="flex items-center space-x-1 bg-gray-100 rounded-lg p-1 relative z-10"
-              variants={itemVariants}
-            >
-              {[
-                { mode: "desktop", icon: Monitor },
-                { mode: "tablet", icon: Tablet },
-                { mode: "mobile", icon: Smartphone }
-              ].map(({ mode, icon: Icon }) => (
-                <motion.div key={mode}>
-                  <Button
-                    variant={previewMode === mode ? "default" : "ghost"}
-                    size="sm"
-                    onClick={() => setPreviewMode(mode as any)}
-                    className={`h-7 w-7 p-0 relative z-20 cursor-pointer ${
-                      previewMode === mode 
-                        ? "bg-black text-white " 
-                        : "text-gray-600 hover:text-orange-600 hover:bg-orange-50"
-                    }`}
+          <nav className="flex-1 overflow-y-auto pb-6">
+            <div className="flex flex-col space-y-1">
+              {sidebarItems.map((item) => {
+                const Icon = item.icon
+                const isActive = activeSection === item.id
+                return (
+                  <motion.div
+                    key={item.id}
+                    className="relative group"
+                    initial={{ opacity: 1, x: 0 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0 }}
                   >
-                    <motion.div
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.95 }}
-                      transition={{ duration: 0.1 }}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onSectionChange(item.id)}
+                      className={cn(
+                        "relative cursor-pointer rounded-lg transition-all duration-150",
+                        isSidebarExpanded
+                          ? "h-9 w-full justify-start gap-2.5 px-3 text-[11px] font-medium tracking-wide text-muted-foreground"
+                          : "h-9 w-9 justify-center text-[11px]",
+                        isActive
+                          ? "bg-gray-100 text-black shadow-sm dark:bg-card/80 dark:text-[#E5E7EB] dark:hover:bg-card/80"
+                          : "text-muted-foreground hover:bg-card/60 hover:text-foreground"
+                      )}
                     >
-                      <Icon className="h-3 w-3" />
-                    </motion.div>
-                  </Button>
-                </motion.div>
-              ))}
-            </motion.div>
+                      <Icon className="h-4 w-4" />
+                      {isSidebarExpanded && (
+                        <span className="text-[11px] font-medium tracking-wide">{item.label}</span>
+                      )}
+                      {isActive && !isSidebarExpanded && (
+                        <motion.span
+                          className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-primary"
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          transition={{ duration: 0.3 }}
+                        />
+                      )}
+                    </Button>
+                    {!isSidebarExpanded && (
+                      <div className="pointer-events-none absolute left-14 top-1/2 -translate-y-1/2 rounded-md border border-border/60 bg-popover px-2 py-1 text-[11px] font-medium text-popover-foreground opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100">
+                        {item.label}
+                      </div>
+                    )}
+                  </motion.div>
+                )
+              })}
+            </div>
 
-            {/* Right - Publish Button */}
-            <Button
-              onClick={onPublish}
-              disabled={!hasUnsavedChanges || isPublishing}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                hasUnsavedChanges && !isPublishing
-                  ? "bg-orange-600 text-white hover:bg-orange-700"
-                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
-              }`}
+            <div
+              className={cn(
+                "mt-6",
+                isSidebarExpanded
+                  ? "space-y-3 rounded-2xl border border-border/60 bg-muted/20 p-3"
+                  : "flex justify-center"
+              )}
             >
-              {isPublishing ? (
-                <DevFolioInlineLoader />
-              ) : hasUnsavedChanges ? (
-                "Publish 🔥"
+              {isSidebarExpanded ? (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onSectionChange(communityItem.id)}
+                  className="relative h-11 w-full justify-start gap-3 rounded-xl bg-card px-3 text-foreground transition-all duration-150 hover:border-primary/30 hover:bg-card/80"
+                >
+                  <Newspaper className="h-4 w-4" />
+                  <div className="flex flex-1 flex-col items-start">
+                    <span className="text-sm font-semibold text-foreground">Community Feed</span>
+                    <span className="text-[11px] font-medium text-muted-foreground">
+                      Discover projects & Devs
+                    </span>
+                  </div>
+                </Button>
               ) : (
-                "No Changes"
+                <div className="relative group">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onSectionChange(communityItem.id)}
+                    className="flex h-10 w-10 items-center justify-center rounded-xl text-foreground transition-all duration-150 hover:bg-muted/60"
+                  >
+                    <Newspaper className="h-4 w-4" />
+                  </Button>
+                  <div className="pointer-events-none absolute left-14 top-1/2 -translate-y-1/2 rounded-md border border-border/60 bg-popover px-2 py-1 text-[11px] font-medium text-popover-foreground opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100">
+                    Community Feed
+                  </div>
+                </div>
+              )}
+            </div>
+          </nav>
+
+          <motion.div
+            className="sticky bottom-0 z-10 pt-4 pb-5"
+            initial={{ opacity: 1, y: 0 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0 }}
+          >
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleLogout}
+              className={cn(
+              "rounded-lg transition-all duration-150",
+                isSidebarExpanded
+                ? "h-9 w-full justify-start gap-2.5 px-3 text-[11px] font-medium tracking-wide text-muted-foreground hover:bg-destructive hover:text-white"
+                : "h-9 w-9 justify-center text-[11px] text-muted-foreground hover:text-destructive"
+              )}
+            >
+              <LogOut className="h-4 w-4" />
+              {isSidebarExpanded && (
+              <span className="text-[11px] font-medium">Logout</span>
               )}
             </Button>
           </motion.div>
+        </motion.aside>
 
-          {/* Preview Content */}
-          <div className="flex-1 flex justify-center overflow-hidden pt-3 pl-3 pr-2 pb-2">
-            <div className={`${
-              previewMode === "mobile" 
-                ? "w-[280px]" 
-                : previewMode === "tablet"
-                ? "w-[420px]"
-                : "w-full max-w-[1200px]"
-            } h-full overflow-hidden rounded-xl shadow-lg border border-gray-200`}>
-              <PortfolioPreview 
-                username={user?.githubUsername} 
-                previewMode={previewMode}
-                portfolio={livePortfolio}
-                key={`${previewMode}-preview`}
-              />
+        <div className="flex h-full flex-1 flex-col overflow-hidden">
+          <motion.header
+            className="relative z-30 flex flex-wrap items-center gap-2 border-b border-border/60 bg-background/80 pl-4 pr-3 py-3 backdrop-blur-sm sm:pl-6 sm:pr-4"
+            variants={itemVariants}
+            initial="visible"
+            animate="visible"
+          >
+            <div className="flex flex-1 flex-wrap items-center gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 md:hidden"
+                onClick={() => setIsMobileNavOpen(true)}
+              >
+                <Menu className="h-5 w-5" />
+                <span className="sr-only">Open navigation</span>
+              </Button>
+              <h2 className="text-base font-semibold sm:ml-2">Dashboard</h2>
+            </div>
+            <div className="flex items-center gap-1.5 md:hidden">
+              {notificationBell ? (
+                <div className="flex items-center">{notificationBell}</div>
+              ) : null}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setIsActionsSheetOpen(true)}
+              >
+                <SlidersHorizontal className="h-5 w-5" />
+                <span className="sr-only">Open quick actions</span>
+              </Button>
+              <Button
+                size="sm"
+                onClick={handlePublishClick}
+                disabled={!hasUnsavedChanges || isPublishing}
+                variant={hasUnsavedChanges && !isPublishing ? "default" : "secondary"}
+                className={cn(
+                  "h-7 rounded-md px-2.5 text-[11px] font-semibold transition-colors",
+                  hasUnsavedChanges && !isPublishing
+                    ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700"
+                    : ""
+                )}
+              >
+                {isPublishing ? (
+                  <DevFolioInlineLoader />
+                ) : hasUnsavedChanges ? (
+                  "Publish"
+                ) : (
+                  "No changes"
+                )}
+              </Button>
+            </div>
+            <div className="hidden items-center gap-1.5 md:flex">
+              {notificationBell ? (
+                <div className="flex items-center">{notificationBell}</div>
+              ) : null}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleVisitProfile}
+                className="h-7 rounded-md px-3 text-xs font-medium"
+              >
+                Visit profile
+                <ExternalLink className="ml-2 h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleTogglePreview}
+                className="h-7 rounded-md px-3 text-xs font-medium"
+              >
+                {isPreviewOpen ? "Hide preview" : "Show preview"}
+                <Eye className="ml-2 h-4 w-4" />
+              </Button>
+              <Button
+                size="sm"
+                onClick={handlePublishClick}
+                disabled={!hasUnsavedChanges || isPublishing}
+                variant={hasUnsavedChanges && !isPublishing ? "default" : "secondary"}
+                className={cn(
+                  "h-7 rounded-md px-3 text-xs font-semibold transition-colors",
+                  hasUnsavedChanges && !isPublishing
+                    ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700"
+                    : ""
+                )}
+              >
+                {isPublishing ? (
+                  <DevFolioInlineLoader />
+                ) : hasUnsavedChanges ? (
+                  <>
+                    Publish
+                    <span className="ml-2 rounded border border-border/60 bg-muted/40 px-1.5 py-0.5 text-[11px]">
+                      Ctrl+S
+                    </span>
+                  </>
+                ) : (
+                  "No changes"
+                )}
+              </Button>
+            </div>
+          </motion.header>
+
+          <div ref={scrollContainerRef} className="flex-1 overflow-y-auto bg-muted/20 scrollbar-hide">
+            <div
+              key={activeSection}
+              className="mx-auto w-full max-w-5xl px-4 py-5 sm:px-6"
+              style={{ willChange: "contents" }}
+            >
+              {children}
             </div>
           </div>
         </div>
+
+          <AnimatePresence>
+            {isPreviewOpen && (
+              <>
+                <motion.div
+                  key="preview-backdrop"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm lg:hidden"
+                  onClick={() => setIsPreviewOpen(false)}
+                />
+                <motion.div
+                  key="preview-panel"
+                  initial={{ x: "100%" }}
+                  animate={{ x: 0 }}
+                  exit={{ x: "100%" }}
+                  transition={{
+                    type: "spring",
+                    damping: 25,
+                    stiffness: 200,
+                    duration: 0.4,
+                  }}
+                  className="fixed inset-y-0 right-0 z-50 flex h-full w-full flex-col border-l border-border/60 bg-card shadow-2xl sm:max-w-[420px] lg:w-[400px]"
+                >
+                  <div className="flex items-center justify-between border-b border-border/60 bg-muted/40 px-4 py-3">
+                    <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                      Portfolio Preview
+                    </h3>
+                    <Button
+                      onClick={() => setIsPreviewOpen(false)}
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 hover:bg-muted/60"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+
+                  <div className="flex-1 overflow-y-auto bg-background">
+                    <PortfolioPreview
+                      username={user?.githubUsername}
+                      previewMode={previewMode}
+                      portfolio={livePortfolio}
+                      key={`${previewMode}-preview`}
+                    />
+                  </div>
+                </motion.div>
+              </>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
+      </div>
+    </>
   )
 }

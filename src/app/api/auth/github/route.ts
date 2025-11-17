@@ -6,41 +6,42 @@ import { sendEmail } from "@/lib/sendEmail"
 import { generateWelcomeEmail } from "@/lib/templates/welcomeEmail"
 
 export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url)
-  const code = searchParams.get("code")
-  const returnedState = searchParams.get("state")
-  
-  if (!code) {
-    // Redirect to GitHub OAuth
-    const requestUrl = new URL(req.url)
-    const baseUrl = `${requestUrl.protocol}//${requestUrl.host}`
-    
-    const githubAuthUrl = new URL("https://github.com/login/oauth/authorize")
-    githubAuthUrl.searchParams.set("client_id", process.env.GITHUB_CLIENT_ID!)
-    githubAuthUrl.searchParams.set("redirect_uri", `${baseUrl}/api/auth/github`)
-    githubAuthUrl.searchParams.set("scope", "read:user user:email public_repo")
-    // Generate CSRF state and store in httpOnly cookie
-    const state = randomBytes(16).toString("hex")
-    githubAuthUrl.searchParams.set("state", state)
+  const requestUrl = new URL(req.url);
+  const { searchParams } = requestUrl;
+  const code = searchParams.get("code");
+  const returnedState = searchParams.get("state");
 
-    const response = NextResponse.redirect(githubAuthUrl.toString())
+  if (!code) {
+    // --- OAUTH INIT: encode context in state param!
+    const baseUrl = `${requestUrl.protocol}//${requestUrl.host}`;
+    const githubAuthUrl = new URL("https://github.com/login/oauth/authorize");
+    githubAuthUrl.searchParams.set("client_id", process.env.GITHUB_CLIENT_ID!);
+    githubAuthUrl.searchParams.set("redirect_uri", `${baseUrl}/api/auth/github`);
+    githubAuthUrl.searchParams.set("scope", "read:user user:email public_repo");
+    // REMOVED: Onboarding flow - all auth goes to dashboard
+    const randomPart = randomBytes(8).toString("hex");
+    const state = `login-${randomPart}`;
+    githubAuthUrl.searchParams.set("state", state);
+    devLog("[GITHUB AUTH] Initiating OAuth | oauth state:", state);
+    // CSRF protection as before
+    const response = NextResponse.redirect(githubAuthUrl.toString());
     response.cookies.set("oauth_state", state, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       path: "/api/auth/github",
       maxAge: 10 * 60,
-    })
-    return response
+    });
+    return response;
   }
-  
+
   try {
-    // Validate state parameter to prevent CSRF
-    const stateCookie = req.cookies.get("oauth_state")?.value
+    // --- CALLBACK: recover context from state only
+    const stateCookie = req.cookies.get("oauth_state")?.value;
+    devLog("[GITHUB AUTH] Callback state param:", returnedState, "| cookie:", stateCookie);
     if (!returnedState || !stateCookie || returnedState !== stateCookie) {
-      const requestUrl = new URL(req.url)
-      const baseUrl = `${requestUrl.protocol}//${requestUrl.host}`
-      return NextResponse.redirect(`${baseUrl}/auth?error=state_mismatch`)
+      const baseUrl = `${requestUrl.protocol}//${requestUrl.host}`;
+      return NextResponse.redirect(`${baseUrl}/auth?error=state_mismatch`);
     }
     // Exchange code for access token
     const tokenResponse = await fetch("https://github.com/login/oauth/access_token", {
@@ -59,9 +60,8 @@ export async function GET(req: NextRequest) {
     const tokenData = await tokenResponse.json()
     
     if (tokenData.error) {
-      const requestUrl = new URL(req.url)
-      const baseUrl = `${requestUrl.protocol}//${requestUrl.host}`
-      return NextResponse.redirect(`${baseUrl}/auth?error=access_denied`)
+      const baseUrl = `${requestUrl.protocol}//${requestUrl.host}`;
+      return NextResponse.redirect(`${baseUrl}/auth?error=access_denied`);
     }
     
     // Get user data from GitHub
@@ -200,6 +200,8 @@ export async function GET(req: NextRequest) {
     }
     
     // Store user data in a simple session (you can improve this later)
+    // Increase session lifespan to 30 days
+    const sessionLifespanDays = 30
     const sessionData = {
       user: {
         id: userData.id.toString(),
@@ -210,33 +212,36 @@ export async function GET(req: NextRequest) {
       },
       // Keep token server-side only
       accessToken: tokenData.access_token,
-      expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      expires: new Date(Date.now() + sessionLifespanDays * 24 * 60 * 60 * 1000).toISOString(),
     }
     
     // Create a simple session cookie
     devLog("Setting session cookie for user:", userData.login)
     
     // Get the current request URL to determine the correct base URL
-    const requestUrl = new URL(req.url)
-    const baseUrl = `${requestUrl.protocol}//${requestUrl.host}`
+    const baseUrl = `${requestUrl.protocol}//${requestUrl.host}`;
     
-    const response = NextResponse.redirect(`${baseUrl}/dashboard`)
+    // REMOVED: Onboarding flow - all users go directly to dashboard after auth
+    // Always redirect to dashboard after authentication
+    const redirectUrl = `${baseUrl}/dashboard`
+    devLog("[GITHUB AUTH] Redirecting authenticated user to dashboard")
+    devLog("[GITHUB AUTH] Will redirect to:", redirectUrl);
+
+    const response = NextResponse.redirect(redirectUrl)
     // Clear state cookie
     response.cookies.set("oauth_state", "", { path: "/api/auth/github", maxAge: 0 })
     response.cookies.set("github-session", JSON.stringify(sessionData), {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 24 * 60 * 60, // 24 hours
+      maxAge: sessionLifespanDays * 24 * 60 * 60, // 30 days
     })
-    
-    devLog("Redirecting to dashboard at:", `${baseUrl}/dashboard`)
+
+    devLog("Redirecting to:", redirectUrl)
     return response
     
   } catch (error) {
-    console.error("GitHub OAuth error:", error)
-    const requestUrl = new URL(req.url)
-    const baseUrl = `${requestUrl.protocol}//${requestUrl.host}`
-    return NextResponse.redirect(`${baseUrl}/auth?error=server_error`)
+    const baseUrl = `${requestUrl.protocol}//${requestUrl.host}`;
+    return NextResponse.redirect(`${baseUrl}/auth?error=server_error`);
   }
 }

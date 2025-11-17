@@ -10,8 +10,10 @@ import {
   X, 
   Wrench,
   ChevronDown,
-  Plus
+  Plus,
+  ArrowRight
 } from "lucide-react"
+import { Skeleton } from "@/components/ui/skeleton"
 import {
   // Frontend & Web Technologies
   SiReact, SiVuedotjs, SiAngular, SiNextdotjs, SiNuxtdotjs, SiSvelte,
@@ -73,6 +75,8 @@ interface SkillsSectionProps {
   skills: Skill[]
   onAddSkill: (skill: Omit<Skill, 'id'>) => void
   onRemoveSkill: (skillId: string) => void
+  isLoading?: boolean
+  onNavigateToSection?: (section: string) => void
 }
 
 // Comprehensive skills database with real technology icons
@@ -200,20 +204,96 @@ const skillsDatabase = [
   { name: "Storybook", category: "Tools", icon: SiStorybook, color: "#FF4785" },
 ]
 
-export function SkillsSection({ skills, onAddSkill, onRemoveSkill }: SkillsSectionProps) {
+// Additional AI/ML, Data Science, and Cybersecurity skills
+const aiMlSkills = [
+  "TensorFlow",
+  "PyTorch",
+  "Keras",
+  "Scikit-learn",
+  "Pandas",
+  "NumPy",
+  "Jupyter",
+  "OpenAI",
+  "Hugging Face",
+  "LangChain",
+  "Machine Learning",
+  "Deep Learning",
+  "Natural Language Processing",
+  "Computer Vision",
+  "Data Science",
+  "AI/ML",
+]
+
+const devOpsSkills = [
+  "CI/CD",
+  "Linux",
+  "Bash",
+  "Shell Scripting",
+  "Monitoring",
+  "Grafana",
+  "Prometheus",
+  "ELK Stack",
+  "CloudFormation",
+]
+
+const cybersecuritySkills = [
+  "Security",
+  "Penetration Testing",
+  "Ethical Hacking",
+  "OWASP",
+  "Cryptography",
+  "Network Security",
+  "Web Security",
+  "Security Auditing",
+]
+
+const otherSkills = [
+  "GraphQL",
+  "REST API",
+  "Microservices",
+  "Serverless",
+  "WebSockets",
+  "OAuth",
+  "JWT",
+  "Agile",
+  "Scrum",
+  "Blockchain",
+  "Web3",
+  "Solidity",
+  "Smart Contracts",
+]
+
+export function SkillsSection({ skills, onAddSkill, onRemoveSkill, isLoading = false, onNavigateToSection }: SkillsSectionProps) {
   const [searchTerm, setSearchTerm] = useState("")
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
   const [hoveredSkill, setHoveredSkill] = useState<string | null>(null)
+  const [customSkillInput, setCustomSkillInput] = useState("")
+  const [showCustomSkillInput, setShowCustomSkillInput] = useState(false)
+  
+  // Merge all skills databases
+  const allSkillNames = useMemo(() => {
+    const additionalSkills = [
+      ...aiMlSkills.map(name => ({ name, category: "AI/ML" })),
+      ...devOpsSkills.map(name => ({ name, category: "DevOps" })),
+      ...cybersecuritySkills.map(name => ({ name, category: "Cybersecurity" })),
+      ...otherSkills.map(name => ({ name, category: "Other" })),
+    ]
+    return [...skillsDatabase, ...additionalSkills.map(skill => ({
+      ...skill,
+      icon: Wrench,
+      color: "#6B7280"
+    }))]
+  }, [])
 
   // Filter skills based on search term
   const filteredSkills = useMemo(() => {
-    if (!searchTerm.trim()) return skillsDatabase
-    return skillsDatabase.filter(skill =>
+    if (!searchTerm.trim()) return allSkillNames
+    return allSkillNames.filter(skill =>
       skill.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       skill.category.toLowerCase().includes(searchTerm.toLowerCase())
     )
-  }, [searchTerm])
+  }, [searchTerm, allSkillNames])
 
   // Get skills that are already added
   const addedSkillNames = useMemo(() => 
@@ -226,6 +306,17 @@ export function SkillsSection({ skills, onAddSkill, onRemoveSkill }: SkillsSecti
       setSearchTerm("")
       // Keep dropdown open for multiple selections
       // setIsDropdownOpen(false)
+    }
+  }
+
+  const handleAddCustomSkill = () => {
+    if (customSkillInput.trim() && !addedSkillNames.has(customSkillInput.trim().toLowerCase())) {
+      onAddSkill({
+        name: customSkillInput.trim(),
+        category: "Custom"
+      })
+      setCustomSkillInput("")
+      setShowCustomSkillInput(false)
     }
   }
 
@@ -248,20 +339,24 @@ export function SkillsSection({ skills, onAddSkill, onRemoveSkill }: SkillsSecti
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
       >
-        <Card className="bg-white   transition-all duration-300">
+        <Card className="bg-white shadow-none border-none bg-background">
         <CardHeader className="pb-2">
-            <CardTitle className="text-lg text-black font-bold flex items-center">
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-              >
-                <Wrench className="h-5 w-5 mr-2" />
-              </motion.div>
-            Skills & Technologies
+            <CardTitle className="text-lg text-black font-bold flex items-center dark:text-white">
+              Skills & Technologies
           </CardTitle>
-            <p className="text-gray-600 font-medium text-sm">
-              Search and add your technical skills to showcase your expertise
-          </p>
+            <div className="flex items-center justify-end">
+              {!showCustomSkillInput && (
+                <Button
+                  onClick={() => setShowCustomSkillInput(true)}
+                  variant="outline"
+                  size="sm"
+                  className="text-black hover:bg-black hover:text-white dark:bg-white dark:text-black"
+                >
+                  <Plus className="h-3 w-3 mr-1" />
+                  Custom
+                </Button>
+              )}
+            </div>
         </CardHeader>
       </Card>
       </motion.div>
@@ -272,8 +367,44 @@ export function SkillsSection({ skills, onAddSkill, onRemoveSkill }: SkillsSecti
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.1 }}
       >
-        <Card className="bg-white   transition-all duration-300">
+        <Card className="bg-white   transition-all duration-300 bg-background">
         <CardContent className="pt-2 space-y-3">
+            {/* Custom Skill Input */}
+            <AnimatePresence>
+              {showCustomSkillInput && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="flex gap-2"
+                >
+                  <Input
+                    value={customSkillInput}
+                    onChange={(e) => setCustomSkillInput(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleAddCustomSkill()}
+                    placeholder="Enter custom skill name..."
+                    className="bg-gray-50 text-black font-medium text-sm focus:bg-white placeholder:text-gray-400"
+                  />
+                  <Button
+                    onClick={handleAddCustomSkill}
+                    className="bg-black text-white hover:bg-gray-800"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      setShowCustomSkillInput(false)
+                      setCustomSkillInput("")
+                    }}
+                    variant="outline"
+                    className="text-black"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             {/* Search Input */}
             <div className="relative">
               <div className="relative">
@@ -286,7 +417,7 @@ export function SkillsSection({ skills, onAddSkill, onRemoveSkill }: SkillsSecti
                   }}
                   onFocus={() => setIsDropdownOpen(true)}
                   placeholder="Search for skill..."
-                  className="pl-10 pr-10 bg-gray-50 text-black font-medium text-sm focus:bg-white"
+                  className="pl-10 pr-10 bg-gray-50 text-black font-medium text-sm focus:bg-white placeholder:text-gray-400 max-w-md"
                 />
                 <Button
                   variant="ghost"
@@ -311,11 +442,11 @@ export function SkillsSection({ skills, onAddSkill, onRemoveSkill }: SkillsSecti
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: -10, scale: 0.95 }}
                     transition={{ duration: 0.2 }}
-                    className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-xl z-50 max-h-80 overflow-hidden"
+                    className="absolute top-full left-0 right-0 mt-2 border border-gray-200 rounded-lg shadow-xl z-50 max-h-80 overflow-hidden bg-background"
                   >
                     <div className="p-4">
                       <div 
-                        className="grid grid-cols-8 md:grid-cols-10 lg:grid-cols-12 gap-3 max-h-64 overflow-y-auto scrollbar-hide"
+                        className="grid grid-cols-10 md:grid-cols-12 lg:grid-cols-14 gap-2 max-h-64 overflow-y-auto scrollbar-hide"
                         onMouseMove={handleMouseMove}
                       >
                         {filteredSkills.slice(0, 60).map((skill, index) => {
@@ -336,14 +467,14 @@ export function SkillsSection({ skills, onAddSkill, onRemoveSkill }: SkillsSecti
                                 disabled={isAdded}
                                 onMouseEnter={() => setHoveredSkill(skill.name)}
                                 onMouseLeave={() => setHoveredSkill(null)}
-                                className={`h-12 w-12 p-0 rounded-lg border-2 transition-all duration-200 ${
+                                className={`h-10 w-10 p-0 rounded-lg border-2 transition-all duration-200 ${
                                   isAdded
                                     ? "bg-gray-100 border-gray-200 cursor-not-allowed opacity-50"
                                     : "bg-gray-50 border-gray-200 hover:bg-white hover:shadow-md hover:scale-105"
                                 }`}
                               >
                                 <IconComponent 
-                                  className="w-6 h-6" 
+                                  className="w-5 h-5" 
                                   style={{ color: isAdded ? '#9CA3AF' : skill.color }}
                                 />
                               </Button>
@@ -382,10 +513,10 @@ export function SkillsSection({ skills, onAddSkill, onRemoveSkill }: SkillsSecti
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.2 }}
         >
-          <Card className="bg-white transition-all duration-300">
+          <Card className="bg-white transition-all duration-300 bg-background">
               <CardHeader className="pb-2">
               <CardTitle className="text-lg text-black font-bold flex items-center justify-between">
-                <span>Selected Skills</span>
+                <span className="dark:text-white">Selected Skills</span>
                 <span className="text-xs bg-orange-600 text-white px-2 py-0.5 rounded-full">
                   {skills.length}
                 </span>
@@ -393,7 +524,7 @@ export function SkillsSection({ skills, onAddSkill, onRemoveSkill }: SkillsSecti
               </CardHeader>
               <CardContent className="pt-2">
               <div 
-                className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-3"
+                className="grid grid-cols-10 sm:grid-cols-12 md:grid-cols-14 lg:grid-cols-16 gap-2"
                 onMouseMove={handleMouseMove}
               >
                 {skills.map((skill, index) => {
@@ -409,21 +540,21 @@ export function SkillsSection({ skills, onAddSkill, onRemoveSkill }: SkillsSecti
                       className="relative group"
                     >
                       <div 
-                        className="relative h-14 w-14 bg-gray-50 rounded-lg flex items-center justify-center hover:bg-white hover:shadow-md transition-all duration-200"
+                        className="relative h-10 w-10 bg-gray-50 rounded-lg flex items-center justify-center hover:bg-white hover:shadow-md transition-all duration-200"
                         onMouseEnter={() => setHoveredSkill(skill.name)}
                         onMouseLeave={() => setHoveredSkill(null)}
                       >
                         <IconComponent 
-                          className="w-7 h-7" 
+                          className="w-5 h-5" 
                           style={{ color: skillData?.color || '#000000' }}
                         />
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => onRemoveSkill(skill.id)}
-                          className="absolute -top-2 -right-2 h-6 w-6 p-0 bg-red-500 hover:bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10"
+                          className="absolute -top-1 -right-1 h-5 w-5 p-0 bg-red-500 hover:bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10"
                       >
-                        <X className="h-4 w-4" />
+                        <X className="h-3 w-3" />
                       </Button>
                 </div>
                     </motion.div>
@@ -435,14 +566,33 @@ export function SkillsSection({ skills, onAddSkill, onRemoveSkill }: SkillsSecti
         </motion.div>
       )}
 
+      {/* Loading Skeleton */}
+      {isLoading && skills.length === 0 && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3 }}
+        >
+          <Card className="bg-background">
+            <CardContent className="pt-6">
+              <div className="grid grid-cols-10 sm:grid-cols-12 md:grid-cols-14 lg:grid-cols-16 gap-2">
+                {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                  <Skeleton key={i} className="h-10 w-10 rounded-lg" />
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
+
       {/* Empty State */}
-      {skills.length === 0 && (
+      {!isLoading && skills.length === 0 && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.2 }}
         >
-          <Card className="bg-white   transition-all duration-300">
+          <Card className="bg-white   transition-all duration-300 bg-background">
           <CardContent className="pt-6">
               <div className="text-center py-8">
                 <motion.div
@@ -480,6 +630,21 @@ export function SkillsSection({ skills, onAddSkill, onRemoveSkill }: SkillsSecti
             <div className="absolute left-2 top-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-black" />
           </motion.div>
         )}
+
+      {onNavigateToSection && (
+        <div className="pointer-events-none fixed bottom-6 right-6 z-40">
+          <Button
+            variant="default"
+            size="sm"
+            onClick={() => onNavigateToSection("socials")}
+            className="pointer-events-auto flex items-center gap-2 rounded-full bg-black px-4 py-2 text-xs font-semibold text-white shadow-lg transition hover:bg-black/85 focus-visible:ring-2 focus-visible:ring-orange-400"
+          >
+            Next: Socials
+            <ArrowRight className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      )}
+
       </AnimatePresence>
     </motion.div>
   )

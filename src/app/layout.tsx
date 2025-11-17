@@ -25,6 +25,9 @@ export const metadata: Metadata = {
   creator: "DevFolio",
   publisher: "DevFolio",
   metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"),
+  other: {
+    "referrer": "origin-when-cross-origin"
+  },
   openGraph: {
     type: "website",
     locale: "en_US",
@@ -34,7 +37,7 @@ export const metadata: Metadata = {
     siteName: "DevFolio",
     images: [
       {
-        url: `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/api/og-landing`,
+        url: `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/api/og-landing?v=${Math.floor(Date.now() / 3600000)}`,
         width: 1200,
         height: 630,
         alt: "DevFolio - Developer Portfolio Builder"
@@ -45,7 +48,14 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "DevFolio - Create Your Developer Portfolio in Minutes",
     description: "DevFolio helps developers create stunning portfolios by importing projects from GitHub. Showcase your work and share your developer journey.",
-    images: [`${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/api/og-landing`],
+    images: [
+      {
+        url: `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/api/og-landing?v=${Math.floor(Date.now() / 3600000)}`,
+        width: 1200,
+        height: 630,
+        alt: "DevFolio - Developer Portfolio Builder"
+      }
+    ],
     creator: "@devfolio"
   },
   robots: {
@@ -75,7 +85,8 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-      <script src="https://www.watchdog.mom/track.js" data-site="851a4075-b123-470a-a7ab-e57f268adaae"></script>
+        <meta name="referrer" content="origin-when-cross-origin" />
+        <script src="https://www.watchdog.mom/track.js" data-site="851a4075-b123-470a-a7ab-e57f268adaae"></script>
         <link rel="icon" href="/favicon-d.svg" type="image/svg+xml" />
         <link rel="shortcut icon" href="/favicon-d.svg" type="image/svg+xml" />
         <link rel="apple-touch-icon" href="/icon-192.png" />

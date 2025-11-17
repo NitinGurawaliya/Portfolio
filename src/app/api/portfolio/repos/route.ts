@@ -102,6 +102,7 @@ export async function POST(req: NextRequest) {
           isFork: repo.isFork,
           isImported: repo.isImported || false,
           favicon: repo.favicon || null,
+          logo: repo.logo || null,
           siteName: repo.siteName || null,
           keywords: repo.keywords || null,
           author: repo.author || null,

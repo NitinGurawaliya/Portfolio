@@ -3,9 +3,13 @@ import { Header } from "@/components/landing/header"
 import { HeroSection } from "@/components/landing/hero-section"
 import { FeaturesSection } from "@/components/landing/features-section"
 import { DemoSection } from "@/components/landing/demo-section"
+import { WallOfFame } from "@/components/landing/wall-of-fame"
 import { CTASection } from "@/components/landing/cta-section"
 import { Footer } from "@/components/landing/footer"
+import { FeatureShowcase } from "@/components/landing/feature-showcase"
 import { SessionRedirect } from "@/components/SessionRedirect"
+import TopContributors from "@/components/landing/contribiuters"
+import { TestimonialsSection } from "@/components/landing/testimonials-section"
 
 export const metadata: Metadata = {
   title: "DevFolio - Build Your Developer Portfolio in Minutes",
@@ -19,14 +23,18 @@ export const metadata: Metadata = {
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-background">
-      <SessionRedirect />
+      <div className="min-h-screen bg-background">
+      {/* <SessionRedirect />  -- REMOVE AUTO-REDIRECT! */}
       <Header />
-      <main>
+        <main className="px-4 sm:px-8 lg:px-14 xl:px-20">
         <HeroSection />
-        <FeaturesSection />
+        {/* <FeaturesSection /> */}
+        <FeatureShowcase />
+        <WallOfFame />
+        <TestimonialsSection />
         {/* <DemoSection /> */}
         <CTASection />
+        {/* <TopContributors /> */}
       </main>
       <Footer />
     </div>

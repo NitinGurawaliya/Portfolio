@@ -1,5 +1,120 @@
 import { NextRequest, NextResponse } from "next/server"
 import * as cheerio from "cheerio"
+import { ImageResponse } from "next/og"
+
+// Helper function to generate a branded logo from text
+function generateLogoBase64(text: string): string {
+  // Take first 2 words and clean them, limit to 2 characters max
+  const words = text.split(' ').slice(0, 2).filter(word => word.length > 0)
+  const logoText = words.map(word => word.charAt(0)).join('').toUpperCase().substring(0, 2)
+  
+  // Create a small, square SVG with white background and border
+  const svg = `
+    <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <rect width="24" height="24" rx="4" fill="white" stroke="#e5e7eb" stroke-width="1"/>
+      <text x="12" y="16" font-family="Arial, sans-serif" font-size="8" font-weight="600" 
+            text-anchor="middle" fill="#374151" letter-spacing="-0.3px">${logoText}</text>
+    </svg>
+  `
+  
+  return `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`
+}
+
+// Helper function to extract and validate favicon
+async function extractFavicon(url: string, $: cheerio.CheerioAPI): Promise<string | null> {
+  const baseUrl = new URL(url).origin
+  
+  // Try multiple favicon sources in order of preference
+  // Only include icons that appear in the browser tab, not app icons
+  const faviconSelectors = [
+    'link[rel="icon"][sizes="32x32"]',
+    'link[rel="icon"][sizes="16x16"]', 
+    'link[rel="icon"]',
+    'link[rel="shortcut icon"]'
+    // Note: We skip apple-touch-icon because that's for iOS bookmarks, not browser tab
+  ]
+  
+  // Collect all favicons first
+  const favicons: string[] = []
+  
+  for (const selector of faviconSelectors) {
+    const elements = $(selector)
+    elements.each((_, el) => {
+      const faviconUrl = $(el).attr('href')
+      if (faviconUrl) {
+        const fullUrl = faviconUrl.startsWith('http') 
+          ? faviconUrl 
+          : new URL(faviconUrl, baseUrl).href
+        favicons.push(fullUrl)
+      }
+    })
+  }
+  
+  // Sort favicons - prioritize in this order:
+  // 1. Custom named ones (like favicon-d.svg, favicon.svg) 
+  // 2. Standard sizes (32x32, 16x16)
+  // 3. Generic favicon.ico last
+  favicons.sort((a, b) => {
+    const aIsCustom = a.includes('favicon-') && !a.includes('favicon.ico')
+    const bIsCustom = b.includes('favicon-') && !b.includes('favicon.ico')
+    const aIsFaviconIco = a.includes('favicon.ico')
+    const bIsFaviconIco = b.includes('favicon.ico')
+    
+    // Custom named ones come first
+    if (aIsCustom && !bIsCustom) return -1
+    if (!aIsCustom && bIsCustom) return 1
+    
+    // favicon.ico comes last
+    if (aIsFaviconIco && !bIsFaviconIco) return 1
+    if (!aIsFaviconIco && bIsFaviconIco) return -1
+    
+    return 0
+  })
+  
+  // Try each favicon in priority order
+  for (const faviconUrl of favicons) {
+    try {
+      // Skip generic Vercel/deployment platform logos
+      if (faviconUrl.includes('vercel.com') || faviconUrl.includes('/_next/')) {
+        continue
+      }
+      
+      // Validate that the favicon exists and is accessible
+      const response = await fetch(faviconUrl, { 
+        method: 'HEAD',
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        },
+        signal: AbortSignal.timeout(5000) // 5 second timeout
+      })
+      
+      if (response.ok && response.headers.get('content-type')?.includes('image')) {
+        return faviconUrl
+      }
+    } catch (error) {
+      continue
+    }
+  }
+  
+  // Try default favicon.ico
+  try {
+    const defaultFavicon = `${baseUrl}/favicon.ico`
+    const response = await fetch(defaultFavicon, { 
+      method: 'HEAD',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+      },
+      signal: AbortSignal.timeout(5000)
+    })
+    if (response.ok && response.headers.get('content-type')?.includes('image')) {
+      return defaultFavicon
+    }
+  } catch (error) {
+    // Default favicon.ico not found
+  }
+  
+  return null
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -57,18 +172,15 @@ export async function POST(req: NextRequest) {
         $('meta[name="description"]').attr('content') ||
         'No description available',
       
-      
       siteName: 
         $('meta[property="og:site_name"]').attr('content') ||
         new URL(url).hostname,
       
       url: url,
       
-      favicon: 
-        $('link[rel="icon"]').attr('href') ||
-        $('link[rel="shortcut icon"]').attr('href') ||
-        $('link[rel="apple-touch-icon"]').attr('href') ||
-        `${new URL(url).origin}/favicon.ico`,
+      favicon: null as string | null,
+      logo: null as string | null,
+      ogImage: null as string | null,
       
       type: 
         $('meta[property="og:type"]').attr('content') ||
@@ -84,9 +196,32 @@ export async function POST(req: NextRequest) {
         '',
     }
 
-    
-    if (metadata.favicon && metadata.favicon.startsWith('/')) {
-      metadata.favicon = new URL(metadata.favicon, url).href
+    // Extract OpenGraph/Twitter image (preview image)
+    try {
+      const baseUrl = new URL(url).origin
+      const ogCandidates = [
+        $('meta[property="og:image"]').attr('content'),
+        $('meta[name="twitter:image"]').attr('content'),
+        $('meta[name="twitter:image:src"]').attr('content')
+      ].filter(Boolean) as string[]
+      if (ogCandidates.length > 0) {
+        const first = ogCandidates[0]!
+        const full = first.startsWith('http') ? first : new URL(first, baseUrl).href
+        metadata.ogImage = full
+        metadata.logo = full // use as large preview image for public card
+      }
+    } catch {}
+
+    // Extract and validate favicon - uses whatever the site has in their browser tab
+    try {
+      metadata.favicon = await extractFavicon(url, $)
+    } catch (error) {
+      // Error extracting favicon
+    }
+
+    // Generate logo as fallback if no favicon found
+    if (!metadata.favicon) {
+      metadata.logo = generateLogoBase64(metadata.title)
     }
 
     // Generate a unique ID for the imported project
@@ -100,7 +235,7 @@ export async function POST(req: NextRequest) {
       description: metadata.description.substring(0, 500), // Limit length
       htmlUrl: metadata.url,
       homepage: metadata.url,
-      language: 'Web Project',
+      language: '',
       stargazersCount: 0,
       forksCount: 0,
       isPrivate: false,
@@ -112,6 +247,7 @@ export async function POST(req: NextRequest) {
       // Additional metadata for imported projects
       isImported: true,
       favicon: metadata.favicon,
+      logo: metadata.logo,
       siteName: metadata.siteName,
       keywords: metadata.keywords,
       author: metadata.author,

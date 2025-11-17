@@ -23,8 +23,9 @@ export async function generateMetadata({
 
   try {
     // Fetch portfolio data to generate metadata
+    // Use public API for metadata generation (no authentication required)
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"
-    const response = await fetch(`${baseUrl}/api/portfolio/publish?username=${username}`, {
+    const response = await fetch(`${baseUrl}/api/portfolio/public?username=${username}`, {
       cache: 'no-store' // Always fetch fresh data for metadata
     })
 
@@ -59,8 +60,30 @@ export async function generateMetadata({
     const bio = portfolio.bio || `Check out ${displayName}'s developer portfolio`
     const profilePic = portfolio.profilePic || `${baseUrl}/default-avatar.png`
     
-    // Generate dynamic OG image URL
-    const ogImageUrl = `${baseUrl}/api/og?username=${encodeURIComponent(username)}&displayName=${encodeURIComponent(displayName)}&jobTitle=${encodeURIComponent(jobTitle)}&bio=${encodeURIComponent(bio.slice(0, 100))}&profilePic=${encodeURIComponent(profilePic)}`
+    // Generate dynamic OG image URL - Use absolute URL for better social media support
+    const ogImageUrl = `${baseUrl}/api/og?username=${encodeURIComponent(username)}&displayName=${encodeURIComponent(displayName)}&jobTitle=${encodeURIComponent(jobTitle)}&bio=${encodeURIComponent(bio.slice(0, 100))}&profilePic=${encodeURIComponent(profilePic)}&v=${Math.floor(Date.now() / 3600000)}`
+    
+    // Generate dynamic favicon URL using user's profile picture
+    // Use profilePic URL hash for cache busting - ensures favicon updates when profile picture changes
+    const generateCacheBuster = (url: string): string => {
+      // Simple hash function to generate cache busting parameter from profilePic URL
+      let hash = 0
+      for (let i = 0; i < url.length; i++) {
+        const char = url.charCodeAt(i)
+        hash = ((hash << 5) - hash) + char
+        hash = hash & hash // Convert to 32bit integer
+      }
+      return Math.abs(hash).toString(36).slice(0, 8)
+    }
+    
+    // Generate favicon URL with strong cache busting
+    const faviconHash = profilePic && profilePic.startsWith('http') 
+      ? generateCacheBuster(profilePic)
+      : null
+    
+    const faviconUrl = faviconHash
+      ? `${baseUrl}/api/favicon?url=${encodeURIComponent(profilePic)}&username=${encodeURIComponent(username)}&hash=${faviconHash}&t=${Date.now()}&v=2`
+      : `${baseUrl}/favicon-d.svg`
     
     // Extract skills for keywords
     const skills = portfolio.skills?.map((s: any) => s.name).join(", ") || ""
@@ -90,7 +113,7 @@ export async function generateMetadata({
       openGraph: {
         type: "profile",
         locale: "en_US",
-        url: `/${username}`,
+        url: `${baseUrl}/${username}`,
         title: `${displayName}${jobTitle ? ` - ${jobTitle}` : ""} | DevFolio`,
         description: bio,
         siteName: "DevFolio",
@@ -99,7 +122,8 @@ export async function generateMetadata({
             url: ogImageUrl,
             width: 1200,
             height: 630,
-            alt: `${displayName}'s developer portfolio`
+            alt: `${displayName}'s developer portfolio`,
+            type: 'image/png',
           }
         ],
       },
@@ -108,8 +132,8 @@ export async function generateMetadata({
         title: `${displayName}${jobTitle ? ` - ${jobTitle}` : ""}`,
         description: bio,
         images: [ogImageUrl],
-        creator: portfolio.socials?.find((s: any) => s.platform === 'twitter')?.username 
-          ? `@${portfolio.socials.find((s: any) => s.platform === 'twitter').username}` 
+        creator: portfolio.socials?.find((s: any) => s.platform === 'twitter' || s.platform === 'x')?.username 
+          ? `@${portfolio.socials.find((s: any) => s.platform === 'twitter' || s.platform === 'x').username}` 
           : "@devfolio"
       },
       robots: {
@@ -122,6 +146,15 @@ export async function generateMetadata({
           "max-image-preview": "large",
           "max-snippet": -1,
         },
+      },
+      icons: {
+        icon: [
+          { url: faviconUrl, type: 'image/png' },
+          { url: faviconUrl, sizes: '32x32', type: 'image/png' },
+          { url: faviconUrl, sizes: '16x16', type: 'image/png' },
+        ],
+        shortcut: faviconUrl,
+        apple: faviconUrl, // Use profile pic for apple touch icon too
       },
     }
   } catch (error) {

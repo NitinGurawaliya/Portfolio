@@ -1,77 +1,31 @@
 "use client"
 
+import { useEffect, useState, useMemo, useRef, useCallback } from "react"
 import { useRouter } from "next/navigation"
-import { devLog } from "@/lib/logger"
-import { useEffect, useMemo, useState } from "react"
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout"
 import { HomeSection } from "@/components/dashboard/HomeSection"
 import { ReposSection } from "@/components/dashboard/ReposSection"
 import { SkillsSection } from "@/components/dashboard/SkillsSection"
 import { SocialsSection } from "@/components/dashboard/SocialsSection"
+import { AnalyticsSection } from "@/components/dashboard/AnalyticsSection"
+import { ShiplogSection } from "@/components/dashboard/ShiplogSection"
 import ThemeSelector from "@/components/dashboard/ThemeSelector"
 import { CustomDomainSection } from "@/components/dashboard/CustomDomainSection"
 import { DevFolioLoader } from "@/components/ui/DevFolioLoader"
+import { UpvoteNotificationsBell, UpvoteNotification } from "@/components/dashboard/UpvoteNotificationsBell"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
 import toast, { Toaster } from "react-hot-toast"
+import { useSession } from "@/hooks/useSession"
+import { usePortfolio } from "@/hooks/usePortfolio"
+import { usePortfolioHandlers } from "@/hooks/usePortfolioHandlers"
+import { publishPortfolio } from "@/lib/services/portfolio-service"
+import { playNotificationSound } from "@/lib/portfolio-utils"
+import { successToastConfig, errorToastConfig } from "@/lib/utils"
+import { loadFeedCache, saveFeedCache } from "@/lib/feed-cache"
 
-interface User {
-  id: number
-  name: string
-  email: string
-  githubUsername: string
-  avatarUrl: string
-  bio: string
-  location: string
-  websiteUrl: string
-  twitterUsername: string
-  company: string
-  publicRepos: number
-  followers: number
-  following: number
-  repositories: Repository[]
-}
-
-interface Repository {
-  id: number
-  name: string
-  fullName: string
-  description: string
-  htmlUrl: string
-  homepage?: string
-  language: string
-  stargazersCount: number
-  forksCount: number
-  isPrivate: boolean
-  isFork: boolean
-  size: number
-  createdAt: string
-  updatedAt: string
-  pushedAt: string
-  isImported?: boolean
-  favicon?: string
-  siteName?: string
-  keywords?: string
-  author?: string
-}
-
-interface Skill {
-  id: string
-  name: string
-  category: string
-}
-
-interface Social {
-  id: number
-  platform: string
-  username: string
-  url: string
-  isPinned: boolean
-}
 
 export default function DashboardPage() {
-  const router = useRouter()
-  const [user, setUser] = useState<User | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [session, setSession] = useState<any>(null)
   const [activeSection, setActiveSection] = useState("home")
   
   // Portfolio data state
@@ -109,218 +63,305 @@ export default function DashboardPage() {
   } | null>(null)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const [isPublishing, setIsPublishing] = useState(false)
-  const [isInitialLoad, setIsInitialLoad] = useState(true)
+  
+  const router = useRouter()
 
-  // Build live portfolio data for preview (unsaved changes reflected)
-  const livePortfolio = useMemo(() => {
-    if (!user) return null
+  // Session hook - redirect to auth if session is invalid
+  const { user, loading } = useSession({ redirectOnAuthFailure: true })
+  
+  // Portfolio hook
+  const portfolio = usePortfolio(user)
+  
+  const feedPrefetchStartedRef = useRef(false)
+  type SummaryProject = {
+    projectId: number
+    projectName: string
+    recentUpvotes: number
+    totalUpvotes: number
+  }
+  const [notifications, setNotifications] = useState<UpvoteNotification[]>([])
+  const [readNotificationIds, setReadNotificationIds] = useState<Set<string>>(new Set())
+  const notificationSocketRef = useRef<WebSocket | null>(null)
+  const summaryFetchTriggeredRef = useRef(false)
+  const [summaryOpen, setSummaryOpen] = useState(false)
+  const [summaryProjects, setSummaryProjects] = useState<SummaryProject[]>([])
+  const [summarySinceLabel, setSummarySinceLabel] = useState<string | null>(null)
+  
+  // Handlers hook - portfolio data को original data के रूप में pass करें
+  const handlers = usePortfolioHandlers(
+    portfolio.setPortfolioData,
+    portfolio.setSelectedRepos,
+    portfolio.setSkills,
+    portfolio.setSocials,
+    portfolio.setDeployedUrls,
+    portfolio.setCustomNames,
+    portfolio.setCustomDescriptions,
+    portfolio.setGithubUrls,
+    portfolio.setProjectCategories,
+    portfolio.setProjectStatuses,
+    portfolio.setProjectRevenues,
+    portfolio.setProjectMrrs,
+    portfolio.setProjectUsers,
+    portfolio.setProjectTechnologies,
+    portfolio.setImportedProjects,
+    portfolio.setRepoOrder,
+    portfolio.setSelectedTheme,
+    portfolio.originalData,  // Pass original data properly
+    user  // Pass user for GitHub username comparison
+  )
 
-    const allRepos: Repository[] = [...(user?.repositories || []), ...importedProjects]
-    const selected: Repository[] = [
-      // Include selected GitHub repos
-      ...selectedRepos
-        .map(id => allRepos.find(r => r.id === id))
-        .filter((r): r is Repository => Boolean(r)),
-      // Include all imported projects (they are automatically selected)
-      ...importedProjects
-    ].filter((repo, index, self) => 
-      // Remove duplicates based on repo.id
-      index === self.findIndex(r => r.id === repo.id)
-    )
-
-    const repositories = selected.map(repo => ({
-      id: repo.id,
-      deployedUrl: deployedUrls[repo.id] || repo.homepage || "",
-      isVisible: true,
-      repository: {
-        id: repo.id,
-        name: repo.name,
-        description: repo.description,
-        htmlUrl: repo.htmlUrl,
-        language: repo.language,
-        stargazersCount: repo.stargazersCount,
-        forksCount: repo.forksCount,
+  // Load existing portfolio data immediately when user is available
+  // Initialize with user data right away for instant UI - ensure home page loads with data
+  // Use ref to track if we've already loaded to prevent infinite loops
+  const hasLoadedRef = useRef(false)
+  
+  useEffect(() => {
+    if (user && !hasLoadedRef.current) {
+      hasLoadedRef.current = true // Mark as loaded to prevent re-running
+      
+      const initialData = {
+        displayName: user.name || user.githubUsername || "",
+        jobTitle: "",
+        bio: user.bio || "",
+        profilePic: user.avatarUrl || "",
+        customUsername: "", // Don't set GitHub username as default, let loadExistingData handle it
       }
-    }))
+      
+      // Set initial data immediately for instant UI - home page will show this data right away
+      portfolio.setPortfolioData(initialData)
+      
+      // Load existing portfolio data in background (non-blocking)
+      // This will update the data once loaded, but home section shows immediately
+      portfolio.loadExistingData(user.githubUsername, initialData)
+    }
+  }, [user]) // Only depend on user, not portfolio object
 
-    const skillsForPreview = skills.map((s, index) => ({
-      id: parseInt(s.id) || index + 1,
-      name: s.name,
-      category: s.category,
-    }))
-
-    return {
-      id: user.id,
-      displayName: portfolioData.displayName,
-      bio: portfolioData.bio,
-      profilePic: portfolioData.profilePic,
-      selectedTheme: selectedTheme,
-      skills: skillsForPreview,
-      socials: socials,
-      repositories,
-      user: {
-        githubUsername: user.githubUsername,
-        location: user.location,
-        company: user.company,
-        websiteUrl: user.websiteUrl,
+  // DashboardPage में useEffect डालो:
+  useEffect(() => {
+    // onboarding से redirect आया है तो resetAfterPublish
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("just-onboarded")) {
+        portfolio.resetAfterPublish();
+        params.delete("just-onboarded");
+        window.history.replaceState(null, "", window.location.pathname);
       }
     }
-  }, [user, portfolioData, skills, socials, selectedRepos, deployedUrls, importedProjects, selectedTheme])
+  }, []);
 
-  // Track changes to enable/disable publish button
   useEffect(() => {
-    console.log("🔍 Change tracking effect triggered:", {
-      isInitialLoad,
-      hasOriginalData: !!originalData,
-      originalDataKeys: originalData ? Object.keys(originalData) : null,
-      portfolioData,
-      selectedRepos: selectedRepos.length,
-      skills: skills.length,
-      socials: socials.length,
-      deployedUrls: Object.keys(deployedUrls).length,
-      importedProjects: importedProjects.length
-    })
-    
-    // Don't track changes during initial load or if we don't have original data
-    if (isInitialLoad || !originalData) {
-      console.log("⏸️ Skipping change tracking - initial load:", isInitialLoad, "no original data:", !originalData)
-      console.log("🔍 OriginalData details:", originalData)
-      setHasUnsavedChanges(false) // Ensure publish button is disabled during initial load
-      return
+    if (typeof window === "undefined") return
+    try {
+      const stored = localStorage.getItem("devfolio:readUpvoteNotificationIds")
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        if (Array.isArray(parsed)) {
+          setReadNotificationIds(new Set(parsed.map(String)))
+        }
+      }
+    } catch (error) {
+      console.error("🔔 Failed to restore read upvote notifications:", error)
     }
-    
-        const currentData = {
-          portfolioData,
-          selectedRepos: [...selectedRepos].sort(), // Sort for consistent comparison
-          skills: [...skills].sort((a, b) => a.id.localeCompare(b.id)),
-          socials: [...socials].sort((a, b) => a.id - b.id),
-          deployedUrls,
-          customNames,
-          customDescriptions,
-          githubUrls,
-          importedProjects: [...importedProjects].sort((a, b) => a.id - b.id),
-          selectedTheme
-        }
-    
-        // Helper function to clean and normalize data
-        const normalizeData = (data: any) => {
-          return JSON.parse(JSON.stringify(data, (key, value) => {
-            // Remove null/undefined
-            if (value === null || value === undefined) return undefined
-            // Don't remove empty strings for portfolioData properties to maintain structure
-            if (value === "" && key !== "displayName" && key !== "jobTitle" && key !== "bio" && key !== "profilePic" && key !== "customUsername") return undefined
-            // Remove empty objects/arrays
-            if (typeof value === 'object' && value !== null) {
-              if (Array.isArray(value) && value.length === 0) return undefined
-              if (!Array.isArray(value) && Object.keys(value).length === 0) return undefined
-            }
-            return value
-          }))
-        }
-    
-        const cleanCurrentData = normalizeData({
-          ...currentData,
-          selectedRepos: [...(currentData.selectedRepos || [])].sort(),
-          skills: [...(currentData.skills || [])].sort((a, b) => a.id.localeCompare(b.id)),
-          socials: [...(currentData.socials || [])].sort((a, b) => a.id - b.id),
-          importedProjects: [...(currentData.importedProjects || [])].sort((a, b) => a.id - b.id),
-          selectedTheme: currentData.selectedTheme || 'dark'
-        })
-        const cleanOriginalData = normalizeData({
-          ...originalData,
-          selectedRepos: [...(originalData.selectedRepos || [])].sort(),
-          skills: [...(originalData.skills || [])].sort((a, b) => a.id.localeCompare(b.id)),
-          socials: [...(originalData.socials || [])].sort((a, b) => a.id - b.id),
-          importedProjects: [...(originalData.importedProjects || [])].sort((a, b) => a.id - b.id),
-          selectedTheme: originalData.selectedTheme || 'dark'
-        })
-    
-    const hasChanges = JSON.stringify(cleanCurrentData) !== JSON.stringify(cleanOriginalData)
-    console.log("📊 Change detection:", { 
-      hasChanges, 
-      cleanCurrentDataString: JSON.stringify(cleanCurrentData), 
-      cleanOriginalDataString: JSON.stringify(cleanOriginalData),
-      cleanCurrentData,
-      cleanOriginalData
-    })
-    setHasUnsavedChanges(hasChanges)
-  }, [portfolioData, selectedRepos, skills, socials, deployedUrls, customNames, customDescriptions, githubUrls, importedProjects, selectedTheme, originalData, isInitialLoad])
+  }, [])
 
-  useEffect(() => {
-    // Fetch session from server (httpOnly cookie)
-    fetch("/api/session", { cache: "no-store" })
-      .then(async (res) => {
-        if (!res.ok) throw new Error("No session")
-        const data = await res.json()
-        setSession(data.session)
-        return data.session
+  const updateReadNotificationIds = useCallback(
+    (updater: (prev: Set<string>) => Set<string>) => {
+      setReadNotificationIds((prev) => {
+        const next = updater(prev)
+        if (next === prev) {
+          return prev
+        }
+        if (typeof window !== "undefined") {
+          try {
+            localStorage.setItem(
+              "devfolio:readUpvoteNotificationIds",
+              JSON.stringify(Array.from(next))
+            )
+          } catch (error) {
+            console.error("🔔 Failed to persist read upvote notifications:", error)
+          }
+        }
+        return next
       })
-      .then(async () => {
-        // Fetch GitHub data via server proxy endpoints
-        const [userRes, reposRes] = await Promise.all([
-          fetch("/api/github/user", { cache: "no-store" }),
-          fetch("/api/github/repos", { cache: "no-store" }),
-        ])
-        if (!userRes.ok || !reposRes.ok) throw new Error("GitHub fetch failed")
-        const userData = await userRes.json()
-        const reposData = await reposRes.json()
+    },
+    []
+  )
 
-        const repositories = reposData.map((repo: any) => ({
-          id: repo.id,
-          name: repo.name,
-          fullName: repo.full_name,
-          description: repo.description || "",
-          htmlUrl: repo.html_url,
-          homepage: repo.homepage || "",
-          language: repo.language || "",
-          stargazersCount: repo.stargazers_count,
-          forksCount: repo.forks_count,
-          isPrivate: repo.private,
-          isFork: repo.fork,
-          size: repo.size || 0,
-          createdAt: repo.created_at,
-          updatedAt: repo.updated_at,
-          pushedAt: repo.pushed_at,
+  const loadNotificationsFromServer = useCallback(
+    async (signal?: AbortSignal) => {
+      if (!user?.id) return
+      try {
+        const response = await fetch("/api/dashboard/upvotes/notifications", {
+          cache: "no-store",
+          signal,
+        })
+
+        if (!response.ok) {
+          if (response.status === 401) {
+            return
+          }
+          throw new Error("Failed to load upvote notifications")
+        }
+
+        const data = await response.json()
+        if (!Array.isArray(data.notifications)) {
+          return
+        }
+
+        const mapped: UpvoteNotification[] = data.notifications.map((item: any) => ({
+          id: String(item.id),
+          projectId: item.projectId,
+          projectName: item.projectName,
+          totalUpvotes: item.totalUpvotes,
+          createdAt: item.createdAt,
+          actor: item.actor
+            ? {
+                id: item.actor.id,
+                name: item.actor.name,
+                githubUsername: item.actor.githubUsername,
+                avatarUrl: item.actor.avatarUrl,
+              }
+            : undefined,
         }))
 
-        const builtUser: User = {
-          id: userData.id,
-          name: userData.name || userData.login,
-          email: userData.email || "",
-          githubUsername: userData.login,
-          avatarUrl: userData.avatar_url,
-          bio: userData.bio || "",
-          location: userData.location || "",
-          websiteUrl: userData.blog || "",
-          twitterUsername: userData.twitter_username || "",
-          company: userData.company || "",
-          publicRepos: userData.public_repos,
-          followers: userData.followers,
-          following: userData.following,
-          repositories,
+        setNotifications(mapped)
+
+        updateReadNotificationIds((prev) => {
+          const availableIds = new Set(mapped.map((item) => item.id))
+          const next = new Set([...prev].filter((id) => availableIds.has(id)))
+          if (next.size === prev.size) {
+            return prev
+          }
+          return next
+        })
+      } catch (error) {
+        if (signal?.aborted) {
+          return
+        }
+        console.error("🔔 Failed to load upvote notifications:", error)
+      }
+    },
+    [updateReadNotificationIds, user?.id]
+  )
+
+  useEffect(() => {
+    summaryFetchTriggeredRef.current = false
+  }, [user?.id])
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    if (loading || !user?.id) return
+
+    const controller = new AbortController()
+    void loadNotificationsFromServer(controller.signal)
+
+    return () => controller.abort()
+  }, [loading, user?.id, loadNotificationsFromServer])
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    if (!user?.id) return
+
+    if (notificationSocketRef.current) {
+      try {
+        notificationSocketRef.current.close()
+      } catch (closeError) {
+        console.error("🔔 Failed to close existing notification socket:", closeError)
+      }
+      notificationSocketRef.current = null
+    }
+
+    const protocol = window.location.protocol === "https:" ? "wss" : "ws"
+    const socket = new WebSocket(`${protocol}://${window.location.host}/api/notifications/stream`)
+    notificationSocketRef.current = socket
+
+    let heartbeat: ReturnType<typeof setInterval> | null = null
+
+    socket.addEventListener("open", () => {
+      heartbeat = setInterval(() => {
+        if (socket.readyState === WebSocket.OPEN) {
+          socket.send("ping")
+        }
+      }, 30000)
+    })
+
+    socket.addEventListener("message", async (event) => {
+      try {
+        if (event.data === "pong") return
+        const payload =
+          typeof event.data === "string"
+            ? event.data
+            : typeof Blob !== "undefined" && event.data instanceof Blob
+              ? await event.data.text()
+              : null
+
+        if (!payload) return
+
+        const parsed = JSON.parse(payload)
+        if (parsed?.type !== "project-upvote" || !parsed.data) return
+
+        const notification: UpvoteNotification = {
+          id: String(parsed.data.notificationId),
+          projectId: parsed.data.projectId,
+          projectName: parsed.data.projectName,
+          totalUpvotes: parsed.data.totalUpvotes,
+          createdAt: parsed.data.createdAt,
+          actor: parsed.data.actor,
         }
 
-        setUser(builtUser)
+        setNotifications((prev) => {
+          const filtered = prev.filter((item) => item.id !== notification.id)
+          const next = [notification, ...filtered]
+          return next.slice(0, 25)
+        })
 
-        const initialPortfolioData = {
-          displayName: userData.name || userData.login,
-          jobTitle: "",
-          bio: userData.bio || "",
-          profilePic: userData.avatar_url,
-          customUsername: userData.login,
+        playNotificationSound()
+
+        const actorDisplay =
+          notification.actor?.githubUsername ||
+          notification.actor?.name ||
+          "Someone"
+
+        toast.success(
+          `${actorDisplay} upvoted “${notification.projectName}”!`,
+          successToastConfig
+        )
+      } catch (messageError) {
+        console.error("🔔 Failed to process upvote websocket message:", messageError)
+      }
+    })
+
+    socket.addEventListener("close", () => {
+      if (heartbeat) {
+        clearInterval(heartbeat)
+      }
+    })
+
+    socket.addEventListener("error", (event) => {
+      console.error("🔔 Upvote websocket error:", event)
+    })
+
+    return () => {
+      if (heartbeat) {
+        clearInterval(heartbeat)
+      }
+      if (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING) {
+        try {
+          socket.close()
+        } catch (closeError) {
+          console.error("🔔 Failed to close notification socket:", closeError)
         }
-        
-        setPortfolioData(initialPortfolioData)
-        console.log("🔍 Set portfolio data, about to call loadExistingPortfolioData")
+      }
+      if (notificationSocketRef.current === socket) {
+        notificationSocketRef.current = null
+      }
+    }
+  }, [user?.id])
 
-        await loadExistingPortfolioData(userData.login, initialPortfolioData)
-        console.log("🔍 loadExistingPortfolioData completed")
-      })
-      .catch(() => {
-        router.push("/auth")
-      })
-      .finally(() => setLoading(false))
-  }, [router])
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    if (loading || !user?.id) return
+    if (summaryFetchTriggeredRef.current) return
 
   const loadExistingPortfolioData = async (username: string, initialPortfolioData?: any) => {
     console.log("🚀 loadExistingPortfolioData called with:", { username, initialPortfolioData })
@@ -346,425 +387,156 @@ export default function DashboardPage() {
             profilePic: portfolio.profilePic || "",
             customUsername: portfolio.customUsername || "",
           })
+    summaryFetchTriggeredRef.current = true
 
-          // Theme will be set later in the setTimeout to avoid change tracking issues
+    const controller = new AbortController()
 
-          // Load social accounts
-          if (portfolio.socials && portfolio.socials.length > 0) {
-            setSocials(portfolio.socials.map((social: any) => ({
-              id: social.id,
-              platform: social.platform,
-              username: social.username,
-              url: social.url,
-              isPinned: social.isPinned
-            })))
-          }
-          
-          // Set deployed URLs, custom names, and descriptions
-          if (portfolio.repositories && portfolio.repositories.length > 0) {
-            devLog("Portfolio repositories from DB:", portfolio.repositories)
-            
-            const urls: Record<number, string> = {}
-            const names: Record<number, string> = {}
-            const descriptions: Record<number, string> = {}
-            const githubUrls: Record<number, string> = {}
-            
-            portfolio.repositories.forEach((repo: any) => {
-              const githubId = parseInt(repo.repository.githubId)
-              devLog("Processing repo:", repo.repository.name, "GitHub ID:", githubId, "Deployed URL:", repo.deployedUrl, "GitHub URL:", repo.repository.githubUrl)
-              
-              if (repo.deployedUrl) {
-                urls[githubId] = repo.deployedUrl
-              }
-              // Only set custom names/descriptions if they exist (not default values)
-              if (repo.customName) {
-                names[githubId] = repo.customName
-              }
-              if (repo.customDescription) {
-                descriptions[githubId] = repo.customDescription
-              }
-              // Load GitHub URL for imported projects
-              if (repo.repository.githubUrl) {
-                githubUrls[githubId] = repo.repository.githubUrl
-              }
-            })
-            
-            devLog("Final deployed URLs object:", urls)
-            devLog("Final custom names object:", names)
-            devLog("Final custom descriptions object:", descriptions)
-            devLog("Final GitHub URLs object:", githubUrls)
-            
-            setDeployedUrls(urls)
-            setCustomNames(names)
-            setCustomDescriptions(descriptions)
-            setGithubUrls(githubUrls)
-            
-            // Set imported projects (URL-imported repositories)
-            const importedProjects = portfolio.repositories
-              .filter((repo: any) => repo.repository.isImported)
-              .map((repo: any) => ({
-                id: parseInt(repo.repository.githubId),
-                name: repo.repository.name,
-                fullName: repo.repository.fullName || repo.repository.name,
-                description: repo.repository.description || "",
-                htmlUrl: repo.repository.htmlUrl,
-                homepage: repo.deployedUrl || "",
-                language: repo.repository.language || "Web Project",
-                stargazersCount: repo.repository.stargazersCount || 0,
-                forksCount: repo.repository.forksCount || 0,
-                isPrivate: repo.repository.isPrivate || false,
-                isFork: repo.repository.isFork || false,
-                size: repo.repository.size || 0,
-                createdAt: repo.repository.createdAt,
-                updatedAt: repo.repository.updatedAt,
-                pushedAt: repo.repository.pushedAt || repo.repository.updatedAt,
-                isImported: true
-              }))
-            devLog("Setting imported projects:", importedProjects)
-            setImportedProjects(importedProjects)
-            
-            // Set selected repos - keep the original logic but ensure imported projects are included
-            const githubIds = portfolio.repositories.map((repo: any) => {
-              const githubId = parseInt(repo.repository.githubId)
-              devLog("Mapping repo:", repo.repository.name, "GitHub ID:", githubId, "Type:", typeof githubId)
-              return githubId
-            })
-            devLog("Setting selected repos to:", githubIds)
-            setSelectedRepos(githubIds)
-          }
-          
-          // Set skills
-          if (portfolio.skills && portfolio.skills.length > 0) {
-            devLog("Loading skills from portfolio:", portfolio.skills)
-            const formattedSkills = portfolio.skills.map((skill: any) => ({
-              id: skill.id.toString(),
-              name: skill.name,
-              category: skill.category
-            }))
-            devLog("Formatted skills:", formattedSkills)
-            setSkills(formattedSkills)
+    const fetchSummary = async () => {
+      try {
+        const summarySeen = localStorage.getItem("devfolio:lastUpvoteSummarySeenAt")
+        const notificationsSeen = localStorage.getItem("devfolio:lastUpvoteNotificationSeenAt")
+        const params = new URLSearchParams()
+
+        let sinceCandidate: string | null = summarySeen || null
+        if (notificationsSeen) {
+          if (!sinceCandidate) {
+            sinceCandidate = notificationsSeen
           } else {
-            devLog("No skills found in portfolio data")
-          }
-
-          // Set original data for change tracking after loading
-          setTimeout(() => {
-            const currentSelectedTheme = portfolio.selectedTheme || 'dark'
-            setSelectedTheme(currentSelectedTheme) // Make sure theme state matches DB
-            
-            const originalDataToSet = {
-              portfolioData: {
-                displayName: portfolio.displayName || "",
-                jobTitle: portfolio.jobTitle || "",
-                bio: portfolio.bio || "",
-                profilePic: portfolio.profilePic || "",
-                customUsername: portfolio.customUsername || "",
-              },
-              selectedRepos: portfolio.repositories ? portfolio.repositories.map((repo: any) => parseInt(repo.repository.githubId)) : [],
-              skills: portfolio.skills ? portfolio.skills.map((skill: any) => ({
-                id: skill.id.toString(),
-                name: skill.name,
-                category: skill.category
-              })) : [],
-              socials: portfolio.socials ? portfolio.socials.map((social: any) => ({
-                id: social.id,
-                platform: social.platform,
-                username: social.username,
-                url: social.url,
-                isPinned: social.isPinned
-              })) : [],
-              deployedUrls: portfolio.repositories ? (() => {
-                const urls: Record<number, string> = {}
-                portfolio.repositories.forEach((repo: any) => {
-                  const githubId = parseInt(repo.repository.githubId)
-                  if (repo.deployedUrl) {
-                    urls[githubId] = repo.deployedUrl
-                  }
-                })
-                return urls
-              })() : {},
-              customNames: portfolio.repositories ? (() => {
-                const names: Record<number, string> = {}
-                portfolio.repositories.forEach((repo: any) => {
-                  const githubId = parseInt(repo.repository.githubId)
-                  if (repo.customName) {
-                    names[githubId] = repo.customName
-                  }
-                })
-                return names
-              })() : {},
-              customDescriptions: portfolio.repositories ? (() => {
-                const descriptions: Record<number, string> = {}
-                portfolio.repositories.forEach((repo: any) => {
-                  const githubId = parseInt(repo.repository.githubId)
-                  if (repo.customDescription) {
-                    descriptions[githubId] = repo.customDescription
-                  }
-                })
-                return descriptions
-              })() : {},
-              githubUrls: portfolio.repositories ? (() => {
-                const urls: Record<number, string> = {}
-                portfolio.repositories.forEach((repo: any) => {
-                  const githubId = parseInt(repo.repository.githubId)
-                  if (repo.repository.githubUrl) {
-                    urls[githubId] = repo.repository.githubUrl
-                  }
-                })
-                return urls
-              })() : {},
-              importedProjects: portfolio.repositories ? portfolio.repositories
-                .filter((repo: any) => repo.repository.isImported)
-                .map((repo: any) => ({
-                  id: parseInt(repo.repository.githubId),
-                  name: repo.repository.name,
-                  fullName: repo.repository.fullName || repo.repository.name,
-                  description: repo.repository.description || "",
-                  htmlUrl: repo.repository.htmlUrl,
-                  homepage: repo.deployedUrl || "",
-                  language: repo.repository.language || "Web Project",
-                  stargazersCount: repo.repository.stargazersCount || 0,
-                  forksCount: repo.repository.forksCount || 0,
-                  isPrivate: repo.repository.isPrivate || false,
-                  isFork: repo.repository.isFork || false,
-                  size: repo.repository.size || 0,
-                  createdAt: repo.repository.createdAt,
-                  updatedAt: repo.repository.updatedAt,
-                  pushedAt: repo.repository.pushedAt || repo.repository.updatedAt,
-                  isImported: true
-                })) : [],
-              selectedTheme: currentSelectedTheme
+            const notifDate = new Date(notificationsSeen)
+            const summaryDate = new Date(sinceCandidate)
+            if (!Number.isNaN(notifDate.getTime()) && notifDate > summaryDate) {
+              sinceCandidate = notificationsSeen
             }
-            
-            console.log("💾 Setting original data from existing portfolio:", originalDataToSet)
-            setOriginalData(originalDataToSet)
-            setIsInitialLoad(false)
-            console.log("✅ Initial load completed, change tracking enabled")
-          }, 200) // Increased timeout to ensure all state updates are complete
-        } else {
-          console.log("🔍 No existing portfolio found in response")
-        }
-      } else {
-        // No existing portfolio data, set initial data and mark as loaded
-        console.log("📝 No existing portfolio data found (404), setting initial data")
-          console.log("🔍 Current state before setting initial data:", {
-            portfolioData,
-            selectedRepos,
-            skills,
-            socials,
-            deployedUrls,
-            customNames,
-            customDescriptions,
-            githubUrls,
-            importedProjects
-          })
-          setTimeout(() => {
-          const currentPortfolioData = initialPortfolioData || portfolioData
-          console.log("🔍 Using portfolio data:", currentPortfolioData)
-          
-          // Ensure theme state is properly initialized
-          const currentTheme = selectedTheme || 'dark'
-          setSelectedTheme(currentTheme)
-          
-          const initialData = {
-            portfolioData: {
-              displayName: currentPortfolioData.displayName || "",
-              jobTitle: currentPortfolioData.jobTitle || "",
-              bio: currentPortfolioData.bio || "",
-              profilePic: currentPortfolioData.profilePic || "",
-              customUsername: currentPortfolioData.customUsername || "",
-            },
-            selectedRepos: [...selectedRepos],
-            skills: [...skills],
-            socials: [...socials],
-            deployedUrls: { ...deployedUrls },
-            customNames: { ...customNames },
-            customDescriptions: { ...customDescriptions },
-            githubUrls: { ...githubUrls },
-            selectedTheme: currentTheme,
-            importedProjects: [...importedProjects]
           }
-            console.log("💾 Setting initial data (no existing portfolio):", initialData)
-            setOriginalData(initialData)
-            setIsInitialLoad(false)
-            console.log("✅ Initial load completed (no existing data), change tracking enabled")
-            console.log("🔍 After setOriginalData - originalData should be set, isInitialLoad:", false)
-          }, 200)
-      }
-    } catch (error) {
-      console.error("❌ Error loading existing portfolio data:", error)
-      // Even if there's an error, mark as loaded to prevent infinite loading
-      setTimeout(() => {
-        const currentPortfolioData = initialPortfolioData || portfolioData
-        // Ensure theme state is properly initialized
-        const currentTheme = selectedTheme || 'dark'
-        setSelectedTheme(currentTheme)
-        
-        const fallbackData = {
-          portfolioData: {
-            displayName: currentPortfolioData.displayName || "",
-            jobTitle: currentPortfolioData.jobTitle || "",
-            bio: currentPortfolioData.bio || "",
-            profilePic: currentPortfolioData.profilePic || "",
-            customUsername: currentPortfolioData.customUsername || "",
-          },
-          selectedRepos: [...selectedRepos],
-          skills: [...skills],
-          socials: [...socials],
-          deployedUrls: { ...deployedUrls },
-          customNames: { ...customNames },
-          customDescriptions: { ...customDescriptions },
-          githubUrls: { ...githubUrls },
-          selectedTheme: currentTheme,
-          importedProjects: [...importedProjects]
         }
-        console.log("💾 Setting fallback data due to error:", fallbackData)
-        setOriginalData(fallbackData)
-        setIsInitialLoad(false)
-        console.log("✅ Initial load completed (error fallback), change tracking enabled")
-      }, 200)
-    }
-  }
 
-  const fetchUserData = async (accessToken: string) => {
-    try {
-      const userResponse = await fetch("https://api.github.com/user", {
-        headers: {
-          "Authorization": `Bearer ${accessToken}`,
-          "Accept": "application/vnd.github.v3+json",
-        },
-      })
-      
-      const reposResponse = await fetch("https://api.github.com/user/repos?sort=updated&per_page=100", {
-        headers: {
-          "Authorization": `Bearer ${accessToken}`,
-          "Accept": "application/vnd.github.v3+json",
-        },
-      })
-      
-      if (userResponse.ok && reposResponse.ok) {
-        const userData = await userResponse.json()
-        const reposData = await reposResponse.json()
-        
-        const repositories = reposData.map((repo: any) => ({
-          id: repo.id,
-          name: repo.name,
-          fullName: repo.full_name,
-          description: repo.description || "",
-          htmlUrl: repo.html_url,
-          homepage: repo.homepage || "",
-          language: repo.language || "",
-          stargazersCount: repo.stargazers_count,
-          forksCount: repo.forks_count,
-          isPrivate: repo.private,
-          isFork: repo.fork,
-          size: repo.size || 0,
-          createdAt: repo.created_at,
-          updatedAt: repo.updated_at,
-          pushedAt: repo.pushed_at,
-        }))
-        
-          devLog("GitHub repositories fetched:", repositories.map((r:any) => ({ id: r.id, name: r.name, type: typeof r.id })))
-        
-        const user: User = {
-          id: userData.id,
-          name: userData.name || userData.login,
-          email: userData.email || "",
-          githubUsername: userData.login,
-          avatarUrl: userData.avatar_url,
-          bio: userData.bio || "",
-          location: userData.location || "",
-          websiteUrl: userData.blog || "",
-          twitterUsername: userData.twitter_username || "",
-          company: userData.company || "",
-          publicRepos: userData.public_repos,
-          followers: userData.followers,
-          following: userData.following,
-          repositories: repositories
+        if (sinceCandidate) {
+          params.set("since", sinceCandidate)
         }
-        
-        setUser(user)
-        
-        // Initialize portfolio data with GitHub data
-        setPortfolioData({
-          displayName: userData.name || userData.login,
-          jobTitle: "",
-          bio: userData.bio || "",
-          profilePic: userData.avatar_url,
-          customUsername: userData.login,
-        })
+        const query = params.toString()
+        const response = await fetch(
+          `/api/dashboard/upvotes/summary${query ? `?${query}` : ""}`,
+          {
+            cache: "no-store",
+            signal: controller.signal,
+          }
+        )
+        if (!response.ok) return
 
-        // Load existing portfolio data from database
-        devLog("About to load existing portfolio data for:", userData.login)
-        await loadExistingPortfolioData(userData.login)
-        
-        // Add a small delay to ensure state updates
-        setTimeout(() => {
-          devLog("After loading portfolio data - Skills:", skills.length, "Selected repos:", selectedRepos.length)
-          devLog("Current skills state:", skills)
-          devLog("Current selectedRepos state:", selectedRepos)
-        }, 100)
+        const data = await response.json()
+        if (controller.signal.aborted) return
+
+        if (Array.isArray(data.projects) && data.projects.length > 0) {
+          setSummaryProjects(data.projects)
+          setSummaryOpen(true)
+
+          if (data.since) {
+            try {
+              const date = new Date(data.since)
+              if (!Number.isNaN(date.getTime())) {
+                setSummarySinceLabel(
+                  date.toLocaleString(undefined, {
+                    dateStyle: "medium",
+                    timeStyle: "short",
+                  })
+                )
+              } else {
+                setSummarySinceLabel(null)
+              }
+            } catch {
+              setSummarySinceLabel(null)
+            }
+          } else {
+            setSummarySinceLabel(null)
+          }
+        }
+      } catch (error) {
+        if (!controller.signal.aborted) {
+          console.error("🔔 Failed to load upvote summary:", error)
+        }
       }
-    } catch (error) {
-      console.error("Error fetching GitHub data:", error)
-    } finally {
-      setLoading(false)
     }
+
+    fetchSummary()
+
+    return () => {
+      controller.abort()
+    }
+  }, [loading, user?.id])
+  const handleNotificationsOpenChange = useCallback(
+    (open: boolean) => {
+      if (!open) return
+      void loadNotificationsFromServer()
+    },
+    [loadNotificationsFromServer]
+  )
+
+  const handleMarkAllNotificationsRead = useCallback(() => {
+    if (notifications.length === 0) return
+    updateReadNotificationIds((prev) => {
+      const next = new Set(prev)
+      notifications.forEach((notification) => next.add(notification.id))
+      return next
+    })
+    if (typeof window !== "undefined") {
+      localStorage.setItem("devfolio:lastUpvoteNotificationSeenAt", new Date().toISOString())
+    }
+  }, [notifications, updateReadNotificationIds])
+
+  const dismissSummary = () => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("devfolio:lastUpvoteSummarySeenAt", new Date().toISOString())
+    }
+    setSummaryOpen(false)
+    setSummaryProjects([])
+    setSummarySinceLabel(null)
   }
 
-  // Sound notification function - Success chime
-  const playNotificationSound = () => {
-    try {
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
-      
-      // Create a pleasant success chime (C-E-G chord)
-      const frequencies = [523.25, 659.25, 783.99] // C5, E5, G5
-      
-      frequencies.forEach((freq, index) => {
-        const oscillator = audioContext.createOscillator()
-        const gainNode = audioContext.createGain()
-        
-        oscillator.connect(gainNode)
-        gainNode.connect(audioContext.destination)
-        
-        oscillator.frequency.setValueAtTime(freq, audioContext.currentTime + index * 0.05)
-        
-        gainNode.gain.setValueAtTime(0, audioContext.currentTime + index * 0.05)
-        gainNode.gain.linearRampToValueAtTime(0.2, audioContext.currentTime + index * 0.05 + 0.1)
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + index * 0.05 + 0.8)
-        
-        oscillator.start(audioContext.currentTime + index * 0.05)
-        oscillator.stop(audioContext.currentTime + index * 0.05 + 0.8)
-      })
-    } catch (error) {
-      console.log("Could not play notification sound:", error)
-    }
-  }
-
+  // Publish handler
   const handlePublishAll = async () => {
+    if (isPublishing) return
+    
+    // Validate username availability
+    const newUsername = portfolio.portfolioData.customUsername?.trim()
+    if (newUsername && handlers.usernameAvailability.isAvailable === false) {
+      alert("Username is already taken. Please choose a different username.")
+      return
+    }
+    
+    if (handlers.usernameAvailability.isChecking) {
+      alert("Please wait while we check username availability.")
+      return
+    }
+    
     setIsPublishing(true)
     try {
-      const allRepositories = [...(user?.repositories || []), ...importedProjects]
+      const allRepositories = [...(user?.repositories || []), ...portfolio.importedProjects]
       
-      const response = await fetch("/api/portfolio/publish-all", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          portfolioData,
-          selectedRepos,
-          skills,
-          socials,
-          deployedUrls,
-          customNames,
-          customDescriptions,
-          githubUrls,
-          selectedTheme,
-          repositories: allRepositories,
-          userId: user?.id,
-          userData: user
-        })
+      const result = await publishPortfolio({
+        portfolioData: portfolio.portfolioData,
+        selectedRepos: portfolio.selectedRepos,
+        skills: portfolio.skills,
+        socials: portfolio.socials,
+        experiences: portfolio.experiences,
+        deployedUrls: portfolio.deployedUrls,
+        customNames: portfolio.customNames,
+        customDescriptions: portfolio.customDescriptions,
+        githubUrls: portfolio.githubUrls,
+          projectCategories: portfolio.projectCategories,
+          projectStatuses: portfolio.projectStatuses,
+          projectRevenues: portfolio.projectRevenues,
+          projectMrrs: portfolio.projectMrrs,
+          projectUsers: portfolio.projectUsers,
+          projectTechnologies: portfolio.projectTechnologies,
+        selectedTheme: portfolio.selectedTheme,
+        repoOrder: portfolio.repoOrder,
+        repositories: allRepositories,
+        userId: user?.id || 0,
+        userData: user,
+        logoOverrides: portfolio.logoOverrides,
+        backgroundColor: portfolio.backgroundColor,
+        backgroundPattern: portfolio.backgroundPattern,
+        cvUrl: portfolio.cvUrl
       })
 
       const result = await response.json()
@@ -827,111 +599,75 @@ export default function DashboardPage() {
         throw new Error(result.error || "Failed to publish portfolio")
       }
     } catch (error) {
+      console.log('📊 Publish result:', result)
+
+      // Reset after publish
+      portfolio.resetAfterPublish()
+      
+      // Show success toast and play sound
+      toast.success("🎉 Portfolio published successfully!", successToastConfig)
+      playNotificationSound()
+    } catch (error: any) {
       console.error("Error publishing portfolio:", error)
       
       // Show error toast
-      toast.error("Failed to publish portfolio. Please try again.", {
-        duration: 3000,
-        position: "top-left",
-        style: {
-          background: "#dc2626",
-          color: "#fff",
-          fontWeight: "500",
-          border: "1px solid #b91c1c",
-          borderRadius: "8px",
-        },
-      })
+      toast.error(
+        error.message || "Failed to publish portfolio. Please try again.", 
+        errorToastConfig
+      )
     } finally {
       setIsPublishing(false)
     }
   }
 
-  const handleUpdatePortfolioData = (data: any) => {
-    setPortfolioData(prev => ({ ...prev, ...data }))
-  }
+  // Keyboard shortcut: Ctrl/Cmd + S → Publish
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      const isSaveCombo = (e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')
+      if (!isSaveCombo) return
 
-  const handleToggleRepo = (repoId: number) => {
-    setSelectedRepos(prev => 
-      prev.includes(repoId) 
-        ? prev.filter(id => id !== repoId)
-        : [...prev, repoId]
-    )
-  }
-
-  const handleUpdateDeployedUrl = (repoId: number, url: string) => {
-    setDeployedUrls(prev => ({ ...prev, [repoId]: url }))
-  }
-
-  const handleUpdateCustomName = (repoId: number, name: string) => {
-    setCustomNames(prev => ({
-      ...prev,
-      [repoId]: name
-    }))
-  }
-
-  const handleUpdateCustomDescription = (repoId: number, description: string) => {
-    setCustomDescriptions(prev => ({
-      ...prev,
-      [repoId]: description
-    }))
-  }
-
-  const handleUpdateGithubUrl = (repoId: number, url: string) => {
-    setGithubUrls(prev => ({
-      ...prev,
-      [repoId]: url
-    }))
-  }
-
-  const handleAddSkill = (skill: Omit<Skill, 'id'>) => {
-    const newSkill: Skill = {
-      ...skill,
-      id: Date.now().toString()
+      e.preventDefault()
+      if (!isPublishing) {
+        handlePublishAll()
+      }
     }
-    setSkills(prev => [...prev, newSkill])
-  }
 
-  const handleRemoveSkill = (skillId: string) => {
-    setSkills(prev => prev.filter(skill => skill.id !== skillId))
-  }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [isPublishing, portfolio, user])
 
-  const handleAddImportedProject = (project: Repository) => {
-    setImportedProjects(prev => [...prev, project])
-    // Also add to selectedRepos so it appears in the UI
-    setSelectedRepos(prev => [...prev, project.id])
-  }
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    if (loading || !user) return
+    if (portfolio.isLoadingPortfolio || portfolio.isInitialLoad) return
+    if (feedPrefetchStartedRef.current) return
 
-  const handleAddSocial = (social: Omit<Social, 'id'>) => {
-    const newSocial: Social = {
-      ...social,
-      id: Date.now() // Temporary ID, will be replaced by database
+    const cached = loadFeedCache<any[]>("newest")
+    if (cached && Array.isArray(cached.projects)) {
+      feedPrefetchStartedRef.current = true
+      return
     }
-    setSocials(prev => [...prev, newSocial])
-  }
 
-  const handleRemoveSocial = (socialId: number) => {
-    setSocials(prev => prev.filter(social => social.id !== socialId))
-  }
+    feedPrefetchStartedRef.current = true
 
-  const handleTogglePin = (socialId: number) => {
-    setSocials(prev => prev.map(social => 
-      social.id === socialId 
-        ? { ...social, isPinned: !social.isPinned }
-        : social
-    ))
-  }
+    const controller = new AbortController()
+    const timer = window.setTimeout(async () => {
+      try {
+        const response = await fetch(`/api/feed/projects?sort=newest`, {
+          cache: "no-store",
+          signal: controller.signal,
+        })
 
-  const handleUpdateSocial = (socialId: number, updates: Partial<Social>) => {
-    setSocials(prev => prev.map(social => 
-      social.id === socialId 
-        ? { ...social, ...updates }
-        : social
-    ))
-  }
+        if (!response.ok) return
 
-  const handleThemeChange = (theme: string) => {
-    setSelectedTheme(theme)
-  }
+        const data = await response.json()
+        saveFeedCache("newest", data.projects ?? [])
+      } catch (error) {
+        if (!controller.signal.aborted) {
+          console.error("Feed prefetch failed", error)
+        }
+      }
+    }, 1500)
 
   const renderActiveSection = () => {
     switch (activeSection) {
@@ -995,54 +731,254 @@ export default function DashboardPage() {
         )
       default:
         return null
+    return () => {
+      controller.abort()
+      window.clearTimeout(timer)
     }
+  }, [loading, user, portfolio.isLoadingPortfolio, portfolio.isInitialLoad])
+
+  // Render active section - memoized for instant navigation
+  const handleSectionChange = (section: string) => {
+    if (section === "feed") {
+      router.push("/feed/projects")
+      return
+    }
+    setActiveSection(section)
   }
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <DevFolioLoader size="lg" />
-      </div>
-    )
-  }
+    const renderActiveSection = useMemo(() => {
+      switch (activeSection) {
+        case "home":
+          // Home section shows immediately with user data, updates when portfolio loads
+          return (
+            <HomeSection
+              user={user}
+              portfolioData={portfolio.portfolioData}
+              onUpdate={handlers.handleUpdatePortfolioData}
+              usernameAvailability={handlers.usernameAvailability}
+              isInitialLoad={portfolio.isLoadingPortfolio}
+              isLoading={portfolio.isLoadingPortfolio}
+              experiences={portfolio.experiences}
+              onExperiencesChange={portfolio.setExperiences}
+              cvUrl={portfolio.cvUrl}
+              setCvUrl={portfolio.setCvUrl}
+              onNavigateToSection={handleSectionChange}
+            />
+          )
+        case "shiplog":
+          return <ShiplogSection />
+        case "repos": {
+          const allRepositories = [
+            ...portfolio.importedProjects,
+            ...(user?.repositories || []),
+          ]
+          const mergedRepositories = allRepositories.reduce((acc, repo) => {
+            const existingIndex = acc.findIndex((r) => r.id === repo.id)
+            if (existingIndex === -1) {
+              acc.push(repo)
+            } else if (repo.portfolioRepositoryId && !acc[existingIndex].portfolioRepositoryId) {
+              acc[existingIndex] = repo
+            }
+            return acc
+          }, [] as any[])
 
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-white mb-4">No user data found</p>
-        </div>
-      </div>
-    )
-  }
+          const portfolioId = portfolio.originalData?.id || portfolio.portfolioData.id
+          console.log("🔍 Dashboard - Portfolio ID for ReposSection:", {
+            originalDataId: portfolio.originalData?.id,
+            portfolioDataId: portfolio.portfolioData.id,
+            finalPortfolioId: portfolioId,
+            portfolioIdType: typeof portfolioId,
+          })
 
           return (
-            <>
-              <Toaster 
-                position="top-left"
-                toastOptions={{
-                  duration: 3000,
-                  style: {
-                    background: '#f97316',
-                    color: '#fff',
-                    border: '1px solid #ea580c',
-                    borderRadius: '8px',
-                    fontWeight: '500',
-                  },
-                }}
-              />
-              <DashboardLayout 
-                user={user} 
-                activeSection={activeSection}
-                onSectionChange={setActiveSection}
-                livePortfolio={livePortfolio}
-                portfolioData={portfolioData}
-                hasUnsavedChanges={hasUnsavedChanges && !isInitialLoad}
-                onPublish={handlePublishAll}
-                isPublishing={isPublishing}
-              >
-                {renderActiveSection()}
-              </DashboardLayout>
-            </>
+            <ReposSection
+              repositories={mergedRepositories}
+              selectedRepos={portfolio.selectedRepos}
+              deployedUrls={portfolio.deployedUrls}
+              customNames={portfolio.customNames}
+              customDescriptions={portfolio.customDescriptions}
+              githubUrls={portfolio.githubUrls}
+                projectCategories={portfolio.projectCategories}
+                projectStatuses={portfolio.projectStatuses}
+                projectRevenues={portfolio.projectRevenues}
+                projectMrrs={portfolio.projectMrrs}
+                projectUsers={portfolio.projectUsers}
+                projectTechnologies={portfolio.projectTechnologies}
+              repoOrder={portfolio.repoOrder}
+              onToggleRepo={handlers.handleToggleRepo}
+              onUpdateDeployedUrl={handlers.handleUpdateDeployedUrl}
+              onUpdateCustomName={handlers.handleUpdateCustomName}
+              onUpdateCustomDescription={handlers.handleUpdateCustomDescription}
+              onUpdateGithubUrl={handlers.handleUpdateGithubUrl}
+                onUpdateProjectCategory={handlers.handleUpdateProjectCategory}
+                onUpdateProjectStatus={handlers.handleUpdateProjectStatus}
+                onUpdateProjectRevenue={handlers.handleUpdateProjectRevenue}
+                onUpdateProjectMrr={handlers.handleUpdateProjectMrr}
+                onUpdateProjectUsers={handlers.handleUpdateProjectUsers}
+                onUpdateProjectTechnologies={handlers.handleUpdateProjectTechnologies}
+              onUpdateRepoOrder={handlers.handleUpdateRepoOrder}
+              onAddImportedProject={handlers.handleAddImportedProject}
+              analytics={portfolio.analytics}
+              portfolioId={portfolioId}
+              onUpdateLogo={(repoId: number, logo: string | null) => {
+                portfolio.setLogoOverrides((prev) => {
+                  if (logo === null) {
+                    const newState = { ...prev }
+                    delete newState[repoId]
+                    return newState
+                  }
+                  return {
+                    ...prev,
+                    [repoId]: logo,
+                  }
+                })
+              }}
+              logoOverrides={portfolio.logoOverrides}
+              isLoading={portfolio.isLoadingPortfolio}
+              onNavigateToSection={handleSectionChange}
+            />
           )
+        }
+        case "skills":
+          return (
+            <SkillsSection
+              skills={portfolio.skills}
+              onAddSkill={handlers.handleAddSkill}
+              onRemoveSkill={handlers.handleRemoveSkill}
+              isLoading={portfolio.isLoadingPortfolio}
+              onNavigateToSection={handleSectionChange}
+            />
+          )
+        case "socials":
+          return (
+            <SocialsSection
+              socials={portfolio.socials}
+              onAddSocial={handlers.handleAddSocial}
+              onRemoveSocial={handlers.handleRemoveSocial}
+              onTogglePin={handlers.handleTogglePin}
+              onUpdateSocial={handlers.handleUpdateSocial}
+              isLoading={portfolio.isLoadingPortfolio}
+              onNavigateToSection={handleSectionChange}
+            />
+          )
+        case "analytics":
+          console.log("🔍 Analytics Section - Portfolio ID:", portfolio.originalData?.id)
+          return (
+            <AnalyticsSection
+              portfolioId={portfolio.originalData?.id || portfolio.portfolioData?.id || 0}
+              analyticsData={portfolio.analytics}
+            />
+          )
+        case "theme":
+          return (
+            <ThemeSelector
+              currentTheme={portfolio.selectedTheme as any}
+              userId={user?.id || 0}
+              onThemeChange={handlers.handleThemeChange}
+              portfolioId={portfolio.originalData?.id || portfolio.portfolioData.id}
+              backgroundColor={portfolio.backgroundColor}
+              backgroundPattern={portfolio.backgroundPattern}
+              setBackgroundColor={portfolio.setBackgroundColor}
+              setBackgroundPattern={portfolio.setBackgroundPattern}
+            />
+          )
+        case "feed":
+          return null
+        default:
+          return null
+      }
+    }, [activeSection, user, portfolio, handlers])
+
+  // Show dashboard immediately - no loader blocking
+  // If session is invalid, redirect will happen automatically via useSession hook
+  // Use placeholder user if not loaded yet to render UI immediately
+  const displayUser = user || {
+    id: 0,
+    name: "",
+    githubUsername: "",
+    avatarUrl: "",
+    bio: "",
+    repositories: []
+  }
+
+  const unreadNotificationCount = useMemo(() => {
+    return notifications.reduce((count, notification) => {
+      return count + (readNotificationIds.has(notification.id) ? 0 : 1)
+    }, 0)
+  }, [notifications, readNotificationIds])
+
+  return (
+    <>
+      <Toaster position="top-left" />
+
+      <Dialog
+        open={summaryOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            dismissSummary()
+          }
+        }}
+      >
+        <DialogContent className="max-w-md space-y-4">
+          <DialogHeader>
+            <DialogTitle>Community updates</DialogTitle>
+            <DialogDescription>
+              {summarySinceLabel
+                ? `Your projects received new upvotes since ${summarySinceLabel}.`
+                : "Your projects recently received fresh upvotes from the community."}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3">
+            {summaryProjects.map((project) => (
+              <div
+                key={project.projectId}
+                className="rounded-xl border border-border/60 bg-muted/20 px-4 py-3 shadow-sm"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold text-foreground line-clamp-2">
+                    {project.projectName}
+                  </span>
+                  <span className="text-sm font-bold text-orange-600">
+                    +{project.recentUpvotes}
+                  </span>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Total upvotes: {project.totalUpvotes}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          <DialogFooter>
+            <Button onClick={dismissSummary} className="ml-auto">
+              Got it, thanks
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <DashboardLayout
+        user={displayUser}
+        activeSection={activeSection}
+        onSectionChange={handleSectionChange}
+        livePortfolio={portfolio.livePortfolio}
+        portfolioData={portfolio.portfolioData}
+        hasUnsavedChanges={portfolio.hasUnsavedChanges && !portfolio.isInitialLoad}
+        onPublish={handlePublishAll}
+        isPublishing={isPublishing}
+        notificationBell={
+          <UpvoteNotificationsBell
+            notifications={notifications}
+            unreadCount={unreadNotificationCount}
+            readNotificationIds={Array.from(readNotificationIds)}
+            onOpenChange={handleNotificationsOpenChange}
+            onMarkAllRead={handleMarkAllNotificationsRead}
+          />
+        }
+      >
+        {renderActiveSection}
+      </DashboardLayout>
+    </>
+  )
 }

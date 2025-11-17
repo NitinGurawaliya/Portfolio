@@ -4,7 +4,7 @@ import { Github, ArrowRight } from "lucide-react"
 export function CTASection() {
   return (
     <section className="py-16 sm:py-20 lg:py-24 xl:py-32">
-      <div className="container px-4 sm:px-6">
+      <div className="container px-4 sm:px-6 lg:px-8 mx-auto max-w-7xl">
         <div className="relative overflow-hidden rounded-xl sm:rounded-2xl border border-border/40 bg-gradient-to-r from-primary/10 to-primary/5 p-6 sm:p-8 lg:p-12 text-center backdrop-blur">
           <div className="absolute inset-0 grid-bg dark:grid-bg opacity-30" />
           <div className="relative">

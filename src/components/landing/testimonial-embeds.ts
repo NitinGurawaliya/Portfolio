@@ -1,0 +1,14 @@
+/**
+ * Paste raw HTML embed code from X (Twitter) inside the array below.
+ * Each entry should be a string containing the full `<blockquote>` snippet
+ * returned by https://publish.twitter.com/. The widgets.js script is loaded
+ * automatically, so you do not need to include the `<script>` tag here.
+ */
+
+export const testimonialEmbeds: string[] = [
+  `<blockquote class="twitter-tweet" data-conversation="all"><p lang="en" dir="ltr"><a href="https://t.co/gzymv7W5cc">https://t.co/gzymv7W5cc</a> is the best portfolio maker, I have seen so far.<br>Easy and effective. <a href="https://twitter.com/nitin93937331?ref_src=twsrc%5Etfw">@nitin93937331</a></p>&mdash; Divyansh Raj (@divyanshraj04) <a href="https://twitter.com/divyanshraj04/status/1980479040999051454?ref_src=twsrc%5Etfw">October 21, 2025</a></blockquote>`,
+  `<blockquote class="twitter-tweet" data-conversation="all"><p lang="en" dir="ltr">Just an appreciation post for <a href="https://twitter.com/nitin93937331?ref_src=twsrc%5Etfw">@nitin93937331</a> <br>Honestly great work out there with devfolio<br>Truly one of the most easy to use portfolio creation platform out there ❤️</p>&mdash; akash vishwakarma (@akash19102001) <a href="https://twitter.com/akash19102001/status/1981023578368700551?ref_src=twsrc%5Etfw">October 22, 2025</a></blockquote>`,
+  `<blockquote class="twitter-tweet" data-conversation="all"><p lang="en" dir="ltr">Used Devfolio got my portfolio ready in just a few minutes <a href="https://t.co/BAy5ge6KSu">https://t.co/BAy5ge6KSu</a> <br><br>Must try !!!</p>&mdash; Shreya Tiwari (@STiwari9244) <a href="https://twitter.com/STiwari9244/status/1981058882001916030?ref_src=twsrc%5Etfw">October 22, 2025</a></blockquote>`,
+`<blockquote class="twitter-tweet"><p lang="en" dir="ltr">checkout <a href="https://t.co/bqm8BNqN4G">https://t.co/bqm8BNqN4G</a> for clean detailed page of your github profiles, awesome work by <a href="https://twitter.com/nitin93937331?ref_src=twsrc%5Etfw">@nitin93937331</a></p>&mdash; priyansh (@oyepriyansh) <a href="https://twitter.com/oyepriyansh/status/1984085510982386115?ref_src=twsrc%5Etfw">October 31, 2025</a></blockquote> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>`,
+`<blockquote class="twitter-tweet"><p lang="en" dir="ltr">Crafted the amazing portfolio in just one click, great work by <a href="https://twitter.com/nitin93937331?ref_src=twsrc%5Etfw">@nitin93937331</a> <br>Check it out : <a href="https://t.co/Yj6BJU8KS6">https://t.co/Yj6BJU8KS6</a> <a href="https://t.co/MHW0U4yLQG">pic.twitter.com/MHW0U4yLQG</a></p>&mdash; Rahil Vahora (@okkrahil) <a href="https://twitter.com/okkrahil/status/1981220143557726528?ref_src=twsrc%5Etfw">October 23, 2025</a></blockquote> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>`,
+]

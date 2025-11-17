@@ -24,7 +24,7 @@ interface Portfolio {
 
 interface PortfolioPreviewProps {
   username?: string
-  previewMode: "desktop" | "tablet" | "mobile"
+  previewMode: "mobile"
   portfolio: Portfolio | null
 }
 
@@ -41,7 +41,7 @@ export function PortfolioPreview({ username, previewMode, portfolio }: Portfolio
   }
 
   // Get the selected theme or default to dark
-  const themeKey = (portfolio.selectedTheme || 'dark') as 'dark' | 'light'
+  const themeKey = (portfolio.selectedTheme || 'light') as 'dark' | 'light'
   const theme = getTheme(themeKey)
   const LayoutComponent = getLayoutComponent(theme.layout as any)
 
@@ -59,32 +59,57 @@ export function PortfolioPreview({ username, previewMode, portfolio }: Portfolio
         msOverflowStyle: 'none' 
           }}
         >
-          <style jsx>{`
+          <style jsx global>{`
             div::-webkit-scrollbar {
               display: none;
             }
-            .preview-override .skills-grid {
-              grid-template-columns: repeat(4, 1fr) !important;
-              gap: 8px !important;
+            
+            /* FORCE MOBILE LAYOUT - Use direct targeting of DOM structure */
+            /* Since Tailwind classes use media queries, we override the computed styles directly */
+            
+            /* Step 1: Find and disable the main grid container (lg:grid lg:grid-cols-12) */
+            .preview-override[data-force-mobile="true"] > div > div:nth-child(2) > div:first-child,
+            .preview-override[data-force-mobile="true"] > div > div:first-child > div:first-child {
+              display: block !important;
+              grid-template-columns: none !important;
+              grid-template-rows: none !important;
             }
-            .preview-override .skill-item {
-              min-width: 60px !important;
-              margin-bottom: 8px !important;
+            
+            /* Step 2: Force all direct children of grid to be full width blocks */
+            .preview-override[data-force-mobile="true"] > div > div:nth-child(2) > div:first-child > div,
+            .preview-override[data-force-mobile="true"] > div > div:first-child > div:first-child > div {
+              width: 100% !important;
+              max-width: 100% !important;
+              display: block !important;
             }
-            .preview-override .skill-icon-container {
-              width: 48px !important;
-              height: 48px !important;
-              padding: 6px !important;
+            
+            /* Step 3: Universal override for any element with responsive grid classes */
+            /* Using attribute selectors to catch compiled Tailwind classes */
+            .preview-override[data-force-mobile="true"] [class*="grid"][class*="lg"] {
+              display: block !important;
             }
-            .preview-override .skill-icon {
-              width: 24px !important;
-              height: 24px !important;
+            .preview-override[data-force-mobile="true"] [class*="col-span"] {
+              width: 100% !important;
+              display: block !important;
             }
-            .preview-override .skill-text {
-              font-size: 10px !important;
-              line-height: 1.2 !important;
+            
+            /* Step 4: Force projects grid to single column */
+            .preview-override[data-force-mobile="true"] [class*="grid-cols-2"],
+            .preview-override[data-force-mobile="true"] [class*="md:grid-cols"] {
+              grid-template-columns: 1fr !important;
             }
-            /* Light theme skills override */
+            
+            /* Additional overrides for all screen sizes */
+            @media (min-width: 0px) {
+              .preview-override[data-force-mobile="true"] * {
+                /* Override any computed grid styles */
+              }
+              .preview-override[data-force-mobile="true"] [style*="grid"] {
+                display: block !important;
+              }
+            }
+            
+            /* Skills grid override */
             .preview-override .skills-grid {
               display: flex !important;
               flex-wrap: wrap !important;
@@ -99,7 +124,8 @@ export function PortfolioPreview({ username, previewMode, portfolio }: Portfolio
             .preview-override .skill-icon-container {
               display: none !important;
             }
-            .preview-override .skill-text {
+            .preview-override .skill-text,
+            .preview-override [class*="bg-black"][class*="text-white"] {
               background: black !important;
               color: white !important;
               padding: 6px 12px !important;
@@ -111,20 +137,40 @@ export function PortfolioPreview({ username, previewMode, portfolio }: Portfolio
             }
             /* Light theme spacing override */
             .preview-override .text-center {
-              gap: 16px !important;
+              gap: 8px !important;
             }
             .preview-override .text-center > * {
-              margin-bottom: 16px !important;
+              margin-bottom: 8px !important;
+            }
+            /* Reduce overall spacing in preview */
+            .preview-override section {
+              padding: 1rem 0 !important;
+            }
+            .preview-override .py-12 {
+              padding-top: 1rem !important;
+              padding-bottom: 1rem !important;
+            }
+            .preview-override .py-16 {
+              padding-top: 1.5rem !important;
+              padding-bottom: 1.5rem !important;
+            }
+            .preview-override .py-20 {
+              padding-top: 2rem !important;
+              padding-bottom: 2rem !important;
+            }
+            /* Force space-y-6 to smaller spacing */
+            .preview-override .space-y-6 > * + * {
+              margin-top: 1rem !important;
             }
           `}</style>
           <div 
             style={{ 
-              transform: previewMode === 'mobile' ? 'scale(0.6)' : previewMode === 'tablet' ? 'scale(0.8)' : 'scale(1)',
+              transform: 'scale(0.6)',
               transformOrigin: 'top left',
-              width: previewMode === 'mobile' ? '167%' : previewMode === 'tablet' ? '125%' : '100%'
+              width: '167%'
             }}
           >
-            <div className="preview-override">
+            <div className="preview-override" data-force-mobile="true">
               <LayoutComponent theme={theme} portfolio={portfolio} />
             </div>
           </div>

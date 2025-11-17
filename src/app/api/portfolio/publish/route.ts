@@ -4,6 +4,8 @@ import { devLog } from "@/lib/logger"
 import type { Prisma } from "@prisma/client"
 import { sendEmail } from "@/lib/sendEmail"
 import { generatePortfolioPublishedEmail } from "@/lib/templates/welcomeEmail"
+import { cache, CacheKeys, CacheTTL, getCachedData, setCachedData, invalidateCache } from "@/lib/cache"
+import { validateSessionOptional } from "@/lib/session-validator"
 
 export async function POST(req: NextRequest) {
   try {
@@ -35,15 +37,12 @@ export async function POST(req: NextRequest) {
     if (existingUser?.email && !existingUser.email.includes('@placeholder.com')) {
       // Use existing real email from database (saved during auth)
       userEmail = existingUser.email
-      devLog("✅ Using existing real email from database:", userEmail)
     } else if (userData?.email && userData.email.trim()) {
       // Use email from frontend if available
       userEmail = userData.email.trim()
-      devLog("📧 Using email from frontend:", userEmail)
     } else {
       // Fallback to placeholder
       userEmail = `github-${userId}@placeholder.com`
-      devLog("⚠️ No real email found, using placeholder:", userEmail)
     }
     
     // Start a transaction to ensure data consistency
@@ -166,10 +165,7 @@ export async function POST(req: NextRequest) {
     })
 
     // Send email on every publish (non-blocking)
-    devLog("📧 Portfolio published! Email:", result.user.email, "| isPlaceholder:", result.user.email.includes('@placeholder.com'))
-    
     if (!result.user.email.includes('@placeholder.com')) {
-      devLog("🎉 Sending portfolio published email to:", result.user.email)
       
       const requestUrl = new URL(req.url)
       const baseUrl = `${requestUrl.protocol}//${requestUrl.host}`
@@ -196,8 +192,12 @@ export async function POST(req: NextRequest) {
         .catch((error) => {
           console.error("❌ Portfolio published email error:", error)
         })
-    } else {
-      devLog("⚠️ Skipping email - placeholder email detected:", result.user.email)
+    }
+
+    // Invalidate cache for this portfolio
+    const portfolioUsername = result.portfolio.customUsername || result.user.githubUsername
+    if (portfolioUsername) {
+      invalidateCache(portfolioUsername)
     }
 
     return NextResponse.json({
@@ -221,41 +221,55 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url)
     const username = searchParams.get("username")
-    const userId = searchParams.get("userId")
-
-    if (!username && !userId) {
-      return NextResponse.json(
-        { error: "Username or User ID is required" },
-        { status: 400 }
-      )
+    
+    // SECURITY FIX: Use centralized session validation (optional)
+    const sessionValidation = await validateSessionOptional(req)
+    const loggedInUser = sessionValidation.valid ? sessionValidation.user : null
+    
+    if (!sessionValidation.valid && sessionValidation.error) {
+      console.log(`Session validation failed: ${sessionValidation.error}, treating as public access`)
     }
 
-    let whereClause: any = { isPublished: true }
+    // PUBLIC ACCESS: If username is provided and no valid session, fetch published portfolio
+    if (username && !loggedInUser) {
+      // Public portfolio view - only published portfolios
+      const cacheKey = CacheKeys.portfolio(username)
+      const cachedData = getCachedData(cacheKey)
+      
+      if (cachedData) {
+        return NextResponse.json(cachedData)
+      }
 
-    if (userId) {
-      whereClause.userId = parseInt(userId)
-    } else if (username) {
-      // Search by custom username first, then fall back to GitHub username
-      whereClause.OR = [
-        { customUsername: username },
-        { user: { githubUsername: username } }
-      ]
-    }
-
-    const portfolio = await prisma.portfolio.findFirst({
-      where: whereClause,
+      // Find portfolio by customUsername (must be published)
+      const portfolio = await prisma.portfolio.findFirst({
+        where: {
+          OR: [
+            { customUsername: username },
+            { user: { githubUsername: username } }
+          ],
+          isPublished: true // Only published portfolios for public access
+        },
       include: {
         user: true,
         skills: true,
         socials: true,
-        repositories: {
-          select: {
-            id: true,
-            deployedUrl: true,
-            customName: true,
-            customDescription: true,
-            isVisible: true,
-            repository: {
+        experiences: {
+          orderBy: { createdAt: 'desc' }
+        },
+            repositories: {
+              select: {
+                id: true,
+                deployedUrl: true,
+                customName: true,
+                customDescription: true,
+                displayOrder: true,
+                isVisible: true,
+                projectCategory: true,
+                projectStatus: true,
+                projectRevenue: true,
+                projectMrr: true,
+                projectUsers: true,
+                repository: {
               select: {
                 id: true,
                 githubId: true,
@@ -265,43 +279,166 @@ export async function GET(req: NextRequest) {
                 htmlUrl: true,
                 githubUrl: true,
                 language: true,
+                languages: true,
                 stargazersCount: true,
                 forksCount: true,
                 size: true,
                 isPrivate: true,
                 isFork: true,
                 isImported: true,
+                favicon: true,
+                logo: true,
+                siteName: true,
+                keywords: true,
+                author: true,
                 createdAt: true,
                 updatedAt: true,
                 pushedAt: true
               }
             }
+          },
+          orderBy: {
+            displayOrder: 'asc'
           }
         }
       }
     })
 
-    devLog("Searching for portfolio with:", whereClause)
-    devLog("Found portfolio:", JSON.stringify(portfolio, (key, value) =>
-      typeof value === 'bigint' ? value.toString() : value
-    , 2))
 
-    if (!portfolio) {
-      return NextResponse.json(
-        { error: "Portfolio not found. Please save at least one section in the dashboard first." },
-        { status: 404 }
-      )
+      if (!portfolio) {
+        return NextResponse.json(
+          { error: "Portfolio not found" },
+          { status: 404 }
+        )
+      }
+
+      // Convert BigInt values to strings for JSON serialization
+      const serializedPortfolio = JSON.parse(JSON.stringify(portfolio, (key, value) =>
+        typeof value === 'bigint' ? value.toString() : value
+      ))
+
+      const responseData = {
+        success: true,
+        portfolio: serializedPortfolio
+      }
+
+      // Cache the response
+      setCachedData(cacheKey, responseData, CacheTTL.PORTFOLIO)
+
+      return NextResponse.json(responseData)
     }
 
-    // Convert BigInt values to strings for JSON serialization
-    const serializedPortfolio = JSON.parse(JSON.stringify(portfolio, (key, value) =>
-      typeof value === 'bigint' ? value.toString() : value
-    ))
+    // DASHBOARD ACCESS: If logged in, fetch their own portfolio (published or unpublished)
+    // SECURITY: Always ignore username query param for dashboard access - only use logged-in user's ID
+    if (loggedInUser) {
+      // SECURITY: Use logged-in user's ID for cache key, ignore username from query params
+      // This prevents any potential cache poisoning attacks
+      const cacheKey = CacheKeys.portfolio(`user_${loggedInUser.id}`)
+      const cachedData = getCachedData(cacheKey)
+      
+      if (cachedData) {
+        // SECURITY: Verify cached data belongs to logged-in user
+        if (cachedData && typeof cachedData === 'object' && 'portfolio' in cachedData) {
+          const cachedPortfolio = cachedData as { portfolio?: { user?: { id: number } } }
+          if (cachedPortfolio.portfolio?.user?.id === loggedInUser.id) {
+            return NextResponse.json(cachedData)
+          }
+        }
+        // If cache doesn't match, invalidate and continue
+        invalidateCache(cacheKey)
+      }
 
-    return NextResponse.json({
-      success: true,
-      portfolio: serializedPortfolio
-    })
+      // SECURITY: Fetch portfolio ONLY for logged-in user by userId
+      // IGNORE username query param completely - it cannot be used to access other users' data
+      // Allow both published and unpublished portfolios for dashboard access
+      const portfolio = await prisma.portfolio.findFirst({
+        where: {
+          userId: loggedInUser.id // SECURITY: Only use logged-in user's ID from session
+        },
+        include: {
+          user: true,
+          skills: true,
+          socials: true,
+          experiences: {
+            orderBy: { createdAt: 'desc' }
+          },
+          repositories: {
+            select: {
+              id: true,
+              deployedUrl: true,
+              customName: true,
+              customDescription: true,
+              displayOrder: true,
+              isVisible: true,
+                projectCategory: true,
+                projectStatus: true,
+                projectRevenue: true,
+                projectMrr: true,
+                projectUsers: true,
+                technologies: true,
+              repository: {
+                select: {
+                  id: true,
+                  githubId: true,
+                  name: true,
+                  fullName: true,
+                  description: true,
+                  htmlUrl: true,
+                  githubUrl: true,
+                  language: true,
+                  languages: true,
+                  stargazersCount: true,
+                  forksCount: true,
+                  size: true,
+                  isPrivate: true,
+                  isFork: true,
+                  isImported: true,
+                  favicon: true,
+                  logo: true,
+                  siteName: true,
+                  keywords: true,
+                  author: true,
+                  createdAt: true,
+                  updatedAt: true,
+                  pushedAt: true
+                }
+              }
+            },
+            orderBy: {
+              displayOrder: 'asc'
+            }
+          }
+        }
+      })
+
+      if (!portfolio) {
+        return NextResponse.json(
+          { error: "Portfolio not found. Please save at least one section in the dashboard first." },
+          { status: 404 }
+        )
+      }
+
+      // Convert BigInt values to strings for JSON serialization
+      const serializedPortfolio = JSON.parse(JSON.stringify(portfolio, (key, value) =>
+        typeof value === 'bigint' ? value.toString() : value
+      ))
+
+      const responseData = {
+        success: true,
+        portfolio: serializedPortfolio
+      }
+
+      // Cache the response
+      setCachedData(cacheKey, responseData, CacheTTL.PORTFOLIO)
+
+      return NextResponse.json(responseData)
+    }
+
+    // No username and no session - invalid request
+    return NextResponse.json(
+      { error: "Portfolio not found" },
+      { status: 404 }
+    )
 
   } catch (error) {
     console.error("Error fetching portfolio:", error)
