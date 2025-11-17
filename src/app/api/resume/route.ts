@@ -321,7 +321,10 @@ export async function GET(req: NextRequest) {
         .trim()
         .replace(/\s+/g, "-") || "devfolio"
 
-    return new NextResponse(pdfBuffer, {
+    // Convert Buffer to Uint8Array for proper NextResponse handling
+    const uint8Array = new Uint8Array(pdfBuffer)
+
+    return new NextResponse(uint8Array, {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",
