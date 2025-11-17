@@ -56,6 +56,7 @@ export default function DashboardPage() {
     tone: "info",
   })
   const [isGeneratingResume, setIsGeneratingResume] = useState(false)
+  const [isProfileWidgetOpen, setIsProfileWidgetOpen] = useState(true)
   
   // Handlers hook - portfolio data को original data के रूप में pass करें
   const handlers = usePortfolioHandlers(
@@ -889,6 +890,8 @@ export default function DashboardPage() {
           onDownloadResume={handleResumeDownload}
           statusMessage={resumeStatus.message}
           statusTone={resumeStatus.tone}
+          isOpen={isProfileWidgetOpen}
+          onToggle={() => setIsProfileWidgetOpen(!isProfileWidgetOpen)}
         />
     </>
   )
