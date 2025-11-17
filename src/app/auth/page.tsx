@@ -1,14 +1,47 @@
 "use client"
 
 import { Github } from "lucide-react";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { DevFolioLoader } from "@/components/ui/DevFolioLoader";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export default function AuthPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [isChecking, setIsChecking] = useState(true)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [username, setUsername] = useState("")
+  const [usernameStatus, setUsernameStatus] = useState<"idle" | "checking" | "available" | "error">("idle")
+  const [usernameMessage, setUsernameMessage] = useState("Reserve a short link for your DevFolio (optional)")
+  
+  const normalizedUsername = useMemo(() => {
+    return username
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9-_]/g, "")
+  }, [username])
+
+  useEffect(() => {
+    const claimed = searchParams.get("username") || ""
+    if (claimed) {
+      setUsername(claimed.toLowerCase())
+    }
+  }, [searchParams])
+
+  useEffect(() => {
+    if (searchParams.get("needsUsernameRetry")) {
+      setUsernameStatus("error")
+      setUsernameMessage("That username was already taken—choose another to continue")
+    }
+  }, [searchParams])
+
+  const handleUsernameInput = useCallback((value: string) => {
+    const cleaned = value.replace(/[^a-zA-Z0-9-_]/g, "")
+    setUsername(cleaned.toLowerCase())
+  }, [])
 
   useEffect(() => {
     // REMOVED: Onboarding flow - all authenticated users go to dashboard
@@ -42,6 +75,79 @@ export default function AuthPage() {
     )
   }
 
+  useEffect(() => {
+    if (!normalizedUsername) {
+      setUsernameStatus("idle")
+      setUsernameMessage("Reserve a short link for your DevFolio (optional)")
+      return
+    }
+
+    if (normalizedUsername.length < 3 || normalizedUsername.length > 20) {
+      setUsernameStatus("error")
+      setUsernameMessage("Username must be between 3 and 20 characters")
+      return
+    }
+
+    setUsernameStatus("checking")
+    setUsernameMessage("Checking availability...")
+
+    const controller = new AbortController()
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch("/api/portfolio/check-username", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username: normalizedUsername }),
+          signal: controller.signal,
+        })
+        const data = await res.json()
+        if (!res.ok) {
+          throw new Error(data?.message || data?.error || "Failed to check username")
+        }
+
+        if (data.available) {
+          setUsernameStatus("available")
+          setUsernameMessage(`/${normalizedUsername} is available`)
+        } else {
+          setUsernameStatus("error")
+          setUsernameMessage(data.message || "Username already taken")
+        }
+      } catch (error) {
+        if (!controller.signal.aborted) {
+          setUsernameStatus("error")
+          setUsernameMessage("Network error, please retry")
+        }
+      }
+    }, 400)
+
+    return () => {
+      clearTimeout(timer)
+      controller.abort()
+    }
+  }, [normalizedUsername])
+
+  const handleGitHubLogin = useCallback(async () => {
+    if (isSubmitting) return
+
+    if (normalizedUsername) {
+      if (usernameStatus === "checking") {
+        setUsernameMessage("Please wait while we finish checking...")
+        return
+      }
+      if (usernameStatus !== "available") {
+        setUsernameStatus("error")
+        setUsernameMessage("Pick an available username to continue")
+        return
+      }
+    }
+
+    setIsSubmitting(true)
+    const target = normalizedUsername
+      ? `/api/auth/github?username=${encodeURIComponent(normalizedUsername)}`
+      : "/api/auth/github"
+    window.location.href = target
+  }, [isSubmitting, normalizedUsername, usernameStatus])
+
   return (
       <div className="relative flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-muted/40 to-background px-4 py-10">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(253,105,33,0.08),_transparent_55%)]" />
@@ -59,14 +165,51 @@ export default function AuthPage() {
             </div>
           </div>
 
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-muted-foreground">
+                Claim your DevFolio URL
+              </Label>
+              <div className="flex items-center gap-2 rounded-xl border border-border/70 bg-muted/30 px-3 py-2.5">
+                <span className="text-sm text-muted-foreground">devfolio.cc/</span>
+                <Input
+                  value={username}
+                  onChange={(e) => handleUsernameInput(e.target.value)}
+                  placeholder="your-handle"
+                  className="border-0 bg-transparent px-0 focus-visible:ring-0"
+                />
+              </div>
+              <p
+                className={`text-xs ${
+                  usernameStatus === "available"
+                    ? "text-emerald-600"
+                    : usernameStatus === "error"
+                      ? "text-red-500"
+                      : "text-muted-foreground"
+                }`}
+              >
+                {usernameMessage}
+              </p>
+            </div>
+
           <div className="space-y-4">
-            <a
-              href="/api/auth/github"
-                className="flex w-full items-center justify-center gap-3 rounded-xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 sm:py-3.5 sm:text-base"
-            >
-              <Github className="h-5 w-5" />
-              Continue with GitHub
-            </a>
+              <button
+                onClick={handleGitHubLogin}
+                disabled={
+                  isSubmitting ||
+                  usernameStatus === "checking" ||
+                  (normalizedUsername && usernameStatus !== "available")
+                }
+                className="flex w-full items-center justify-center gap-3 rounded-xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60 sm:py-3.5 sm:text-base"
+              >
+                {isSubmitting ? (
+                  <DevFolioLoader size="sm" />
+                ) : (
+                  <>
+                    <Github className="h-5 w-5" />
+                    Continue with GitHub
+                  </>
+                )}
+              </button>
 
             <div className="rounded-xl border border-border/50 bg-muted/40 p-4">
               <div className="flex items-start gap-3">

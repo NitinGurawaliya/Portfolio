@@ -1,15 +1,22 @@
 "use client";
 
 import { Button } from "@/components/ui/button"
-import { ArrowRight, Github, Play } from "lucide-react"
-import { useEffect, useState } from "react";
+import { ArrowRight, Play } from "lucide-react"
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { PortfolioMobilePreview } from "./portfolio-mobile-preview";
+import { ClaimUsernameModal } from "./claim-username-modal";
 
 export function HeroSection() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
+  const [claimOpen, setClaimOpen] = useState(false);
   const router = useRouter();
+
+  const handleClaimSuccess = useCallback((username: string) => {
+    setClaimOpen(false)
+    router.push(`/auth?username=${encodeURIComponent(username)}`)
+  }, [router])
   
   useEffect(() => {
     const checkSession = async () => {
@@ -91,18 +98,16 @@ export function HeroSection() {
                           <ArrowRight className="ml-2 h-3 w-3 sm:h-4 sm:w-4" />
                         </a>
                       </Button>
-                    ) : (
-                      <Button
-                        size="lg"
-                        className="inline-flex w-full max-w-[18rem] border-0 bg-gradient-to-r from-orange-500 to-orange-600 px-4 text-xs text-white shadow-md hover:from-orange-600 hover:to-orange-700 sm:w-auto sm:max-w-none sm:px-6 sm:text-sm lg:px-8 lg:text-base"
-                        asChild
-                      >
-                        <a href="/auth">
+                      ) : (
+                        <Button
+                          size="lg"
+                          className="inline-flex w-full max-w-[18rem] border-0 bg-gradient-to-r from-orange-500 to-orange-600 px-4 text-xs text-white shadow-md hover:from-orange-600 hover:to-orange-700 sm:w-auto sm:max-w-none sm:px-6 sm:text-sm lg:px-8 lg:text-base"
+                          onClick={() => setClaimOpen(true)}
+                        >
                           Claim your page
                           <ArrowRight className="ml-2 h-3 w-3 sm:h-4 sm:w-4" />
-                        </a>
-                      </Button>
-                    )}
+                        </Button>
+                      )}
                     <Button
                       variant="outline"
                       size="lg"
@@ -145,6 +150,11 @@ export function HeroSection() {
           <PortfolioMobilePreview />
         </div>
       </div>
-    </section>
+      <ClaimUsernameModal
+        open={claimOpen}
+        onOpenChange={setClaimOpen}
+        onSuccess={handleClaimSuccess}
+      />
+      </section>
   )
 }
