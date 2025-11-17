@@ -10,18 +10,12 @@ import {
   BarChart3,
   Code,
   Wrench,
-  Users,
   Palette,
-  Check,
-  Github,
-  Twitter,
-  Linkedin,
-  Instagram,
-  Mail
+  Check
 } from "lucide-react"
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts"
-import { SiGooglechrome } from "react-icons/si"
-import { SiReact, SiNextdotjs, SiTypescript, SiTailwindcss, SiJavascript, SiVercel, SiSupabase, SiStripe } from "react-icons/si"
+import { SiGithub, SiGooglechrome, SiGmail, SiInstagram } from "react-icons/si"
+import { SiReact, SiNextdotjs, SiTypescript, SiTailwindcss, SiJavascript, SiVercel, SiSupabase, SiStripe, SiLinkedin } from "react-icons/si"
 
 // Demo data
 const demoAnalytics = {
@@ -147,11 +141,10 @@ const demoSkills = [
 ]
 
 const demoSocials = [
-  { platform: "GitHub", username: "@johndoe", icon: Github },
-  { platform: "Twitter", username: "@johndoe", icon: Twitter },
-  { platform: "LinkedIn", username: "john-doe", icon: Linkedin },
-  { platform: "Instagram", username: "@johndoe", icon: Instagram },
-  { platform: "Email", username: "john@example.com", icon: Mail },
+  { platform: "GitHub", username: "@johndoe", icon: SiGithub },
+  { platform: "LinkedIn", username: "john-doe", icon: SiLinkedin },
+  { platform: "Instagram", username: "@johndoe", icon: SiInstagram },
+  { platform: "Email", username: "john@example.com", icon: SiGmail },
 ]
 
 function ProjectChart({ data, color, maxY }: { data: any[], color: string, maxY: number }) {
@@ -331,203 +324,139 @@ const getPatternStyle = (pattern: string | null) => {
 
 export function FeatureShowcase() {
   return (
-    <section className="py-16 sm:py-20 lg:py-24 bg-background">
-      <div className="container mx-auto max-w-6xl px-6 sm:px-8 lg:px-12">
+    <section className="py-6 sm:py-8 lg:py-10 bg-background">
+      <div className="container mx-auto max-w-[1400px] px-6 sm:px-8 lg:px-12">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
+        <div className="text-center mb-6">
+          <h2 className="text-lg md:text-xl lg:text-2xl font-bold text-foreground mb-1">
             Our Flagship Features
           </h2>
-          <p className="text-sm text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-[11px] md:text-xs text-muted-foreground max-w-xl mx-auto">
             Everything you need to build and showcase your developer portfolio
           </p>
         </div>
 
-          <div className="space-y-6">
-          {/* 1. Analytics Dashboard - Full Width */}
-          <Card className="bg-card shadow-md border-border rounded-lg">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg text-card-foreground font-bold">Analytics and Insights</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Stats Cards */}
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                <Card className="bg-card shadow-md border-border rounded-lg h-24">
-                  <CardContent className="p-3 h-full">
-                    <p className="text-[10px] text-muted-foreground mb-1">Total Visits</p>
-                    <div className="flex items-end justify-between">
-                      <p className="text-2xl font-bold text-card-foreground leading-none">{demoAnalytics.totalViews}</p>
-                      <div className="border border-border rounded p-1">
-                        <Eye className="h-4 w-4 text-card-foreground" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+        {/* Feature Images Grid */}
+        <div className="space-y-3">
 
-                <Card className="bg-card shadow-md border-border rounded-lg h-24">
-                  <CardContent className="p-3 h-full">
-                    <p className="text-[10px] text-muted-foreground mb-1">Unique Sources</p>
-                    <div className="flex items-end justify-between">
-                      <p className="text-2xl font-bold text-card-foreground leading-none">{demoAnalytics.uniqueSources}</p>
-                      <div className="border border-border rounded p-1">
-                        <ExternalLink className="h-4 w-4 text-card-foreground" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-card shadow-md border-border rounded-lg h-24">
-                  <CardContent className="p-3 h-full flex flex-col justify-between">
-                    <p className="text-[10px] text-muted-foreground">Top Device</p>
-                    <div className="flex items-center justify-between mt-auto">
-                      <div>
-                        <p className="text-2xl font-bold text-card-foreground leading-none">{demoAnalytics.topDevice.count}</p>
-                        <p className="text-[9px] text-muted-foreground mt-0.5">{demoAnalytics.topDevice.name}</p>
-                      </div>
-                      <div className="border border-border rounded p-1">
-                        <Smartphone className="h-4 w-4 text-card-foreground" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-card shadow-md border-border rounded-lg h-24">
-                  <CardContent className="p-3 h-full flex flex-col justify-between">
-                    <p className="text-[10px] text-muted-foreground">Top Browser</p>
-                    <div className="flex items-center justify-between mt-auto">
-                      <div>
-                        <p className="text-2xl font-bold text-card-foreground leading-none">{demoAnalytics.topBrowser.count}</p>
-                        <p className="text-[9px] text-muted-foreground mt-0.5">{demoAnalytics.topBrowser.name}</p>
-                      </div>
-                      <div className="border border-border rounded p-1">
-                        <SiGooglechrome className="h-4 w-4 text-[#4285F4]" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+          {/* Analytics Dashboard Row */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+            {/* Referrer Analytics */}
+            <div className="group relative flex flex-col overflow-hidden rounded-lg border border-border bg-white dark:bg-card shadow-sm hover:shadow-md transition-shadow lg:col-span-1">
+              <div className="flex-1 overflow-hidden bg-gray-50 dark:bg-background/50 flex items-center justify-center">
+                <img 
+                  src="/landing/topreferers.png" 
+                  alt="Top Referrers" 
+                  className="w-full h-full object-contain"
+                />
               </div>
-
-              {/* Visits over time and Top Referrers - Side by Side */}
-                <div className="flex flex-col gap-4 lg:flex-row lg:gap-6">
-                {/* Heatmap - Left side */}
-                <div className="flex-1 min-w-0">
-                  <CardTitle className="text-base text-card-foreground font-bold mb-2">Visits over time</CardTitle>
-                    <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:gap-2">
-                    {/* Weekday labels */}
-                      <div className="hidden flex-col gap-1 pt-0.5 flex-shrink-0 sm:flex">
-                      <span className="text-[9px] text-muted-foreground font-medium h-3 leading-none">Sun</span>
-                      <span className="text-[9px] text-muted-foreground font-medium h-3 leading-none">Mon</span>
-                      <span className="text-[9px] text-muted-foreground font-medium h-3 leading-none">Tue</span>
-                      <span className="text-[9px] text-muted-foreground font-medium h-3 leading-none">Wed</span>
-                      <span className="text-[9px] text-muted-foreground font-medium h-3 leading-none">Thu</span>
-                      <span className="text-[9px] text-muted-foreground font-medium h-3 leading-none">Fri</span>
-                      <span className="text-[9px] text-muted-foreground font-medium h-3 leading-none">Sat</span>
-                    </div>
-                    
-                      <div className="flex flex-col max-w-full lg:max-w-[620px]">
-                        <div className="overflow-x-auto">
-                          <div className="inline-flex min-w-[520px] flex-col gap-1 pr-2">
-                          {/* Month labels */}
-                          <div className="flex gap-1 mb-1.5 pl-7">
-                            {["Nov", "Dec", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov"].map((month, idx) => (
-                              <div key={idx} className="w-3 flex items-start justify-center">
-                                {idx === 0 || idx === 12 ? (
-                                  <span className="text-[9px] text-muted-foreground font-medium">{month}</span>
-                                ) : null}
-                              </div>
-                            ))}
-                          </div>
-                          
-                          {/* Heatmap grid */}
-                              <div className="flex gap-1 pb-2 sm:pb-0">
-                            {heatmapWeeks.map((week, weekIndex) => (
-                              <div key={weekIndex} className="flex flex-col gap-1">
-                                {week.map((day, dayIndex) => (
-                                  <div
-                                    key={`${weekIndex}-${dayIndex}`}
-                                    className={`w-3 h-3 rounded-sm ${getHeatmapColor(day.count)}`}
-                                  />
-                                ))}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Top Referrers - Right side */}
-                <div className="w-full lg:w-72 lg:max-w-[280px] flex-shrink-0 min-w-0">
-                  <CardTitle className="text-base text-card-foreground font-bold mb-2">Top Referrers</CardTitle>
-                  <div className="space-y-2">
-                    {demoAnalytics.topReferrers.map((ref, index) => (
-                      <div key={index} className="flex items-center justify-between gap-2 rounded-md border border-border/40 px-2 py-1.5">
-                        <div className="flex items-center gap-2 min-w-0 flex-1">
-                          {getReferrerIcon(ref.referrer)}
-                          <span className="text-xs text-card-foreground font-medium truncate">{ref.referrer}</span>
-                        </div>
-                        <span className="text-xs font-bold text-card-foreground ml-2 shrink-0 text-right tabular-nums">{ref.count}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+              <div className="p-2.5 text-center bg-white dark:bg-card flex-shrink-0">
+                <h3 className="text-[11px] font-semibold text-gray-900 dark:text-card-foreground mb-0.5">Referrer Analytics</h3>
+                <p className="text-[9px] text-gray-600 dark:text-muted-foreground">See where your traffic comes from.</p>
               </div>
-            </CardContent>
-          </Card>
+            </div>
 
-          {/* 2. Projects Section - Full Width */}
-          <Card className="bg-card shadow-md border-border rounded-lg">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base text-card-foreground font-bold">Projects</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {demoProjects.map((project) => (
-                  <Card key={project.id} className="bg-card shadow-md border-border rounded-lg h-[240px]">
-                    <CardContent className="p-4 h-full flex flex-col">
-                      <div className="mb-3 flex items-start justify-between gap-3">
-                        <div className="flex items-start gap-3 min-w-0 flex-1">
-                          <ProjectIcon title={project.name} size="md" />
-                          <div className="min-w-0 flex-1">
-                            <h3 className="text-sm font-semibold text-card-foreground truncate leading-tight">{project.name}</h3>
-                            <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5 leading-snug">{project.description}</p>
-                          </div>
-                        </div>
-                        <div className="text-right flex-shrink-0 ml-2">
-                          <div className="text-[10px] text-muted-foreground mb-0.5">Times visited</div>
-                          <div className="text-base font-bold text-card-foreground leading-none">{project.visits}</div>
-                          <div className="text-[10px] text-green-600 dark:text-green-500 mt-1 font-medium">
-                            ↗{project.percentageChange}%
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex-1 overflow-hidden mt-auto">
-                        <ProjectChart data={project.chartData} color={project.color} maxY={project.maxY} />
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+            {/* Profile Showcase - Takes 2 columns */}
+            <div className="group relative flex flex-col overflow-hidden rounded-lg border border-border bg-white dark:bg-card shadow-sm hover:shadow-md transition-shadow lg:col-span-2">
+              <div className="flex-1 overflow-hidden bg-gray-50 dark:bg-background/50 flex items-center justify-center">
+                <img 
+                  src="/landing/ss_portfolio.png" 
+                  alt="Profile Showcase" 
+                  className="w-full h-full object-contain"
+                />
               </div>
-            </CardContent>
-          </Card>
+              <div className="p-2.5 text-center bg-white dark:bg-card flex-shrink-0">
+                <h3 className="text-[11px] font-semibold text-gray-900 dark:text-card-foreground mb-0.5">Profile Showcase</h3>
+                <p className="text-[9px] text-gray-600 dark:text-muted-foreground">Display your projects and social links.</p>
+              </div>
+            </div>
+          </div>
 
-          {/* 3. Bottom Row - Customization, Skills, Socials Side by Side */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {/* Live Analytics Dashboard - Full Width */}
+          <div className="group relative overflow-hidden rounded-lg border border-border bg-white dark:bg-card shadow-sm hover:shadow-md transition-shadow">
+            <div className="overflow-hidden bg-gray-50 dark:bg-background/50">
+              <img 
+                src="/landing/analytics_ss.png" 
+                alt="Live Analytics Dashboard" 
+                className="w-full h-auto object-cover"
+              />
+            </div>
+            <div className="p-2.5 text-center bg-white dark:bg-card">
+              <h3 className="text-[11px] md:text-xs font-semibold text-gray-900 dark:text-card-foreground mb-0.5 flex items-center gap-1 justify-center">
+                <BarChart3 className="h-2.5 w-2.5 text-orange-500" />
+                Live Analytics Dashboard
+              </h3>
+              <p className="text-[9px] text-gray-600 dark:text-muted-foreground">Track every visit, understand your audience</p>
+            </div>
+          </div>
+
+          {/* Community Features Row */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+            {/* Customize Layout */}
+            <div className="group relative overflow-hidden rounded-lg border border-border bg-white dark:bg-card shadow-sm hover:shadow-md transition-shadow">
+              <div className="overflow-hidden bg-gray-50 dark:bg-background/50">
+                <img 
+                  src="/landing/customize_layout.png" 
+                  alt="Customize Layout" 
+                  className="w-full h-auto object-cover"
+                />
+              </div>
+              <div className="p-2.5 text-center bg-white dark:bg-card">
+                <h3 className="text-[11px] font-semibold text-gray-900 dark:text-card-foreground mb-0.5">Customize Your Layout</h3>
+                <p className="text-[9px] text-gray-600 dark:text-muted-foreground">Choose from multiple themes and customize every detail</p>
+              </div>
+            </div>
+
+            {/* Community Feed */}
+            <div className="group relative overflow-hidden rounded-lg border border-border bg-white dark:bg-card shadow-sm hover:shadow-md transition-shadow">
+              <div className="overflow-hidden bg-gray-50 dark:bg-background/50">
+                <img 
+                  src="/landing/communtiyy_ss.png" 
+                  alt="Community Feed" 
+                  className="w-full h-auto object-cover"
+                />
+              </div>
+              <div className="p-2.5 text-center bg-white dark:bg-card">
+                <h3 className="text-[11px] font-semibold text-gray-900 dark:text-card-foreground mb-0.5">Discover Community</h3>
+                <p className="text-[9px] text-gray-600 dark:text-muted-foreground">Explore portfolios and projects from other developers</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Feature Highlight with Image */}
+          <div className="group relative overflow-hidden rounded-lg border border-border bg-white dark:bg-card shadow-sm hover:shadow-md transition-shadow">
+            <div className="overflow-hidden bg-gradient-to-br from-purple-50 to-pink-50 dark:from-gray-900 dark:to-gray-800">
+              <img 
+                src="/landing/landingphoto1canva.png" 
+                alt="DevFolio Features" 
+                className="w-full h-auto object-cover"
+              />
+            </div>
+            <div className="p-2.5 text-center bg-white dark:bg-card">
+              <h3 className="text-[11px] md:text-xs font-semibold text-gray-900 dark:text-foreground mb-0.5">Showcase Your Best Work</h3>
+              <p className="text-[9px] text-gray-600 dark:text-muted-foreground">Import projects from GitHub and customize every detail</p>
+            </div>
+          </div>
+
+          {/* Bottom Row - Code Features Display */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {/* Theme Customization */}
-            <Card className="bg-card shadow-md border-border rounded-lg">
-              <CardHeader className="pb-1.5">
-                <CardTitle className="text-sm text-card-foreground font-bold">Customization</CardTitle>
+            <Card className="bg-white dark:bg-card shadow-sm hover:shadow-md transition-shadow border border-border rounded-lg">
+              <CardHeader className="pb-1">
+                <CardTitle className="text-[11px] font-semibold text-gray-900 dark:text-card-foreground flex items-center gap-1">
+                  <Palette className="h-3 w-3 text-pink-500" />
+                  Customization
+                </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-2.5">
+              <CardContent className="space-y-1.5">
                 {/* Background Colors */}
                 <div>
-                  <h3 className="text-[10px] font-semibold text-card-foreground mb-1.5">Background Colors</h3>
-                  <div className="flex gap-1.5 flex-wrap">
+                  <h3 className="text-[8px] font-semibold text-card-foreground mb-0.5">Background Colors</h3>
+                  <div className="flex gap-1 flex-wrap">
                     {BACKGROUND_COLORS.map((color, idx) => (
                       <div
                         key={idx}
-                        className={`w-9 h-9 rounded-lg shadow-sm cursor-pointer relative border-2 ${
+                        className={`w-7 h-7 rounded-md shadow-sm cursor-pointer relative border-2 ${
                           idx === 1 ? 'border-orange-500' : 'border-border'
                         }`}
                         style={{ background: color.preview }}
@@ -544,12 +473,12 @@ export function FeatureShowcase() {
 
                 {/* Background Patterns */}
                 <div>
-                  <h3 className="text-[10px] font-semibold text-card-foreground mb-1.5">Background Patterns</h3>
-                  <div className="flex gap-1.5 flex-wrap">
+                  <h3 className="text-[8px] font-semibold text-card-foreground mb-0.5">Background Patterns</h3>
+                  <div className="flex gap-1 flex-wrap">
                     {BACKGROUND_PATTERNS.map((pattern, idx) => (
                       <div
                         key={idx}
-                        className={`w-12 h-9 rounded-lg shadow-sm cursor-pointer relative border-2 ${
+                        className={`w-10 h-7 rounded-md shadow-sm cursor-pointer relative border-2 ${
                           idx === 2 ? 'border-orange-500' : 'border-border'
                         }`}
                         style={{
@@ -568,33 +497,34 @@ export function FeatureShowcase() {
                 </div>
 
                 {/* Customization Alert */}
-                <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-1.5 flex items-start gap-1.5">
-                  <Palette className="h-3.5 w-3.5 text-orange-600 dark:text-orange-500 flex-shrink-0 mt-0.5" />
+                <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-md p-1 flex items-start gap-0.5">
+                  <Palette className="h-2.5 w-2.5 text-orange-600 dark:text-orange-500 flex-shrink-0 mt-0.5" />
                   <div>
-                    <div className="text-[10px] font-semibold text-orange-900 dark:text-orange-300 mb-0.5">Customization</div>
-                    <div className="text-[9px] text-orange-700 dark:text-orange-400">Changes will be applied when you click 'Publish 🔥'</div>
+                    <div className="text-[8px] font-semibold text-orange-900 dark:text-orange-300 mb-0.5">Customization</div>
+                    <div className="text-[7px] text-orange-700 dark:text-orange-400 leading-tight">Changes apply when you click 'Publish 🔥'</div>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
             {/* Skills Feature Card */}
-            <Card className="bg-card shadow-md border-border rounded-lg">
-              <CardHeader className="pb-1.5">
-                <div className="flex items-center gap-2">
-                    <CardTitle className="text-sm font-bold text-card-foreground">Skills & Tech</CardTitle>
+            <Card className="bg-white dark:bg-card shadow-sm hover:shadow-md transition-shadow border border-border rounded-lg">
+              <CardHeader className="pb-1">
+                <div className="flex items-center gap-1">
+                  <Code className="h-3 w-3 text-blue-500" />
+                  <CardTitle className="text-[11px] font-semibold text-gray-900 dark:text-card-foreground">Skills & Tech</CardTitle>
                 </div>
               </CardHeader>
-              <CardContent className="pt-1.5">
-                <div className="flex flex-wrap gap-1.5">
+              <CardContent className="pt-1">
+                <div className="flex flex-wrap gap-0.5">
                   {demoSkills.map((skill, idx) => {
                     const IconComponent = skill.icon
                     return (
                       <div 
                         key={idx}
-                        className="flex items-center gap-1 px-1.5 py-0.5 bg-muted border-border rounded text-[10px]"
+                        className="flex items-center gap-0.5 px-1 py-0.5 bg-muted border-border rounded text-[8px]"
                       >
-                        <IconComponent className="h-3 w-3" style={{ color: skill.color }} />
+                        <IconComponent className="h-2 w-2" style={{ color: skill.color }} />
                         <span className="text-muted-foreground font-medium">{skill.name}</span>
                       </div>
                     )
@@ -603,40 +533,13 @@ export function FeatureShowcase() {
               </CardContent>
             </Card>
 
-            {/* Socials Feature Card */}
-            <Card className="bg-card shadow-md border-border rounded-lg">
-              <CardHeader className="pb-1.5">
-                <div className="flex items-center gap-2">
-                  <CardTitle className="text-sm font-bold text-card-foreground">Social Links</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent className="pt-1.5">
-                <div className="space-y-1">
-                  {demoSocials.map((social, idx) => {
-                    const IconComponent = social.icon
-                    return (
-                      <div 
-                        key={idx}
-                        className="flex items-center gap-1.5 p-1.5 bg-muted border-border rounded hover:border-border/80 transition-colors"
-                      >
-                        <IconComponent className="h-3 w-3 text-muted-foreground" />
-                        <div className="flex-1 min-w-0">
-                          <div className="text-[10px] font-medium text-card-foreground">{social.platform}</div>
-                          <div className="text-[9px] text-muted-foreground truncate">{social.username}</div>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              </CardContent>
-            </Card>
           </div>
         </div>
-        
+
         {/* Bottom CTA Text */}
-          <div className="mt-8 text-center">
-            <p className="text-sm text-muted-foreground max-w-3xl mx-auto">
-            <span className="font-semibold text-foreground">Everything you need</span> to showcase your work, track your impact, and grow your developer brand—all in one beautiful portfolio.
+        <div className="mt-6 text-center">
+          <p className="text-[10px] md:text-xs text-gray-600 dark:text-muted-foreground max-w-xl mx-auto leading-relaxed">
+            <span className="font-semibold text-gray-900 dark:text-foreground">Everything you need</span> to showcase your work, track your impact, and grow your developer brand—all in one beautiful portfolio.
           </p>
         </div>
       </div>
