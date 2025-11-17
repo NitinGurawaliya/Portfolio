@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, Suspense, useCallback, useRef } from "react"
+import { useEffect, useState, Suspense, useCallback, useRef, useMemo } from "react"
 import { useParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { StructuredData } from "@/components/StructuredData"
@@ -9,6 +9,9 @@ import { getTheme, ThemeKey } from "@/lib/theme-config"
 import { getLayoutComponent } from "@/lib/theme-layouts"
 import { Portfolio } from "@/interface"
 import { PortfolioShareButton } from "@/components/portfolio/PortfolioShareButton"
+import { cn } from "@/lib/utils"
+
+type AppearanceMode = "light" | "dark"
 
 export default function PublicPortfolioPage() {
   const params = useParams()
@@ -17,6 +20,7 @@ export default function PublicPortfolioPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [shareUrl, setShareUrl] = useState("")
+  const [appearance, setAppearance] = useState<AppearanceMode>("light")
   
   // Prevent conflicts with app routes
   const reservedRoutes = ['dashboard', 'auth', 'api', '_next', 'favicon.ico']
@@ -119,6 +123,22 @@ export default function PublicPortfolioPage() {
     }
   }, [username])
 
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const stored = window.localStorage.getItem("devfolio:layout-mode")
+    if (stored === "light" || stored === "dark") {
+      setAppearance(stored)
+      return
+    }
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches
+    setAppearance(prefersDark ? "dark" : "light")
+  }, [])
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    window.localStorage.setItem("devfolio:layout-mode", appearance)
+  }, [appearance])
+
   // Update favicon once when portfolio data is available - OPTIMIZED: Single update
   useEffect(() => {
     if (portfolio?.profilePic && typeof window !== 'undefined') {
@@ -204,11 +224,78 @@ export default function PublicPortfolioPage() {
 
   // Dynamic theme rendering
   const themeKey = (portfolio.selectedTheme as ThemeKey) || 'light'
-  const theme = getTheme(themeKey)
-  const Layout = getLayoutComponent(theme.layout)
+  const baseTheme = getTheme(themeKey)
+  const supportsToggle = baseTheme.layout === "LayoutLight" || baseTheme.layout === "LayoutModern"
+  const effectiveAppearance: AppearanceMode = supportsToggle ? appearance : "light"
+  const theme = useMemo(() => {
+    if (effectiveAppearance === "dark") {
+      if (baseTheme.layout === "LayoutLight") {
+        return getTheme("dark")
+      }
+      if (baseTheme.layout === "LayoutModern") {
+        return {
+          ...baseTheme,
+          colors: {
+            ...baseTheme.colors,
+            background: "#020617",
+            text: "#f8fafc",
+            accent: "#38bdf8",
+            cardBg: "#0f172a",
+            border: "#1f293b",
+          },
+        }
+      }
+    }
+    return baseTheme
+  }, [baseTheme, effectiveAppearance])
+
+  const activeLayoutName =
+    effectiveAppearance === "dark" && baseTheme.layout === "LayoutLight"
+      ? "LayoutDark"
+      : baseTheme.layout
+
+  const Layout = getLayoutComponent(activeLayoutName)
+  const layoutProps: Record<string, any> = {
+    theme,
+    portfolio,
+  }
+
+  if (activeLayoutName === "LayoutModern") {
+    layoutProps.appearance = effectiveAppearance
+  }
 
     return (
-      <div className="scroll-smooth" style={{ scrollBehavior: 'smooth' }}>
+    <div className="scroll-smooth" style={{ scrollBehavior: 'smooth' }}>
+        {supportsToggle && (
+          <div className="fixed top-4 right-4 z-40">
+            <div
+              className={cn(
+                "flex items-center gap-1 rounded-full px-1 py-1 shadow-lg backdrop-blur",
+                effectiveAppearance === "dark"
+                  ? "bg-white/10 border border-white/20 text-white"
+                  : "bg-gray-900/80 border border-gray-800 text-white"
+              )}
+            >
+              {(["light", "dark"] as AppearanceMode[]).map((mode) => (
+                <button
+                  key={mode}
+                  type="button"
+                  onClick={() => setAppearance(mode)}
+                  className={cn(
+                    "px-3 py-1 text-xs font-semibold rounded-full transition focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-white/70",
+                    effectiveAppearance === mode
+                      ? "bg-white text-black shadow"
+                      : "text-gray-300 hover:text-white/90"
+                  )}
+                  aria-pressed={effectiveAppearance === mode}
+                >
+                  {mode === "light" ? "Light" : "Dark"}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
       {/* Structured Data for SEO */}
         <StructuredData
           type="Person"
@@ -227,10 +314,10 @@ export default function PublicPortfolioPage() {
           }}
         />
       
-      {/* Dynamic Theme Layout */}
-      <Suspense fallback={<div className="min-h-screen bg-black flex items-center justify-center"><DevFolioLoader size="lg" /></div>}>
-        <Layout theme={theme} portfolio={portfolio} />
-      </Suspense>
+        {/* Dynamic Theme Layout */}
+        <Suspense fallback={<div className="min-h-screen bg-black flex items-center justify-center"><DevFolioLoader size="lg" /></div>}>
+          <Layout {...layoutProps} />
+        </Suspense>
         <PortfolioShareButton url={shareUrl} portfolioName={portfolio.displayName ?? undefined} />
     </div>
   )
