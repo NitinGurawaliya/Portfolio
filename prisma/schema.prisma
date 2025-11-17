@@ -8,38 +8,30 @@ datasource db {
 }
 
 model User {
-  id              Int          @id @default(autoincrement())
-  name            String
-  email           String       @unique
-  avatarUrl       String?
-  bio             String?
-  company         String?
-  createdAt       DateTime     @default(now())
-  followers       Int?
-  following       Int?
-  githubId        String?      @unique
-  githubUsername  String?
-  location        String?
-  publicRepos     Int?
-  twitterUsername String?
-  company       String?
-  publicRepos   Int?
-  followers     Int?
-  following     Int?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  repositories  Repository[]
-  portfolio     Portfolio?
-  customDomains CustomDomain[]
-  updatedAt       DateTime     @updatedAt
-  websiteUrl      String?
-  portfolio       Portfolio?
-  repositories    Repository[]
-  projectUpvotes  ProjectUpvote[]
-  shiplogs        Shiplog[]
-  shiplogReactions ShiplogReaction[]
-  followingConnections UserFollow[] @relation("userFollows")
-  followerConnections  UserFollow[] @relation("userFollowed")
+  id                   Int               @id @default(autoincrement())
+  name                 String
+  email                String            @unique
+  avatarUrl            String?
+  bio                  String?
+  company              String?
+  websiteUrl           String?
+  location             String?
+  followers            Int?
+  following            Int?
+  publicRepos          Int?
+  twitterUsername      String?
+  githubId             String?           @unique
+  githubUsername       String?
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+  repositories         Repository[]
+  portfolio            Portfolio?
+  customDomains        CustomDomain[]
+  projectUpvotes       ProjectUpvote[]
+  shiplogs             Shiplog[]
+  shiplogReactions     ShiplogReaction[]
+  followingConnections UserFollow[]      @relation("userFollows")
+  followerConnections  UserFollow[]      @relation("userFollowed")
 
   // Index for fast portfolio lookup by githubUsername
   @@index([githubUsername])
@@ -76,46 +68,27 @@ model Repository {
 }
 
 model Portfolio {
-  id             Int                   @id @default(autoincrement())
-  userId         Int                   @unique
-  displayName    String?
-  bio            String?
-  profilePic     String?
-  isPublished    Boolean               @default(false)
-  createdAt      DateTime              @default(now())
-  updatedAt      DateTime              @updatedAt
-  customUsername String?
-  
-  // Theme Configuration
-  selectedTheme String   @default("dark") // Theme identifier (dark, light)
-  themeConfig   Json?    // Custom theme overrides (colors, fonts, etc.)
-  
-  // Skills
-  skills      Skill[]
-  
-  // Social accounts
-  socials     Social[]
-  
-  // Selected repositories
-  repositories PortfolioRepository[]
-  
-  // Custom domain
-  customDomain CustomDomain?
-  
-  isPublished Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  jobTitle       String?
-  selectedTheme  String                @default("dark")
-  themeConfig    Json?
-  backgroundColor String?              // Background color customization
-  backgroundPattern String?            // Background pattern option
-  cvUrl          String?               // CV/Resume download URL
-  user           User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  repositories   PortfolioRepository[]
-  skills         Skill[]
-  socials        Social[]
-  experiences    Experience[]
+  id                Int                   @id @default(autoincrement())
+  userId            Int                   @unique
+  displayName       String?
+  jobTitle          String?
+  bio               String?
+  profilePic        String?
+  customUsername    String?
+  isPublished       Boolean               @default(false)
+  selectedTheme     String                @default("dark") // Theme identifier (dark, light)
+  themeConfig       Json? // Custom theme overrides (colors, fonts, etc.)
+  backgroundColor   String? // Background color customization
+  backgroundPattern String? // Background pattern option
+  cvUrl             String? // CV/Resume download URL
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+  user              User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  repositories      PortfolioRepository[]
+  skills            Skill[]
+  socials           Social[]
+  experiences       Experience[]
+  customDomain      CustomDomain?
 
   // Indexes for fast public portfolio lookups
   @@index([customUsername])
@@ -147,28 +120,28 @@ model Social {
 }
 
 model PortfolioRepository {
-  id                Int        @id @default(autoincrement())
+  id                Int             @id @default(autoincrement())
   portfolioId       Int
   repositoryId      Int
   deployedUrl       String?
-  isVisible         Boolean    @default(true)
-  createdAt         DateTime   @default(now())
-  updatedAt         DateTime   @default(now()) @updatedAt
-  deletedAt        DateTime?  // Soft delete to preserve analytics integrity
+  isVisible         Boolean         @default(true)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @default(now()) @updatedAt
+  deletedAt         DateTime? // Soft delete to preserve analytics integrity
   displayOrder      Int?
   customName        String?
   customDescription String?
   technologies      String?
   projectCategory   String?
-  projectStatus     String?    @default("building")
+  projectStatus     String?         @default("building")
   projectRevenue    Int?
   projectMrr        Int?
   projectUsers      Int?
-  portfolio         Portfolio  @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
-  repository        Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  portfolio         Portfolio       @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+  repository        Repository      @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
   upvotes           ProjectUpvote[]
   shiplogs          Shiplog[]
-  
+
   @@index([portfolioId, isVisible])
 }
 
@@ -219,7 +192,7 @@ model ProjectClick {
 model SocialClick {
   id          Int      @id @default(autoincrement())
   portfolioId Int
-  socialType  String   // 'github', 'linkedin', 'twitter', etc.
+  socialType  String // 'github', 'linkedin', 'twitter', etc.
   socialUrl   String
   clickedAt   DateTime @default(now())
   ipAddress   String?
@@ -232,12 +205,12 @@ model SocialClick {
 }
 
 model PortfolioSession {
-  id          Int      @id @default(autoincrement())
+  id          Int       @id @default(autoincrement())
   portfolioId Int
-  sessionId   String   @unique
-  startTime   DateTime @default(now())
+  sessionId   String    @unique
+  startTime   DateTime  @default(now())
   endTime     DateTime?
-  timeSpent   Int?     // in seconds
+  timeSpent   Int? // in seconds
   ipAddress   String?
   userAgent   String?
   referrer    String?
@@ -265,7 +238,7 @@ model ProjectView {
 model DailyProjectViews {
   id          Int      @id @default(autoincrement())
   portfolioId Int
-  projectId   BigInt  // PortfolioRepository ID
+  projectId   BigInt // PortfolioRepository ID
   projectName String
   date        DateTime @db.Date
   views       Int      @default(0)
@@ -292,32 +265,32 @@ model ProjectUpvote {
 }
 
 model Experience {
-  id           Int       @id @default(autoincrement())
-  portfolioId  Int
-  companyName  String
-  companyUrl   String?
-  faviconUrl   String?
-  role         String? // SDE, SDE2, etc.
-  duration     String? // e.g., May 2023 - May 2024
-  description  String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  portfolio    Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+  id          Int       @id @default(autoincrement())
+  portfolioId Int
+  companyName String
+  companyUrl  String?
+  faviconUrl  String?
+  role        String? // SDE, SDE2, etc.
+  duration    String? // e.g., May 2023 - May 2024
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  portfolio   Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
 
   @@index([portfolioId])
 }
 
 model Shiplog {
-  id                     Int                  @id @default(autoincrement())
-  userId                 Int
-  portfolioRepositoryId  Int?
-  content                String               @db.Text
-  imageUrl               String?
-  createdAt              DateTime              @default(now())
-  updatedAt              DateTime              @updatedAt
-  author                 User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
-  project                PortfolioRepository? @relation(fields: [portfolioRepositoryId], references: [id], onDelete: SetNull)
-  reactions              ShiplogReaction[]
+  id                    Int                  @id @default(autoincrement())
+  userId                Int
+  portfolioRepositoryId Int?
+  content               String               @db.Text
+  imageUrl              String?
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime             @updatedAt
+  author                User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project               PortfolioRepository? @relation(fields: [portfolioRepositoryId], references: [id], onDelete: SetNull)
+  reactions             ShiplogReaction[]
 
   @@index([userId])
   @@index([portfolioRepositoryId])
@@ -325,13 +298,13 @@ model Shiplog {
 }
 
 model ShiplogReaction {
-  id         Int                 @id @default(autoincrement())
-  shiplogId  Int
-  userId     Int
-  type       ShiplogReactionType
-  createdAt  DateTime            @default(now())
-  shiplog    Shiplog             @relation(fields: [shiplogId], references: [id], onDelete: Cascade)
-  user       User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id        Int                 @id @default(autoincrement())
+  shiplogId Int
+  userId    Int
+  type      ShiplogReactionType
+  createdAt DateTime            @default(now())
+  shiplog   Shiplog             @relation(fields: [shiplogId], references: [id], onDelete: Cascade)
+  user      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([shiplogId, userId])
   @@index([shiplogId])
@@ -339,33 +312,34 @@ model ShiplogReaction {
 }
 
 model CustomDomain {
-  id                String   @id @default(cuid())
-  domain            String   @unique
-  portfolioId       Int      @unique // One domain per portfolio
-  portfolio         Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
-  userId            Int
-  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+  id          String    @id @default(cuid())
+  domain      String    @unique
+  portfolioId Int       @unique // One domain per portfolio
+  portfolio   Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+  userId      Int
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   // Verification
-  verified          Boolean  @default(false)
-  verificationToken String   // For TXT record
-  
+  verified          Boolean @default(false)
+  verificationToken String // For TXT record
+
   // Metadata
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  lastCheckedAt     DateTime?
-  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  lastCheckedAt DateTime?
+
   @@index([userId])
   @@index([domain])
   @@index([verified])
 }
+
 model UserFollow {
-  id           Int      @id @default(autoincrement())
-  followerId   Int
-  followingId  Int
-  createdAt    DateTime @default(now())
-  follower     User     @relation("userFollows", fields: [followerId], references: [id], onDelete: Cascade)
-  following    User     @relation("userFollowed", fields: [followingId], references: [id], onDelete: Cascade)
+  id          Int      @id @default(autoincrement())
+  followerId  Int
+  followingId Int
+  createdAt   DateTime @default(now())
+  follower    User     @relation("userFollows", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User     @relation("userFollowed", fields: [followingId], references: [id], onDelete: Cascade)
 
   @@unique([followerId, followingId])
   @@index([followerId])

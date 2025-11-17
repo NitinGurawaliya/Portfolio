@@ -14,6 +14,8 @@ import {
   isOwnDomain,
 } from '@/lib/domain-utils';
 import { cookies } from 'next/headers';
+import { sendEmail } from '@/lib/sendEmail';
+import { domainAddedEmail } from '@/lib/templates/customDomainEmails';
 
 /**
  * Add a new custom domain
@@ -50,10 +52,14 @@ export async function POST(req: NextRequest) {
     }
 
     // Find the actual database user ID by GitHub ID
-    const dbUser = await prisma.user.findUnique({
-      where: { githubId: githubId },
-      select: { id: true },
-    });
+      const dbUser = await prisma.user.findUnique({
+        where: { githubId: githubId },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+        },
+      });
 
     if (!dbUser) {
       return NextResponse.json(
@@ -62,7 +68,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const userIdInt = dbUser.id;
+      const userIdInt = dbUser.id;
+      const userEmail = dbUser.email;
+      const userNameFromDb = dbUser.name;
 
     // Parse request body
     const body = await req.json();
@@ -202,7 +210,25 @@ export async function POST(req: NextRequest) {
     });
 
     // Generate DNS records
-    const dnsRecords = generateDNSRecords(normalizedDomain, verificationToken);
+      const dnsRecords = generateDNSRecords(normalizedDomain, verificationToken);
+
+      if (userEmail) {
+        try {
+          const emailHtml = domainAddedEmail({
+            userName: userNameFromDb || session?.user?.name || userEmail,
+            domain: customDomain.domain,
+            verificationToken,
+          });
+
+          await sendEmail({
+            to: userEmail,
+            subject: `Custom domain instructions for ${customDomain.domain}`,
+            html: emailHtml,
+          });
+        } catch (emailError) {
+          console.error('[Custom Domain] Failed to send domain added email:', emailError);
+        }
+      }
 
     return NextResponse.json({
       success: true,

@@ -12,15 +12,6 @@ interface CustomDomainSectionProps {
   isPublished: boolean
 }
 
-interface DomainStatus {
-  hasDomain: boolean
-  domain: string | null
-  verified: boolean
-  id?: string
-  createdAt?: string
-  lastCheckedAt?: string | null
-}
-
 interface DNSRecord {
   type: string
   name: string
@@ -28,10 +19,26 @@ interface DNSRecord {
   ttl: number
 }
 
+interface DNSRecordSet {
+  apex: DNSRecord
+  www: DNSRecord
+  verification: DNSRecord
+}
+
+interface DomainStatus {
+  hasDomain: boolean
+  domain: string | null
+  verified: boolean
+  id?: string
+  createdAt?: string
+  lastCheckedAt?: string | null
+  dnsRecords?: DNSRecordSet | null
+}
+
 export function CustomDomainSection({ portfolioId, isPublished }: CustomDomainSectionProps) {
   const [domainInput, setDomainInput] = useState("")
   const [domainStatus, setDomainStatus] = useState<DomainStatus | null>(null)
-  const [dnsRecords, setDnsRecords] = useState<any>(null)
+  const [dnsRecords, setDnsRecords] = useState<DNSRecordSet | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [isVerifying, setIsVerifying] = useState(false)
   const [isRemoving, setIsRemoving] = useState(false)
@@ -49,14 +56,20 @@ export function CustomDomainSection({ portfolioId, isPublished }: CustomDomainSe
       const response = await fetch(`/api/custom-domain/status?portfolioId=${portfolioId}`)
       const data = await response.json()
       
-      if (data.success) {
-        setDomainStatus(data)
-        if (data.hasDomain && !data.verified) {
-          setShowDNSConfig(true)
+        if (data.success) {
+          setDomainStatus(data)
+          setDnsRecords(data.dnsRecords || null)
+          setShowDNSConfig(Boolean(data.hasDomain && !data.verified))
+        } else {
+          setDomainStatus(null)
+          setDnsRecords(null)
+          setShowDNSConfig(false)
         }
-      }
     } catch (error) {
       console.error("Error fetching domain status:", error)
+        setDomainStatus(null)
+        setDnsRecords(null)
+        setShowDNSConfig(false)
     }
   }
 

@@ -8,11 +8,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getCachedDomain, cacheDomain } from '@/lib/domain-cache';
+import { normalizeDomain } from '@/lib/domain-utils';
 
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
-    const domain = searchParams.get('domain');
+      const domain = searchParams.get('domain');
 
     if (!domain) {
       return NextResponse.json(
@@ -21,8 +22,10 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // Check cache first
-    const cached = await getCachedDomain(domain);
+      const normalizedDomain = normalizeDomain(domain);
+
+      // Check cache first
+      const cached = await getCachedDomain(normalizedDomain);
     if (cached && cached.verified) {
       return NextResponse.json({
         success: true,
@@ -32,11 +35,11 @@ export async function GET(req: NextRequest) {
     }
 
     // Query database
-    const customDomain = await prisma.customDomain.findUnique({
-      where: {
-        domain: domain,
-        verified: true,
-      },
+      const customDomain = await prisma.customDomain.findFirst({
+        where: {
+          domain: normalizedDomain,
+          verified: true,
+        },
       include: {
         portfolio: {
           include: {
@@ -58,7 +61,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Cache the result
-    await cacheDomain(domain, {
+      await cacheDomain(normalizedDomain, {
       portfolioId: customDomain.portfolioId,
       username: customDomain.portfolio.user.githubUsername || '',
       verified: true,
@@ -66,7 +69,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      username: customDomain.portfolio.user.githubUsername,
+        username: customDomain.portfolio.user.githubUsername,
       portfolioId: customDomain.portfolioId,
     });
   } catch (error) {

@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { cookies } from 'next/headers';
+import { generateDNSRecords } from '@/lib/dns-config';
 
 export async function GET(req: NextRequest) {
   try {
@@ -80,30 +81,39 @@ export async function GET(req: NextRequest) {
     }
 
     // Get custom domain for this portfolio
-    const customDomain = await prisma.customDomain.findUnique({
-      where: {
-        portfolioId: parseInt(portfolioId),
-      },
-    });
+      const portfolioIdInt = parseInt(portfolioId);
 
-    if (!customDomain) {
+      const customDomain = await prisma.customDomain.findUnique({
+        where: {
+          portfolioId: portfolioIdInt,
+        },
+      });
+
+      if (!customDomain) {
+        return NextResponse.json({
+          success: true,
+          hasDomain: false,
+          domain: null,
+          verified: false,
+          dnsRecords: null,
+        });
+      }
+
+      const dnsRecords = generateDNSRecords(
+        customDomain.domain,
+        customDomain.verificationToken
+      );
+
       return NextResponse.json({
         success: true,
-        hasDomain: false,
-        domain: null,
-        verified: false,
+        hasDomain: true,
+        domain: customDomain.domain,
+        verified: customDomain.verified,
+        id: customDomain.id,
+        createdAt: customDomain.createdAt,
+        lastCheckedAt: customDomain.lastCheckedAt,
+        dnsRecords,
       });
-    }
-
-    return NextResponse.json({
-      success: true,
-      hasDomain: true,
-      domain: customDomain.domain,
-      verified: customDomain.verified,
-      id: customDomain.id,
-      createdAt: customDomain.createdAt,
-      lastCheckedAt: customDomain.lastCheckedAt,
-    });
   } catch (error) {
     console.error('Error fetching domain status:', error);
     return NextResponse.json(

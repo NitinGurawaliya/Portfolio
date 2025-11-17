@@ -8,6 +8,8 @@ import { prisma } from '@/lib/prisma';
 import { verifyDomainComplete } from '@/lib/domain-verification';
 import { cacheDomain, invalidateDomainCache } from '@/lib/domain-cache';
 import { cookies } from 'next/headers';
+import { sendEmail } from '@/lib/sendEmail';
+import { domainVerifiedEmail } from '@/lib/templates/customDomainEmails';
 
 export async function POST(
   req: NextRequest,
@@ -61,20 +63,22 @@ export async function POST(
     const domainId = params.id;
 
     // Find the custom domain
-    const customDomain = await prisma.customDomain.findUnique({
-      where: { id: domainId },
-      include: {
-        portfolio: {
-          include: {
-            user: {
-              select: {
-                githubUsername: true,
+      const customDomain = await prisma.customDomain.findUnique({
+        where: { id: domainId },
+        include: {
+          portfolio: {
+            include: {
+              user: {
+                select: {
+                  githubUsername: true,
+                  email: true,
+                  name: true,
+                },
               },
             },
           },
         },
-      },
-    });
+      });
 
     if (!customDomain) {
       return NextResponse.json(
@@ -109,12 +113,34 @@ export async function POST(
     });
 
     // Update cache if verified
-    if (verified) {
-      await cacheDomain(customDomain.domain, {
-        portfolioId: customDomain.portfolioId,
-        username: customDomain.portfolio.user.githubUsername || '',
-        verified: true,
-      });
+      if (verified) {
+        await cacheDomain(customDomain.domain, {
+          portfolioId: customDomain.portfolioId,
+          username: customDomain.portfolio.user.githubUsername || '',
+          verified: true,
+        });
+
+        const domainOwner = customDomain.portfolio.user;
+        if (domainOwner?.email) {
+          try {
+            const emailHtml = domainVerifiedEmail({
+              userName:
+                domainOwner.name ||
+                domainOwner.githubUsername ||
+                domainOwner.email,
+              domain: customDomain.domain,
+              portfolioUrl: `https://${process.env.NEXT_PUBLIC_APP_DOMAIN || 'devfolio.cc'}/dashboard`,
+            });
+
+            await sendEmail({
+              to: domainOwner.email,
+              subject: `🎉 ${customDomain.domain} is now live`,
+              html: emailHtml,
+            });
+          } catch (emailError) {
+            console.error('[Custom Domain] Failed to send verification email:', emailError);
+          }
+        }
     } else {
       // Invalidate cache if not verified
       await invalidateDomainCache(customDomain.domain);
