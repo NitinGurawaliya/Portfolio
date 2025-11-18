@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { ArrowLeft, ArrowRight, CheckCircle2, Loader2, Plus, Sparkles, Trash2, X } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
@@ -37,7 +37,7 @@ const onboardingSteps = [
   },
 ]
 
-export default function OnboardingPage() {
+function OnboardingContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { user, loading } = useSession({ redirectOnAuthFailure: true })
@@ -409,6 +409,17 @@ export default function OnboardingPage() {
   )
 }
 
+export default function OnboardingPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <DevFolioLoader size="lg" />
+      </div>
+    }>
+      <OnboardingContent />
+    </Suspense>
+  )
+}
 
 interface ProjectsStepProps {
   userRepos: Repository[]

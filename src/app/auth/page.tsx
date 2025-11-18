@@ -1,12 +1,13 @@
 "use client"
 
+import { Suspense } from "react";
 import { Github } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { DevFolioLoader } from "@/components/ui/DevFolioLoader";
 import { Card, CardContent } from "@/components/ui/card";
 
-export default function AuthPage() {
+function AuthContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [isChecking, setIsChecking] = useState(true)
@@ -112,5 +113,17 @@ export default function AuthPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function AuthPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-muted/30 to-background">
+        <DevFolioLoader size="lg" />
+      </div>
+    }>
+      <AuthContent />
+    </Suspense>
   );
 }
