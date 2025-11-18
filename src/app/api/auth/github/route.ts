@@ -313,6 +313,22 @@ export async function GET(req: NextRequest) {
         redirectUrl = `${baseUrl}/onboarding?${onboardingParams.toString()}`
         devLog("[GITHUB AUTH] Redirecting new user to onboarding")
       } else {
+        // Handle username assignment feedback for returning users
+        const dashboardParams = new URLSearchParams()
+        if (desiredUsernameFromState) {
+          if (assignedUsername) {
+            // Username was successfully assigned
+            dashboardParams.set("username_updated", assignedUsername)
+            devLog("[GITHUB AUTH] Username assigned to returning user:", assignedUsername)
+          } else {
+            // Username was requested but not assigned (conflict or other issue)
+            dashboardParams.set("username_conflict", desiredUsernameFromState)
+            devLog("[GITHUB AUTH] Username conflict for returning user:", desiredUsernameFromState)
+          }
+        }
+        
+        const queryString = dashboardParams.toString()
+        redirectUrl = queryString ? `${baseUrl}/dashboard?${queryString}` : `${baseUrl}/dashboard`
         devLog("[GITHUB AUTH] Redirecting authenticated user to dashboard")
       }
       devLog("[GITHUB AUTH] Will redirect to:", redirectUrl);

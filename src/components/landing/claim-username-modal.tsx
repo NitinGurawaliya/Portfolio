@@ -117,13 +117,14 @@ export function ClaimUsernameModal({ open, onOpenChange, onSuccess }: ClaimUsern
 
     setIsSubmitting(true)
     const targetUrl = `/auth?username=${encodeURIComponent(normalizedUsername)}`
+    
+    // Navigate immediately for instant transition
     if (onSuccess) {
       onSuccess(normalizedUsername)
     } else {
-      router.push(targetUrl)
+      window.location.href = targetUrl
     }
-    setTimeout(() => setIsSubmitting(false), 300)
-  }, [availability.status, normalizedUsername, onSuccess, router])
+  }, [availability.status, normalizedUsername, onSuccess])
 
   const helperIcon = useMemo(() => {
     switch (availability.status) {
@@ -140,66 +141,77 @@ export function ClaimUsernameModal({ open, onOpenChange, onSuccess }: ClaimUsern
   }, [availability.status])
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md rounded-3xl border-border/60">
-        <DialogHeader>
-          <DialogTitle className="text-2xl font-semibold">Reserve your DevFolio URL</DialogTitle>
-          <DialogDescription>
-            People will find you at devfolio.cc{normalizedUsername ? `/${normalizedUsername}` : "/your-name"}.
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-4">
-        <div>
-          <label className="text-sm font-medium text-muted-foreground">Portfolio handle</label>
-            <div className="mt-2 flex items-center gap-2 rounded-2xl border border-border/70 bg-muted/40 px-4 py-3">
-              <span className="text-sm text-muted-foreground">devfolio.cc/</span>
-              <Input
-                value={rawUsername}
-                onChange={(e) => setRawUsername(e.target.value)}
-                placeholder="nitin"
-                className="border-0 bg-transparent px-0 text-base font-semibold focus-visible:ring-0"
-              />
-            </div>
-            <p className="mt-2 flex items-center gap-1 text-sm text-muted-foreground">
-              {helperIcon}
-              <span>{availability.message}</span>
+    <Dialog open={open} onOpenChange={(newOpen) => {
+      // Prevent closing during submission
+      if (isSubmitting) return
+      onOpenChange(newOpen)
+    }}>
+      <DialogContent className="max-w-md border-border/40 bg-card/95 backdrop-blur-sm p-6">
+        {isSubmitting ? (
+          // Show loading state during redirect
+          <div className="flex flex-col items-center justify-center py-8">
+            <Loader2 className="h-10 w-10 animate-spin text-orange-500" />
+            <p className="mt-3 text-base font-medium text-foreground">Taking you to login...</p>
+            <p className="mt-1.5 text-xs text-muted-foreground">
+              Username: <span className="font-medium text-foreground">/{normalizedUsername}</span>
             </p>
           </div>
+        ) : (
+          <>
+            <DialogHeader className="space-y-1">
+              <DialogTitle className="text-lg font-semibold">Reserve your URL</DialogTitle>
+              <DialogDescription className="text-xs">
+                devfolio.cc{normalizedUsername ? `/${normalizedUsername}` : "/your-name"}
+              </DialogDescription>
+            </DialogHeader>
 
-          <Badge variant="secondary" className="rounded-full px-3 py-1 text-xs font-medium">
-            This username auto-fills inside your dashboard bio
-          </Badge>
+            <div className="mt-4 space-y-3">
+              <div>
+                <label className="text-xs font-medium text-muted-foreground">Portfolio handle</label>
+                <div className="mt-1.5 flex items-center gap-2 rounded-lg border border-border/40 bg-muted/20 px-3 py-2">
+                  <span className="text-xs text-muted-foreground">devfolio.cc/</span>
+                  <Input
+                    value={rawUsername}
+                    onChange={(e) => setRawUsername(e.target.value)}
+                    placeholder="your-handle"
+                    className="h-8 border-0 bg-transparent px-0 text-sm font-medium focus-visible:ring-0"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && availability.status === "available") {
+                        handleSubmit()
+                      }
+                    }}
+                  />
+                </div>
+                <p className="mt-1.5 flex items-center gap-1 text-xs text-muted-foreground">
+                  {helperIcon}
+                  <span>{availability.message}</span>
+                </p>
+              </div>
 
-        <Button
-          className="w-full rounded-2xl bg-gradient-to-r from-orange-500 to-orange-600 text-base font-semibold"
-          disabled={availability.status !== "available" || isSubmitting}
-          onClick={handleSubmit}
-        >
-          {isSubmitting ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Taking you to login...
-            </>
-          ) : (
-            "Continue"
-          )}
-        </Button>
+              <Button
+                className="w-full bg-foreground py-2.5 text-sm font-medium text-background hover:bg-foreground/90"
+                disabled={availability.status !== "available" || isSubmitting}
+                onClick={handleSubmit}
+              >
+                Continue
+              </Button>
 
-        <p className="text-center text-xs text-muted-foreground">
-          Already have an account?{" "}
-          <button
-            type="button"
-            className="font-medium text-foreground underline-offset-2 hover:underline"
-            onClick={() => {
-              onOpenChange(false)
-              router.push("/auth")
-            }}
-          >
-            Log in
-          </button>
-        </p>
-        </div>
+              <p className="text-center text-xs text-muted-foreground">
+                Already have an account?{" "}
+                <button
+                  type="button"
+                  className="font-medium text-foreground underline-offset-2 hover:underline"
+                  onClick={() => {
+                    onOpenChange(false)
+                    router.push("/auth")
+                  }}
+                >
+                  Log in
+                </button>
+              </p>
+            </div>
+          </>
+        )}
       </DialogContent>
     </Dialog>
   )

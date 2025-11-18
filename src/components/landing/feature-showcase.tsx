@@ -34,22 +34,31 @@ const demoAnalytics = {
   ]
 }
 
-// Generate heatmap data (52 weeks x 7 days)
+// Generate fixed heatmap data (52 weeks x 7 days) - using deterministic values for SSR
 const generateHeatmapData = () => {
   const weeks: any[][] = []
+  // Use a deterministic pattern instead of Math.random()
+  const pattern = [0, 0, 0, 0, 1, 0, 0, 2, 0, 0, 0, 0, 0, 3, 0, 0, 0, 1, 0, 0]
+  
   for (let week = 0; week < 52; week++) {
     const weekData = []
     for (let day = 0; day < 7; day++) {
-      // Most days have 0 visits, some have visits
-      const count = Math.random() < 0.1 ? Math.floor(Math.random() * 5) : 0
+      // Use deterministic pattern based on week and day
+      const index = (week * 7 + day) % pattern.length
+      const count = week >= 48 ? pattern[index] : (pattern[index] === 0 ? 0 : Math.max(0, pattern[index] - 1))
       weekData.push({ count })
     }
     weeks.push(weekData)
   }
-  // Add some activity in the last week (Nov)
-  for (let day = 0; day < 8; day++) {
-    weeks[51][day] = { count: Math.floor(Math.random() * 3) + 1 }
+  
+  // Add specific activity pattern in the last week (Nov)
+  const lastWeekPattern = [2, 1, 3, 2, 1, 2, 3]
+  for (let day = 0; day < 7; day++) {
+    if (weeks[51] && weeks[51][day]) {
+      weeks[51][day] = { count: lastWeekPattern[day] || 0 }
+    }
   }
+  
   return weeks
 }
 

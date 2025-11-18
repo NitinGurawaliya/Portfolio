@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
 import { testimonialEmbeds } from "./testimonial-embeds"
 
@@ -15,8 +15,14 @@ declare global {
 }
 
 export function TestimonialsSection() {
+  const [mounted, setMounted] = useState(false)
+
   useEffect(() => {
-    if (testimonialEmbeds.length === 0 || typeof window === "undefined") {
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    if (!mounted || testimonialEmbeds.length === 0 || typeof window === "undefined") {
       return
     }
 
@@ -42,9 +48,9 @@ export function TestimonialsSection() {
     script.charset = "utf-8"
     script.onload = loadWidgets
     document.body.appendChild(script)
-  }, [])
+  }, [mounted])
 
-  if (testimonialEmbeds.length === 0) {
+  if (!mounted || testimonialEmbeds.length === 0) {
     return null
   }
 
