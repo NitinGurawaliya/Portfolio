@@ -11,12 +11,14 @@ import { AnalyticsSection } from "@/components/dashboard/AnalyticsSection"
 import { ShiplogSection } from "@/components/dashboard/ShiplogSection"
 import ThemeSelector from "@/components/dashboard/ThemeSelector"
 import { UpvoteNotificationsBell, UpvoteNotification } from "@/components/dashboard/UpvoteNotificationsBell"
+import { ProfileCompletionWidget } from "@/components/dashboard/ProfileCompletionWidget"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import toast, { Toaster } from "react-hot-toast"
 import { useSession } from "@/hooks/useSession"
 import { usePortfolio } from "@/hooks/usePortfolio"
 import { usePortfolioHandlers } from "@/hooks/usePortfolioHandlers"
+import { useProfileCompletion } from "@/hooks/useProfileCompletion"
 import { publishPortfolio } from "@/lib/services/portfolio-service"
 import { playNotificationSound } from "@/lib/portfolio-utils"
 import { successToastConfig, errorToastConfig } from "@/lib/utils"
@@ -49,6 +51,12 @@ export default function DashboardPage() {
   const [summaryOpen, setSummaryOpen] = useState(false)
   const [summaryProjects, setSummaryProjects] = useState<SummaryProject[]>([])
   const [summarySinceLabel, setSummarySinceLabel] = useState<string | null>(null)
+  const [resumeStatus, setResumeStatus] = useState<{ message: string; tone: "info" | "success" | "error" }>({
+    message: "",
+    tone: "info",
+  })
+  const [isGeneratingResume, setIsGeneratingResume] = useState(false)
+  const [isProfileWidgetOpen, setIsProfileWidgetOpen] = useState(true)
   
   // Handlers hook - portfolio data को original data के रूप में pass करें
   const handlers = usePortfolioHandlers(
@@ -718,6 +726,82 @@ export default function DashboardPage() {
     repositories: []
   }
 
+  const profileCompletion = useProfileCompletion({
+    portfolioData: portfolio.portfolioData,
+    selectedRepos: portfolio.selectedRepos,
+    repoDetails: {
+      deployedUrls: portfolio.deployedUrls,
+      customDescriptions: portfolio.customDescriptions,
+      customNames: portfolio.customNames,
+      projectStatuses: portfolio.projectStatuses,
+      projectCategories: portfolio.projectCategories,
+    },
+    skills: portfolio.skills,
+    socials: portfolio.socials,
+    experiences: portfolio.experiences,
+    cvUrl: portfolio.cvUrl,
+  })
+
+  const canDownloadResume = profileCompletion.overallPercent >= 90
+
+  const handleResumeDownload = useCallback(async () => {
+    if (!canDownloadResume) {
+      setResumeStatus({
+        message: "Complete at least 90% of your profile to unlock the ATS resume.",
+        tone: "error",
+      })
+      return
+    }
+
+    try {
+      setIsGeneratingResume(true)
+      setResumeStatus({
+        message: "Generating your ATS-ready PDF…",
+        tone: "info",
+      })
+      const response = await fetch("/api/resume", { method: "GET" })
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null)
+        throw new Error(errorData?.error || "Failed to generate resume.")
+      }
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const fallbackName =
+        portfolio.portfolioData.displayName ||
+        user?.name ||
+        user?.githubUsername ||
+        "devfolio"
+      const slug = fallbackName
+        .toLowerCase()
+        .replace(/[^a-z0-9\- ]/g, "")
+        .trim()
+        .replace(/\s+/g, "-") || "devfolio"
+      const link = document.createElement("a")
+      link.href = url
+      link.download = `${slug}-resume.pdf`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+      setResumeStatus({
+        message: "ATS resume download started.",
+        tone: "success",
+      })
+    } catch (error: any) {
+      setResumeStatus({
+        message: error?.message || "Failed to download resume.",
+        tone: "error",
+      })
+    } finally {
+      setIsGeneratingResume(false)
+    }
+  }, [
+    canDownloadResume,
+    portfolio.portfolioData.displayName,
+    user?.name,
+    user?.githubUsername,
+  ])
+
   const unreadNotificationCount = useMemo(() => {
     return notifications.reduce((count, notification) => {
       return count + (readNotificationIds.has(notification.id) ? 0 : 1)
@@ -775,7 +859,7 @@ export default function DashboardPage() {
         </DialogContent>
       </Dialog>
 
-      <DashboardLayout
+        <DashboardLayout
         user={displayUser}
         activeSection={activeSection}
         onSectionChange={handleSectionChange}
@@ -796,6 +880,19 @@ export default function DashboardPage() {
       >
         {renderActiveSection}
       </DashboardLayout>
+
+        <ProfileCompletionWidget
+          overallPercent={profileCompletion.overallPercent}
+          sections={profileCompletion.sections}
+          onNavigate={handleSectionChange}
+          canDownloadResume={canDownloadResume}
+          isDownloading={isGeneratingResume}
+          onDownloadResume={handleResumeDownload}
+          statusMessage={resumeStatus.message}
+          statusTone={resumeStatus.tone}
+          isOpen={isProfileWidgetOpen}
+          onToggle={() => setIsProfileWidgetOpen(!isProfileWidgetOpen)}
+        />
     </>
   )
 }

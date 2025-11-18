@@ -64,16 +64,16 @@ export function WallOfFameClient({ portfolios, loading = false, error = null }: 
     return null
   }
   return (
-    <section className="py-16 sm:py-20 lg:py-24">
-      <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
-        <div className="mx-auto mb-10 max-w-3xl text-center sm:mb-12">
+    <section className="py-10 sm:py-12 lg:py-14">
+      <div className="mx-auto w-full max-w-[1400px] px-6 sm:px-8">
+        <div className="mx-auto mb-8 max-w-2xl text-center">
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-            <div className="mb-4 inline-flex items-center rounded-full border border-border/40 bg-muted/50 px-3 py-1 text-xs sm:text-sm">
-              <span className="mr-2">🌍</span>
+            <div className="mb-3 inline-flex items-center rounded-full border border-border/40 bg-muted/50 px-2.5 py-0.5 text-[10px] sm:text-xs">
+              <span className="mr-1.5">🌍</span>
               <span>DevFolio community</span>
             </div>
-            <h2 className="mb-3 text-3xl font-semibold tracking-tight text-balance sm:text-4xl">Builders on display</h2>
-              <p className="text-sm text-muted-foreground sm:text-base">
+            <h2 className="mb-2 text-xl font-semibold tracking-tight text-balance sm:text-2xl lg:text-3xl">Builders on display</h2>
+              <p className="text-xs text-muted-foreground sm:text-sm">
                 Explore every live portfolio—arranged as three rows with horizontal scrolling for overflow.
               </p>
           </motion.div>

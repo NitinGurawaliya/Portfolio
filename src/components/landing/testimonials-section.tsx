@@ -49,19 +49,19 @@ export function TestimonialsSection() {
   }
 
   return (
-    <section className="py-12 sm:py-16 lg:py-20">
-      <div className="container mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+    <section className="py-8 sm:py-10 lg:py-12">
+      <div className="container mx-auto max-w-[1400px] px-6 sm:px-8 lg:px-12">
         <motion.div
-          className="mx-auto mb-12 max-w-2xl text-center sm:mb-16"
+          className="mx-auto mb-8 max-w-2xl text-center"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
           viewport={{ once: true }}
         >
-          <div className="mb-4 inline-flex items-center rounded-full border border-border/40 bg-muted/60 px-3 py-1 text-xs font-medium text-muted-foreground sm:text-sm">
+          <div className="mb-3 inline-flex items-center rounded-full border border-border/40 bg-muted/60 px-2.5 py-0.5 text-[10px] font-medium text-muted-foreground sm:text-xs">
             Loved by builders
           </div>
-          <h2 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+          <h2 className="text-lg font-semibold tracking-tight text-foreground sm:text-xl lg:text-2xl">
             What devs say about DevFolio
           </h2>
 
