@@ -98,23 +98,16 @@ export function HeroSection() {
                           <ArrowRight className="ml-2 h-3 w-3 sm:h-4 sm:w-4" />
                         </a>
                       </Button>
-                      ) : (
-                        <Button
-                          size="lg"
-                          className="inline-flex w-full max-w-[18rem] border-0 bg-gradient-to-r from-orange-500 to-orange-600 px-4 text-xs text-white shadow-md hover:from-orange-600 hover:to-orange-700 sm:w-auto sm:max-w-none sm:px-6 sm:text-sm lg:px-8 lg:text-base"
-                          onClick={() => setClaimOpen(true)}
-                        >
                     ) : (
                       <Button
                         size="lg"
-                        className="inline-flex w-full max-w-[16rem] border-0 bg-gradient-to-r from-orange-500 to-orange-600 px-4 text-xs text-white shadow-md hover:from-orange-600 hover:to-orange-700 sm:w-auto sm:max-w-none sm:px-6 sm:text-sm lg:px-8 lg:text-base"
-                        asChild
+                        className="inline-flex w-full max-w-[18rem] border-0 bg-gradient-to-r from-orange-500 to-orange-600 px-4 text-xs text-white shadow-md hover:from-orange-600 hover:to-orange-700 sm:w-auto sm:max-w-none sm:px-6 sm:text-sm lg:px-8 lg:text-base"
+                        onClick={() => setClaimOpen(true)}
                       >
-                        <a href="/auth">
-                          Claim your page
-                          <ArrowRight className="ml-2 h-3 w-3 sm:h-4 sm:w-4" />
-                        </Button>
-                      )}
+                        Claim your page
+                        <ArrowRight className="ml-2 h-3 w-3 sm:h-4 sm:w-4" />
+                      </Button>
+                    )}
                     <Button
                       variant="outline"
                       size="lg"
