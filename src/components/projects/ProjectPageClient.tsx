@@ -26,6 +26,7 @@ import {
   Banknote,
   CurrencyIcon,
   BanknoteArrowUpIcon,
+  ArrowUp,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -37,6 +38,7 @@ import { useToast } from "@/hooks/use-toast"
 import type { PublicProjectPageData } from "@/types/public-project"
 import type { Shiplog } from "@/types/shiplog"
 import { MdCurrencyBitcoin } from "react-icons/md"
+import { Arrow } from "@radix-ui/react-dropdown-menu"
 
 const formatNumber = (value: number) => {
   if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`
@@ -323,15 +325,15 @@ export default function ProjectPageClient({
         backgroundSize: "28px 28px",
       }}
     >
-      <div className="px-2">
-        <div className="mx-auto w-full bg-white max-w-6xl px-3 py-6 pb-16 sm:px-6 lg:px-8">
+      <div className="px-6">
+        <div className="mx-auto w-full bg-white max-w-6xl px-3 py-6 pb-0 sm:px-6 lg:px-8">
           {/* Hero Section: Logo, Title, Buttons, Description */}
           <div className="flex flex-col gap-4">
             {/* Layout: Logo + Title + Buttons */}
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
               {/* Logo + Title (Left side on large screens) */}
-              <div className="flex items-start gap-3 sm:gap-4">
-                <div className="flex h-16 w-16 shrink-0 items-center justify-center bg-white  overflow-hidden">
+              <div className="flex items-start gap-4 md:gap-2">
+                <div className="flex h-14 w-14   bg-gray-800 shadow-sm rounded-md shrink-0 items-center  justify-center bg-white  overflow-hidden">
                   <ProjectIcon
                     favicon={data.project.favicon || undefined}
                     logo={data.project.logo || undefined}
@@ -340,7 +342,7 @@ export default function ProjectPageClient({
                   />
                 </div>
                 <div className="space-y-2 sm:space-y-3">
-                  <h1 className="text-2xl font-semibold mt-2 leading-tight text-black sm:text-2xl lg:text-3xl">
+                  <h1 className="text-xl font-semibold mt-2 text-black md:text-lg lg:text-3xl">
                     {data.project.title}
                   </h1>
                   
@@ -348,24 +350,23 @@ export default function ProjectPageClient({
               </div>
 
               {/* Action Buttons (Right side on large screens) */}
-              <div className="flex flex-wrap items-center gap-2 md:gap-6">
-                <Button
+              <div className="flex flex-wrap items-center gap-8 md:gap-6">
+                {/* <Button
                   type="button"
                   size="sm"
                   variant="outline"
                   onClick={handleShare}
-                  className="flex h-10 items-center gap-2 rounded-full border-slate-200 bg-white px-4 text-xs font-semibold uppercase tracking-wide text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                  className="flex h-10 items-center gap-2 rounded-full border-1 border-gray-200  shadow-sm bg-white p-4 text-xs font-semibold uppercase tracking-wide text-slate-600 hover:border-slate-300 hover:bg-slate-50"
                   aria-label="Share project"
                 >
-                  <Share2 className="h-4 w-4" />
-                  {copied ? "Link copied" : "Share"}
-                </Button>
+                  <ArrowBigUp className="h-4 w-4" />
+                </Button> */}
                 {data.project.deployedUrl ? (
                   <Button
                     asChild
                     size="sm"
                     variant="outline"
-                    className="flex h-10 items-center gap-2 rounded-full border-slate-200 bg-white px-4 text-xs font-semibold uppercase tracking-wide text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                    className="flex h-10 items-center gap-2 rounded-full border-1 border-gray-200 bg-white p-4 text-xs font-semibold uppercase tracking-wide text-slate-600 hover:border-slate-300 hover:bg-slate-50"
                   >
                     <Link
                       href={data.project.deployedUrl}
@@ -399,7 +400,7 @@ export default function ProjectPageClient({
             {/* Description */}
             {data.project.description ? (
               <div
-                className="prose max-w-none text-md ml-2 leading-snug text-gray-600  font-semibold line-clamp-2"
+                className="prose max-w-none text-md ml-2 leading-snug text-gray-900  font-semibold line-clamp-2"
                 dangerouslySetInnerHTML={{
                   __html: sanitizeDescription(data.project.description),
                 }}
@@ -422,13 +423,13 @@ export default function ProjectPageClient({
                   </span>
                 )} */}
                 {typeof data.project.revenue === "number" && (
-                  <span className="inline-flex items-center text-sm font-semibold rounded-md px-3 py-1.5 bg-purple-50 text-purple-700 border border-purple-200">
+                  <span className="inline-flex items-center text-xs font-semibold rounded-md px-3 py-1 bg-purple-50 text-purple-700 border border-purple-200">
                     <Banknote className="h-3.5 w-3.5 mr-1.5" />
                     Rev {formatCurrency(data.project.revenue)}
                   </span>
                 )}
                 {typeof data.project.mrr === "number" && (
-                  <span className="inline-flex items-center text-sm font-semibold rounded-md px-3 py-1.5 bg-orange-50 text-orange-700 border border-orange-200">
+                  <span className="inline-flex items-center text-xs font-semibold rounded-md px-3 py-1 bg-orange-50 text-orange-700 border border-orange-200">
                     <BanknoteArrowUpIcon className="h-3.5 w-3.5 mr-1.5" />
                     MRR {formatCurrency(data.project.mrr)}
                   </span>
@@ -569,21 +570,24 @@ export default function ProjectPageClient({
                   ) : null}
                 </div>
               </div>
-              {data.portfolio.websiteUrl ? (
+              {data.portfolio.cvUrl ? (
                 <Button
-                  asChild
                   size="sm"
                   variant="outline"
+                  onClick={() => {
+                    const link = document.createElement("a")
+                    link.href = data.portfolio.cvUrl!
+                    link.download = `${data.portfolio.name || "resume"}-cv.pdf`
+                    link.target = "_blank"
+                    link.rel = "noopener noreferrer"
+                    document.body.appendChild(link)
+                    link.click()
+                    document.body.removeChild(link)
+                  }}
                   className="rounded-full border border-black bg-white px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-black hover:border-slate-300 hover:bg-slate-50"
                 >
-                  <Link
-                    href={data.portfolio.websiteUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <Download className="h-3.5 w-3.5" />
-                    Download CV
-                  </Link>
+                  <Download className="h-3.5 w-3.5" />
+                  Download CV
                 </Button>
               ) : null}
             </div>
@@ -650,18 +654,20 @@ export default function ProjectPageClient({
                 </span>
               </div>
 
-              {techStack.length > 0 ? (
+              {data.portfolio.skills && data.portfolio.skills.length > 0 ? (
                 <div className="flex items-center justify-between border-b border-slate-100 pb-0">
                   <span className="text-xs font-medium text-slate-500">
                     Skills
                   </span>
-                  <div className="flex flex-wrap justify-end gap-2">
-                    {techStack.slice(0, 6).map((tech) => (
+                  <div className="flex items-center justify-end -space-x-2 overflow-x-auto max-w-[200px] sm:max-w-none scrollbar-hide">
+                    {data.portfolio.skills.map((skill, index) => (
                       <span
-                        key={tech}
-                        className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600"
+                        key={skill.id}
+                        className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-white shadow-sm hover:z-10 hover:scale-110 transition-transform"
+                        title={skill.name}
+                        style={{ zIndex: data.portfolio.skills.length - index }}
                       >
-                        {tech}
+                        <SkillIcon skillName={skill.name} className="h-4 w-4" />
                       </span>
                     ))}
                   </div>

@@ -117,6 +117,7 @@ export async function GET(req: NextRequest) {
           githubId: repoInfo.githubId, // Also include GitHub ID for reference
           projectName: click.projectName,
           clickCount: 0,
+          totalViews: 0, // Will be populated later from DailyProjectViews
           lastClicked: click.clickedAt.toISOString() // Convert Date to string
         }
         console.log(`🔍 DEBUG: Created new entry for PortfolioRepository ${portfolioRepoId}`)
@@ -130,7 +131,34 @@ export async function GET(req: NextRequest) {
     console.log(`🔍 DEBUG: Project stats keys:`, Object.keys(projectStats))
     console.log(`🔍 DEBUG: Project stats values:`, Object.values(projectStats))
 
-    // Ensure every portfolio repository has an entry and enrich with upvote counts
+    // Fetch total views from DailyProjectViews for all portfolio repositories
+    const portfolioRepoIdsBigInt = portfolioRepos.map((repo) => BigInt(repo.id))
+    const dailyViews = await prisma.dailyProjectViews.groupBy({
+      by: ["projectId"],
+      where: {
+        portfolioId: parseInt(portfolioId),
+        projectId: { in: portfolioRepoIdsBigInt },
+      },
+      _sum: {
+        views: true,
+      },
+    })
+
+    // Create a map of projectId to totalViews
+    const viewsMap = new Map<bigint, number>()
+    dailyViews.forEach((entry) => {
+      viewsMap.set(entry.projectId, entry._sum.views ?? 0)
+    })
+
+    // Update totalViews for all existing projectStats entries from projectClicks
+    Object.keys(projectStats).forEach((key) => {
+      const projectStat = projectStats[key]
+      if (projectStat && projectStat.projectId) {
+        projectStat.totalViews = viewsMap.get(BigInt(projectStat.projectId)) ?? 0
+      }
+    })
+
+    // Ensure every portfolio repository has an entry and enrich with upvote counts and totalViews
     portfolioRepos.forEach((repo) => {
       const key = repo.id.toString()
       if (!projectStats[key]) {
@@ -140,10 +168,13 @@ export async function GET(req: NextRequest) {
           githubId: Number(repo.repository.githubId),
           projectName: repo.repository.name,
           clickCount: 0,
+          totalViews: 0,
           lastClicked: null
         }
       }
       projectStats[key].upvoteCount = upvoteCountMap.get(repo.id) ?? 0
+      // Update totalViews for all entries (both existing and new)
+      projectStats[key].totalViews = viewsMap.get(BigInt(repo.id)) ?? 0
     })
     
     // Get social clicks

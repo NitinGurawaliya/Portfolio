@@ -12,6 +12,7 @@ import { ShiplogSection } from "@/components/dashboard/ShiplogSection"
 import ThemeSelector from "@/components/dashboard/ThemeSelector"
 import { UpvoteNotificationsBell, UpvoteNotification } from "@/components/dashboard/UpvoteNotificationsBell"
 import { ProfileCompletionWidget } from "@/components/dashboard/ProfileCompletionWidget"
+import { SharePortfolioWidget } from "@/components/dashboard/SharePortfolioWidget"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import toast, { Toaster } from "react-hot-toast"
@@ -76,6 +77,7 @@ export default function DashboardPage() {
   })
   const [isGeneratingResume, setIsGeneratingResume] = useState(false)
   const [isProfileWidgetOpen, setIsProfileWidgetOpen] = useState(true)
+  const [showShareWidget, setShowShareWidget] = useState(false)
   
   // Handlers hook - portfolio data को original data के रूप में pass करें
   const handlers = usePortfolioHandlers(
@@ -128,16 +130,22 @@ export default function DashboardPage() {
 
   // DashboardPage में useEffect डालो:
   useEffect(() => {
-    // onboarding से redirect आया है तो resetAfterPublish
+    // onboarding से redirect आया है तो resetAfterPublish और share widget show करो
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
       if (params.get("just-onboarded")) {
         portfolio.resetAfterPublish();
         params.delete("just-onboarded");
         window.history.replaceState(null, "", window.location.pathname);
+        
+        // Check if user hasn't dismissed the widget before
+        const dismissed = localStorage.getItem("devfolio:share-widget-dismissed");
+        if (!dismissed) {
+          setShowShareWidget(true);
+        }
       }
     }
-  }, []);
+  }, [portfolio]);
 
   useEffect(() => {
     if (typeof window === "undefined") return
@@ -912,6 +920,13 @@ export default function DashboardPage() {
           isOpen={isProfileWidgetOpen}
           onToggle={() => setIsProfileWidgetOpen(!isProfileWidgetOpen)}
         />
+
+        {showShareWidget && (portfolio.portfolioData.customUsername || user?.githubUsername) && (
+          <SharePortfolioWidget
+            portfolioUrl={`https://devfolio.cc/${portfolio.portfolioData.customUsername || user?.githubUsername || ''}`}
+            onClose={() => setShowShareWidget(false)}
+          />
+        )}
     </>
   )
 }
