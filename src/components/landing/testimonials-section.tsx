@@ -64,10 +64,8 @@ export function TestimonialsSection() {
           transition={{ duration: 0.6 }}
           viewport={{ once: true }}
         >
-          <div className="mb-3 inline-flex items-center rounded-full border border-border/40 bg-muted/60 px-2.5 py-0.5 text-[10px] font-medium text-muted-foreground sm:text-xs">
-            Loved by builders
-          </div>
-          <h2 className="text-lg font-semibold tracking-tight text-foreground sm:text-xl lg:text-2xl">
+          
+          <h2 className="text-lg md:text-xl lg:text-2xl font-bold text-foreground mb-1">
             What devs say about DevFolio
           </h2>
 
@@ -89,19 +87,6 @@ export function TestimonialsSection() {
               />
             </motion.article>
           ))}
-        </div>
-
-        <div className="mt-5 text-center text-xs text-muted-foreground sm:mt-6">
-          Tip: generate embed code at{" "}
-          <a
-            href="https://publish.twitter.com/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-medium text-foreground underline-offset-4 hover:underline"
-          >
-            publish.twitter.com
-          </a>{" "}
-          and paste it into <code className="rounded bg-muted px-1.5 py-0.5 text-xs">testimonial-embeds.ts</code>.
         </div>
       </div>
     </section>

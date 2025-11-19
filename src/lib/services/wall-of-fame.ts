@@ -57,7 +57,7 @@ const fetchCommunityPortfolios = unstable_cache(
       .filter((portfolio) => portfolio.projectsCount > 0)
   },
   ["wall-of-fame-community-portfolios"],
-  { revalidate: 60 * 60 }
+  { revalidate: 60 } // 60 seconds = 1 minute for fresh data
 )
 
 export async function getWallOfFamePortfolios() {

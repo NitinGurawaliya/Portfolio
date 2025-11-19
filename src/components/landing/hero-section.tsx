@@ -48,31 +48,15 @@ export function HeroSection() {
   }, []);
 
   return (
-    <section className="relative overflow-hidden px-4 py-12 sm:px-8 lg:px-12 xl:px-20">
+    <section className="relative overflow-hidden px-4 py-6 sm:px-8 lg:px-12 xl:px-20">
       <div className="absolute inset-0 grid-bg opacity-30" />
-      <div className="mx-auto w-full max-w-[9rem] -mt-2 sm:mt-0 sm:max-w-[10rem]">
-        <a
-          href="https://shipsquad.space/saas/1eb0b450-6fb4-44ef-ab2b-ce0ce95e25b9"
-          target="_blank"
-          rel="noopener"
-        >
-          <img
-            src="https://shipsquad.space/api/badge?id=1eb0b450-6fb4-44ef-ab2b-ce0ce95e25b9&style=light"
-            alt="Featured on ShipSquad"
-            className="w-full"
-          />
-        </a>
-      </div>
-        <div className="container relative mx-auto max-w-5xl px-0 sm:px-2">
-          <div className="grid items-center justify-items-center gap-12 lg:gap-16 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
+        <div className="relative w-full">
+          <div className="grid items-center justify-items-center gap-6 lg:gap-8 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
           {/* Left Column - Text Content */}
             <div className="mx-auto w-full max-w-xl text-center lg:mx-0 lg:text-left">
-            {/* <div className="mb-4 sm:mb-5 inline-flex items-center rounded-full border border-border/40 bg-muted/50 px-3 py-1.5 text-xs sm:text-sm backdrop-blur-sm">
-              <span className="mr-1.5 sm:mr-2">🔥</span>
-              <span className="text-xs sm:text-sm">Free right now - grab it while it's hot</span>
-            </div> */}
+          
  
-              <h1 className="mb-3 text-xl font-semibold leading-tight tracking-tight text-balance sm:mb-4 sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl">
+              <h1 className="mb-3 text-3xl font-semibold leading-tight tracking-tight text-balance sm:mb-4 sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl">
               Turn your GitHub into a{" "}
               <span className="bg-gradient-to-r from-orange-500 to-orange-600 bg-clip-text text-transparent block sm:inline">
                 stunning portfolio
@@ -134,9 +118,7 @@ export function HeroSection() {
                 </div>
               )}
  
-              <div className="mt-6 text-xs text-muted-foreground sm:mt-8 sm:text-sm lg:text-base">
-                Used by devs who actually ship stuff
-              </div>
+
           </div>
  
           {/* Right Column - Mobile Preview (Desktop) */}
