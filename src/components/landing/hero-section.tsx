@@ -41,7 +41,7 @@ export function HeroSection() {
   }, []);
 
   return (
-    <section className="relative overflow-hidden px-4 py-8 sm:px-6 lg:px-8">
+    <section className="relative overflow-hidden px-4 py-12 sm:px-8 lg:px-12 xl:px-20">
       <div className="absolute inset-0 grid-bg opacity-30" />
       <div className="mx-auto w-full max-w-[9rem] -mt-2 sm:mt-0 sm:max-w-[10rem]">
         <a
@@ -56,10 +56,10 @@ export function HeroSection() {
           />
         </a>
       </div>
-      <div className="container relative mx-auto max-w-[1400px] px-0">
-        <div className="grid items-center justify-items-center gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+        <div className="container relative mx-auto max-w-5xl px-0 sm:px-2">
+          <div className="grid items-center justify-items-center gap-12 lg:gap-16 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
           {/* Left Column - Text Content */}
-          <div className="w-full text-center lg:text-left">
+            <div className="mx-auto w-full max-w-xl text-center lg:mx-0 lg:text-left">
             {/* <div className="mb-4 sm:mb-5 inline-flex items-center rounded-full border border-border/40 bg-muted/50 px-3 py-1.5 text-xs sm:text-sm backdrop-blur-sm">
               <span className="mr-1.5 sm:mr-2">🔥</span>
               <span className="text-xs sm:text-sm">Free right now - grab it while it's hot</span>
