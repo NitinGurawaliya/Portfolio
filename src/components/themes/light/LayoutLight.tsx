@@ -529,7 +529,7 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
                     >
                       Projects I've Made
                     </motion.h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 md:gap-6 auto-rows-fr">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
                 {portfolio.repositories
                   .filter(repo => repo.isVisible)
                   .map((repo, index) => {
@@ -542,26 +542,25 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
                       const descriptionText = truncateWords(repo.customDescription || repo.repository.description, 18)
                       const cardContent = (
                       <motion.article
-                        className="group relative flex h-full w-full cursor-pointer"
+                        className={`group relative flex w-full cursor-pointer ${repo.technologies ? 'h-full' : ''}`}
                         initial={{ opacity: 0, y: 20 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.5, delay: index * 0.1 }}
                         viewport={{ once: true }}
                         whileHover={{ y: -2 }}
                       >
-                          <div className="relative flex h-full w-full min-h-[190px] flex-col rounded-2xl border border-gray-200 bg-white p-3 xs:p-4 sm:p-4 transition-all duration-300 hover:border-gray-300">
+                          <div className={`relative flex w-full flex-col rounded-2xl border border-gray-200 bg-white p-3 xs:p-4 sm:p-4 transition-all duration-300 hover:border-gray-300 ${repo.technologies ? 'h-full min-h-[190px]' : ''}`}>
                             {/* Top Right: Status + Users */}
                             {(repo.projectStatus || typeof repo.projectUsers === "number") && (
-                              <div className="absolute top-3 right-3 xs:top-4 xs:right-4 sm:top-4 sm:right-4 flex items-center gap-1.5">
+                              <div className="absolute top-3 right-3 xs:top-4 xs:right-4 sm:top-4 sm:right-4 flex items-center gap-1.5 z-10">
                                 {repo.projectStatus && (
-                                  <span className="inline-flex items-center text-[10px] font-semibold rounded-full px-2 py-0.5 bg-green-100 text-green-800 border border-green-200">
-                                    <span className="mr-1">●</span>
+                                  <span className="inline-flex items-center text-[10px] font-semibold rounded-md px-2 py-0.5 bg-green-100 text-green-800 border border-green-200 whitespace-nowrap">
                                     {repo.projectStatus}
                                   </span>
                                 )}
                                 {typeof repo.projectUsers === "number" && (
-                                  <span className="inline-flex items-center text-[10px] font-semibold rounded-full px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-200">
-                                    <UsersIcon className="h-2.5 w-2.5 mr-1" />
+                                  <span className="inline-flex items-center text-[10px] font-semibold rounded-full px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 whitespace-nowrap">
+                                    <UsersIcon className="h-2.5 w-2.5 mr-1 flex-shrink-0" />
                                     {repo.projectUsers.toLocaleString()}
                                   </span>
                                 )}
@@ -569,7 +568,7 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
                             )}
 
                             {/* Header: Icon/Name */}
-                            <div className="flex items-start mb-2 pr-24">
+                            <div className={`flex items-start mb-2 ${(repo.projectStatus && typeof repo.projectUsers === "number") ? "pr-32" : (repo.projectStatus || typeof repo.projectUsers === "number") ? "pr-28" : "pr-3"}`}>
                               <div className="flex-1 min-w-0">
                                 <div className="mb-0 flex items-center gap-2">
                                   <ProjectIcon
@@ -605,7 +604,7 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
 
                             {/* Tech Stack */}
                             {repo.technologies && (
-                              <div className="mt-2">
+                              <div className="mt-2 mb-2">
                                 <div className="flex items-center gap-1 mb-1.5">
                                   <Code2 className="h-3 w-3 text-gray-500" />
                                   <span className="text-[9px] font-medium text-gray-500 uppercase tracking-wide">Tech Stack</span>
@@ -627,7 +626,7 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
                               </div>
                             )}
 
-                            <div className="flex items-center flex-wrap gap-1.5 mt-auto pt-1.5">
+                            <div className={`flex items-center flex-wrap gap-1.5 ${repo.technologies ? 'mt-auto pt-1.5' : 'mt-3 pt-2'}`}>
                               {(() => {
                                 let languages: string[] = []
                                 if (repo.repository.languages) {

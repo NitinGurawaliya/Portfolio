@@ -466,7 +466,7 @@ export default function LayoutDark({ theme, portfolio }: LayoutDarkProps) {
                   >
                     Projects
                   </motion.h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 auto-rows-fr">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                 {portfolio.repositories
                   .filter(repo => repo.isVisible)
                   .map((repo, index) => {
@@ -479,26 +479,26 @@ export default function LayoutDark({ theme, portfolio }: LayoutDarkProps) {
                       const descriptionText = truncateWords(repo.customDescription || repo.repository.description, 18)
                       const cardContent = (
                       <motion.article
-                        className="group relative flex h-full w-full cursor-pointer"
+                        className={`group relative flex w-full cursor-pointer ${repo.technologies ? 'h-full' : ''}`}
                         initial={{ opacity: 0, y: 20 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.5, delay: index * 0.1 }}
                         viewport={{ once: true }}
                         whileHover={{ scale: 1.02, y: -4 }}
                       >
-                          <div className="relative bg-transparent border border-orange-500/30 rounded-lg p-4 sm:p-4 hover:border-orange-500/40 transition-all duration-300 h-full min-h-[190px] flex flex-col w-full">
+                          <div className={`relative bg-transparent border border-orange-500/30 rounded-lg p-4 sm:p-4 hover:border-orange-500/40 transition-all duration-300 flex flex-col w-full ${repo.technologies ? 'h-full min-h-[190px]' : ''}`}>
                             {/* Top Right: Status + Users */}
                             {(repo.projectStatus || typeof repo.projectUsers === "number") && (
-                              <div className="absolute top-4 right-4 sm:top-4 sm:right-4 flex items-center gap-1.5">
+                              <div className="absolute top-4 right-4 sm:top-4 sm:right-4 flex items-center gap-1.5 z-10">
                                 {repo.projectStatus && (
-                                  <span className="inline-flex items-center text-[10px] font-semibold rounded-full px-2 py-0.5 bg-emerald-500/10 text-emerald-200 border border-emerald-400/30">
+                                  <span className="inline-flex items-center text-[10px] font-semibold rounded-full px-2 py-0.5 bg-emerald-500/10 text-emerald-200 border border-emerald-400/30 whitespace-nowrap">
                                     <span className="mr-1">●</span>
                                     {repo.projectStatus}
                                   </span>
                                 )}
                                 {typeof repo.projectUsers === "number" && (
-                                  <span className="inline-flex items-center text-[10px] font-semibold rounded-full px-2 py-0.5 bg-blue-500/10 text-blue-300 border border-blue-500/30">
-                                    <UsersIcon className="h-2.5 w-2.5 mr-1" />
+                                  <span className="inline-flex items-center text-[10px] font-semibold rounded-full px-2 py-0.5 bg-blue-500/10 text-blue-300 border border-blue-500/30 whitespace-nowrap">
+                                    <UsersIcon className="h-2.5 w-2.5 mr-1 flex-shrink-0" />
                                     {repo.projectUsers.toLocaleString()}
                                   </span>
                                 )}
@@ -506,7 +506,7 @@ export default function LayoutDark({ theme, portfolio }: LayoutDarkProps) {
                             )}
 
                             {/* Header: Icon/Name */}
-                            <div className="flex items-start mb-2 pr-24">
+                            <div className={`flex items-start mb-2 ${(repo.projectStatus && typeof repo.projectUsers === "number") ? "pr-32" : (repo.projectStatus || typeof repo.projectUsers === "number") ? "pr-28" : "pr-3"}`}>
                               <div className="flex-1 min-w-0">
                                 <div className="mb-2">
                                   <ProjectIcon
@@ -564,7 +564,7 @@ export default function LayoutDark({ theme, portfolio }: LayoutDarkProps) {
                               </div>
                             )}
 
-                            <div className="flex items-center flex-wrap gap-2 mt-auto pt-2">
+                            <div className={`flex items-center flex-wrap gap-2 ${repo.technologies ? 'mt-auto pt-2' : 'mt-3 pt-2'}`}>
                               {(() => {
                                 let languages: string[] = []
                                 if (repo.repository.languages) {

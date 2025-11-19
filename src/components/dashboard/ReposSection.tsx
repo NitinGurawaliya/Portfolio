@@ -896,7 +896,7 @@ export function ReposSection({
                                     {(() => {
                                       const portfolioRepoId = repo.portfolioRepositoryId
                                       const projectData = analytics?.detailed?.projects?.find((p: any) => p.projectId == portfolioRepoId)
-                                      return projectData?.clickCount || 0
+                                      return projectData?.totalViews || 0
                                     })()}
                                   </div>
                                 </div>

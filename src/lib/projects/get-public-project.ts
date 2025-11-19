@@ -28,6 +28,7 @@ export async function getPublicProjectPageData(
       jobTitle: true,
       profilePic: true,
       customUsername: true,
+      cvUrl: true,
       user: {
         select: {
           id: true,
@@ -37,6 +38,16 @@ export async function getPublicProjectPageData(
           company: true,
           location: true,
           websiteUrl: true,
+        },
+      },
+      skills: {
+        select: {
+          id: true,
+          name: true,
+          category: true,
+        },
+        orderBy: {
+          createdAt: "asc",
         },
       },
       repositories: {
@@ -228,13 +239,18 @@ export async function getPublicProjectPageData(
   const statsViews7 = last7Agg._sum.views ?? 0
   const statsViews30 = last30Agg._sum.views ?? 0
 
+  // Get deployedUrl with fallback to repository htmlUrl
+  const deployedUrl = project.deployedUrl 
+    || project.repository?.htmlUrl 
+    || null
+
   return {
     slug: resolvedSlug,
     project: {
       id: project.id,
       title: projectTitle,
       description: primaryDescription,
-      deployedUrl: project.deployedUrl ?? null,
+      deployedUrl: deployedUrl,
       githubUrl: project.repository?.githubUrl || project.repository?.htmlUrl,
       favicon: project.repository?.favicon ?? null,
       logo: project.repository?.logo ?? null,
@@ -264,6 +280,12 @@ export async function getPublicProjectPageData(
       company: portfolio.user.company || null,
       location: portfolio.user.location || null,
       projectCount: portfolio.repositories.length,
+      cvUrl: portfolio.cvUrl || null,
+      skills: portfolio.skills.map((skill) => ({
+        id: skill.id,
+        name: skill.name,
+        category: skill.category,
+      })),
     },
     stats: {
       totalViews: statsViewsTotal,

@@ -421,7 +421,7 @@ export default function LayoutModern({ theme, portfolio }: LayoutModernProps) {
                       Curated projects showcasing recent capabilities.
                     </p>
                   </div>
-                  <div className="grid grid-cols-1 gap-3 xs:gap-4 sm:gap-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 auto-rows-fr">
+                  <div className="grid grid-cols-1 gap-3 xs:gap-4 sm:gap-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4">
                       {visibleRepos.map((repo: any, index: number) => {
                         const projectSlug = projectSlugMap[repo.id]
                         const projectHref =
@@ -432,7 +432,7 @@ export default function LayoutModern({ theme, portfolio }: LayoutModernProps) {
                           const descriptionText = truncateWords(repo.customDescription || repo.repository.description, 18)
                           const cardContent = (
                           <motion.article
-                              className="group flex h-full w-full min-w-0 flex-col rounded-xl border border-neutral-200 bg-white p-3 shadow-sm transition hover:-translate-y-1 hover:shadow-md cursor-pointer"
+                              className={`group flex w-full min-w-0 flex-col rounded-xl border border-neutral-200 bg-white p-3 shadow-sm transition hover:-translate-y-1 hover:shadow-md cursor-pointer ${repo.technologies ? 'h-full' : ''}`}
                             initial={{ opacity: 0, y: 20 }}
                             whileInView={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.4, delay: index * 0.05 }}
@@ -440,16 +440,16 @@ export default function LayoutModern({ theme, portfolio }: LayoutModernProps) {
                           >
                               {/* Top Right: Status + Users */}
                               {(repo.projectStatus || typeof repo.projectUsers === "number") && (
-                                <div className="absolute top-3 right-3 flex items-center gap-1.5">
+                                <div className="absolute top-3 right-3 flex items-center gap-1.5 z-10">
                                   {repo.projectStatus && (
-                                    <span className="inline-flex items-center text-[10px] font-semibold rounded-full px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                    <span className="inline-flex items-center text-[10px] font-semibold rounded-sm px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap">
                                       <span className="mr-1">●</span>
                                       {repo.projectStatus}
                                     </span>
                                   )}
                                   {typeof repo.projectUsers === "number" && (
-                                    <span className="inline-flex items-center text-[10px] font-semibold rounded-full px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-200">
-                                      <UsersIcon className="h-2.5 w-2.5 mr-1" />
+                                    <span className="inline-flex items-center text-[10px] font-semibold rounded-sm px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 whitespace-nowrap">
+                                      <UsersIcon className="h-2.5 w-2.5 mr-1 flex-shrink-0" />
                                       {repo.projectUsers.toLocaleString()}
                                     </span>
                                   )}
@@ -457,7 +457,7 @@ export default function LayoutModern({ theme, portfolio }: LayoutModernProps) {
                               )}
 
                               {/* Header: Icon/Name */}
-                              <div className="flex items-start gap-2 xs:gap-3 mb-3 pr-24">
+                              <div className={`flex items-start gap-2 xs:gap-3 mb-3 ${(repo.projectStatus && typeof repo.projectUsers === "number") ? "pr-32" : (repo.projectStatus || typeof repo.projectUsers === "number") ? "pr-28" : "pr-3"}`}>
                                 <div className="flex-1 min-w-0 space-y-1.5">
                                   <ProjectIcon
                                     favicon={repo.repository.favicon}
@@ -491,7 +491,7 @@ export default function LayoutModern({ theme, portfolio }: LayoutModernProps) {
 
                               {/* Tech Stack */}
                               {repo.technologies && (
-                                <div className="mt-2">
+                                <div className="mt-2 mb-2">
                                   <div className="flex items-center gap-1 mb-1.5">
                                     <Code2 className="h-3 w-3 text-neutral-500" />
                                     <span className="text-[9px] font-medium text-neutral-500 uppercase tracking-wide">Tech Stack</span>
@@ -513,7 +513,7 @@ export default function LayoutModern({ theme, portfolio }: LayoutModernProps) {
                                 </div>
                               )}
 
-                            <div className="mt-3 xs:mt-4 flex flex-wrap gap-1.5 xs:gap-2">
+                            <div className={`flex flex-wrap gap-1.5 xs:gap-2 ${repo.technologies ? 'mt-auto pt-2' : 'mt-3 xs:mt-4'}`}>
                               {(() => {
                                 let languages: string[] = []
                                 if (repo.repository.languages) {
