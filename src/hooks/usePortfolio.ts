@@ -18,7 +18,7 @@ declare global {
   }
 }
 
-// Analytics data load करने का function
+// Helper to load analytics data
 const loadAnalyticsData = async (portfolioId: number) => {
   try {
     // Fetch basic analytics

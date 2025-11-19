@@ -1,7 +1,7 @@
 import { User, Repository } from "@/interface"
 
 /**
- * Portfolio को publish करता है
+ * Publishes a portfolio
  */
 export const publishPortfolio = async (data: {
   portfolioData: any
@@ -54,7 +54,7 @@ export const publishPortfolio = async (data: {
 }
 
 /**
- * Existing portfolio data load करता है
+ * Loads existing portfolio data
  */
 export const loadPortfolioData = async (username: string) => {
   const response = await fetch(`/api/portfolio/publish?username=${username}`)
@@ -77,7 +77,7 @@ export const loadPortfolioData = async (username: string) => {
 }
 
 /**
- * Username availability check करता है
+ * Checks username availability
  */
 export const checkUsernameAvailability = async (username: string, currentUsername?: string, githubUsername?: string, currentUserId?: number) => {
   if (!username.trim()) {
@@ -133,7 +133,7 @@ export const checkUsernameAvailability = async (username: string, currentUsernam
 }
 
 /**
- * GitHub user data fetch करता है
+ * Fetches GitHub user data
  */
 export const fetchGitHubData = async (): Promise<User | null> => {
   try {
@@ -198,7 +198,7 @@ export const fetchGitHubData = async (): Promise<User | null> => {
 }
 
 /**
- * Session data fetch करता है - with secure validation
+ * Fetches session data with validation
  */
 export const fetchSession = async (): Promise<any | null> => {
   try {
