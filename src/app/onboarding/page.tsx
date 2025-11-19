@@ -2,12 +2,11 @@
 
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { ArrowLeft, ArrowRight, CheckCircle2, Loader2, Plus, Sparkles, Trash2, X } from "lucide-react"
+import { ArrowLeft, ArrowRight, CheckCircle2, Loader2, Sparkles } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
 import { DevFolioLoader } from "@/components/ui/DevFolioLoader"
 import { useSession } from "@/hooks/useSession"
@@ -277,136 +276,132 @@ function OnboardingContent() {
     )
   }
 
-  return (
-    <div className="min-h-screen bg-background">
-      {/* Back to Dashboard - Top Left */}
-      <Button 
-        variant="ghost"
-        size="sm"
-        className="fixed left-4 top-4 z-50"
-        onClick={() => router.push("/dashboard")}
-      >
-        <ArrowLeft className="mr-2 h-4 w-4" />
-        Dashboard
-      </Button>
+    return (
+      <div className="relative min-h-screen overflow-hidden bg-background">
+        <div className="pointer-events-none absolute -left-10 top-16 h-72 w-72 rounded-full bg-orange-500/15 blur-3xl" />
+        <div className="pointer-events-none absolute right-0 bottom-0 h-96 w-96 rounded-full bg-sky-500/15 blur-3xl" />
 
-      {/* Step Progress Indicator - Subtle at top */}
-      <div className="fixed top-4 left-1/2 -translate-x-1/2 z-40 flex items-center gap-1.5 rounded-full border border-border/40 bg-background/80 backdrop-blur-sm px-3 py-1.5">
-        {onboardingSteps.map((step, index) => {
-          const isActive = index === currentStep
-          const isComplete = index < currentStep
-          return (
-            <div key={index} className="flex items-center">
-              <div
-                className={cn(
-                  "flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium transition-all",
-                  isActive
-                    ? "bg-orange-500 text-white"
-                    : isComplete
-                      ? "bg-orange-500/20 text-orange-600"
-                      : "bg-muted text-muted-foreground"
-                )}
-              >
-                {isComplete ? <CheckCircle2 className="h-3 w-3" /> : index + 1}
+        <div className="relative mx-auto flex min-h-screen w-full max-w-6xl flex-col items-center justify-center px-4 py-12 transition-all duration-300 md:items-center md:justify-start md:pl-12">
+          <Card className="w-full max-w-sm border border-border/40 bg-card/95 shadow-2xl shadow-orange-500/10 backdrop-blur">
+            <CardContent className="space-y-5 p-5 sm:p-6">
+              <div className="flex items-center justify-between">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 px-2 text-xs font-medium"
+                  onClick={() => router.push("/dashboard")}
+                >
+                  <ArrowLeft className="mr-1.5 h-3.5 w-3.5" />
+                  Dashboard
+                </Button>
+
+                <Badge className="bg-muted/60 px-2 py-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                  Step {currentStep + 1}/{onboardingSteps.length}
+                </Badge>
               </div>
-              {index < onboardingSteps.length - 1 && (
-                <div 
-                  className={cn(
-                    "mx-1 h-0.5 w-6 rounded-full transition-all",
-                    index < currentStep ? "bg-orange-500" : "bg-muted"
-                  )} 
-                />
-              )}
-            </div>
-          )
-        })}
+
+              <div className="flex items-center gap-1.5">
+                {onboardingSteps.map((_, index) => {
+                  const isActive = index === currentStep
+                  const isComplete = index < currentStep
+                  return (
+                    <span
+                      key={index}
+                      className={cn(
+                        "h-1 flex-1 rounded-full transition-all duration-300",
+                        isActive
+                          ? "bg-orange-500"
+                          : isComplete
+                            ? "bg-orange-500/40"
+                            : "bg-muted"
+                      )}
+                    />
+                  )
+                })}
+              </div>
+
+              <div className="space-y-0.5">
+                <p className="text-base font-semibold text-foreground">
+                  {onboardingSteps[currentStep].title}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {onboardingSteps[currentStep].description}
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                {currentStep === 0 && (
+                  <ProjectsStep
+                    userRepos={sanitizedRepos}
+                    selectedRepos={portfolio.selectedRepos}
+                    importedProjects={portfolio.importedProjects}
+                    onToggleRepo={handleToggleRepo}
+                    onImportUrl={handleProjectImport}
+                    onRemoveImported={removeImportedProject}
+                    isImporting={importing}
+                    importError={importError}
+                    onNext={goNext}
+                  />
+                )}
+                {currentStep === 1 && (
+                  <SkillsStep
+                    selectedSkills={selectedSkills}
+                    onAddSkill={handleAddSkill}
+                    onRemoveSkill={handleRemoveSkill}
+                    onNext={goNext}
+                  />
+                )}
+                {currentStep === 2 && (
+                  <SocialStep
+                    socials={portfolio.socials}
+                    onSocialChange={handleSocialChange}
+                    onNext={goNext}
+                  />
+                )}
+                {currentStep === 3 && (
+                  <ThemeStep
+                    userId={user?.id || 0}
+                    selectedTheme={portfolio.selectedTheme}
+                    onThemeChange={handleThemeChange}
+                    backgroundColor={portfolio.backgroundColor}
+                    setBackgroundColor={portfolio.setBackgroundColor}
+                    backgroundPattern={portfolio.backgroundPattern}
+                    setBackgroundPattern={portfolio.setBackgroundPattern}
+                    onFinish={handleFinish}
+                    isPublishing={isPublishing}
+                  />
+                )}
+              </div>
+
+              <div className="flex items-center justify-between border-t border-border/20 pt-3">
+                {currentStep > 0 ? (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={goPrev}
+                    className="h-8 text-xs text-muted-foreground hover:text-foreground"
+                  >
+                    <ArrowLeft className="mr-1.5 h-3.5 w-3.5" />
+                    Back
+                  </Button>
+                ) : (
+                  <div />
+                )}
+
+                {currentStep < 2 && (
+                  <button
+                    onClick={goNext}
+                    className="text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    Skip
+                  </button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
-
-      {/* Step Modals */}
-      <Dialog open={true} onOpenChange={() => {}}>
-        <DialogContent className="max-w-md border-border/30 bg-card/98 backdrop-blur-md p-5 sm:p-6 [&>button]:hidden">
-          <DialogHeader className="space-y-0.5">
-            <DialogTitle className="text-base font-semibold">
-              {onboardingSteps[currentStep].title}
-            </DialogTitle>
-            <DialogDescription className="text-xs text-muted-foreground/80">
-              {onboardingSteps[currentStep].description}
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="mt-4">
-            {currentStep === 0 && (
-              <ProjectsStep
-                userRepos={sanitizedRepos}
-                selectedRepos={portfolio.selectedRepos}
-                importedProjects={portfolio.importedProjects}
-                onToggleRepo={handleToggleRepo}
-                onImportUrl={handleProjectImport}
-                onRemoveImported={removeImportedProject}
-                isImporting={importing}
-                importError={importError}
-                onNext={goNext}
-              />
-            )}
-            {currentStep === 1 && (
-              <SkillsStep
-                selectedSkills={selectedSkills}
-                onAddSkill={handleAddSkill}
-                onRemoveSkill={handleRemoveSkill}
-                onNext={goNext}
-              />
-            )}
-            {currentStep === 2 && (
-              <SocialStep
-                socials={portfolio.socials}
-                onSocialChange={handleSocialChange}
-                onNext={goNext}
-              />
-            )}
-            {currentStep === 3 && (
-              <ThemeStep
-                userId={user?.id || 0}
-                selectedTheme={portfolio.selectedTheme}
-                onThemeChange={handleThemeChange}
-                backgroundColor={portfolio.backgroundColor}
-                setBackgroundColor={portfolio.setBackgroundColor}
-                backgroundPattern={portfolio.backgroundPattern}
-                setBackgroundPattern={portfolio.setBackgroundPattern}
-                onFinish={handleFinish}
-                isPublishing={isPublishing}
-              />
-            )}
-          </div>
-
-          {/* Navigation */}
-          <div className="mt-4 flex items-center justify-between border-t border-border/20 pt-3">
-            {currentStep > 0 ? (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={goPrev}
-                className="h-8 text-xs text-muted-foreground hover:text-foreground"
-              >
-                <ArrowLeft className="mr-1.5 h-3.5 w-3.5" />
-                Back
-              </Button>
-            ) : (
-              <div />
-            )}
-
-            {currentStep < 2 && (
-              <button
-                onClick={goNext}
-                className="text-xs text-muted-foreground hover:text-foreground"
-              >
-                Skip
-              </button>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
-    </div>
-  )
+    )
 }
 
 export default function OnboardingPage() {
@@ -706,39 +701,39 @@ function SkillsStep({ selectedSkills, onAddSkill, onRemoveSkill, onNext }: Skill
         className="h-9"
       />
 
-      {/* Skills Grid */}
-      <div className="max-h-[280px] overflow-y-auto rounded-lg border border-border/40 bg-muted/20 p-3">
-        <div className="grid grid-cols-8 gap-2">
-          {filteredSkills.map((skill) => {
-            const isActive = selectedNames.has(skill.name.toLowerCase())
-            const IconComponent = skill.icon
-            return (
-              <button
-                key={skill.name}
-                type="button"
-                onClick={() => toggleSkill(skill.name, skill.category)}
-                title={skill.name}
-                className={cn(
-                  "group relative flex h-10 w-10 items-center justify-center rounded-lg border transition-all",
-                  isActive
-                    ? "border-orange-500 bg-orange-50 dark:bg-orange-950/20"
-                    : "border-border/40 bg-background hover:border-orange-300"
-                )}
-              >
-                <IconComponent
-                  className="h-5 w-5"
-                  style={{ color: isActive ? '#f97316' : skill.color }}
-                />
-                {isActive && (
-                  <div className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-orange-500 text-white">
-                    <CheckCircle2 className="h-2.5 w-2.5" />
-                  </div>
-                )}
-              </button>
-            )
-          })}
+        {/* Skills Grid */}
+        <div className="max-h-[280px] overflow-y-auto rounded-lg border border-border/40 bg-muted/20 p-3">
+          <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
+            {filteredSkills.map((skill) => {
+              const isActive = selectedNames.has(skill.name.toLowerCase())
+              const IconComponent = skill.icon
+              return (
+                <button
+                  key={skill.name}
+                  type="button"
+                  onClick={() => toggleSkill(skill.name, skill.category)}
+                  title={skill.name}
+                  className={cn(
+                    "group relative flex h-10 w-10 items-center justify-center rounded-lg border transition-all",
+                    isActive
+                      ? "border-orange-500 bg-orange-50 dark:bg-orange-950/20"
+                      : "border-border/40 bg-background hover:border-orange-300"
+                  )}
+                >
+                  <IconComponent
+                    className="h-5 w-5"
+                    style={{ color: isActive ? '#f97316' : skill.color }}
+                  />
+                  {isActive && (
+                    <div className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-orange-500 text-white">
+                      <CheckCircle2 className="h-2.5 w-2.5" />
+                    </div>
+                  )}
+                </button>
+              )
+            })}
+          </div>
         </div>
-      </div>
 
       {/* Selected Count */}
       {selectedSkills.length > 0 && (
