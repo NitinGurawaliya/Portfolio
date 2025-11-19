@@ -5,44 +5,62 @@ import { prisma } from "@/lib/prisma"
 import { sendEmail } from "@/lib/sendEmail"
 import { generateWelcomeEmail } from "@/lib/templates/welcomeEmail"
 
+const sanitizeUsername = (value?: string | null) => {
+  if (!value) return null
+  const cleaned = value.trim().toLowerCase().replace(/[^a-z0-9-_]/g, "")
+  if (!cleaned) return null
+  if (cleaned.length < 3 || cleaned.length > 20) return null
+  return cleaned
+}
+
+const extractUsernameFromState = (state: string | null | undefined) => {
+  if (!state) return null
+  const marker = "|u:"
+  const markerIndex = state.indexOf(marker)
+  if (markerIndex === -1) return null
+  const rawUsername = state.slice(markerIndex + marker.length)
+  return sanitizeUsername(rawUsername)
+}
+
 export async function GET(req: NextRequest) {
   const requestUrl = new URL(req.url);
   const { searchParams } = requestUrl;
   const code = searchParams.get("code");
   const returnedState = searchParams.get("state");
 
-  if (!code) {
-    // --- OAUTH INIT: encode context in state param!
-    const baseUrl = `${requestUrl.protocol}//${requestUrl.host}`;
-    const githubAuthUrl = new URL("https://github.com/login/oauth/authorize");
-    githubAuthUrl.searchParams.set("client_id", process.env.GITHUB_CLIENT_ID!);
-    githubAuthUrl.searchParams.set("redirect_uri", `${baseUrl}/api/auth/github`);
-    githubAuthUrl.searchParams.set("scope", "read:user user:email public_repo");
-    // REMOVED: Onboarding flow - all auth goes to dashboard
-    const randomPart = randomBytes(8).toString("hex");
-    const state = `login-${randomPart}`;
-    githubAuthUrl.searchParams.set("state", state);
-    devLog("[GITHUB AUTH] Initiating OAuth | oauth state:", state);
-    // CSRF protection as before
-    const response = NextResponse.redirect(githubAuthUrl.toString());
-    response.cookies.set("oauth_state", state, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/api/auth/github",
-      maxAge: 10 * 60,
-    });
-    return response;
-  }
+    if (!code) {
+      // --- OAUTH INIT: encode context in state param!
+      const baseUrl = `${requestUrl.protocol}//${requestUrl.host}`;
+      const githubAuthUrl = new URL("https://github.com/login/oauth/authorize");
+      githubAuthUrl.searchParams.set("client_id", process.env.GITHUB_CLIENT_ID!);
+      githubAuthUrl.searchParams.set("redirect_uri", `${baseUrl}/api/auth/github`);
+      githubAuthUrl.searchParams.set("scope", "read:user user:email public_repo");
+      const randomPart = randomBytes(8).toString("hex");
+      const requestedUsername = sanitizeUsername(searchParams.get("username"));
+      const state = requestedUsername ? `login-${randomPart}|u:${requestedUsername}` : `login-${randomPart}`;
+      githubAuthUrl.searchParams.set("state", state);
+      devLog("[GITHUB AUTH] Initiating OAuth | oauth state:", state);
+      // CSRF protection as before
+      const response = NextResponse.redirect(githubAuthUrl.toString());
+      response.cookies.set("oauth_state", state, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/api/auth/github",
+        maxAge: 10 * 60,
+      });
+      return response;
+    }
 
   try {
     // --- CALLBACK: recover context from state only
     const stateCookie = req.cookies.get("oauth_state")?.value;
-    devLog("[GITHUB AUTH] Callback state param:", returnedState, "| cookie:", stateCookie);
-    if (!returnedState || !stateCookie || returnedState !== stateCookie) {
+      devLog("[GITHUB AUTH] Callback state param:", returnedState, "| cookie:", stateCookie);
+      if (!returnedState || !stateCookie || returnedState !== stateCookie) {
       const baseUrl = `${requestUrl.protocol}//${requestUrl.host}`;
       return NextResponse.redirect(`${baseUrl}/auth?error=state_mismatch`);
     }
+      const desiredUsernameFromState = extractUsernameFromState(returnedState)
     // Exchange code for access token
     const tokenResponse = await fetch("https://github.com/login/oauth/access_token", {
       method: "POST",
@@ -74,8 +92,9 @@ export async function GET(req: NextRequest) {
     
     const userData = await userResponse.json()
     
-    // Save/update user in database and send welcome email for new users
-    let isNewUser = false
+      // Save/update user in database and send welcome email for new users
+      let isNewUser = false
+      let assignedUsername: string | null = null
     try {
       devLog("Saving user to database:", userData.login)
       
@@ -121,7 +140,7 @@ export async function GET(req: NextRequest) {
       
       isNewUser = !existingUser
       
-      const savedUser = await prisma.user.upsert({
+        const savedUser = await prisma.user.upsert({
         where: { githubId: userData.id.toString() },
         update: {
           name: userData.name || userData.login,
@@ -155,6 +174,66 @@ export async function GET(req: NextRequest) {
       })
       
       devLog("User saved to database successfully:", userData.login)
+
+        if (desiredUsernameFromState) {
+          try {
+            const conflict = await prisma.portfolio.findFirst({
+              where: {
+                OR: [
+                  {
+                    customUsername: {
+                      equals: desiredUsernameFromState,
+                      mode: "insensitive"
+                    }
+                  },
+                  {
+                    user: {
+                      githubUsername: {
+                        equals: desiredUsernameFromState,
+                        mode: "insensitive"
+                      }
+                    }
+                  }
+                ],
+                NOT: {
+                  userId: savedUser.id
+                }
+              },
+              select: { id: true }
+            })
+
+            if (!conflict) {
+              const existingPortfolio = await prisma.portfolio.findUnique({
+                where: { userId: savedUser.id },
+                select: { id: true, customUsername: true }
+              })
+
+              if (!existingPortfolio) {
+                await prisma.portfolio.create({
+                  data: {
+                    userId: savedUser.id,
+                    displayName: userData.name || userData.login,
+                    bio: userData.bio || "",
+                    profilePic: userData.avatar_url || "",
+                    customUsername: desiredUsernameFromState,
+                    isPublished: false
+                  }
+                })
+                assignedUsername = desiredUsernameFromState
+              } else if (!existingPortfolio.customUsername || isNewUser) {
+                await prisma.portfolio.update({
+                  where: { userId: savedUser.id },
+                  data: { customUsername: desiredUsernameFromState }
+                })
+                assignedUsername = desiredUsernameFromState
+              }
+            } else {
+              devLog("Requested username already taken, skipping assignment:", desiredUsernameFromState)
+            }
+          } catch (usernameError) {
+            console.error("Failed to assign onboarding username:", usernameError)
+          }
+        }
       
       // Debug logs
       devLog("📧 Email check - isNewUser:", isNewUser, "| userEmail:", userEmail, "| isPlaceholder:", userEmail.includes('@placeholder.com'))
@@ -218,14 +297,41 @@ export async function GET(req: NextRequest) {
     // Create a simple session cookie
     devLog("Setting session cookie for user:", userData.login)
     
-    // Get the current request URL to determine the correct base URL
-    const baseUrl = `${requestUrl.protocol}//${requestUrl.host}`;
-    
-    // REMOVED: Onboarding flow - all users go directly to dashboard after auth
-    // Always redirect to dashboard after authentication
-    const redirectUrl = `${baseUrl}/dashboard`
-    devLog("[GITHUB AUTH] Redirecting authenticated user to dashboard")
-    devLog("[GITHUB AUTH] Will redirect to:", redirectUrl);
+      // Get the current request URL to determine the correct base URL
+      const baseUrl = `${requestUrl.protocol}//${requestUrl.host}`;
+      
+      let redirectUrl = `${baseUrl}/dashboard`
+      if (isNewUser) {
+        const onboardingParams = new URLSearchParams()
+        onboardingParams.set("fresh", "1")
+        if (assignedUsername) {
+          onboardingParams.set("username", assignedUsername)
+        } else if (desiredUsernameFromState) {
+          onboardingParams.set("username", desiredUsernameFromState)
+          onboardingParams.set("needsUsernameRetry", "1")
+        }
+        redirectUrl = `${baseUrl}/onboarding?${onboardingParams.toString()}`
+        devLog("[GITHUB AUTH] Redirecting new user to onboarding")
+      } else {
+        // Handle username assignment feedback for returning users
+        const dashboardParams = new URLSearchParams()
+        if (desiredUsernameFromState) {
+          if (assignedUsername) {
+            // Username was successfully assigned
+            dashboardParams.set("username_updated", assignedUsername)
+            devLog("[GITHUB AUTH] Username assigned to returning user:", assignedUsername)
+          } else {
+            // Username was requested but not assigned (conflict or other issue)
+            dashboardParams.set("username_conflict", desiredUsernameFromState)
+            devLog("[GITHUB AUTH] Username conflict for returning user:", desiredUsernameFromState)
+          }
+        }
+        
+        const queryString = dashboardParams.toString()
+        redirectUrl = queryString ? `${baseUrl}/dashboard?${queryString}` : `${baseUrl}/dashboard`
+        devLog("[GITHUB AUTH] Redirecting authenticated user to dashboard")
+      }
+      devLog("[GITHUB AUTH] Will redirect to:", redirectUrl);
 
     const response = NextResponse.redirect(redirectUrl)
     // Clear state cookie

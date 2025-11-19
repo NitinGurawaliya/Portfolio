@@ -31,6 +31,25 @@ export default function DashboardPage() {
   
   const router = useRouter()
 
+  // Handle username assignment feedback from OAuth callback
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    
+    const params = new URLSearchParams(window.location.search)
+    const usernameUpdated = params.get('username_updated')
+    const usernameConflict = params.get('username_conflict')
+    
+    if (usernameUpdated) {
+      toast.success(`✅ Custom username claimed: /${usernameUpdated}`, successToastConfig)
+      // Clean up URL
+      window.history.replaceState({}, '', '/dashboard')
+    } else if (usernameConflict) {
+      toast.error(`❌ Username '${usernameConflict}' was already taken. You can set a different one in your profile settings.`, errorToastConfig)
+      // Clean up URL
+      window.history.replaceState({}, '', '/dashboard')
+    }
+  }, [])
+
   // Session hook - redirect to auth if session is invalid
   const { user, loading } = useSession({ redirectOnAuthFailure: true })
   

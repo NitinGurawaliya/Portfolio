@@ -1,17 +1,19 @@
 "use client"
 
+import { Suspense } from "react";
 import { Github } from "lucide-react";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { DevFolioLoader } from "@/components/ui/DevFolioLoader";
 import { Card, CardContent } from "@/components/ui/card";
 
-export default function AuthPage() {
+function AuthContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [isChecking, setIsChecking] = useState(true)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
-    // REMOVED: Onboarding flow - all authenticated users go to dashboard
     // Session detection - if user is authenticated, redirect to dashboard
     const checkSession = async () => {
       try {
@@ -33,6 +35,19 @@ export default function AuthPage() {
     checkSession()
   }, [router])
 
+  // GitHub login handler
+  const handleGitHubLogin = useCallback(async () => {
+    if (isSubmitting) return
+
+    setIsSubmitting(true)
+    // Get username from URL if it was claimed from landing page
+    const claimedUsername = searchParams.get("username")
+    const target = claimedUsername
+      ? `/api/auth/github?username=${encodeURIComponent(claimedUsername)}`
+      : "/api/auth/github"
+    window.location.href = target
+  }, [isSubmitting, searchParams])
+
   // Show loader while checking session
   if (isChecking) {
     return (
@@ -43,30 +58,37 @@ export default function AuthPage() {
   }
 
   return (
-      <div className="relative flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-muted/40 to-background px-4 py-10">
+    <div className="relative flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-muted/40 to-background px-4 py-10">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(253,105,33,0.08),_transparent_55%)]" />
-        <Card className="relative z-10 w-full max-w-md border border-border/60 bg-card/80 shadow-2xl backdrop-blur">
-          <CardContent className="space-y-6 p-6 sm:space-y-8 sm:p-8">
-            <div className="space-y-4 text-center">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-r from-orange-500 to-orange-600 text-2xl font-bold text-white shadow-lg">
+      <Card className="relative z-10 w-full max-w-md border border-border/60 bg-card/80 shadow-2xl backdrop-blur">
+        <CardContent className="space-y-6 p-6 sm:space-y-8 sm:p-8">
+          <div className="space-y-4 text-center">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-r from-orange-500 to-orange-600 text-2xl font-bold text-white shadow-lg">
               D
             </div>
             <div className="space-y-1">
-                <h1 className="text-2xl font-semibold text-foreground sm:text-3xl">Welcome to DevFolio</h1>
-                <p className="text-sm text-muted-foreground sm:text-base">
+              <h1 className="text-2xl font-semibold text-foreground sm:text-3xl">Welcome to DevFolio</h1>
+              <p className="text-sm text-muted-foreground sm:text-base">
                 Import your GitHub projects, customize your theme, and publish in minutes.
               </p>
             </div>
           </div>
 
           <div className="space-y-4">
-            <a
-              href="/api/auth/github"
-                className="flex w-full items-center justify-center gap-3 rounded-xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 sm:py-3.5 sm:text-base"
+            <button
+              onClick={handleGitHubLogin}
+              disabled={isSubmitting}
+              className="flex w-full items-center justify-center gap-3 rounded-xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60 sm:py-3.5 sm:text-base"
             >
-              <Github className="h-5 w-5" />
-              Continue with GitHub
-            </a>
+              {isSubmitting ? (
+                <DevFolioLoader size="sm" />
+              ) : (
+                <>
+                  <Github className="h-5 w-5" />
+                  Continue with GitHub
+                </>
+              )}
+            </button>
 
             <div className="rounded-xl border border-border/50 bg-muted/40 p-4">
               <div className="flex items-start gap-3">
@@ -91,5 +113,17 @@ export default function AuthPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function AuthPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-muted/30 to-background">
+        <DevFolioLoader size="lg" />
+      </div>
+    }>
+      <AuthContent />
+    </Suspense>
   );
 }
