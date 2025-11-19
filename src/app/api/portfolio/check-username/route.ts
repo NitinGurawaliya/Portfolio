@@ -3,7 +3,25 @@ import { prisma } from "@/lib/prisma"
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json()
+    // Check if request has body
+    const contentType = req.headers.get("content-type")
+    if (!contentType || !contentType.includes("application/json")) {
+      return NextResponse.json(
+        { error: "Content-Type must be application/json" },
+        { status: 400 }
+      )
+    }
+
+    let body
+    try {
+      body = await req.json()
+    } catch (parseError) {
+      return NextResponse.json(
+        { error: "Invalid JSON in request body" },
+        { status: 400 }
+      )
+    }
+
     const { username, currentUserId } = body
 
     if (!username || typeof username !== 'string') {

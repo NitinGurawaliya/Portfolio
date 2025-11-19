@@ -118,13 +118,12 @@ export function ClaimUsernameModal({ open, onOpenChange, onSuccess }: ClaimUsern
     setIsSubmitting(true)
     const targetUrl = `/auth?username=${encodeURIComponent(normalizedUsername)}`
     
-    // Navigate immediately for instant transition
-    if (onSuccess) {
-      onSuccess(normalizedUsername)
-    } else {
+    // Use window.location.href for full page redirect
+    // This keeps the modal open with loader until navigation happens
+    setTimeout(() => {
       window.location.href = targetUrl
-    }
-  }, [availability.status, normalizedUsername, onSuccess])
+    }, 100) // Small delay to ensure loader is visible
+  }, [availability.status, normalizedUsername])
 
   const helperIcon = useMemo(() => {
     switch (availability.status) {
@@ -141,20 +140,34 @@ export function ClaimUsernameModal({ open, onOpenChange, onSuccess }: ClaimUsern
   }, [availability.status])
 
   return (
-    <Dialog open={open} onOpenChange={(newOpen) => {
-      // Prevent closing during submission
-      if (isSubmitting) return
-      onOpenChange(newOpen)
-    }}>
-      <DialogContent className="max-w-md border-border/40 bg-card/95 backdrop-blur-sm p-6">
+    <Dialog 
+      open={open} 
+      onOpenChange={(newOpen) => {
+        // Prevent closing during submission
+        if (isSubmitting && !newOpen) return
+        onOpenChange(newOpen)
+      }}
+    >
+      <DialogContent 
+        className="max-w-md border-border/40 bg-card/95 backdrop-blur-sm p-6"
+        onInteractOutside={(e) => {
+          // Prevent closing by clicking outside during submission
+          if (isSubmitting) {
+            e.preventDefault()
+          }
+        }}
+        onEscapeKeyDown={(e) => {
+          // Prevent closing with Escape key during submission
+          if (isSubmitting) {
+            e.preventDefault()
+          }
+        }}
+      >
         {isSubmitting ? (
           // Show loading state during redirect
-          <div className="flex flex-col items-center justify-center py-8">
-            <Loader2 className="h-10 w-10 animate-spin text-orange-500" />
-            <p className="mt-3 text-base font-medium text-foreground">Taking you to login...</p>
-            <p className="mt-1.5 text-xs text-muted-foreground">
-              Username: <span className="font-medium text-foreground">/{normalizedUsername}</span>
-            </p>
+          <div className="flex flex-col items-center justify-center py-6">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground/60" />
+            <p className="mt-2.5 text-sm text-muted-foreground">Redirecting...</p>
           </div>
         ) : (
           <>
@@ -193,7 +206,14 @@ export function ClaimUsernameModal({ open, onOpenChange, onSuccess }: ClaimUsern
                 disabled={availability.status !== "available" || isSubmitting}
                 onClick={handleSubmit}
               >
-                Continue
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin text-muted-foreground/70" />
+                    <span className="text-muted-foreground/80">Redirecting...</span>
+                  </>
+                ) : (
+                  "Continue"
+                )}
               </Button>
 
               <p className="text-center text-xs text-muted-foreground">

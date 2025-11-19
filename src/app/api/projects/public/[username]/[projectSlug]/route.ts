@@ -22,8 +22,13 @@ export async function GET(
     return NextResponse.json({ success: true, data })
   } catch (error) {
     console.error("❌ Public project API failed:", error)
+    console.error("❌ Error details:", error instanceof Error ? error.message : String(error))
+    console.error("❌ Error stack:", error instanceof Error ? error.stack : "No stack trace")
     return NextResponse.json(
-      { error: "Failed to load project" },
+      { 
+        error: "Failed to load project",
+        details: error instanceof Error ? error.message : String(error)
+      },
       { status: 500 }
     )
   }

@@ -231,6 +231,17 @@ export const usePortfolioHandlers = (
       console.log("📦 Updated repoOrder:", newOrder)
       return newOrder
     })
+    // Set deployedUrl if project has homepage or htmlUrl
+    if (project.homepage || project.htmlUrl) {
+      const deployedUrl = project.homepage || project.htmlUrl || ""
+      if (deployedUrl) {
+        setDeployedUrls(prev => ({
+          ...prev,
+          [project.id]: deployedUrl
+        }))
+        console.log("📦 Set deployedUrl for project:", project.id, deployedUrl)
+      }
+    }
   }
 
   const handleAddSocial = (social: Omit<Social, 'id'>) => {

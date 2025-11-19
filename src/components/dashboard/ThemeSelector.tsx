@@ -16,6 +16,7 @@ interface ThemeSelectorProps {
   backgroundPattern?: string | null
   setBackgroundColor?: (color: string | null) => void
   setBackgroundPattern?: (pattern: string | null) => void
+  onboardingMode?: boolean
 }
 
 // Background color options
@@ -56,7 +57,8 @@ export default function ThemeSelector({
   backgroundColor: backgroundColorProp,
   backgroundPattern: backgroundPatternProp,
   setBackgroundColor: setBackgroundColorProp,
-  setBackgroundPattern: setBackgroundPatternProp
+  setBackgroundPattern: setBackgroundPatternProp,
+  onboardingMode = false
 }: ThemeSelectorProps) {
   const [selectedTheme, setSelectedTheme] = useState<ThemeKey>(currentTheme)
   
@@ -221,67 +223,110 @@ export default function ThemeSelector({
   return (
     <div className="space-y-6">
       {/* Theme Layout Selection */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Choose Your Layout</h3>
-        </div>
-        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {Array.from(new Set<ThemeKey>([...selectableThemes, selectedTheme].filter((key): key is ThemeKey => key in THEMES))).map((themeKey) => {
-            const themeConfig = THEMES[themeKey]
-            const isSelected = selectedTheme === themeKey
-            const isSelectable = selectableThemes.includes(themeKey)
-            return (
-              <motion.div
-                key={themeKey}
-                whileHover={{ y: isSelectable ? -3 : 0 }}
-                transition={{ duration: 0.2 }}
-                className="flex flex-col items-center gap-2"
-              >
-                <Card
-                  className={`relative mx-auto w-full max-w-[240px] cursor-pointer overflow-hidden rounded-3xl border-0  transition-all ${
-                    !isSelectable ? 'cursor-not-allowed opacity-75' : ''
-                  }`}
-                  onClick={() => {
-                    if (!isSelectable) return
-                    handleThemeSelect(themeKey)
-                  }}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(event) => {
-                    if (!isSelectable) return
-                    if (event.key === 'Enter' || event.key === ' ') {
-                      event.preventDefault()
+      {!onboardingMode && (
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Choose Your Layout</h3>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {Array.from(new Set<ThemeKey>([...selectableThemes, selectedTheme].filter((key): key is ThemeKey => key in THEMES))).map((themeKey) => {
+              const themeConfig = THEMES[themeKey]
+              const isSelected = selectedTheme === themeKey
+              const isSelectable = selectableThemes.includes(themeKey)
+              return (
+                <motion.div
+                  key={themeKey}
+                  whileHover={{ y: isSelectable ? -3 : 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="flex flex-col items-center gap-2"
+                >
+                  <Card
+                    className={`relative mx-auto w-full max-w-[240px] cursor-pointer overflow-hidden rounded-3xl border-0  transition-all ${
+                      !isSelectable ? 'cursor-not-allowed opacity-75' : ''
+                    }`}
+                    onClick={() => {
+                      if (!isSelectable) return
                       handleThemeSelect(themeKey)
-                    }
-                  }}
-                >
-                  <CardContent className="p-0">
-                    {getThemePreview(themeConfig)}
-                  </CardContent>
-                </Card>
-                <Button
-                  variant={isSelected ? "default" : "outline"}
-                  className={`w-full max-w-[240px] rounded-full text-xs ${isSelected ? 'bg-orange-500 hover:bg-orange-600' : 'border-gray-200 text-gray-700 hover:bg-gray-100'}`}
-                  disabled={!isSelectable || isSelected}
-                >
-                  {isSelected ? (isSelectable ? "Selected" : "Active (Legacy)") : isSelectable ? "Use this layout" : "Not available"}
-                </Button>
-              </motion.div>
-            )
-          })}
+                    }}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(event) => {
+                      if (!isSelectable) return
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault()
+                        handleThemeSelect(themeKey)
+                      }
+                    }}
+                  >
+                    <CardContent className="p-0">
+                      {getThemePreview(themeConfig)}
+                    </CardContent>
+                  </Card>
+                  <Button
+                    variant={isSelected ? "default" : "outline"}
+                    className={`w-full max-w-[240px] rounded-full text-xs ${isSelected ? 'bg-orange-500 hover:bg-orange-600' : 'border-gray-200 text-gray-700 hover:bg-gray-100'}`}
+                    disabled={!isSelectable || isSelected}
+                  >
+                    {isSelected ? (isSelectable ? "Selected" : "Active (Legacy)") : isSelectable ? "Use this layout" : "Not available"}
+                  </Button>
+                </motion.div>
+              )
+            })}
+          </div>
         </div>
-      </div>
+      )}
+      
+      {/* Onboarding Theme Layout Selection - Simplified */}
+      {onboardingMode && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Choose Your Layout</h3>
+          </div>
+          <div className="grid gap-2 grid-cols-2">
+            {selectableThemes.map((themeKey) => {
+              const themeConfig = THEMES[themeKey]
+              const isSelected = selectedTheme === themeKey
+              return (
+                <motion.div
+                  key={themeKey}
+                  whileTap={{ scale: 0.98 }}
+                  className="flex flex-col items-center gap-2"
+                >
+                  <Card
+                    className={`relative w-full cursor-pointer overflow-hidden rounded-xl transition-all ${
+                      isSelected ? 'ring-2 ring-orange-500' : 'hover:ring-2 hover:ring-orange-300'
+                    }`}
+                    onClick={() => handleThemeSelect(themeKey)}
+                  >
+                    <CardContent className="p-0">
+                      {getThemePreview(themeConfig)}
+                    </CardContent>
+                  </Card>
+                  <Button
+                    variant={isSelected ? "default" : "outline"}
+                    size="sm"
+                    className={`w-full rounded-lg text-xs ${isSelected ? 'bg-orange-500 hover:bg-orange-600' : 'border-gray-200 text-gray-700 hover:bg-gray-100'}`}
+                    disabled={isSelected}
+                  >
+                    {isSelected ? "Selected" : "Use this layout"}
+                  </Button>
+                </motion.div>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Background Customization Section */}
       <div className="space-y-4">
         <div className="flex items-center gap-2">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Customize Background</h3>
+          <h3 className={`${onboardingMode ? 'text-sm' : 'text-lg'} font-semibold text-gray-900 dark:text-white`}>Customize Background</h3>
         </div>
         
         {/* Background Colors */}
         <div>
           <p className="text-sm font-medium text-gray-700 mb-3 dark:text-white">Background Colors</p>
-          <div className="grid grid-cols-4 md:grid-cols-8 gap-x-3 gap-y-6">
+          <div className={`grid ${onboardingMode ? 'grid-cols-5 gap-2' : 'grid-cols-4 md:grid-cols-8 gap-x-3 gap-y-6'}`}>
             {BACKGROUND_COLORS.map((color) => (
               <motion.div
                 key={color.name}
@@ -319,7 +364,7 @@ export default function ThemeSelector({
         {/* Background Patterns */}
         <div>
           <p className="text-sm font-medium text-gray-700 mb-3 dark:text-white">Background Patterns</p>
-          <div className="grid grid-cols-3 md:grid-cols-6 gap-x-3 gap-y-6">
+          <div className={`grid ${onboardingMode ? 'grid-cols-3 gap-2' : 'grid-cols-3 md:grid-cols-6 gap-x-3 gap-y-6'}`}>
             {BACKGROUND_PATTERNS.map((pattern) => (
               <motion.div
                 key={pattern.name}
@@ -359,19 +404,21 @@ export default function ThemeSelector({
       </div>
 
       {/* Info Note */}
-      <div className="bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-xl p-4">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center flex-shrink-0">
-            <Palette className="h-4 w-4 text-white" />
-          </div>
-          <div>
-            <h4 className="text-sm font-semibold text-orange-900">Customization</h4>
-            <p className="text-sm text-orange-700 mt-1">
-              Changes will be applied when you click "Publish 🔥"
-            </p>
+      {!onboardingMode && (
+        <div className="bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-xl p-4">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center flex-shrink-0">
+              <Palette className="h-4 w-4 text-white" />
+            </div>
+            <div>
+              <h4 className="text-sm font-semibold text-orange-900">Customization</h4>
+              <p className="text-sm text-orange-700 mt-1">
+                Changes will be applied when you click "Publish 🔥"
+              </p>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }

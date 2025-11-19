@@ -30,6 +30,12 @@ export type PublicProjectPageData = {
     company: string | null
     location: string | null
     projectCount: number
+    cvUrl: string | null
+    skills: Array<{
+      id: number
+      name: string
+      category: string | null
+    }>
   }
   stats: {
     totalViews: number
