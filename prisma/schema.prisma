@@ -327,3 +327,15 @@ enum ShiplogReactionType {
   FIXED
   SUPPORT
 }
+
+model Feedback {
+  id         Int      @id @default(autoincrement())
+  rating     String   // disappointed, okay, good, great, amazing
+  experience String?  @db.Text
+  features   String?  @db.Text
+  userId     Int?
+  userEmail  String?
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+}

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { PortfolioPreview } from "./PortfolioPreview"
+import { FeedbackModal } from "./FeedbackModal"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   User,
@@ -21,6 +22,7 @@ import {
   Menu,
   SlidersHorizontal,
   Sparkles,
+  MessageSquare,
 } from "lucide-react"
 import { DevFolioInlineLoader } from "@/components/ui/DevFolioLoader"
 import { cn } from "@/lib/utils"
@@ -59,6 +61,7 @@ export function DashboardLayout({
   const [isActionsSheetOpen, setIsActionsSheetOpen] = useState(false)
   const [isSidebarPinned, setIsSidebarPinned] = useState(true)
   const [isSidebarHovered, setIsSidebarHovered] = useState(false)
+  const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
 
   const isSidebarExpanded = isSidebarPinned || isSidebarHovered
@@ -231,6 +234,18 @@ export function DashboardLayout({
               </Button>
             </div>
             <div className="mt-auto border-t border-border/60 pt-3 space-y-2">
+              <Button
+                variant="ghost"
+                size="lg"
+                onClick={() => {
+                  setIsMobileNavOpen(false)
+                  setIsFeedbackModalOpen(true)
+                }}
+                className="h-10 w-full justify-start gap-2.5 rounded-lg text-sm font-medium"
+              >
+                <MessageSquare className="h-4 w-4" />
+                Feedback
+              </Button>
               <Button
                 variant="outline"
                 size="lg"
@@ -417,11 +432,27 @@ export function DashboardLayout({
           </nav>
 
           <motion.div
-            className="sticky bottom-0 z-10 pt-4 pb-5"
+            className="sticky bottom-0 z-10 space-y-2 pt-4 pb-5"
             initial={{ opacity: 1, y: 0 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0 }}
           >
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsFeedbackModalOpen(true)}
+              className={cn(
+                "rounded-lg transition-all duration-150",
+                isSidebarExpanded
+                  ? "h-9 w-full justify-start gap-2.5 px-3 text-[11px] font-medium tracking-wide text-muted-foreground hover:bg-blue-500/10 hover:text-blue-600 dark:hover:text-blue-400"
+                  : "h-9 w-9 justify-center text-[11px] text-muted-foreground hover:text-blue-600 dark:hover:text-blue-400"
+              )}
+            >
+              <MessageSquare className="h-4 w-4" />
+              {isSidebarExpanded && (
+                <span className="text-[11px] font-medium">Feedback</span>
+              )}
+            </Button>
             <Button
               variant="ghost"
               size="sm"
@@ -608,6 +639,11 @@ export function DashboardLayout({
         </div>
       </div>
       </div>
+
+      <FeedbackModal
+        isOpen={isFeedbackModalOpen}
+        onClose={() => setIsFeedbackModalOpen(false)}
+      />
     </>
   )
 }
