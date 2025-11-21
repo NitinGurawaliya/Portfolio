@@ -188,7 +188,7 @@ export default function UsersFeedPage() {
 function UserFeedCard({ user }: { user: FeedUser }) {
   return (
     <Card className="group relative w-full rounded-xl border border-border/25 bg-background p-4 sm:p-5 transition hover:border-border/50 hover:bg-background/95">
-      <Link href={user.portfolioUrl} className="block">
+      <Link href={user.portfolioUrl} className="block" target="_blank" rel="noopener noreferrer">
         <div className="flex items-start gap-3 sm:gap-4">
           {/* Profile Picture - Smaller */}
           <div className="flex-shrink-0">
