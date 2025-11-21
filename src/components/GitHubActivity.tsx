@@ -135,9 +135,64 @@ export function GitHubActivity({ username, theme }: GitHubActivityProps) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
-      </div>
+      <motion.section
+        className="relative"
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8 }}
+        viewport={{ once: true }}
+      >
+        <div className={`rounded-3xl p-6 sm:p-8 ${
+          theme === 'dark'
+            ? "border border-gray-800 bg-gray-900/70 shadow-2xl"
+            : "border border-gray-200 bg-white shadow-xl"
+        }`}>
+          <div className="mb-6 flex flex-col gap-2">
+            <div className={`h-6 w-32 rounded ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-200'}`} />
+            <div className={`h-4 w-48 rounded ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-200'}`} />
+          </div>
+          <div className="space-y-6">
+            <div className={`rounded-2xl border p-4 sm:p-5 ${
+              theme === 'dark' ? "border-gray-800 bg-gray-900/50" : "border-gray-200 bg-white"
+            }`}>
+              <div className="mb-4 flex items-center justify-between">
+                <div className={`h-5 w-40 rounded ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-200'}`} />
+              </div>
+              <div className="space-y-2">
+                <div className="flex gap-0.5">
+                  {Array.from({ length: 52 }).map((_, i) => (
+                    <div
+                      key={i}
+                      className={`h-2 w-2 rounded-sm ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-200'}`}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className={`rounded-2xl border p-4 sm:p-5 ${
+              theme === 'dark' ? "border-gray-800 bg-gray-900/40" : "border-gray-100 bg-gray-50"
+            }`}>
+              <div className="mb-4 flex items-center justify-between">
+                <div className={`h-5 w-48 rounded ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-200'}`} />
+              </div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className={`min-h-[120px] rounded-xl border p-3 sm:min-h-[140px] sm:p-4 ${
+                      theme === 'dark' ? "border-gray-800 bg-gray-900/50" : "border-gray-200 bg-white"
+                    }`}
+                  >
+                    <div className={`mb-2 h-4 w-24 rounded ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-200'}`} />
+                    <div className={`mb-3 h-3 w-full rounded ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-200'}`} />
+                    <div className={`h-3 w-2/3 rounded ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-200'}`} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </motion.section>
     )
   }
 

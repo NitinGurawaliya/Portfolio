@@ -138,17 +138,27 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const portfolioId = searchParams.get('portfolioId')
     const projectId = searchParams.get('projectId')
-    const days = parseInt(searchParams.get('days') || '7')
+    const daysParam = searchParams.get('days')
+    const getAllData = daysParam === 'all'
 
-    console.log('🚀 API GET: Starting request', { portfolioId, projectId, days })
+    console.log('🚀 API GET: Starting request', { portfolioId, projectId, days: daysParam, getAllData })
 
     if (!portfolioId) {
       return NextResponse.json({ error: 'Portfolio ID is required' }, { status: 400 })
     }
 
-    const startDate = new Date()
-    startDate.setDate(startDate.getDate() - days)
-    startDate.setHours(0, 0, 0, 0)
+    let startDate: Date
+    if (getAllData) {
+      // Get all data from project creation or last 2 years, whichever is earlier
+      startDate = new Date()
+      startDate.setFullYear(startDate.getFullYear() - 2)
+      startDate.setHours(0, 0, 0, 0)
+    } else {
+      const days = parseInt(daysParam || '7')
+      startDate = new Date()
+      startDate.setDate(startDate.getDate() - days)
+      startDate.setHours(0, 0, 0, 0)
+    }
 
     let whereClause: any = {
       portfolioId: parseInt(portfolioId),
@@ -156,6 +166,9 @@ export async function GET(request: NextRequest) {
         gte: startDate
       }
     }
+
+    // Get current project name for matching - needed for data extraction
+    let currentProjectName: string | null = null
 
     if (projectId) {
       try {
@@ -248,42 +261,110 @@ export async function GET(request: NextRequest) {
       viewsByDate[dateKey][view.projectName] = view.views
     })
 
-    // Create chart data
-    const chartData = []
-    for (let i = 0; i < days; i++) {
-      const date = new Date()
-      date.setDate(date.getDate() - (days - 1 - i))
-      const dateKey = date.toISOString().split('T')[0]
+    // Get all unique project names from data
+    const projectNames = new Set<string>()
+    filteredViews.forEach(view => {
+      projectNames.add(view.projectName)
+    })
+
+    // Use the first name as the primary key (current or most recent)
+    // If we have currentProjectName, use it; otherwise use the first name from data
+    const primaryProjectName = currentProjectName || Array.from(projectNames)[0] || ''
+
+    let chartData: any[] = []
+
+    if (getAllData) {
+      // Summarize by month, skip months with no views
+      const viewsByMonth: { [key: string]: { [key: string]: number } } = {}
       
-      const dayData: any = {
-        date: dateKey,
-        day: date.toLocaleDateString('en-US', { weekday: 'short' })
-      }
-
-      // Get all unique project names
-      const projectNames = new Set<string>()
       filteredViews.forEach(view => {
-        projectNames.add(view.projectName)
+        const date = new Date(view.date)
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+        if (!viewsByMonth[monthKey]) {
+          viewsByMonth[monthKey] = {}
+        }
+        
+        // Aggregate all project names (in case name changed over time)
+        const viewProjectName = view.projectName
+        if (!viewsByMonth[monthKey][viewProjectName]) {
+          viewsByMonth[monthKey][viewProjectName] = 0
+        }
+        viewsByMonth[monthKey][viewProjectName] += view.views
+        
+        // Also add to primary name if different (for name changes)
+        // This ensures data is accessible by current project name even if it changed
+        if (primaryProjectName && viewProjectName !== primaryProjectName) {
+          if (!viewsByMonth[monthKey][primaryProjectName]) {
+            viewsByMonth[monthKey][primaryProjectName] = 0
+          }
+          viewsByMonth[monthKey][primaryProjectName] += view.views
+        }
       })
 
-      // Add views for each project
-      projectNames.forEach(projectName => {
-        dayData[projectName] = viewsByDate[dateKey]?.[projectName] || 0
-      })
+      // Convert to chart data, only include months with views
+      const sortedMonths = Object.keys(viewsByMonth).sort()
+      
+      sortedMonths.forEach(monthKey => {
+        const [year, month] = monthKey.split('-')
+        const date = new Date(parseInt(year), parseInt(month) - 1, 1)
+        
+        const monthData: any = {
+          date: monthKey,
+          month: date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+          monthShort: date.toLocaleDateString('en-US', { month: 'short' })
+        }
 
-      chartData.push(dayData)
+        // Use primary project name for consistent data access
+        if (primaryProjectName) {
+          monthData[primaryProjectName] = viewsByMonth[monthKey]?.[primaryProjectName] || 0
+        }
+
+        // Only add if there are views
+        const hasViews = primaryProjectName && (viewsByMonth[monthKey]?.[primaryProjectName] || 0) > 0
+        if (hasViews) {
+          chartData.push(monthData)
+        }
+      })
+    } else {
+      // Original daily data logic
+      const days = parseInt(daysParam || '7')
+      for (let i = 0; i < days; i++) {
+        const date = new Date()
+        date.setDate(date.getDate() - (days - 1 - i))
+        const dateKey = date.toISOString().split('T')[0]
+        
+        const dayData: any = {
+          date: dateKey,
+          day: date.toLocaleDateString('en-US', { weekday: 'short' })
+        }
+
+        // Use primary project name for consistent data access
+        if (primaryProjectName) {
+          dayData[primaryProjectName] = viewsByDate[dateKey]?.[primaryProjectName] || 0
+        }
+
+        chartData.push(dayData)
+      }
     }
-
+    
     const totalViews = filteredViews.reduce((sum, view) => sum + view.views, 0)
     
-    console.log('✅ API GET: Returning response with', chartData.length, 'days,', totalViews, 'total views')
-
-    return NextResponse.json({
+    // Add metadata about which project name to use
+    const responseData: any = {
       success: true, 
       data: chartData,
       totalViews,
       validProjectsCount: validProjectIds.size
-    })
+    }
+    
+    if (primaryProjectName) {
+      responseData.projectName = primaryProjectName
+    }
+    
+    console.log('✅ API GET: Returning response with', chartData.length, 'data points,', totalViews, 'total views')
+    console.log('✅ API GET: Primary project name:', primaryProjectName)
+
+    return NextResponse.json(responseData)
   } catch (error) {
     console.error('❌ API GET: Error:', error instanceof Error ? error.message : 'Unknown error')
     return NextResponse.json({ 

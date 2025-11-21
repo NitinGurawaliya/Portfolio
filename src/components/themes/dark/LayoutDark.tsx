@@ -487,44 +487,38 @@ export default function LayoutDark({ theme, portfolio }: LayoutDarkProps) {
                         whileHover={{ scale: 1.02, y: -4 }}
                       >
                           <div className={`relative bg-transparent border border-orange-500/30 rounded-lg p-4 sm:p-4 hover:border-orange-500/40 transition-all duration-300 flex flex-col w-full ${repo.technologies ? 'h-full min-h-[190px]' : ''}`}>
-                            {/* Top Right: Status + Users */}
-                            {(repo.projectStatus || typeof repo.projectUsers === "number") && (
-                              <div className="absolute top-4 right-4 sm:top-4 sm:right-4 flex items-center gap-1.5 z-10">
-                                {repo.projectStatus && (
-                                  <span className="inline-flex items-center text-[10px] font-semibold rounded-full px-2 py-0.5 bg-emerald-500/10 text-emerald-200 border border-emerald-400/30 whitespace-nowrap">
-                                    <span className="mr-1">●</span>
-                                    {repo.projectStatus}
-                                  </span>
-                                )}
+                            {/* Top Row: Logo, Users, Status */}
+                            <div className="flex items-center justify-between mb-3">
+                              <ProjectIcon
+                                favicon={repo.repository.favicon}
+                                logo={repo.repository.logo}
+                                title={repo.customName || repo.repository.name}
+                                size="sm"
+                              />
+                              <div className="flex items-center gap-1.5">
                                 {typeof repo.projectUsers === "number" && (
                                   <span className="inline-flex items-center text-[10px] font-semibold rounded-full px-2 py-0.5 bg-blue-500/10 text-blue-300 border border-blue-500/30 whitespace-nowrap">
                                     <UsersIcon className="h-2.5 w-2.5 mr-1 flex-shrink-0" />
                                     {repo.projectUsers.toLocaleString()}
                                   </span>
                                 )}
-                              </div>
-                            )}
-
-                            {/* Header: Icon/Name */}
-                            <div className={`flex items-start mb-2 ${(repo.projectStatus && typeof repo.projectUsers === "number") ? "pr-32" : (repo.projectStatus || typeof repo.projectUsers === "number") ? "pr-28" : "pr-3"}`}>
-                              <div className="flex-1 min-w-0">
-                                <div className="mb-2">
-                                  <ProjectIcon
-                                    favicon={repo.repository.favicon}
-                                    logo={repo.repository.logo}
-                                    title={repo.customName || repo.repository.name}
-                                    size="sm"
-                                  />
-                                </div>
-                                <h3 className="text-base sm:text-lg font-semibold text-white group-hover:text-orange-300 transition-colors duration-300 break-words mb-1.5">
-                                  {repo.customName || repo.repository.name}
-                                </h3>
+                                {repo.projectStatus && (
+                                  <span className="inline-flex items-center text-[10px] font-semibold rounded-full px-2 py-0.5 bg-emerald-500/10 text-emerald-200 border border-emerald-400/30 whitespace-nowrap">
+                                    <span className="mr-1">●</span>
+                                    {repo.projectStatus}
+                                  </span>
+                                )}
                               </div>
                             </div>
 
+                            {/* Name */}
+                            <h3 className="text-base sm:text-lg font-semibold text-white group-hover:text-orange-300 transition-colors duration-300 break-words mb-2">
+                              {repo.customName || repo.repository.name}
+                            </h3>
+
                             {/* Description */}
                             {descriptionText && (
-                              <p className="text-gray-400 text-sm leading-relaxed mb-2 break-words line-clamp-2">
+                              <p className="text-gray-400 text-sm leading-relaxed mb-3 break-words line-clamp-2">
                                 {descriptionText}
                               </p>
                             )}
@@ -542,7 +536,7 @@ export default function LayoutDark({ theme, portfolio }: LayoutDarkProps) {
 
                             {/* Tech Stack */}
                             {repo.technologies && (
-                              <div className="mb-3">
+                              <div className="mb-2">
                                 <div className="flex items-center gap-1 mb-2">
                                   <Code2 className="h-3 w-3 text-white/50" />
                                   <span className="text-[9px] font-medium text-white/50 uppercase tracking-wide">Tech Stack</span>

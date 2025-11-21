@@ -113,6 +113,36 @@ export default function PublicPortfolioPage() {
     fetchPortfolio()
   }, [username])
 
+  // Prefetch project slug pages in background
+  useEffect(() => {
+    if (!portfolio?.repositories || portfolio.repositories.length === 0) return
+
+    const prefetchProjectPages = async () => {
+      const visibleRepos = portfolio.repositories.filter((r: any) => r.isVisible)
+      
+      // Prefetch first 5 project pages in background
+      for (const repo of visibleRepos.slice(0, 5)) {
+        if (repo.repository?.name && username) {
+          try {
+            // Prefetch the project page data
+            fetch(`/api/projects/public/${username}/${encodeURIComponent(repo.repository.name)}`, {
+              method: 'GET',
+              priority: 'low' as any
+            }).catch(() => {
+              // Ignore errors in prefetch
+            })
+          } catch (e) {
+            // Ignore errors
+          }
+        }
+      }
+    }
+
+    // Delay prefetch to not block initial load
+    const timer = setTimeout(prefetchProjectPages, 2000)
+    return () => clearTimeout(timer)
+  }, [portfolio, username])
+
   useEffect(() => {
     if (typeof window !== "undefined") {
       setShareUrl(window.location.href)

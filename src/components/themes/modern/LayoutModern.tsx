@@ -438,42 +438,38 @@ export default function LayoutModern({ theme, portfolio }: LayoutModernProps) {
                             transition={{ duration: 0.4, delay: index * 0.05 }}
                             viewport={{ once: true }}
                           >
-                              {/* Top Right: Status + Users */}
-                              {(repo.projectStatus || typeof repo.projectUsers === "number") && (
-                                <div className="absolute top-3 right-3 flex items-center gap-1.5 z-10">
-                                  {repo.projectStatus && (
-                                    <span className="inline-flex items-center text-[10px] font-semibold rounded-sm px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap">
-                                      <span className="mr-1">●</span>
-                                      {repo.projectStatus}
-                                    </span>
-                                  )}
+                              {/* Top Row: Logo, Users, Status */}
+                              <div className="flex items-center justify-between mb-3">
+                                <ProjectIcon
+                                  favicon={repo.repository.favicon}
+                                  logo={repo.repository.logo}
+                                  title={repo.customName || repo.repository.name}
+                                  size="sm"
+                                />
+                                <div className="flex items-center gap-1.5">
                                   {typeof repo.projectUsers === "number" && (
                                     <span className="inline-flex items-center text-[10px] font-semibold rounded-sm px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 whitespace-nowrap">
                                       <UsersIcon className="h-2.5 w-2.5 mr-1 flex-shrink-0" />
                                       {repo.projectUsers.toLocaleString()}
                                     </span>
                                   )}
-                                </div>
-                              )}
-
-                              {/* Header: Icon/Name */}
-                              <div className={`flex items-start gap-2 xs:gap-3 mb-3 ${(repo.projectStatus && typeof repo.projectUsers === "number") ? "pr-32" : (repo.projectStatus || typeof repo.projectUsers === "number") ? "pr-28" : "pr-3"}`}>
-                                <div className="flex-1 min-w-0 space-y-1.5">
-                                  <ProjectIcon
-                                    favicon={repo.repository.favicon}
-                                    logo={repo.repository.logo}
-                                    title={repo.customName || repo.repository.name}
-                                    size="sm"
-                                  />
-                                  <h3 className="text-sm xs:text-base font-semibold text-neutral-900 break-words line-clamp-2">
-                                    {repo.customName || repo.repository.name}
-                                  </h3>
+                                  {repo.projectStatus && (
+                                    <span className="inline-flex items-center text-[10px] font-semibold rounded-sm px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap">
+                                      <span className="mr-1">●</span>
+                                      {repo.projectStatus}
+                                    </span>
+                                  )}
                                 </div>
                               </div>
 
+                              {/* Name */}
+                              <h3 className="text-sm xs:text-base font-semibold text-neutral-900 break-words mb-2 line-clamp-2">
+                                {repo.customName || repo.repository.name}
+                              </h3>
+
                               {/* Description */}
                               {descriptionText && (
-                                <p className="text-xs text-neutral-600 leading-relaxed mb-2 line-clamp-2">
+                                <p className="text-xs text-neutral-600 leading-relaxed mb-3 line-clamp-2">
                                   {descriptionText}
                                 </p>
                               )}
@@ -491,7 +487,7 @@ export default function LayoutModern({ theme, portfolio }: LayoutModernProps) {
 
                               {/* Tech Stack */}
                               {repo.technologies && (
-                                <div className="mt-2 mb-2">
+                                <div className="mb-2">
                                   <div className="flex items-center gap-1 mb-1.5">
                                     <Code2 className="h-3 w-3 text-neutral-500" />
                                     <span className="text-[9px] font-medium text-neutral-500 uppercase tracking-wide">Tech Stack</span>

@@ -813,7 +813,7 @@ export function ReposSection({
               </motion.div>
             </motion.div> */}
             
-              <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 xl:grid-cols-3 md:gap-3">
+              <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 md:gap-3">
               <AnimatePresence mode="popLayout">
                   {selectedRepositories.map((repo, index) => {
                   const isEditing = editingRepo === repo.id
@@ -843,10 +843,11 @@ export function ReposSection({
                       layoutId={`repo-${repo.id}`}
                     >
                       <Card 
-                        className="hover:border-gray-600 transition-all duration-300 group h-[240px] relative bg-background"
+                        className="hover:border-gray-600 transition-all duration-300 group h-[350px] relative bg-background"
+                        style={{ overflow: 'visible' }}
                       >
-                        <CardContent className="p-0 h-full">
-                          <div className="flex flex-col h-full px-3 py-2 relative">
+                        <CardContent className="p-0 h-full" style={{ overflow: 'visible' }}>
+                          <div className="flex flex-col h-full px-3 py-2.5 relative" style={{ overflow: 'visible' }}>
 
                             {/* Delete Button - Appears on hover */}
                               <motion.div
@@ -935,16 +936,46 @@ export function ReposSection({
                               </div>
                             </div>
 
+                            {/* Categories and Metrics - Below title/desc */}
+                            {(categoryValue || hasRevenue || hasMrr || hasUsers) && (
+                              <div className="mt-2 mb-2 flex flex-wrap items-center gap-1.5">
+                                {categoryValue && (
+                                  <div className="flex flex-wrap gap-1">
+                                    {categoryValue.split(',').map((cat: string, idx: number) => (
+                                      <span key={idx} className="inline-flex items-center text-[9px] leading-none font-medium rounded px-1.5 py-0.5 bg-gray-100 text-gray-700 border border-gray-200">
+                                        {cat.trim()}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
+                                {hasRevenue && (
+                                  <span className="inline-flex items-center text-[9px] leading-none font-medium rounded px-1.5 py-0.5 bg-blue-50 text-blue-700 border border-blue-200">
+                                    ARR: ${(revenueValue / 1000).toFixed(1)}k
+                                  </span>
+                                )}
+                                {hasMrr && (
+                                  <span className="inline-flex items-center text-[9px] leading-none font-medium rounded px-1.5 py-0.5 bg-purple-50 text-purple-700 border border-purple-200">
+                                    MRR: ${(mrrValue / 1000).toFixed(1)}k
+                                  </span>
+                                )}
+                                {hasUsers && (
+                                  <span className="inline-flex items-center text-[9px] leading-none font-medium rounded px-1.5 py-0.5 bg-green-50 text-green-700 border border-green-200">
+                                    Users: {usersValue >= 1000 ? `${(usersValue / 1000).toFixed(1)}k` : usersValue}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+
                             {/* Project Views Chart */}
                             {portfolioId ? (
-                              <div className="mt-1 flex-1 flex flex-col">
-                              <div className="flex-1 overflow-hidden">
+                              <div className="mt-auto flex-shrink-0" style={{ height: '180px', minHeight: '180px', overflow: 'visible' }}>
+                              <div className="w-full" style={{ overflow: 'visible' }}>
                                   <IndividualProjectChart 
                                     portfolioId={portfolioId}
                                     projectId={repo.portfolioRepositoryId || repo.id}
-                                    projectName={repo.repository.name}
+                                    projectName={customName || repo.repository.name}
                                     size="sm"
-                                    className="h-full w-full origin-top scale-[0.92]"
+                                    className="w-full"
                                   />
                                 </div>
                               </div>

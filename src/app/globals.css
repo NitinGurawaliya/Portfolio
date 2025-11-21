@@ -280,3 +280,12 @@ html {
     transform: none;
   }
 }
+
+/* Fix recharts X-axis clipping */
+.recharts-wrapper {
+  overflow: visible !important;
+}
+
+.recharts-surface {
+  overflow: visible !important;
+}
