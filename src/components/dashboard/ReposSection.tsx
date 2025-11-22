@@ -208,6 +208,7 @@ export function ReposSection({
   } | null>(null)
   const [logoOverrides, setLogoOverrides] = useState<Record<number, string>>(initialLogoOverrides || {})
   const [deletingRepoIds, setDeletingRepoIds] = useState<Record<number, boolean>>({})
+  const [chartPeriods, setChartPeriods] = useState<Record<number, 'week' | 'month' | 'year'>>({})
 
   const updateCategory = (repoId: number, value: string | null) => {
     setProjectCategoriesState(prev => {
@@ -813,7 +814,7 @@ export function ReposSection({
               </motion.div>
             </motion.div> */}
             
-              <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 md:gap-3">
+              <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3 md:gap-3">
               <AnimatePresence mode="popLayout">
                   {selectedRepositories.map((repo, index) => {
                   const isEditing = editingRepo === repo.id
@@ -969,13 +970,53 @@ export function ReposSection({
                             {/* Project Views Chart */}
                             {portfolioId ? (
                               <div className="mt-auto flex-shrink-0" style={{ height: '180px', minHeight: '180px', overflow: 'visible' }}>
-                              <div className="w-full" style={{ overflow: 'visible' }}>
+                                {/* Period Toggle Buttons */}
+                                <div className="flex items-center justify-end gap-1 mb-1">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setChartPeriods(prev => ({ ...prev, [repo.id]: 'week' }))}
+                                    className={`h-6 px-2 text-[10px] ${
+                                      (chartPeriods[repo.id] || 'week') === 'week'
+                                        ? 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+                                        : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                                    }`}
+                                  >
+                                    1W
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setChartPeriods(prev => ({ ...prev, [repo.id]: 'month' }))}
+                                    className={`h-6 px-2 text-[10px] ${
+                                      (chartPeriods[repo.id] || 'week') === 'month'
+                                        ? 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+                                        : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                                    }`}
+                                  >
+                                    1M
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setChartPeriods(prev => ({ ...prev, [repo.id]: 'year' }))}
+                                    className={`h-6 px-2 text-[10px] ${
+                                      (chartPeriods[repo.id] || 'week') === 'year'
+                                        ? 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+                                        : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                                    }`}
+                                  >
+                                    1Y
+                                  </Button>
+                                </div>
+                                <div className="w-full" style={{ overflow: 'visible' }}>
                                   <IndividualProjectChart 
                                     portfolioId={portfolioId}
                                     projectId={repo.portfolioRepositoryId || repo.id}
                                     projectName={customName || repo.repository.name}
                                     size="sm"
                                     className="w-full"
+                                    period={chartPeriods[repo.id] || 'week'}
                                   />
                                 </div>
                               </div>

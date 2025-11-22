@@ -10,6 +10,7 @@ interface IndividualProjectChartProps {
   projectName: string
   className?: string
   size?: 'sm' | 'md' | 'lg'
+  period?: 'week' | 'month' | 'year'
 }
 
 // Subtle, aesthetic colors for different projects
@@ -32,7 +33,8 @@ export function IndividualProjectChart({
   projectId, 
   projectName,
   className = "",
-  size = 'sm'
+  size = 'sm',
+  period = 'week'
 }: IndividualProjectChartProps) {
   // Dynamic Y-axis max based on data - ensure it's visible
   const getYAxisMax = (data: any[]) => {
@@ -63,10 +65,21 @@ export function IndividualProjectChart({
           return
         }
 
+        // Determine days parameter based on period
+        let daysParam: string
+        if (period === 'week') {
+          daysParam = '7'
+        } else if (period === 'month') {
+          daysParam = '30'
+        } else {
+          // year - use 'all' to get monthly summary
+          daysParam = 'all'
+        }
+
         const params = new URLSearchParams({
           portfolioId: portfolioId.toString(),
           projectId: projectId.toString(),
-          days: 'all' // Get all data, will be summarized by month
+          days: daysParam
         })
 
         const apiUrl = `/api/analytics/track-project-click?${params}`
@@ -162,7 +175,7 @@ export function IndividualProjectChart({
     }
 
     fetchData()
-  }, [portfolioId, projectId, projectName])
+  }, [portfolioId, projectId, projectName, period])
 
   const getSizeClasses = () => {
     switch (size) {
@@ -219,8 +232,35 @@ export function IndividualProjectChart({
     const views = item[dataProjectName] !== undefined 
       ? item[dataProjectName] 
       : (item[projectName] !== undefined ? item[projectName] : (item.views || 0))
+    
+    // Format label based on period
+    let label = ''
+    if (period === 'year') {
+      // For year, use month format
+      label = item.month || item.monthShort || item.date || ''
+    } else if (period === 'month') {
+      // For month, show just day number for cleaner look
+      if (item.date) {
+        const date = new Date(item.date)
+        label = date.getDate().toString() // Just show day number (1, 2, 3, etc.)
+      } else {
+        label = item.date || ''
+      }
+    } else {
+      // For week, use day format or date
+      if (item.day) {
+        label = item.day
+      } else if (item.date) {
+        // Format date as "MMM DD" for daily view
+        const date = new Date(item.date)
+        label = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+      } else {
+        label = item.date || ''
+      }
+    }
+    
     return {
-      label: item.month || item.monthShort || item.day || item.date || '',
+      label,
       date: item.date || '',
       views: Number(views) || 0
     }
@@ -276,12 +316,12 @@ export function IndividualProjectChart({
           </div>
         )}
         
-        <div className="flex-1 w-full" style={{ overflow: 'visible', position: 'relative', paddingBottom: '15px' }}>
+        <div className="flex-1 w-full" style={{ overflow: 'visible', position: 'relative', paddingBottom: period === 'year' ? '20px' : '15px' }}>
           <div style={{ width: '100%', height: '170px', overflow: 'visible', position: 'relative' }}>
             <ResponsiveContainer width="100%" height={170} style={{ overflow: 'visible' }}>
             <AreaChart 
               data={displayData} 
-              margin={{ top: 5, right: 8, left: 8, bottom: 45 }}
+              margin={{ top: 5, right: 8, left: 8, bottom: period === 'year' ? 60 : 45 }}
             >
             <defs>
               {/* More visible gradient for area under line */}
@@ -296,12 +336,12 @@ export function IndividualProjectChart({
               axisLine={true}
               tickLine={true}
               mirror={false}
-              tick={{ fontSize: 9, fill: '#374151', fontWeight: 500 }}
-              tickMargin={10}
-              height={40}
-              interval={0}
-              angle={displayData.length > 6 ? -35 : 0}
-              textAnchor={displayData.length > 6 ? "end" : "middle"}
+              tick={{ fontSize: 9, fill: '#374151', fontWeight: 500, dy: period === 'year' ? 12 : 4 }}
+              tickMargin={period === 'year' ? 12 : 10}
+              height={period === 'year' ? 50 : 40}
+              interval={period === 'year' ? 'preserveStartEnd' : period === 'month' ? 2 : 0}
+              angle={period === 'year' ? -35 : 0}
+              textAnchor={period === 'year' ? "end" : "middle"}
               hide={displayData.length === 3 && projectData.length === 1}
               stroke="#9ca3af"
               strokeWidth={1.5}

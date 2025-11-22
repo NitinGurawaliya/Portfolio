@@ -148,16 +148,20 @@ export async function GET(request: NextRequest) {
     }
 
     let startDate: Date
+    let shouldSummarizeByMonth = false
     if (getAllData) {
-      // Get all data from project creation or last 2 years, whichever is earlier
+      // For 'all', get last 12 months for year view
       startDate = new Date()
-      startDate.setFullYear(startDate.getFullYear() - 2)
+      startDate.setMonth(startDate.getMonth() - 12)
+      startDate.setDate(1) // Start from first day of that month
       startDate.setHours(0, 0, 0, 0)
+      shouldSummarizeByMonth = true
     } else {
       const days = parseInt(daysParam || '7')
       startDate = new Date()
       startDate.setDate(startDate.getDate() - days)
       startDate.setHours(0, 0, 0, 0)
+      shouldSummarizeByMonth = false
     }
 
     let whereClause: any = {
@@ -273,7 +277,7 @@ export async function GET(request: NextRequest) {
 
     let chartData: any[] = []
 
-    if (getAllData) {
+    if (shouldSummarizeByMonth) {
       // Summarize by month, skip months with no views
       const viewsByMonth: { [key: string]: { [key: string]: number } } = {}
       
