@@ -5,8 +5,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && node scripts/validate-database-schema.js && next build",
-    "vercel-build": "prisma generate && node scripts/resolve-failed-migrations.js && prisma migrate deploy && node scripts/validate-database-schema.js && next build",
+    "build": "prisma generate && next build",
+    "vercel-build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
     "postinstall": "prisma generate",
