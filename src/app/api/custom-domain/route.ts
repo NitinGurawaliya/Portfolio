@@ -198,7 +198,18 @@ export async function POST(req: NextRequest) {
     // Generate verification token
     const verificationToken = generateVerificationToken();
 
-    // Create custom domain record
+    // IMPORTANT: Add domain to Vercel FIRST to get the correct IP
+    // Vercel provides the IP address that should be used for A record
+    console.log(`[Custom Domain] Adding domain to Vercel first to get DNS configuration: ${normalizedDomain}`);
+    const { addDomainToVercel, getVercelRecommendedIP } = await import('@/lib/vercel-api');
+    const vercelResult = await addDomainToVercel(normalizedDomain, portfolioId.toString());
+
+    // Get recommended IP from Vercel (or fallback to env var)
+    const ipResult = await getVercelRecommendedIP(portfolioId.toString());
+    const vercelIP = ipResult.ip || null;
+    console.log(`[Custom Domain] Vercel IP for domain: ${vercelIP || 'using fallback'}`);
+
+    // Create custom domain record with Vercel IP
     const customDomain = await prisma.customDomain.create({
       data: {
         domain: normalizedDomain,
@@ -206,11 +217,12 @@ export async function POST(req: NextRequest) {
         userId: userIdInt,
         verificationToken: verificationToken,
         verified: false,
+        vercelIPAddress: vercelIP, // Store IP from Vercel
       },
     });
 
-    // Generate DNS records
-      const dnsRecords = generateDNSRecords(normalizedDomain, verificationToken);
+    // Generate DNS records using the IP from Vercel (or fallback)
+    const dnsRecords = await generateDNSRecords(normalizedDomain, verificationToken, vercelIP);
 
       if (userEmail) {
         try {

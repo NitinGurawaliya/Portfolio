@@ -115,9 +115,11 @@ export async function GET(req: NextRequest) {
         });
       }
 
-      const dnsRecords = generateDNSRecords(
+      // Use stored Vercel IP if available, otherwise fallback
+      const dnsRecords = await generateDNSRecords(
         customDomain.domain,
-        customDomain.verificationToken
+        customDomain.verificationToken,
+        customDomain.vercelIPAddress || null
       );
 
       return NextResponse.json({

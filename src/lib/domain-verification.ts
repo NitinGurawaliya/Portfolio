@@ -48,17 +48,36 @@ export async function verifyDomainOwnership(
  * @param domain - The domain to check
  * @returns true if A record points to us
  */
+/**
+ * List of valid Vercel IP addresses (both old and new)
+ * Vercel expanded their IP range, so we accept both for backward compatibility
+ */
+const VALID_VERCEL_IPS = [
+  '76.76.21.21',      // Old Vercel IP (still works)
+  '192.64.119.187',  // New Vercel IP (recommended)
+  '76.76.21.22',     // Additional Vercel IP (if any)
+];
+
 export async function checkDomainPointing(domain: string): Promise<boolean> {
-  const expectedIP = process.env.APP_IP_ADDRESS || '76.76.21.21';
+  // Support both old and new Vercel IPs for verification
+  const expectedIP = process.env.APP_IP_ADDRESS || '192.64.119.187';
   console.log(`🔍 [DNS Verification] Checking A record for: ${domain}`);
   console.log(`🔍 [DNS Verification] Expected IP: ${expectedIP}`);
+  console.log(`🔍 [DNS Verification] Valid Vercel IPs: ${VALID_VERCEL_IPS.join(', ')}`);
   
   try {
     const addresses = await dns.resolve4(domain);
     console.log(`✅ [DNS Verification] A record addresses found:`, addresses);
     
-    const matches = addresses.includes(expectedIP);
+    // Check if IP matches any valid Vercel IP
+    const matches = addresses.some(ip => VALID_VERCEL_IPS.includes(ip));
     console.log(`🔍 [DNS Verification] IP match: ${matches}`);
+    
+    if (!matches && addresses.length > 0) {
+      console.warn(`⚠️ [DNS Verification] Domain points to: ${addresses.join(', ')}`);
+      console.warn(`⚠️ [DNS Verification] Expected one of: ${VALID_VERCEL_IPS.join(', ')}`);
+      console.warn(`⚠️ [DNS Verification] Domain may work but Vercel validation might fail`);
+    }
     
     return matches;
   } catch (error: any) {

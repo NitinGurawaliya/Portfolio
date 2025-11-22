@@ -323,6 +323,10 @@ model CustomDomain {
   verified          Boolean @default(false)
   verificationToken String // For TXT record
 
+  // DNS Configuration (from Vercel)
+  vercelIPAddress   String? // IP address provided by Vercel for A record
+  vercelCnameTarget String? // CNAME target provided by Vercel (if any)
+
   // Metadata
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
