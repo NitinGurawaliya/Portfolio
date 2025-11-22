@@ -41,11 +41,27 @@ export function validateDomain(domain: string): boolean {
 /**
  * Normalize domain name
  * - Convert to lowercase
+ * - Remove protocol (http://, https://)
+ * - Remove trailing slashes and paths
  * - Remove www prefix
  * - Trim whitespace
  */
 export function normalizeDomain(domain: string): string {
-  return domain.toLowerCase().replace(/^www\./, '').trim();
+  let normalized = domain.toLowerCase().trim();
+  
+  // Remove protocol (http://, https://)
+  normalized = normalized.replace(/^https?:\/\//, '');
+  
+  // Remove trailing slashes and paths
+  normalized = normalized.split('/')[0];
+  
+  // Remove www prefix
+  normalized = normalized.replace(/^www\./, '');
+  
+  // Remove trailing dot if present
+  normalized = normalized.replace(/\.$/, '');
+  
+  return normalized.trim();
 }
 
 /**

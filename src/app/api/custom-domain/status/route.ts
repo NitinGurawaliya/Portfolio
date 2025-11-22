@@ -81,13 +81,29 @@ export async function GET(req: NextRequest) {
     }
 
     // Get custom domain for this portfolio
-      const portfolioIdInt = parseInt(portfolioId);
+    const portfolioIdInt = parseInt(portfolioId);
 
-      const customDomain = await prisma.customDomain.findUnique({
+    let customDomain;
+    try {
+      customDomain = await prisma.customDomain.findUnique({
         where: {
           portfolioId: portfolioIdInt,
         },
       });
+    } catch (error: any) {
+      // Handle case where Prisma client hasn't been regenerated
+      if (error?.message?.includes('customDomain') || error?.message?.includes('Cannot read properties of undefined')) {
+        console.error('CustomDomain model not found in Prisma client. Please stop the dev server and run: npx prisma generate');
+        return NextResponse.json({
+          success: true,
+          hasDomain: false,
+          domain: null,
+          verified: false,
+          dnsRecords: null,
+        });
+      }
+      throw error;
+    }
 
       if (!customDomain) {
         return NextResponse.json({

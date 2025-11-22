@@ -23,6 +23,7 @@ import { publishPortfolio } from "@/lib/services/portfolio-service"
 import { playNotificationSound } from "@/lib/portfolio-utils"
 import { successToastConfig, errorToastConfig } from "@/lib/utils"
 import { loadFeedCache, saveFeedCache } from "@/lib/feed-cache"
+import type { Skill, Social, Repository } from "@/interface"
 
 
 export default function DashboardPage() {
@@ -363,30 +364,37 @@ export default function DashboardPage() {
     if (loading || !user?.id) return
     if (summaryFetchTriggeredRef.current) return
 
-  const loadExistingPortfolioData = async (username: string, initialPortfolioData?: any) => {
-    console.log("🚀 loadExistingPortfolioData called with:", { username, initialPortfolioData })
-    try {
-      const response = await fetch(`/api/portfolio/publish?username=${username}`)
-      console.log("📡 Portfolio fetch response:", response.status, response.ok)
-      
-      if (response.ok) {
-        const result = await response.json()
-        const portfolio = result.portfolio
-        console.log("🔍 Found existing portfolio:", !!portfolio)
+    const loadExistingPortfolioData = async (username: string, initialPortfolioData?: any) => {
+      console.log("🚀 loadExistingPortfolioData called with:", { username, initialPortfolioData })
+      try {
+        const response = await fetch(`/api/portfolio/publish?username=${username}`)
+        console.log("📡 Portfolio fetch response:", response.status, response.ok)
         
-        if (portfolio) {
-          // Set portfolio ID and published status
-          console.log('📋 Loading portfolio:', { id: portfolio.id, isPublished: portfolio.isPublished })
-          setPortfolioId(portfolio.id)
-          setIsPortfolioPublished(portfolio.isPublished)
-          // Update portfolio data with saved data
-          setPortfolioData({
-            displayName: portfolio.displayName || "",
-            jobTitle: portfolio.jobTitle || "",
-            bio: portfolio.bio || "",
-            profilePic: portfolio.profilePic || "",
-            customUsername: portfolio.customUsername || "",
-          })
+        if (response.ok) {
+          const result = await response.json()
+          const portfolio = result.portfolio
+          console.log("🔍 Found existing portfolio:", !!portfolio)
+          
+          if (portfolio) {
+            // Set portfolio ID and published status
+            console.log('📋 Loading portfolio:', { id: portfolio.id, isPublished: portfolio.isPublished })
+            setPortfolioId(portfolio.id)
+            setIsPortfolioPublished(portfolio.isPublished)
+            // Update portfolio data with saved data
+            setPortfolioData({
+              displayName: portfolio.displayName || "",
+              jobTitle: portfolio.jobTitle || "",
+              bio: portfolio.bio || "",
+              profilePic: portfolio.profilePic || "",
+              customUsername: portfolio.customUsername || "",
+            })
+          }
+        }
+      } catch (error) {
+        console.error("Failed to load portfolio data:", error)
+      }
+    }
+
     summaryFetchTriggeredRef.current = true
 
     const controller = new AbortController()
@@ -539,9 +547,7 @@ export default function DashboardPage() {
         cvUrl: portfolio.cvUrl
       })
 
-      const result = await response.json()
-
-      if (response.ok) {
+      if (result.success) {
         // Update published status and portfolio ID
         setIsPortfolioPublished(true)
         
@@ -562,19 +568,18 @@ export default function DashboardPage() {
         // Update original data to match current data (no more unsaved changes)
         // Make sure to sort arrays the same way as in change detection
         setOriginalData({
-          portfolioData: { ...portfolioData },
-          selectedRepos: [...selectedRepos].sort(),
-          skills: [...skills].sort((a, b) => a.id.localeCompare(b.id)),
-          socials: [...socials].sort((a, b) => a.id - b.id),
-          deployedUrls: { ...deployedUrls },
-          customNames: { ...customNames },
-          customDescriptions: { ...customDescriptions },
-          githubUrls: { ...githubUrls },
-          selectedTheme,
-          importedProjects: [...importedProjects].sort((a, b) => a.id - b.id)
+          portfolioData: { ...portfolio.portfolioData },
+          selectedRepos: [...portfolio.selectedRepos].sort(),
+          skills: [...portfolio.skills].sort((a, b) => a.id.localeCompare(b.id)),
+          socials: [...portfolio.socials].sort((a, b) => a.id - b.id),
+          deployedUrls: { ...portfolio.deployedUrls },
+          customNames: { ...portfolio.customNames },
+          customDescriptions: { ...portfolio.customDescriptions },
+          githubUrls: { ...portfolio.githubUrls },
+          selectedTheme: portfolio.selectedTheme,
+          importedProjects: [...portfolio.importedProjects].sort((a, b) => a.id - b.id)
         })
         setHasUnsavedChanges(false)
-        setIsInitialLoad(false)
         
         // Show success toast and play sound
         toast.success("🎉 Portfolio published successfully!", {
@@ -595,18 +600,12 @@ export default function DashboardPage() {
         
         // Play notification sound
         playNotificationSound()
+
+        // Reset after publish
+        portfolio.resetAfterPublish()
       } else {
         throw new Error(result.error || "Failed to publish portfolio")
       }
-    } catch (error) {
-      console.log('📊 Publish result:', result)
-
-      // Reset after publish
-      portfolio.resetAfterPublish()
-      
-      // Show success toast and play sound
-      toast.success("🎉 Portfolio published successfully!", successToastConfig)
-      playNotificationSound()
     } catch (error: any) {
       console.error("Error publishing portfolio:", error)
       
@@ -669,68 +668,6 @@ export default function DashboardPage() {
       }
     }, 1500)
 
-  const renderActiveSection = () => {
-    switch (activeSection) {
-      case "home":
-        return (
-          <HomeSection 
-            user={user} 
-            portfolioData={portfolioData}
-            onUpdate={handleUpdatePortfolioData}
-          />
-        )
-      case "repos":
-        return (
-          <ReposSection
-            repositories={[...(user?.repositories || []), ...importedProjects]}
-            selectedRepos={selectedRepos}
-            deployedUrls={deployedUrls}
-            customNames={customNames}
-            customDescriptions={customDescriptions}
-            githubUrls={githubUrls}
-            onToggleRepo={handleToggleRepo}
-            onUpdateDeployedUrl={handleUpdateDeployedUrl}
-            onUpdateCustomName={handleUpdateCustomName}
-            onUpdateCustomDescription={handleUpdateCustomDescription}
-            onUpdateGithubUrl={handleUpdateGithubUrl}
-            onAddImportedProject={handleAddImportedProject}
-          />
-        )
-      case "skills":
-        return (
-          <SkillsSection
-            skills={skills}
-            onAddSkill={handleAddSkill}
-            onRemoveSkill={handleRemoveSkill}
-          />
-        )
-      case "socials":
-        return (
-          <SocialsSection
-            socials={socials}
-            onAddSocial={handleAddSocial}
-            onRemoveSocial={handleRemoveSocial}
-            onTogglePin={handleTogglePin}
-            onUpdateSocial={handleUpdateSocial}
-          />
-        )
-      case "theme":
-        return (
-          <ThemeSelector
-            currentTheme={selectedTheme as any}
-            userId={user?.id || 0}
-            onThemeChange={handleThemeChange}
-          />
-        )
-      case "domain":
-        return (
-          <CustomDomainSection
-            portfolioId={portfolioId || 0}
-            isPublished={isPortfolioPublished}
-          />
-        )
-      default:
-        return null
     return () => {
       controller.abort()
       window.clearTimeout(timer)
@@ -880,6 +817,13 @@ export default function DashboardPage() {
               backgroundPattern={portfolio.backgroundPattern}
               setBackgroundColor={portfolio.setBackgroundColor}
               setBackgroundPattern={portfolio.setBackgroundPattern}
+            />
+          )
+        case "domain":
+          return (
+            <CustomDomainSection
+              portfolioId={portfolioId || portfolio.originalData?.id || portfolio.portfolioData?.id || 0}
+              isPublished={isPortfolioPublished}
             />
           )
         case "feed":

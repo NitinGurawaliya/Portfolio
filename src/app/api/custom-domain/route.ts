@@ -97,16 +97,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Validate domain format
-    if (!validateDomain(domain)) {
+    // Normalize domain first (strips protocol, trailing slashes, etc.)
+    const normalizedDomain = normalizeDomain(domain);
+
+    // Validate domain format using normalized domain
+    if (!validateDomain(normalizedDomain)) {
       return NextResponse.json(
-        { error: 'Invalid domain format' },
+        { error: 'Invalid domain format. Please enter just the domain name (e.g., example.com)' },
         { status: 400 }
       );
     }
-
-    // Normalize domain
-    const normalizedDomain = normalizeDomain(domain);
 
     // Check if it's our own domain
     if (isOwnDomain(normalizedDomain)) {

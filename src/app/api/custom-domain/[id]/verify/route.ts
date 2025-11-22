@@ -13,9 +13,12 @@ import { domainVerifiedEmail } from '@/lib/templates/customDomainEmails';
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Await params in Next.js 15
+    const { id: domainId } = await params;
+    
     // Get user session
     const cookieStore = await cookies();
     const sessionCookie = cookieStore.get('github-session');
@@ -60,8 +63,6 @@ export async function POST(
 
     const userIdInt = dbUser.id;
 
-    const domainId = params.id;
-
     // Find the custom domain
       const customDomain = await prisma.customDomain.findUnique({
         where: { id: domainId },
@@ -96,10 +97,16 @@ export async function POST(
     }
 
     // Perform DNS verification
+    console.log(`\n🔍 [Custom Domain] Starting verification for domain: ${customDomain.domain}`);
+    console.log(`🔍 [Custom Domain] Domain ID: ${domainId}`);
+    console.log(`🔍 [Custom Domain] Verification Token: ${customDomain.verificationToken}\n`);
+    
     const verificationResult = await verifyDomainComplete(
       customDomain.domain,
       customDomain.verificationToken
     );
+    
+    console.log(`\n📊 [Custom Domain] Verification result:`, verificationResult);
 
     // Update domain verification status
     const verified = verificationResult.allChecks;

@@ -43,13 +43,39 @@ export function CustomDomainSection({ portfolioId, isPublished }: CustomDomainSe
   const [isVerifying, setIsVerifying] = useState(false)
   const [isRemoving, setIsRemoving] = useState(false)
   const [showDNSConfig, setShowDNSConfig] = useState(false)
+  const [portfolioPublished, setPortfolioPublished] = useState(isPublished)
+  const [isCheckingPublished, setIsCheckingPublished] = useState(false)
 
-  // Fetch domain status on mount
+  // Fetch portfolio published status and domain status on mount
   useEffect(() => {
     if (portfolioId && portfolioId !== 0) {
+      checkPortfolioPublished()
       fetchDomainStatus()
     }
   }, [portfolioId])
+
+  // Also check when isPublished prop changes
+  useEffect(() => {
+    setPortfolioPublished(isPublished)
+  }, [isPublished])
+
+  const checkPortfolioPublished = async () => {
+    setIsCheckingPublished(true)
+    try {
+      // Fetch portfolio data to check if it's published
+      const response = await fetch('/api/portfolio/publish')
+      if (response.ok) {
+        const result = await response.json()
+        if (result.portfolio) {
+          setPortfolioPublished(result.portfolio.isPublished === true)
+        }
+      }
+    } catch (error) {
+      console.error("Error checking portfolio published status:", error)
+    } finally {
+      setIsCheckingPublished(false)
+    }
+  }
 
   const fetchDomainStatus = async () => {
     try {
@@ -79,10 +105,19 @@ export function CustomDomainSection({ portfolioId, isPublished }: CustomDomainSe
       return
     }
 
-    if (!isPublished) {
+    if (!portfolioPublished && !isPublished) {
       toast.error("Please publish your portfolio first")
       return
     }
+
+    // Sanitize domain input (remove protocol, trailing slashes, etc.)
+    let sanitizedDomain = domainInput.trim()
+    // Remove protocol
+    sanitizedDomain = sanitizedDomain.replace(/^https?:\/\//, '')
+    // Remove trailing slashes and paths
+    sanitizedDomain = sanitizedDomain.split('/')[0]
+    // Remove trailing dot
+    sanitizedDomain = sanitizedDomain.replace(/\.$/, '')
 
     setIsLoading(true)
     try {
@@ -92,7 +127,7 @@ export function CustomDomainSection({ portfolioId, isPublished }: CustomDomainSe
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          domain: domainInput,
+          domain: sanitizedDomain,
           portfolioId: portfolioId,
         }),
       })
@@ -183,7 +218,21 @@ export function CustomDomainSection({ portfolioId, isPublished }: CustomDomainSe
     toast.success("Copied to clipboard!")
   }
 
-  if (!isPublished) {
+  // Show loading state while checking published status
+  if (isCheckingPublished) {
+    return (
+      <div className="space-y-4">
+        <Card className="p-6 bg-zinc-900 border-zinc-800">
+          <p className="text-zinc-400 text-center">
+            Checking portfolio status...
+          </p>
+        </Card>
+      </div>
+    )
+  }
+
+  // Check both prop and internal state
+  if (!portfolioPublished && !isPublished) {
     return (
       <div className="space-y-4">
         <Card className="p-6 bg-zinc-900 border-zinc-800">
@@ -303,7 +352,7 @@ export function CustomDomainSection({ portfolioId, isPublished }: CustomDomainSe
               <div className="flex gap-2">
                 <Input
                   type="text"
-                  placeholder="e.g., nitin.com"
+                  placeholder="e.g., zayka.store or example.com"
                   value={domainInput}
                   onChange={(e) => setDomainInput(e.target.value)}
                   className="flex-1 bg-zinc-800 border-zinc-700 text-white"
@@ -330,6 +379,9 @@ export function CustomDomainSection({ portfolioId, isPublished }: CustomDomainSe
                 <li>Access to domain DNS settings</li>
                 <li>Portfolio must be published</li>
               </ul>
+              <p className="mt-2 text-xs text-zinc-500">
+                💡 Tip: Enter just the domain name (e.g., zayka.store). Protocol (https://) and paths are automatically removed.
+              </p>
             </div>
           </div>
         </Card>

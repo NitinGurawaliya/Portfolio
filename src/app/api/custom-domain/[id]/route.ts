@@ -10,9 +10,12 @@ import { cookies } from 'next/headers';
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Await params in Next.js 15
+    const { id: domainId } = await params;
+    
     // Get user session
     const cookieStore = await cookies();
     const sessionCookie = cookieStore.get('github-session');
@@ -56,8 +59,6 @@ export async function DELETE(
     }
 
     const userIdInt = dbUser.id;
-
-    const domainId = params.id;
 
     // Find the custom domain
     const customDomain = await prisma.customDomain.findUnique({
