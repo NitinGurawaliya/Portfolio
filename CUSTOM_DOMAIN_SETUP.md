@@ -79,13 +79,13 @@ If deploying to Vercel, create a `vercel.json` file:
   "crons": [
     {
       "path": "/api/cron/verify-domains",
-      "schedule": "0 * * * *"
+      "schedule": "0 2 * * *"
     }
   ]
 }
 ```
 
-This will run the domain verification cron job every hour.
+This will run the domain verification cron job daily at 2 AM (Hobby plan compatible - runs once per day).
 
 ## Usage Guide
 
@@ -151,7 +151,7 @@ DELETE /api/custom-domain/{id}
 ### Verification System
 - TXT record verification for domain ownership
 - A record verification for proper DNS setup
-- Auto-verification via cron job (runs hourly)
+- Auto-verification via cron job (runs daily at 2 AM)
 - Email notifications on success/failure
 
 ### Routing

@@ -117,10 +117,23 @@ After setting environment variables:
   dig _devfolio-verification.zayka.online TXT
   ```
 
+## Cron Job Schedule
+
+⚠️ **Vercel Hobby Plan Limitation:**
+- Hobby plans only support **daily cron jobs** (once per day)
+- The cron job is configured to run **daily at 2 AM** (`0 2 * * *`)
+- Users can still **manually verify** domains by clicking "Verify Domain" button
+- Daily verification is sufficient since DNS propagation can take 5-10 minutes to 24 hours
+
+**To upgrade for hourly verification:**
+- Upgrade to Vercel Pro plan
+- Change schedule in `vercel.json` to `"0 * * * *"` (every hour)
+
 ## Quick Setup Checklist
 
 - [ ] Add `NEXT_PUBLIC_APP_DOMAIN` to Vercel environment variables
 - [ ] Add `APP_IP_ADDRESS` to Vercel environment variables (use `76.76.21.21`)
+- [ ] Verify cron schedule in `vercel.json` is `"0 2 * * *"` (daily, Hobby plan compatible)
 - [ ] Redeploy on Vercel
 - [ ] Test custom domain feature
 - [ ] Check Vercel function logs for DNS verification details

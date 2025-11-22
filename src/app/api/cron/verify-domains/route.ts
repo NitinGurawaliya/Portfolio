@@ -6,7 +6,7 @@
  * "crons": [
  *   {
  *     "path": "/api/cron/verify-domains",
- *     "schedule": "0 * * * *" // Every hour
+ *     "schedule": "0 2 * * *" // Daily at 2 AM (Hobby plan compatible)
  *   }
  * ]
  */
