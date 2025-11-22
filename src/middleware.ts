@@ -33,11 +33,15 @@ export async function middleware(request: NextRequest) {
   // This is a custom domain - fetch mapping from API
   const normalizedDomain = hostname.replace(/^www\./, '')
   
+  console.log(`[Middleware] Checking custom domain: ${normalizedDomain}`)
+  
   try {
     // Call internal API to get domain mapping
     // This API route uses Prisma in Node.js runtime (not Edge)
     const apiUrl = new URL('/api/custom-domain/lookup', request.url)
     apiUrl.searchParams.set('domain', normalizedDomain)
+    
+    console.log(`[Middleware] Calling lookup API: ${apiUrl.toString()}`)
     
     const response = await fetch(apiUrl.toString(), {
       headers: {
@@ -45,19 +49,31 @@ export async function middleware(request: NextRequest) {
       },
     })
 
+    console.log(`[Middleware] Lookup API response status: ${response.status}`)
+
     if (response.ok) {
       const data = await response.json()
-      if (data.username) {
+      console.log(`[Middleware] Lookup API response:`, data)
+      
+      if (data.success && data.username) {
         // Rewrite to user's portfolio
-        url.pathname = `/${data.username}`
+        const username = data.username
+        console.log(`[Middleware] Rewriting to portfolio: /${username}`)
+        url.pathname = `/${username}`
         return NextResponse.rewrite(url)
+      } else {
+        console.log(`[Middleware] No username found for domain: ${normalizedDomain}`)
       }
+    } else {
+      const errorData = await response.json().catch(() => ({}))
+      console.error(`[Middleware] Lookup API failed:`, errorData)
     }
   } catch (error) {
-    console.error('Error checking custom domain:', error)
+    console.error('[Middleware] Error checking custom domain:', error)
   }
 
   // No custom domain found, continue with normal routing
+  console.log(`[Middleware] No custom domain mapping found, continuing with normal routing`)
   return NextResponse.next()
 }
 
