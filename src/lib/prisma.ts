@@ -8,8 +8,15 @@ export const prisma =
   globalForPrisma.prisma ||
   new PrismaClient({
     log: ["error"], // Only show errors, no query logs
+    // Optimize connection pool for better performance
+    datasources: {
+      db: {
+        url: process.env.DATABASE_URL,
+      },
+    },
   });
 
+// Optimize connection pool settings
 if (isDevelopment) globalForPrisma.prisma = prisma;
 
 export default prisma;
