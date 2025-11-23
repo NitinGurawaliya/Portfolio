@@ -139,8 +139,8 @@ export const CacheTTL = {
   GITHUB_USER: 1200, // 20 hours (20 * 60 minutes)
   GITHUB_REPOS: 1200, // 20 hours (20 * 60 minutes)
   GITHUB_ACTIVITY: 1200, // 20 hours (20 * 60 minutes)
-  PORTFOLIO: 5, // 5 minutes (kept same for quick updates)
-  PORTFOLIO_DATA: 2, // 2 minutes (kept same for quick updates)
+  PORTFOLIO: 60, // 60 minutes (increased for better performance - public portfolios change less frequently)
+  PORTFOLIO_DATA: 10, // 10 minutes (increased for better performance)
   API_RESPONSE: 10 // 10 minutes (kept same for own APIs)
 }
 
