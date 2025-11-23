@@ -1,7 +1,6 @@
 "use client"
 
 import { Suspense } from "react"
-import { DevFolioLoader } from "@/components/ui/DevFolioLoader"
 import { getTheme, ThemeKey } from "@/lib/theme-config"
 import { getLayoutComponent } from "@/lib/theme-layouts"
 import { Portfolio } from "@/interface"
@@ -18,8 +17,8 @@ export function PortfolioLayout({ portfolio }: PortfolioLayoutProps) {
 
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <DevFolioLoader size="lg" />
+      <div className="fixed top-4 left-4 z-50">
+        <p className="text-sm font-medium text-gray-700">loading...</p>
       </div>
     }>
       <Layout theme={theme} portfolio={portfolio} />
