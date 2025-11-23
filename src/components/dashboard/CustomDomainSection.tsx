@@ -139,10 +139,18 @@ export function CustomDomainSection({ portfolioId, isPublished }: CustomDomainSe
         
         // Show warning if domain wasn't added to Vercel
         if (data.vercelAdded === false) {
-          toast.warning(
+          toast(
             data.warning || 
             "Domain added to database but may need manual addition to Vercel. Check Vercel Dashboard → Settings → Domains.",
-            { duration: 8000 }
+            { 
+              duration: 8000,
+              icon: '⚠️',
+              style: {
+                background: '#fef3c7',
+                color: '#92400e',
+                border: '1px solid #fbbf24',
+              }
+            }
           )
         }
         
