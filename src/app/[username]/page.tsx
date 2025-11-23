@@ -7,7 +7,7 @@ import { PortfolioLayout } from "./PortfolioLayout"
 
 // Enable static generation with revalidation
 export const revalidate = 300 // Revalidate every 5 minutes
-export const dynamic = 'force-static'
+// Note: dynamic = 'force-static' removed to support custom domain routing
 
 // Reserved routes that should not be treated as portfolio usernames
 const reservedRoutes = ['dashboard', 'auth', 'api', '_next', 'favicon.ico']
