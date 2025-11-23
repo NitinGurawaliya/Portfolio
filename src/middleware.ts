@@ -1,47 +1,114 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const hostname = request.headers.get('host') || ''
-  const pathname = request.nextUrl.pathname
-  
-  // Get main domain from environment variable
-  const mainDomain = process.env.NEXT_PUBLIC_BASE_URL 
-    ? new URL(process.env.NEXT_PUBLIC_BASE_URL).hostname.replace('www.', '')
-    : 'devfolio.cc'
-  
-  // Extract hostname without port
-  const cleanHostname = hostname.split(':')[0].replace('www.', '')
-  
-  // Check if this is a custom domain (not main domain and not localhost)
-  const isCustomDomain = cleanHostname !== mainDomain && 
-                         !cleanHostname.includes('localhost') && 
-                         !cleanHostname.includes('127.0.0.1') &&
-                         !cleanHostname.includes('vercel.app')
-  
-  // If custom domain and root path, rewrite to portfolio lookup
-  // The [username] route will handle finding the portfolio by hostname
-  if (isCustomDomain && pathname === '/') {
-    // Rewrite to use hostname as username parameter
-    // The portfolio page will handle the lookup
-    const newUrl = new URL(`/${cleanHostname}`, request.url)
-    return NextResponse.rewrite(newUrl)
-  }
-  
+  const url = request.nextUrl
+
   // Redirect old portfolio URLs to new format
-  if (pathname.startsWith('/portfolio/')) {
-    const username = pathname.replace('/portfolio/', '')
+  if (url.pathname.startsWith('/portfolio/')) {
+    const username = url.pathname.replace('/portfolio/', '')
     const newUrl = new URL(`/${username}`, request.url)
     return NextResponse.redirect(newUrl, 301) // Permanent redirect
   }
 
+  // Skip custom domain logic for localhost and dev environment
+  if (
+    hostname.includes('localhost') ||
+    hostname.includes('127.0.0.1') ||
+    process.env.NODE_ENV === 'development'
+  ) {
+    return NextResponse.next()
+  }
+
+  // Custom domain routing (only in production)
+  // Get main app domain
+  const mainDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || 'devfolio.cc'
+  
+  // If it's our main domain or subdomain, continue normally
+  if (hostname === mainDomain || hostname.endsWith(`.${mainDomain}`)) {
+    return NextResponse.next()
+  }
+
+  // This is a custom domain - fetch mapping from API
+  const normalizedDomain = hostname.replace(/^www\./, '')
+  
+  console.log(`[Middleware] Checking custom domain: ${normalizedDomain}`)
+  
+  try {
+    // Call internal API to get domain mapping
+    // This API route uses Prisma in Node.js runtime (not Edge)
+    const apiUrl = new URL('/api/custom-domain/lookup', request.url)
+    apiUrl.searchParams.set('domain', normalizedDomain)
+    
+    console.log(`[Middleware] Calling lookup API: ${apiUrl.toString()}`)
+    
+    const response = await fetch(apiUrl.toString(), {
+      headers: {
+        'x-middleware-request': 'true',
+      },
+    })
+
+    console.log(`[Middleware] Lookup API response status: ${response.status}`)
+
+    if (response.ok) {
+      const data = await response.json()
+      console.log(`[Middleware] Lookup API response:`, data)
+      
+      if (data.success && data.username) {
+        // Rewrite to user's portfolio, preserving any path (e.g., project slug)
+        const username = data.username
+        let originalPath = url.pathname
+        
+        // If path is just "/", rewrite to portfolio root
+        if (originalPath === '/') {
+          url.pathname = `/${username}`
+        } else {
+          // Check if path already starts with username (e.g., /Nitin/project-slug)
+          // If so, remove the duplicate username prefix
+          if (originalPath.startsWith(`/${username}/`)) {
+            // Path has username prefix, remove it to avoid duplication
+            // e.g., "/Nitin/project-slug" -> "/Nitin/project-slug" (keep as-is since it's correct)
+            url.pathname = originalPath
+          } else if (originalPath === `/${username}`) {
+            // Path is exactly "/username", use it as-is
+            url.pathname = originalPath
+          } else {
+            // Path doesn't have username, add it (e.g., "/project-slug" -> "/username/project-slug")
+            // Ensure path starts with /
+            const cleanPath = originalPath.startsWith('/') ? originalPath : `/${originalPath}`
+            url.pathname = `/${username}${cleanPath}`
+          }
+        }
+        
+        console.log(`[Middleware] Custom domain ${normalizedDomain}: Rewriting ${originalPath} to: ${url.pathname}`)
+        return NextResponse.rewrite(url)
+      } else {
+        console.log(`[Middleware] No username found for domain: ${normalizedDomain}`)
+      }
+    } else {
+      const errorData = await response.json().catch(() => ({}))
+      console.error(`[Middleware] Lookup API failed:`, errorData)
+    }
+  } catch (error) {
+    console.error('[Middleware] Error checking custom domain:', error)
+  }
+
+  // No custom domain found, continue with normal routing
+  console.log(`[Middleware] No custom domain mapping found, continuing with normal routing`)
   return NextResponse.next()
 }
 
 export const config = {
   matcher: [
-    '/',
-    '/portfolio/:path*',
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
-  ]
+    /*
+     * Match all request paths except:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - site.webmanifest (web manifest file)
+     * - api routes (to avoid infinite loops)
+     */
+    '/((?!api|_next/static|_next/image|favicon.ico|site.webmanifest|robots.txt).*)',
+  ],
 }

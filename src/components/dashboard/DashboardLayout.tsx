@@ -12,6 +12,7 @@ import {
   ExternalLink,
   LogOut,
   Palette,
+  Globe,
   BarChart3,
   Eye,
   X,
@@ -75,6 +76,7 @@ export function DashboardLayout({
     { id: "socials", label: "Socials", icon: Users },
     { id: "analytics", label: "Analytics", icon: BarChart3 },
     { id: "theme", label: "Theme", icon: Palette },
+    { id: "domain", label: "Domain", icon: Globe },
   ]
 
     const communityItem = { id: "feed", label: "Community Feed", icon: Newspaper }
