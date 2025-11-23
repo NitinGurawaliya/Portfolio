@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { extractSubdomain, getSubdomainRoute } from '@/lib/subdomain-routing'
 
 export async function middleware(request: NextRequest) {
   const hostname = request.headers.get('host') || ''
@@ -12,6 +13,22 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(newUrl, 301) // Permanent redirect
   }
 
+  // Get main app domain
+  const mainDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || 'devfolio.cc'
+  
+  // Check for subdomain routing (works in all environments)
+  const subdomain = extractSubdomain(hostname, mainDomain)
+  if (subdomain) {
+    const route = getSubdomainRoute(subdomain)
+    if (route) {
+      // Rewrite to the subdomain route, preserving query parameters
+      const newUrl = new URL(route, request.url)
+      newUrl.search = url.search // Preserve query parameters
+      console.log(`[Middleware] Subdomain routing: ${hostname} → ${newUrl.pathname}`)
+      return NextResponse.rewrite(newUrl)
+    }
+  }
+
   // Skip custom domain logic for localhost and dev environment
   if (
     hostname.includes('localhost') ||
@@ -21,11 +38,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // Custom domain routing (only in production)
-  // Get main app domain
-  const mainDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || 'devfolio.cc'
-  
-  // If it's our main domain or subdomain, continue normally
+  // If it's our main domain, continue normally
   if (hostname === mainDomain || hostname.endsWith(`.${mainDomain}`)) {
     return NextResponse.next()
   }
