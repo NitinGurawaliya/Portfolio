@@ -58,18 +58,30 @@ export async function middleware(request: NextRequest) {
       if (data.success && data.username) {
         // Rewrite to user's portfolio, preserving any path (e.g., project slug)
         const username = data.username
-        const originalPath = url.pathname
+        let originalPath = url.pathname
         
         // If path is just "/", rewrite to portfolio root
-        // Otherwise, preserve the path (e.g., "/my-project" -> "/username/my-project")
         if (originalPath === '/') {
           url.pathname = `/${username}`
         } else {
-          // Preserve the path after root (project slug, etc.)
-          url.pathname = `/${username}${originalPath}`
+          // Check if path already starts with username (e.g., /Nitin/project-slug)
+          // If so, remove the duplicate username prefix
+          if (originalPath.startsWith(`/${username}/`)) {
+            // Path has username prefix, remove it to avoid duplication
+            // e.g., "/Nitin/project-slug" -> "/Nitin/project-slug" (keep as-is since it's correct)
+            url.pathname = originalPath
+          } else if (originalPath === `/${username}`) {
+            // Path is exactly "/username", use it as-is
+            url.pathname = originalPath
+          } else {
+            // Path doesn't have username, add it (e.g., "/project-slug" -> "/username/project-slug")
+            // Ensure path starts with /
+            const cleanPath = originalPath.startsWith('/') ? originalPath : `/${originalPath}`
+            url.pathname = `/${username}${cleanPath}`
+          }
         }
         
-        console.log(`[Middleware] Rewriting ${originalPath} to: ${url.pathname}`)
+        console.log(`[Middleware] Custom domain ${normalizedDomain}: Rewriting ${originalPath} to: ${url.pathname}`)
         return NextResponse.rewrite(url)
       } else {
         console.log(`[Middleware] No username found for domain: ${normalizedDomain}`)
@@ -94,8 +106,9 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
+     * - site.webmanifest (web manifest file)
      * - api routes (to avoid infinite loops)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|site.webmanifest|robots.txt).*)',
   ],
 }

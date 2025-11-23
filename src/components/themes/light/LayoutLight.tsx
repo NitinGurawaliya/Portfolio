@@ -717,7 +717,7 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
         <div className="mx-auto px-4 sm:px-6 lg:px-12 max-w-4xl">
           <div className="flex justify-center">
             <motion.a
-              href="/"
+              href="https://devfolio.cc"
               target="_blank"
               rel="noopener noreferrer"
               className="bg-gray-800 rounded-lg px-6 py-3 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer border border-gray-700"

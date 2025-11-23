@@ -654,7 +654,7 @@ export default function LayoutDark({ theme, portfolio }: LayoutDarkProps) {
         <div className="mx-auto px-4 sm:px-6 lg:px-12 max-w-6xl">
           <div className="flex justify-end">
             <motion.a
-              href="/"
+              href="https://devfolio.cc"
               target="_blank"
               rel="noopener noreferrer"
               className="bg-white rounded-xl px-5 py-3 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer border border-gray-200"
