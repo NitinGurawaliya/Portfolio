@@ -36,7 +36,7 @@ async function getRecommendedIP(): Promise<string> {
 
   // Fallback to Vercel's standard IP
   // This is the IP Vercel typically provides when adding domains
-  return '76.76.21.21';
+  return '216.198.79.1';
 }
 
 /**

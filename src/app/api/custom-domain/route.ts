@@ -204,6 +204,32 @@ export async function POST(req: NextRequest) {
     const { addDomainToVercel, getVercelRecommendedIP } = await import('@/lib/vercel-api');
     const vercelResult = await addDomainToVercel(normalizedDomain, portfolioId.toString());
 
+    // Log Vercel API result for debugging
+    if (!vercelResult.success) {
+      console.warn(`[Custom Domain] Failed to add domain to Vercel: ${vercelResult.error}`);
+      
+      // Check if domain is in different project
+      if ((vercelResult as any).inDifferentProject) {
+        console.error(`[Custom Domain] Domain is in a DIFFERENT Vercel project!`);
+        console.error(`[Custom Domain] Other project ID: ${(vercelResult as any).otherProjectId}`);
+        console.error(`[Custom Domain] Current project ID: ${process.env.VERCEL_PROJECT_ID}`);
+        // Don't create domain in database if it's in different project
+        return NextResponse.json(
+          {
+            error: vercelResult.error || 'Domain is already in use by another Vercel project. Please remove it from that project first.',
+            inDifferentProject: true,
+            otherProjectId: (vercelResult as any).otherProjectId,
+          },
+          { status: 409 }
+        );
+      }
+      
+      console.warn(`[Custom Domain] Domain will be created in database but may need manual addition to Vercel`);
+      console.warn(`[Custom Domain] Check VERCEL_API_TOKEN and VERCEL_PROJECT_ID environment variables`);
+    } else {
+      console.log(`[Custom Domain] Successfully added domain to Vercel: ${normalizedDomain}`);
+    }
+
     // Get recommended IP from Vercel (or fallback to env var)
     const ipResult = await getVercelRecommendedIP(portfolioId.toString());
     const vercelIP = ipResult.ip || null;
@@ -249,6 +275,12 @@ export async function POST(req: NextRequest) {
       verified: customDomain.verified,
       verificationToken: customDomain.verificationToken,
       dnsRecords: dnsRecords,
+      // Include Vercel API status for debugging
+      vercelAdded: vercelResult.success,
+      vercelError: vercelResult.success ? undefined : vercelResult.error,
+      warning: !vercelResult.success 
+        ? 'Domain added to database but may need manual addition to Vercel. Check Vercel Dashboard → Settings → Domains.'
+        : undefined,
     });
   } catch (error) {
     console.error('Error adding custom domain:', error);

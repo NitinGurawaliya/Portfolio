@@ -55,13 +55,18 @@ export async function verifyDomainOwnership(
 const VALID_VERCEL_IPS = [
   '76.76.21.21',      // Old Vercel IP (still works)
   '192.64.119.187',  // New Vercel IP (recommended)
+  '216.198.79.1',    // Vercel edge IP (project-specific)
   '76.76.21.22',     // Additional Vercel IP (if any)
 ];
 
-export async function checkDomainPointing(domain: string): Promise<boolean> {
+export async function checkDomainPointing(
+  domain: string,
+  storedIP?: string | null
+): Promise<{ matches: boolean; actualIPs: string[] }> {
   // Support both old and new Vercel IPs for verification
-  const expectedIP = process.env.APP_IP_ADDRESS || '192.64.119.187';
+  const expectedIP = storedIP || process.env.APP_IP_ADDRESS || '192.64.119.187';
   console.log(`🔍 [DNS Verification] Checking A record for: ${domain}`);
+  console.log(`🔍 [DNS Verification] Stored IP from database: ${storedIP || 'none'}`);
   console.log(`🔍 [DNS Verification] Expected IP: ${expectedIP}`);
   console.log(`🔍 [DNS Verification] Valid Vercel IPs: ${VALID_VERCEL_IPS.join(', ')}`);
   
@@ -79,7 +84,7 @@ export async function checkDomainPointing(domain: string): Promise<boolean> {
       console.warn(`⚠️ [DNS Verification] Domain may work but Vercel validation might fail`);
     }
     
-    return matches;
+    return { matches, actualIPs: addresses };
   } catch (error: any) {
     console.error(`❌ [DNS Verification] A record verification failed for ${domain}:`, {
       code: error?.code,
@@ -88,7 +93,7 @@ export async function checkDomainPointing(domain: string): Promise<boolean> {
       hostname: error?.hostname,
       message: error?.message,
     });
-    return false;
+    return { matches: false, actualIPs: [] };
   }
 }
 
@@ -127,27 +132,34 @@ export async function checkWWWPointing(domain: string): Promise<boolean> {
  */
 export async function verifyDomainComplete(
   domain: string,
-  expectedToken: string
+  expectedToken: string,
+  storedIP?: string | null
 ): Promise<{
   ownershipVerified: boolean;
   aRecordPointing: boolean;
   cnamePointing: boolean;
   allChecks: boolean;
+  actualIPs: string[];
 }> {
   console.log(`\n🚀 [DNS Verification] Starting complete verification for: ${domain}`);
-  console.log(`🚀 [DNS Verification] Token: ${expectedToken}\n`);
+  console.log(`🚀 [DNS Verification] Token: ${expectedToken}`);
+  console.log(`🚀 [DNS Verification] Stored IP: ${storedIP || 'none'}\n`);
   
-  const [ownershipVerified, aRecordPointing, cnamePointing] = await Promise.all([
+  const [ownershipVerified, aRecordResult, cnamePointing] = await Promise.all([
     verifyDomainOwnership(domain, expectedToken),
-    checkDomainPointing(domain),
+    checkDomainPointing(domain, storedIP),
     checkWWWPointing(domain),
   ]);
 
+  const aRecordPointing = aRecordResult.matches;
   const allChecks = ownershipVerified && aRecordPointing;
   
   console.log(`\n📊 [DNS Verification] Verification Summary for ${domain}:`);
   console.log(`  ✓ Ownership (TXT): ${ownershipVerified ? '✅' : '❌'}`);
   console.log(`  ✓ A Record: ${aRecordPointing ? '✅' : '❌'}`);
+  if (!aRecordPointing && aRecordResult.actualIPs.length > 0) {
+    console.log(`  ⚠️  Actual A Record IPs: ${aRecordResult.actualIPs.join(', ')}`);
+  }
   console.log(`  ✓ CNAME (www): ${cnamePointing ? '✅' : '❌'}`);
   console.log(`  ✓ All Checks Passed: ${allChecks ? '✅' : '❌'}\n`);
 
@@ -156,6 +168,7 @@ export async function verifyDomainComplete(
     aRecordPointing,
     cnamePointing,
     allChecks,
+    actualIPs: aRecordResult.actualIPs,
   };
 }
 

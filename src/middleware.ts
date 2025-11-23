@@ -56,10 +56,20 @@ export async function middleware(request: NextRequest) {
       console.log(`[Middleware] Lookup API response:`, data)
       
       if (data.success && data.username) {
-        // Rewrite to user's portfolio
+        // Rewrite to user's portfolio, preserving any path (e.g., project slug)
         const username = data.username
-        console.log(`[Middleware] Rewriting to portfolio: /${username}`)
-        url.pathname = `/${username}`
+        const originalPath = url.pathname
+        
+        // If path is just "/", rewrite to portfolio root
+        // Otherwise, preserve the path (e.g., "/my-project" -> "/username/my-project")
+        if (originalPath === '/') {
+          url.pathname = `/${username}`
+        } else {
+          // Preserve the path after root (project slug, etc.)
+          url.pathname = `/${username}${originalPath}`
+        }
+        
+        console.log(`[Middleware] Rewriting ${originalPath} to: ${url.pathname}`)
         return NextResponse.rewrite(url)
       } else {
         console.log(`[Middleware] No username found for domain: ${normalizedDomain}`)

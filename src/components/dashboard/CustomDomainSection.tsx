@@ -136,6 +136,16 @@ export function CustomDomainSection({ portfolioId, isPublished }: CustomDomainSe
 
       if (response.ok) {
         toast.success("Domain added! Please configure your DNS records.")
+        
+        // Show warning if domain wasn't added to Vercel
+        if (data.vercelAdded === false) {
+          toast.warning(
+            data.warning || 
+            "Domain added to database but may need manual addition to Vercel. Check Vercel Dashboard → Settings → Domains.",
+            { duration: 8000 }
+          )
+        }
+        
         setDnsRecords(data.dnsRecords)
         setShowDNSConfig(true)
         setDomainInput("")

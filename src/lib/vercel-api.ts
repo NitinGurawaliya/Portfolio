@@ -25,6 +25,7 @@ interface VercelError {
   error: {
     code: string;
     message: string;
+    projectId?: string;
   };
 }
 
@@ -34,7 +35,7 @@ interface VercelError {
 export async function addDomainToVercel(
   domain: string,
   projectId?: string
-): Promise<{ success: boolean; data?: VercelDomainResponse; error?: string }> {
+): Promise<{ success: boolean; data?: VercelDomainResponse; error?: string; inDifferentProject?: boolean; otherProjectId?: string }> {
   const vercelToken = process.env.VERCEL_API_TOKEN;
   const vercelProjectId = process.env.VERCEL_PROJECT_ID || projectId;
   const vercelTeamId = process.env.VERCEL_TEAM_ID; // Optional for teams
@@ -84,8 +85,25 @@ export async function addDomainToVercel(
 
       // Handle specific error cases
       if (error.error?.code === 'domain_already_in_use') {
-        // Domain already added - this is okay, might have been added manually
-        console.log(`[Vercel API] Domain ${domain} already exists in Vercel`);
+        // Check if domain is in the same project or different project
+        const errorProjectId = error.error?.projectId;
+        const currentProjectId = vercelProjectId;
+        
+        if (errorProjectId && errorProjectId !== currentProjectId) {
+          // Domain is in a DIFFERENT project - this is a problem!
+          console.error(`[Vercel API] Domain ${domain} is already in use by a DIFFERENT project: ${errorProjectId}`);
+          console.error(`[Vercel API] Current project: ${currentProjectId}`);
+          console.error(`[Vercel API] Domain must be removed from the other project first`);
+          return {
+            success: false,
+            error: `Domain is already in use by another Vercel project (${errorProjectId}). Please remove it from that project first, or use a different domain.`,
+            inDifferentProject: true,
+            otherProjectId: errorProjectId,
+          };
+        }
+        
+        // Domain already added to SAME project - this is okay
+        console.log(`[Vercel API] Domain ${domain} already exists in current Vercel project`);
         return {
           success: true,
           data: data as VercelDomainResponse,
@@ -182,7 +200,7 @@ export async function getVercelRecommendedIP(
 
   if (!vercelToken || !vercelProjectId) {
     // Fallback to env var or default if API not configured
-    const fallbackIP = process.env.APP_IP_ADDRESS || '76.76.21.21';
+    const fallbackIP = process.env.APP_IP_ADDRESS || '216.198.79.1';
     console.warn('[Vercel API] API not configured, using fallback IP:', fallbackIP);
     return {
       success: true,
@@ -215,7 +233,7 @@ export async function getVercelRecommendedIP(
 
     // Default to Vercel's current recommended IP
     // This can be updated via APP_IP_ADDRESS env var
-    const defaultIP = '76.76.21.21'; // Vercel's standard IP
+    const defaultIP = '216.198.79.1'; // Project-specific Vercel IP
     
     return {
       success: true,
@@ -226,7 +244,7 @@ export async function getVercelRecommendedIP(
     // Fallback to default
     return {
       success: true,
-      ip: process.env.APP_IP_ADDRESS || '76.76.21.21',
+      ip: process.env.APP_IP_ADDRESS || '216.198.79.1',
     };
   }
 }

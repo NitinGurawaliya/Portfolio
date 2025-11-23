@@ -100,11 +100,13 @@ export async function POST(
     // Perform DNS verification
     console.log(`\n🔍 [Custom Domain] Starting verification for domain: ${customDomain.domain}`);
     console.log(`🔍 [Custom Domain] Domain ID: ${domainId}`);
-    console.log(`🔍 [Custom Domain] Verification Token: ${customDomain.verificationToken}\n`);
+    console.log(`🔍 [Custom Domain] Verification Token: ${customDomain.verificationToken}`);
+    console.log(`🔍 [Custom Domain] Stored Vercel IP: ${customDomain.vercelIPAddress || 'none'}\n`);
     
     const verificationResult = await verifyDomainComplete(
       customDomain.domain,
-      customDomain.verificationToken
+      customDomain.verificationToken,
+      customDomain.vercelIPAddress // Pass stored IP from database
     );
     
     console.log(`\n📊 [Custom Domain] Verification result:`, verificationResult);
@@ -173,8 +175,12 @@ export async function POST(
       if (!verificationResult.ownershipVerified) {
         errorMessage = 'TXT verification record not found. Please add the TXT record and wait for DNS propagation.';
       } else if (!verificationResult.aRecordPointing) {
-        const expectedIP = process.env.APP_IP_ADDRESS || '192.64.119.187';
-        errorMessage = `A record does not point to a valid Vercel IP. Please update your A record to point to ${expectedIP}. Note: Both old (76.76.21.21) and new (192.64.119.187) Vercel IPs are accepted, but Vercel recommends using the new IP.`;
+        // Use stored IP from database, or fallback to env var, or default
+        const recommendedIP = customDomain.vercelIPAddress || process.env.APP_IP_ADDRESS || '216.198.79.1';
+        const actualIPs = verificationResult.actualIPs.length > 0 
+          ? ` Your domain currently points to: ${verificationResult.actualIPs.join(', ')}.`
+          : '';
+        errorMessage = `A record does not point to a valid Vercel IP.${actualIPs} Please update your A record to point to ${recommendedIP}. Note: Both old (76.76.21.21) and new (192.64.119.187) Vercel IPs are accepted, but Vercel recommends using the new IP.`;
       } else {
         errorMessage = 'DNS records not found or incomplete. Please check your DNS configuration and wait for propagation (may take up to 24 hours).';
       }
@@ -195,7 +201,8 @@ export async function POST(
       // Include IP mismatch info for debugging
       ...(verificationResult.ownershipVerified && !verificationResult.aRecordPointing ? {
         ipMismatch: true,
-        recommendedIP: process.env.APP_IP_ADDRESS || '192.64.119.187',
+        recommendedIP: customDomain.vercelIPAddress || process.env.APP_IP_ADDRESS || '76.76.21.21',
+        actualIPs: verificationResult.actualIPs,
         note: 'Your domain may work, but Vercel validation might show "Invalid Configuration". Update A record to recommended IP for best results.',
       } : {}),
     });
