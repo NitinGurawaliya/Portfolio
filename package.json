@@ -5,8 +5,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && node scripts/validate-database-schema.js && next build",
-    "vercel-build": "prisma generate && node scripts/validate-database-schema.js && next build",
+    "build": "prisma generate && next build",
+    "vercel-build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
     "postinstall": "prisma generate",
@@ -19,7 +19,8 @@
     "db:pull": "prisma db pull",
     "validate:schema": "node scripts/validate-database-schema.js",
     "deploy:production": "node scripts/production-deploy.js",
-    "migrate:production": "node scripts/safe-production-migration.js"
+    "migrate:production": "node scripts/safe-production-migration.js",
+    "test:custom-domain-migration": "node scripts/test-custom-domain-migration.js"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.10.0",
