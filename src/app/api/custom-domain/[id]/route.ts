@@ -7,12 +7,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { invalidateDomainCache } from '@/lib/domain-cache';
 import { cookies } from 'next/headers';
+import { removeDomainFromVercel } from '@/lib/vercel-api';
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Await params in Next.js 15
+    const { id: domainId } = await params;
+    
     // Get user session
     const cookieStore = await cookies();
     const sessionCookie = cookieStore.get('github-session');
@@ -57,8 +61,6 @@ export async function DELETE(
 
     const userIdInt = dbUser.id;
 
-    const domainId = params.id;
-
     // Find the custom domain
     const customDomain = await prisma.customDomain.findUnique({
       where: { id: domainId },
@@ -79,13 +81,25 @@ export async function DELETE(
       );
     }
 
-    // Delete the domain
+    // Delete the domain from database
     await prisma.customDomain.delete({
       where: { id: domainId },
     });
 
     // Invalidate cache
     await invalidateDomainCache(customDomain.domain);
+
+    // Automatically remove domain from Vercel via API
+    console.log(`[Custom Domain] Removing domain from Vercel: ${customDomain.domain}`);
+    const vercelResult = await removeDomainFromVercel(customDomain.domain);
+    
+    if (vercelResult.success) {
+      console.log(`[Custom Domain] Successfully removed domain from Vercel: ${customDomain.domain}`);
+    } else {
+      // Log warning but don't fail - domain is removed from our system
+      console.warn(`[Custom Domain] Failed to remove domain from Vercel: ${vercelResult.error}`);
+      console.warn(`[Custom Domain] Domain removed from our system but may still exist in Vercel`);
+    }
 
     return NextResponse.json({
       success: true,

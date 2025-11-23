@@ -3,6 +3,8 @@
  * Generates DNS records for custom domain setup
  */
 
+import { getVercelRecommendedIP } from './vercel-api';
+
 export interface DNSRecord {
   type: 'A' | 'CNAME' | 'TXT';
   name: string;
@@ -17,17 +19,51 @@ export interface DNSRecordSet {
 }
 
 /**
+ * Get the recommended IP address for A records
+ * Priority: APP_IP_ADDRESS env var > Vercel API > Default fallback
+ */
+async function getRecommendedIP(): Promise<string> {
+  // First, check env var (highest priority)
+  if (process.env.APP_IP_ADDRESS) {
+    return process.env.APP_IP_ADDRESS;
+  }
+
+  // Try to get from Vercel API
+  const vercelIP = await getVercelRecommendedIP();
+  if (vercelIP.success && vercelIP.ip) {
+    return vercelIP.ip;
+  }
+
+  // Fallback to Vercel's standard IP
+  // This is the IP Vercel typically provides when adding domains
+  return '216.198.79.1';
+}
+
+/**
  * Generate DNS records for a custom domain
  * @param domain - The custom domain (e.g., "nitin.com")
  * @param verificationToken - The verification token for TXT record
+ * @param vercelIP - Optional IP address from Vercel (preferred)
  * @returns DNS records that the user needs to add
  */
-export function generateDNSRecords(
+export async function generateDNSRecords(
   domain: string,
-  verificationToken: string
-): DNSRecordSet {
+  verificationToken: string,
+  vercelIP?: string | null
+): Promise<DNSRecordSet> {
   const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || 'devfolio.cc';
-  const appIP = process.env.APP_IP_ADDRESS || '76.76.21.21';
+  
+  // Priority: Use IP from Vercel > env var > API > default
+  let appIP: string;
+  if (vercelIP) {
+    // Use IP provided by Vercel (most accurate)
+    appIP = vercelIP;
+    console.log(`[DNS Config] Using Vercel-provided IP: ${appIP}`);
+  } else {
+    // Fallback to dynamic lookup
+    appIP = await getRecommendedIP();
+    console.log(`[DNS Config] Using fallback IP: ${appIP}`);
+  }
 
   return {
     // For apex domain (nitin.com)

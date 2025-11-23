@@ -6,19 +6,24 @@ import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import toast from "react-hot-toast"
+import { 
+  Globe, 
+  CheckCircle2, 
+  Clock, 
+  Copy, 
+  ExternalLink, 
+  Trash2, 
+  AlertCircle,
+  ChevronDown,
+  ChevronUp,
+  HelpCircle,
+  Shield,
+  Server
+} from "lucide-react"
 
 interface CustomDomainSectionProps {
   portfolioId: number
   isPublished: boolean
-}
-
-interface DomainStatus {
-  hasDomain: boolean
-  domain: string | null
-  verified: boolean
-  id?: string
-  createdAt?: string
-  lastCheckedAt?: string | null
 }
 
 interface DNSRecord {
@@ -28,35 +33,83 @@ interface DNSRecord {
   ttl: number
 }
 
+interface DNSRecordSet {
+  apex: DNSRecord
+  www: DNSRecord
+  verification: DNSRecord
+}
+
+interface DomainStatus {
+  hasDomain: boolean
+  domain: string | null
+  verified: boolean
+  id?: string
+  createdAt?: string
+  lastCheckedAt?: string | null
+  dnsRecords?: DNSRecordSet | null
+}
+
 export function CustomDomainSection({ portfolioId, isPublished }: CustomDomainSectionProps) {
   const [domainInput, setDomainInput] = useState("")
   const [domainStatus, setDomainStatus] = useState<DomainStatus | null>(null)
-  const [dnsRecords, setDnsRecords] = useState<any>(null)
+  const [dnsRecords, setDnsRecords] = useState<DNSRecordSet | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [isVerifying, setIsVerifying] = useState(false)
   const [isRemoving, setIsRemoving] = useState(false)
   const [showDNSConfig, setShowDNSConfig] = useState(false)
+  const [portfolioPublished, setPortfolioPublished] = useState(isPublished)
+  const [isCheckingPublished, setIsCheckingPublished] = useState(false)
 
-  // Fetch domain status on mount
+  // Fetch portfolio published status and domain status on mount
   useEffect(() => {
     if (portfolioId && portfolioId !== 0) {
+      checkPortfolioPublished()
       fetchDomainStatus()
     }
   }, [portfolioId])
+
+  // Also check when isPublished prop changes
+  useEffect(() => {
+    setPortfolioPublished(isPublished)
+  }, [isPublished])
+
+  const checkPortfolioPublished = async () => {
+    setIsCheckingPublished(true)
+    try {
+      // Fetch portfolio data to check if it's published
+      const response = await fetch('/api/portfolio/publish')
+      if (response.ok) {
+        const result = await response.json()
+        if (result.portfolio) {
+          setPortfolioPublished(result.portfolio.isPublished === true)
+        }
+      }
+    } catch (error) {
+      console.error("Error checking portfolio published status:", error)
+    } finally {
+      setIsCheckingPublished(false)
+    }
+  }
 
   const fetchDomainStatus = async () => {
     try {
       const response = await fetch(`/api/custom-domain/status?portfolioId=${portfolioId}`)
       const data = await response.json()
       
-      if (data.success) {
-        setDomainStatus(data)
-        if (data.hasDomain && !data.verified) {
-          setShowDNSConfig(true)
+        if (data.success) {
+          setDomainStatus(data)
+          setDnsRecords(data.dnsRecords || null)
+          setShowDNSConfig(Boolean(data.hasDomain && !data.verified))
+        } else {
+          setDomainStatus(null)
+          setDnsRecords(null)
+          setShowDNSConfig(false)
         }
-      }
     } catch (error) {
       console.error("Error fetching domain status:", error)
+        setDomainStatus(null)
+        setDnsRecords(null)
+        setShowDNSConfig(false)
     }
   }
 
@@ -66,10 +119,19 @@ export function CustomDomainSection({ portfolioId, isPublished }: CustomDomainSe
       return
     }
 
-    if (!isPublished) {
+    if (!portfolioPublished && !isPublished) {
       toast.error("Please publish your portfolio first")
       return
     }
+
+    // Sanitize domain input (remove protocol, trailing slashes, etc.)
+    let sanitizedDomain = domainInput.trim()
+    // Remove protocol
+    sanitizedDomain = sanitizedDomain.replace(/^https?:\/\//, '')
+    // Remove trailing slashes and paths
+    sanitizedDomain = sanitizedDomain.split('/')[0]
+    // Remove trailing dot
+    sanitizedDomain = sanitizedDomain.replace(/\.$/, '')
 
     setIsLoading(true)
     try {
@@ -79,7 +141,7 @@ export function CustomDomainSection({ portfolioId, isPublished }: CustomDomainSe
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          domain: domainInput,
+          domain: sanitizedDomain,
           portfolioId: portfolioId,
         }),
       })
@@ -88,6 +150,24 @@ export function CustomDomainSection({ portfolioId, isPublished }: CustomDomainSe
 
       if (response.ok) {
         toast.success("Domain added! Please configure your DNS records.")
+        
+        // Show warning if domain wasn't added to Vercel
+        if (data.vercelAdded === false) {
+          toast(
+            data.warning || 
+            "Domain added to database but may need manual addition to Vercel. Check Vercel Dashboard → Settings → Domains.",
+            { 
+              duration: 8000,
+              icon: '⚠️',
+              style: {
+                background: '#fef3c7',
+                color: '#92400e',
+                border: '1px solid #fbbf24',
+              }
+            }
+          )
+        }
+        
         setDnsRecords(data.dnsRecords)
         setShowDNSConfig(true)
         setDomainInput("")
@@ -170,7 +250,21 @@ export function CustomDomainSection({ portfolioId, isPublished }: CustomDomainSe
     toast.success("Copied to clipboard!")
   }
 
-  if (!isPublished) {
+  // Show loading state while checking published status
+  if (isCheckingPublished) {
+    return (
+      <div className="space-y-4">
+        <Card className="p-6 bg-zinc-900 border-zinc-800">
+          <p className="text-zinc-400 text-center">
+            Checking portfolio status...
+          </p>
+        </Card>
+      </div>
+    )
+  }
+
+  // Check both prop and internal state
+  if (!portfolioPublished && !isPublished) {
     return (
       <div className="space-y-4">
         <Card className="p-6 bg-zinc-900 border-zinc-800">
@@ -208,38 +302,52 @@ export function CustomDomainSection({ portfolioId, isPublished }: CustomDomainSe
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h2 className="text-2xl font-bold text-white mb-2">Custom Domain</h2>
-        <p className="text-zinc-400">
-          Connect your own domain to your portfolio (e.g., nitin.com)
-        </p>
+      <div className="flex items-start gap-3">
+        <div className="p-2 bg-orange-500/10 rounded-lg border border-orange-500/20">
+          <Globe className="h-5 w-5 text-orange-500" />
+        </div>
+        <div className="flex-1">
+          <h2 className="text-2xl font-bold text-white mb-2">Custom Domain</h2>
+          <p className="text-zinc-400">
+            Connect your own domain to your portfolio (e.g., nitin.com)
+          </p>
+        </div>
       </div>
 
       {/* Domain Status Card */}
       {domainStatus?.hasDomain ? (
-        <Card className="p-6 bg-zinc-900 border-zinc-800">
+        <Card className="p-6 bg-gradient-to-br from-zinc-900 to-zinc-950 border-zinc-800 shadow-lg">
           <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="text-lg font-semibold text-white">
-                {domainStatus.domain}
+            <div className="flex items-center gap-3 flex-1">
+              <div className="p-2 bg-zinc-800 rounded-lg border border-zinc-700">
+                <Globe className="h-4 w-4 text-orange-500" />
               </div>
-              {domainStatus.verified ? (
-                <Badge className="bg-green-500/10 text-green-500 border-green-500/20">
-                  ✓ Verified & Live
-                </Badge>
-              ) : (
-                <Badge className="bg-yellow-500/10 text-yellow-500 border-yellow-500/20">
-                  ⏳ Pending Verification
-                </Badge>
-              )}
+              <div className="flex-1">
+                <div className="text-lg font-semibold text-white flex items-center gap-2">
+                  {domainStatus.domain}
+                </div>
+                {domainStatus.verified ? (
+                  <Badge className="bg-green-500/10 text-green-500 border-green-500/20 mt-1.5 flex items-center gap-1.5 w-fit">
+                    <CheckCircle2 className="h-3 w-3" />
+                    Verified & Live
+                  </Badge>
+                ) : (
+                  <Badge className="bg-yellow-500/10 text-yellow-500 border-yellow-500/20 mt-1.5 flex items-center gap-1.5 w-fit">
+                    <Clock className="h-3 w-3" />
+                    Pending Verification
+                  </Badge>
+                )}
+              </div>
             </div>
             <Button
               variant="destructive"
               size="sm"
               onClick={handleRemoveDomain}
               disabled={isRemoving}
+              className="ml-4"
             >
-              {isRemoving ? "Removing..." : "Remove Domain"}
+              <Trash2 className="h-4 w-4 mr-1.5" />
+              {isRemoving ? "Removing..." : "Remove"}
             </Button>
           </div>
 
@@ -258,65 +366,100 @@ export function CustomDomainSection({ portfolioId, isPublished }: CustomDomainSe
                 onClick={() => setShowDNSConfig(!showDNSConfig)}
                 className="w-full border-zinc-700 hover:bg-zinc-800"
               >
-                {showDNSConfig ? "Hide" : "Show"} DNS Configuration
+                {showDNSConfig ? (
+                  <>
+                    <ChevronUp className="h-4 w-4 mr-2" />
+                    Hide DNS Configuration
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="h-4 w-4 mr-2" />
+                    Show DNS Configuration
+                  </>
+                )}
               </Button>
             </div>
           )}
 
           {domainStatus.verified && (
-            <div className="mt-4 p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
-              <p className="text-green-400 text-sm">
-                🎉 Your portfolio is now live at{" "}
-                <a
-                  href={`http://${domainStatus.domain}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="underline font-semibold"
-                >
-                  {domainStatus.domain}
-                </a>
-              </p>
+            <div className="mt-4 p-4 bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/20 rounded-lg">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0" />
+                <p className="text-green-400 text-sm flex-1">
+                  Your portfolio is now live at{" "}
+                  <a
+                    href={`https://${domainStatus.domain}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline font-semibold hover:text-green-300 transition-colors inline-flex items-center gap-1"
+                  >
+                    {domainStatus.domain}
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                </p>
+              </div>
             </div>
           )}
         </Card>
       ) : (
         /* Add Domain Form */
-        <Card className="p-6 bg-zinc-900 border-zinc-800">
-          <div className="space-y-4">
+        <Card className="p-6 bg-gradient-to-br from-zinc-900 to-zinc-950 border-zinc-800 shadow-lg">
+          <div className="space-y-5">
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-2">
+              <label className="block text-sm font-medium text-zinc-300 mb-2 flex items-center gap-2">
+                <Globe className="h-4 w-4" />
                 Enter your domain
               </label>
               <div className="flex gap-2">
-                <Input
-                  type="text"
-                  placeholder="e.g., nitin.com"
-                  value={domainInput}
-                  onChange={(e) => setDomainInput(e.target.value)}
-                  className="flex-1 bg-zinc-800 border-zinc-700 text-white"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      handleAddDomain()
-                    }
-                  }}
-                />
+                <div className="flex-1 relative">
+                  <Input
+                    type="text"
+                    placeholder="e.g., zayka.store or example.com"
+                    value={domainInput}
+                    onChange={(e) => setDomainInput(e.target.value)}
+                    className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500 focus:border-orange-500 focus:ring-orange-500/20"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        handleAddDomain()
+                      }
+                    }}
+                  />
+                </div>
                 <Button
                   onClick={handleAddDomain}
                   disabled={isLoading}
-                  className="bg-orange-500 hover:bg-orange-600"
+                  className="bg-orange-500 hover:bg-orange-600 px-6"
                 >
                   {isLoading ? "Adding..." : "Add Domain"}
                 </Button>
               </div>
             </div>
             
-            <div className="text-sm text-zinc-400">
-              <p className="font-semibold mb-2">Requirements:</p>
-              <ul className="list-disc list-inside space-y-1">
-                <li>You must own the domain</li>
-                <li>Access to domain DNS settings</li>
-                <li>Portfolio must be published</li>
+            <div className="p-4 bg-zinc-800/50 border border-zinc-700 rounded-lg">
+              <p className="text-sm font-semibold text-zinc-300 mb-3 flex items-center gap-2">
+                <Shield className="h-4 w-4 text-orange-500" />
+                Requirements:
+              </p>
+              <ul className="space-y-2 text-sm text-zinc-400">
+                <li className="flex items-start gap-2">
+                  <span className="text-orange-500 mt-0.5">•</span>
+                  <span>You must own the domain</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-orange-500 mt-0.5">•</span>
+                  <span>Access to domain DNS settings</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-orange-500 mt-0.5">•</span>
+                  <span>Portfolio must be published</span>
+                </li>
               </ul>
+              <div className="mt-3 pt-3 border-t border-zinc-700 flex items-start gap-2">
+                <HelpCircle className="h-4 w-4 text-orange-500 mt-0.5 flex-shrink-0" />
+                <p className="text-xs text-zinc-500">
+                  <span className="font-semibold text-zinc-400">Tip:</span> Enter just the domain name (e.g., zayka.store). Protocol (https://) and paths are automatically removed.
+                </p>
+              </div>
             </div>
           </div>
         </Card>
@@ -324,27 +467,37 @@ export function CustomDomainSection({ portfolioId, isPublished }: CustomDomainSe
 
       {/* DNS Configuration Instructions */}
       {showDNSConfig && dnsRecords && (
-        <Card className="p-6 bg-zinc-900 border-zinc-800">
-          <h3 className="text-lg font-semibold text-white mb-4">
-            DNS Configuration
-          </h3>
-          <p className="text-zinc-400 text-sm mb-4">
-            Add these DNS records at your domain provider (GoDaddy, Namecheap, etc.):
-          </p>
+        <Card className="p-6 bg-gradient-to-br from-zinc-900 to-zinc-950 border-zinc-800 shadow-lg">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-blue-500/10 rounded-lg border border-blue-500/20">
+              <Server className="h-5 w-5 text-blue-500" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-white">
+                DNS Configuration
+              </h3>
+              <p className="text-zinc-400 text-sm">
+                Add these DNS records at your domain provider
+              </p>
+            </div>
+          </div>
 
           <div className="space-y-4">
             {/* A Record */}
-            <div className="p-4 bg-zinc-800/50 border border-zinc-700 rounded-lg">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-sm font-semibold text-white">
-                  Record 1: A Record (Required for apex domain)
+            <div className="p-4 bg-zinc-800/50 border border-zinc-700 rounded-lg hover:border-zinc-600 transition-colors">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-sm font-semibold text-white flex items-center gap-2">
+                  <span className="text-orange-500">1.</span>
+                  A Record (Required for apex domain)
                 </p>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => copyToClipboard(dnsRecords.apex.value)}
+                  className="h-8"
                 >
-                  Copy Value
+                  <Copy className="h-3.5 w-3.5 mr-1.5" />
+                  Copy
                 </Button>
               </div>
               <div className="grid grid-cols-3 gap-2 text-sm">
@@ -364,17 +517,20 @@ export function CustomDomainSection({ portfolioId, isPublished }: CustomDomainSe
             </div>
 
             {/* CNAME Record */}
-            <div className="p-4 bg-zinc-800/50 border border-zinc-700 rounded-lg">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-sm font-semibold text-white">
-                  Record 2: CNAME (Required for www subdomain)
+            <div className="p-4 bg-zinc-800/50 border border-zinc-700 rounded-lg hover:border-zinc-600 transition-colors">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-sm font-semibold text-white flex items-center gap-2">
+                  <span className="text-orange-500">2.</span>
+                  CNAME (Required for www subdomain)
                 </p>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => copyToClipboard(dnsRecords.www.value)}
+                  className="h-8"
                 >
-                  Copy Value
+                  <Copy className="h-3.5 w-3.5 mr-1.5" />
+                  Copy
                 </Button>
               </div>
               <div className="grid grid-cols-3 gap-2 text-sm">
@@ -394,17 +550,20 @@ export function CustomDomainSection({ portfolioId, isPublished }: CustomDomainSe
             </div>
 
             {/* TXT Record */}
-            <div className="p-4 bg-zinc-800/50 border border-zinc-700 rounded-lg">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-sm font-semibold text-white">
-                  Record 3: TXT (Verification - temporary)
+            <div className="p-4 bg-zinc-800/50 border border-zinc-700 rounded-lg hover:border-zinc-600 transition-colors">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-sm font-semibold text-white flex items-center gap-2">
+                  <span className="text-orange-500">3.</span>
+                  TXT (Verification - temporary)
                 </p>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => copyToClipboard(dnsRecords.verification.value)}
+                  className="h-8"
                 >
-                  Copy Value
+                  <Copy className="h-3.5 w-3.5 mr-1.5" />
+                  Copy
                 </Button>
               </div>
               <div className="grid grid-cols-3 gap-2 text-sm">
@@ -426,32 +585,60 @@ export function CustomDomainSection({ portfolioId, isPublished }: CustomDomainSe
             </div>
           </div>
 
-          <div className="mt-6 p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-            <p className="text-blue-400 text-sm">
-              <strong>Next steps:</strong>
-            </p>
-            <ol className="list-decimal list-inside text-blue-400 text-sm mt-2 space-y-1">
-              <li>Copy these records to your domain provider's DNS settings</li>
-              <li>Wait 5-10 minutes for DNS propagation (may take up to 24 hours)</li>
-              <li>Click "Verify Domain" button above</li>
-              <li>Once verified, your portfolio will be live at your domain!</li>
-            </ol>
+          <div className="mt-6 p-4 bg-gradient-to-r from-blue-500/10 to-indigo-500/10 border border-blue-500/20 rounded-lg">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 text-blue-400 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-blue-400 text-sm font-semibold mb-2">
+                  Next steps:
+                </p>
+                <ol className="text-blue-400/90 text-sm space-y-1.5">
+                  <li className="flex items-start gap-2">
+                    <span className="text-blue-500 mt-0.5">1.</span>
+                    <span>Copy these records to your domain provider's DNS settings</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-blue-500 mt-0.5">2.</span>
+                    <span>Wait 5-10 minutes for DNS propagation (may take up to 24 hours)</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-blue-500 mt-0.5">3.</span>
+                    <span>Click "Verify Domain" button above</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-blue-500 mt-0.5">4.</span>
+                    <span>Once verified, your portfolio will be live at your domain!</span>
+                  </li>
+                </ol>
+              </div>
+            </div>
           </div>
         </Card>
       )}
 
       {/* Help Section */}
-      <Card className="p-6 bg-zinc-900 border-zinc-800">
-        <h3 className="text-lg font-semibold text-white mb-3">Need Help?</h3>
-        <div className="space-y-2 text-sm text-zinc-400">
-          <p><strong>Where do I add DNS records?</strong></p>
-          <p>Go to your domain registrar (GoDaddy, Namecheap, Cloudflare, etc.) and look for "DNS Management" or "DNS Settings".</p>
+      <Card className="p-6 bg-gradient-to-br from-zinc-900 to-zinc-950 border-zinc-800 shadow-lg">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-2 bg-purple-500/10 rounded-lg border border-purple-500/20">
+            <HelpCircle className="h-5 w-5 text-purple-500" />
+          </div>
+          <h3 className="text-lg font-semibold text-white">Need Help?</h3>
+        </div>
+        <div className="space-y-4 text-sm">
+          <div className="p-3 bg-zinc-800/50 border border-zinc-700 rounded-lg">
+            <p className="text-zinc-300 font-semibold mb-1.5">Where do I add DNS records?</p>
+            <p className="text-zinc-400">Go to your domain registrar (GoDaddy, Namecheap, Cloudflare, etc.) and look for "DNS Management" or "DNS Settings".</p>
+          </div>
           
-          <p className="mt-3"><strong>How long does DNS propagation take?</strong></p>
-          <p>Usually 5-10 minutes, but can take up to 24-48 hours in some cases.</p>
+          <div className="p-3 bg-zinc-800/50 border border-zinc-700 rounded-lg">
+            <p className="text-zinc-300 font-semibold mb-1.5">How long does DNS propagation take?</p>
+            <p className="text-zinc-400">Usually 5-10 minutes, but can take up to 24-48 hours in some cases.</p>
+          </div>
           
-          <p className="mt-3"><strong>What about SSL/HTTPS?</strong></p>
-          <p>SSL is handled by your domain provider or CDN (like Cloudflare). Make sure SSL is enabled on your domain.</p>
+          <div className="p-3 bg-zinc-800/50 border border-zinc-700 rounded-lg">
+            <p className="text-zinc-300 font-semibold mb-1.5">What about SSL/HTTPS?</p>
+            <p className="text-zinc-400">SSL is handled automatically by Vercel. Once your domain is verified, SSL will be provisioned automatically.</p>
+          </div>
         </div>
       </Card>
     </div>

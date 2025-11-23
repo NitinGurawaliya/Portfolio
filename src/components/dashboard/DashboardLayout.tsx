@@ -12,7 +12,7 @@ import {
   ExternalLink,
   LogOut,
   Palette,
-  Globe
+  Globe,
   BarChart3,
   Eye,
   X,

@@ -15,7 +15,7 @@ interface DomainEmailData {
 export function domainAddedEmail(data: DomainEmailData): string {
   const { userName, domain, verificationToken } = data;
   const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || 'devfolio.cc';
-  const appIP = process.env.APP_IP_ADDRESS || '76.76.21.21';
+  const appIP = process.env.APP_IP_ADDRESS || '216.198.79.1';
 
   return `
 <!DOCTYPE html>

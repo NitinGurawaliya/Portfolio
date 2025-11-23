@@ -8,22 +8,30 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getCachedDomain, cacheDomain } from '@/lib/domain-cache';
+import { normalizeDomain } from '@/lib/domain-utils';
 
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
-    const domain = searchParams.get('domain');
+      const domain = searchParams.get('domain');
+
+    console.log(`[Custom Domain Lookup] Request for domain: ${domain}`);
 
     if (!domain) {
+      console.error('[Custom Domain Lookup] No domain parameter provided');
       return NextResponse.json(
         { error: 'Domain parameter required' },
         { status: 400 }
       );
     }
 
-    // Check cache first
-    const cached = await getCachedDomain(domain);
+      const normalizedDomain = normalizeDomain(domain);
+      console.log(`[Custom Domain Lookup] Normalized domain: ${normalizedDomain}`);
+
+      // Check cache first
+      const cached = await getCachedDomain(normalizedDomain);
     if (cached && cached.verified) {
+      console.log(`[Custom Domain Lookup] Found in cache: ${cached.username}`);
       return NextResponse.json({
         success: true,
         username: cached.username,
@@ -31,15 +39,20 @@ export async function GET(req: NextRequest) {
       });
     }
 
+    console.log(`[Custom Domain Lookup] Querying database for: ${normalizedDomain}`);
+    
     // Query database
-    const customDomain = await prisma.customDomain.findUnique({
-      where: {
-        domain: domain,
-        verified: true,
-      },
+      const customDomain = await prisma.customDomain.findFirst({
+        where: {
+          domain: normalizedDomain,
+          verified: true,
+        },
       include: {
         portfolio: {
-          include: {
+          select: {
+            id: true,
+            customUsername: true,
+            isPublished: true,
             user: {
               select: {
                 githubUsername: true,
@@ -50,23 +63,55 @@ export async function GET(req: NextRequest) {
       },
     });
 
+    console.log(`[Custom Domain Lookup] Database query result:`, {
+      found: !!customDomain,
+      verified: customDomain?.verified,
+      portfolioId: customDomain?.portfolioId,
+      portfolioPublished: customDomain?.portfolio?.isPublished,
+      customUsername: customDomain?.portfolio?.customUsername,
+      githubUsername: customDomain?.portfolio?.user?.githubUsername,
+    });
+
     if (!customDomain || !customDomain.verified) {
+      console.log(`[Custom Domain Lookup] Domain not found or not verified: ${normalizedDomain}`);
       return NextResponse.json(
         { success: false, username: null },
         { status: 404 }
       );
     }
 
+    // Check if portfolio is published
+    if (!customDomain.portfolio.isPublished) {
+      console.log(`[Custom Domain Lookup] Portfolio not published for domain: ${normalizedDomain}`);
+      return NextResponse.json(
+        { success: false, username: null, error: 'Portfolio is not published' },
+        { status: 404 }
+      );
+    }
+
+    // Use customUsername if available, otherwise use githubUsername
+    const username = customDomain.portfolio.customUsername || customDomain.portfolio.user.githubUsername;
+    
+    if (!username) {
+      console.error(`[Custom Domain Lookup] No username found for domain: ${normalizedDomain}`);
+      return NextResponse.json(
+        { success: false, username: null, error: 'No username associated with portfolio' },
+        { status: 404 }
+      );
+    }
+
+    console.log(`[Custom Domain Lookup] Found username: ${username} for domain: ${normalizedDomain}`);
+
     // Cache the result
-    await cacheDomain(domain, {
+      await cacheDomain(normalizedDomain, {
       portfolioId: customDomain.portfolioId,
-      username: customDomain.portfolio.user.githubUsername || '',
+      username: username,
       verified: true,
     });
 
     return NextResponse.json({
       success: true,
-      username: customDomain.portfolio.user.githubUsername,
+        username: username,
       portfolioId: customDomain.portfolioId,
     });
   } catch (error) {

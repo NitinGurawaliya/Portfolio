@@ -79,7 +79,7 @@ Create `vercel.json`:
   "crons": [
     {
       "path": "/api/cron/verify-domains",
-      "schedule": "0 * * * *"
+      "schedule": "0 2 * * *"
     }
   ]
 }
@@ -171,7 +171,7 @@ DELETE /api/custom-domain/{id}
 
 ✅ **DNS-Only Routing** - No SSL management (users handle SSL)  
 ✅ **Domain Verification** - TXT record proves ownership  
-✅ **Auto-Verification** - Cron job checks hourly  
+✅ **Auto-Verification** - Cron job checks daily (users can also verify manually)  
 ✅ **Email Notifications** - On add, verify success/fail  
 ✅ **Performance** - Cache layer, optimized queries  
 ✅ **Security** - Verified ownership, one per portfolio  

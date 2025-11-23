@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { cookies } from 'next/headers';
+import { generateDNSRecords } from '@/lib/dns-config';
 
 export async function GET(req: NextRequest) {
   try {
@@ -80,30 +81,57 @@ export async function GET(req: NextRequest) {
     }
 
     // Get custom domain for this portfolio
-    const customDomain = await prisma.customDomain.findUnique({
-      where: {
-        portfolioId: parseInt(portfolioId),
-      },
-    });
+    const portfolioIdInt = parseInt(portfolioId);
 
-    if (!customDomain) {
-      return NextResponse.json({
-        success: true,
-        hasDomain: false,
-        domain: null,
-        verified: false,
+    let customDomain;
+    try {
+      customDomain = await prisma.customDomain.findUnique({
+        where: {
+          portfolioId: portfolioIdInt,
+        },
       });
+    } catch (error: any) {
+      // Handle case where Prisma client hasn't been regenerated
+      if (error?.message?.includes('customDomain') || error?.message?.includes('Cannot read properties of undefined')) {
+        console.error('CustomDomain model not found in Prisma client. Please stop the dev server and run: npx prisma generate');
+        return NextResponse.json({
+          success: true,
+          hasDomain: false,
+          domain: null,
+          verified: false,
+          dnsRecords: null,
+        });
+      }
+      throw error;
     }
 
-    return NextResponse.json({
-      success: true,
-      hasDomain: true,
-      domain: customDomain.domain,
-      verified: customDomain.verified,
-      id: customDomain.id,
-      createdAt: customDomain.createdAt,
-      lastCheckedAt: customDomain.lastCheckedAt,
-    });
+      if (!customDomain) {
+        return NextResponse.json({
+          success: true,
+          hasDomain: false,
+          domain: null,
+          verified: false,
+          dnsRecords: null,
+        });
+      }
+
+      // Use stored Vercel IP if available, otherwise fallback
+      const dnsRecords = await generateDNSRecords(
+        customDomain.domain,
+        customDomain.verificationToken,
+        customDomain.vercelIPAddress || null
+      );
+
+      return NextResponse.json({
+        success: true,
+        hasDomain: true,
+        domain: customDomain.domain,
+        verified: customDomain.verified,
+        id: customDomain.id,
+        createdAt: customDomain.createdAt,
+        lastCheckedAt: customDomain.lastCheckedAt,
+        dnsRecords,
+      });
   } catch (error) {
     console.error('Error fetching domain status:', error);
     return NextResponse.json(

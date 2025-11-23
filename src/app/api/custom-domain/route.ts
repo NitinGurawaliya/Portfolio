@@ -14,6 +14,8 @@ import {
   isOwnDomain,
 } from '@/lib/domain-utils';
 import { cookies } from 'next/headers';
+import { sendEmail } from '@/lib/sendEmail';
+import { domainAddedEmail } from '@/lib/templates/customDomainEmails';
 
 /**
  * Add a new custom domain
@@ -50,10 +52,14 @@ export async function POST(req: NextRequest) {
     }
 
     // Find the actual database user ID by GitHub ID
-    const dbUser = await prisma.user.findUnique({
-      where: { githubId: githubId },
-      select: { id: true },
-    });
+      const dbUser = await prisma.user.findUnique({
+        where: { githubId: githubId },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+        },
+      });
 
     if (!dbUser) {
       return NextResponse.json(
@@ -62,7 +68,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const userIdInt = dbUser.id;
+      const userIdInt = dbUser.id;
+      const userEmail = dbUser.email;
+      const userNameFromDb = dbUser.name;
 
     // Parse request body
     const body = await req.json();
@@ -89,16 +97,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Validate domain format
-    if (!validateDomain(domain)) {
+    // Normalize domain first (strips protocol, trailing slashes, etc.)
+    const normalizedDomain = normalizeDomain(domain);
+
+    // Validate domain format using normalized domain
+    if (!validateDomain(normalizedDomain)) {
       return NextResponse.json(
-        { error: 'Invalid domain format' },
+        { error: 'Invalid domain format. Please enter just the domain name (e.g., example.com)' },
         { status: 400 }
       );
     }
-
-    // Normalize domain
-    const normalizedDomain = normalizeDomain(domain);
 
     // Check if it's our own domain
     if (isOwnDomain(normalizedDomain)) {
@@ -190,7 +198,44 @@ export async function POST(req: NextRequest) {
     // Generate verification token
     const verificationToken = generateVerificationToken();
 
-    // Create custom domain record
+    // IMPORTANT: Add domain to Vercel FIRST to get the correct IP
+    // Vercel provides the IP address that should be used for A record
+    console.log(`[Custom Domain] Adding domain to Vercel first to get DNS configuration: ${normalizedDomain}`);
+    const { addDomainToVercel, getVercelRecommendedIP } = await import('@/lib/vercel-api');
+    const vercelResult = await addDomainToVercel(normalizedDomain, portfolioId.toString());
+
+    // Log Vercel API result for debugging
+    if (!vercelResult.success) {
+      console.warn(`[Custom Domain] Failed to add domain to Vercel: ${vercelResult.error}`);
+      
+      // Check if domain is in different project
+      if ((vercelResult as any).inDifferentProject) {
+        console.error(`[Custom Domain] Domain is in a DIFFERENT Vercel project!`);
+        console.error(`[Custom Domain] Other project ID: ${(vercelResult as any).otherProjectId}`);
+        console.error(`[Custom Domain] Current project ID: ${process.env.VERCEL_PROJECT_ID}`);
+        // Don't create domain in database if it's in different project
+        return NextResponse.json(
+          {
+            error: vercelResult.error || 'Domain is already in use by another Vercel project. Please remove it from that project first.',
+            inDifferentProject: true,
+            otherProjectId: (vercelResult as any).otherProjectId,
+          },
+          { status: 409 }
+        );
+      }
+      
+      console.warn(`[Custom Domain] Domain will be created in database but may need manual addition to Vercel`);
+      console.warn(`[Custom Domain] Check VERCEL_API_TOKEN and VERCEL_PROJECT_ID environment variables`);
+    } else {
+      console.log(`[Custom Domain] Successfully added domain to Vercel: ${normalizedDomain}`);
+    }
+
+    // Get recommended IP from Vercel (or fallback to env var)
+    const ipResult = await getVercelRecommendedIP(portfolioId.toString());
+    const vercelIP = ipResult.ip || null;
+    console.log(`[Custom Domain] Vercel IP for domain: ${vercelIP || 'using fallback'}`);
+
+    // Create custom domain record with Vercel IP
     const customDomain = await prisma.customDomain.create({
       data: {
         domain: normalizedDomain,
@@ -198,11 +243,30 @@ export async function POST(req: NextRequest) {
         userId: userIdInt,
         verificationToken: verificationToken,
         verified: false,
+        vercelIPAddress: vercelIP, // Store IP from Vercel
       },
     });
 
-    // Generate DNS records
-    const dnsRecords = generateDNSRecords(normalizedDomain, verificationToken);
+    // Generate DNS records using the IP from Vercel (or fallback)
+    const dnsRecords = await generateDNSRecords(normalizedDomain, verificationToken, vercelIP);
+
+      if (userEmail) {
+        try {
+          const emailHtml = domainAddedEmail({
+            userName: userNameFromDb || session?.user?.name || userEmail,
+            domain: customDomain.domain,
+            verificationToken,
+          });
+
+          await sendEmail({
+            to: userEmail,
+            subject: `Custom domain instructions for ${customDomain.domain}`,
+            html: emailHtml,
+          });
+        } catch (emailError) {
+          console.error('[Custom Domain] Failed to send domain added email:', emailError);
+        }
+      }
 
     return NextResponse.json({
       success: true,
@@ -211,6 +275,12 @@ export async function POST(req: NextRequest) {
       verified: customDomain.verified,
       verificationToken: customDomain.verificationToken,
       dnsRecords: dnsRecords,
+      // Include Vercel API status for debugging
+      vercelAdded: vercelResult.success,
+      vercelError: vercelResult.success ? undefined : vercelResult.error,
+      warning: !vercelResult.success 
+        ? 'Domain added to database but may need manual addition to Vercel. Check Vercel Dashboard → Settings → Domains.'
+        : undefined,
     });
   } catch (error) {
     console.error('Error adding custom domain:', error);

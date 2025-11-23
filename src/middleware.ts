@@ -33,11 +33,15 @@ export async function middleware(request: NextRequest) {
   // This is a custom domain - fetch mapping from API
   const normalizedDomain = hostname.replace(/^www\./, '')
   
+  console.log(`[Middleware] Checking custom domain: ${normalizedDomain}`)
+  
   try {
     // Call internal API to get domain mapping
     // This API route uses Prisma in Node.js runtime (not Edge)
     const apiUrl = new URL('/api/custom-domain/lookup', request.url)
     apiUrl.searchParams.set('domain', normalizedDomain)
+    
+    console.log(`[Middleware] Calling lookup API: ${apiUrl.toString()}`)
     
     const response = await fetch(apiUrl.toString(), {
       headers: {
@@ -45,19 +49,53 @@ export async function middleware(request: NextRequest) {
       },
     })
 
+    console.log(`[Middleware] Lookup API response status: ${response.status}`)
+
     if (response.ok) {
       const data = await response.json()
-      if (data.username) {
-        // Rewrite to user's portfolio
-        url.pathname = `/${data.username}`
+      console.log(`[Middleware] Lookup API response:`, data)
+      
+      if (data.success && data.username) {
+        // Rewrite to user's portfolio, preserving any path (e.g., project slug)
+        const username = data.username
+        let originalPath = url.pathname
+        
+        // If path is just "/", rewrite to portfolio root
+        if (originalPath === '/') {
+          url.pathname = `/${username}`
+        } else {
+          // Check if path already starts with username (e.g., /Nitin/project-slug)
+          // If so, remove the duplicate username prefix
+          if (originalPath.startsWith(`/${username}/`)) {
+            // Path has username prefix, remove it to avoid duplication
+            // e.g., "/Nitin/project-slug" -> "/Nitin/project-slug" (keep as-is since it's correct)
+            url.pathname = originalPath
+          } else if (originalPath === `/${username}`) {
+            // Path is exactly "/username", use it as-is
+            url.pathname = originalPath
+          } else {
+            // Path doesn't have username, add it (e.g., "/project-slug" -> "/username/project-slug")
+            // Ensure path starts with /
+            const cleanPath = originalPath.startsWith('/') ? originalPath : `/${originalPath}`
+            url.pathname = `/${username}${cleanPath}`
+          }
+        }
+        
+        console.log(`[Middleware] Custom domain ${normalizedDomain}: Rewriting ${originalPath} to: ${url.pathname}`)
         return NextResponse.rewrite(url)
+      } else {
+        console.log(`[Middleware] No username found for domain: ${normalizedDomain}`)
       }
+    } else {
+      const errorData = await response.json().catch(() => ({}))
+      console.error(`[Middleware] Lookup API failed:`, errorData)
     }
   } catch (error) {
-    console.error('Error checking custom domain:', error)
+    console.error('[Middleware] Error checking custom domain:', error)
   }
 
   // No custom domain found, continue with normal routing
+  console.log(`[Middleware] No custom domain mapping found, continuing with normal routing`)
   return NextResponse.next()
 }
 
@@ -68,8 +106,9 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
+     * - site.webmanifest (web manifest file)
      * - api routes (to avoid infinite loops)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|site.webmanifest|robots.txt).*)',
   ],
 }
