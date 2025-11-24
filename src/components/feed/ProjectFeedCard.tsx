@@ -62,8 +62,9 @@ export function ProjectFeedCard({ project, onToggleUpvote, upvotePending = false
   }
 
   const handleNavigate = () => {
-    if (!projectHref) return
-    router.push(projectHref)
+    if (projectHref) {
+      router.push(projectHref)
+    }
   }
 
   return (

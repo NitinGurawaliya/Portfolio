@@ -594,15 +594,21 @@ export default function LayoutDark({ theme, portfolio }: LayoutDarkProps) {
 
                     if (projectHref) {
                       return (
-                        <Link
+                        <div
                           key={repo.id}
-                          href={projectHref}
-                          className="group relative flex h-full w-full"
-                          target="_blank"
-                          rel="noopener noreferrer"
+                          className="group relative flex h-full w-full cursor-pointer"
+                          onClick={(e) => {
+                            e.preventDefault()
+                            const openModal = (window as any).__portfolioOpenModal
+                            if (openModal) {
+                              openModal(repo, projectSlug)
+                            } else {
+                              window.open(projectHref, '_blank', 'noopener,noreferrer')
+                            }
+                          }}
                         >
                           {cardContent}
-                        </Link>
+                        </div>
                       )
                     }
 
