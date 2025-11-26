@@ -39,19 +39,18 @@ export const THEMES = {
     previewImage: "/themes/modern-preview.png",
     description: "Minimal monochrome layout with bold sections"
   },
-  demo:{
-      name: "Demo",
-      colors: {
-        background: "#ffffff",
-        text: "#0f172a",
-        accent: "#111111",
-        cardBg: "#f5f5f5",
-        border: "#d1d5db"
-      },
-      layout: "LayoutDemo",
-      previewImage: "/themes/modern-preview.png",
-      description: "Minimal monochrome layout with bold sections"
-    
+  acernity: {
+    name: "Minimal",
+    colors: {
+      background: "#ffffff",
+      text: "#0f172a",
+      accent: "#6366f1",
+      cardBg: "#f9fafb",
+      border: "#e5e7eb"
+    },
+    layout: "LayoutAcernity",
+    previewImage: "/themes/accernity-preview.png",
+    description: "Beautiful minimal portfolio with smooth animations and modern design"
   }
 } as const
 
@@ -81,4 +80,4 @@ export function getTheme(themeKey: ThemeKey): ThemeConfig {
 export const DEFAULT_THEME: ThemeKey = 'light'
 
 // Available themes array for easy iteration
-export const AVAILABLE_THEMES = ['light', 'modern', 'demo'] as ThemeKey[]
+export const AVAILABLE_THEMES = ['light', 'modern', 'demo', 'acernity'] as ThemeKey[]

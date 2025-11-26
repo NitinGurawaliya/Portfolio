@@ -43,6 +43,19 @@ const THEMES = {
     previewImage: "/themes/modern-preview.png",
     description: "Minimal monochrome layout with bold sections"
   },
+  acernity: {
+    name: "Acernity",
+    colors: {
+      background: "#ffffff",
+      text: "#0f172a",
+      accent: "#6366f1",
+      cardBg: "#f9fafb",
+      border: "#e5e7eb"
+    },
+    layout: "PortfolioLayout",
+    previewImage: "/themes/modern-preview.png",
+    description: "Beautiful minimal portfolio with smooth animations and modern design"
+  },
 } as const
 
 type ThemeKey = keyof typeof THEMES

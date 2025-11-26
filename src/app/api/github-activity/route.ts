@@ -120,108 +120,88 @@ export async function GET(request: NextRequest) {
       contributionData = generateMockContributions()
     }
 
-    // Fetch pinned repositories using GraphQL API
-    let pinnedRepos = []
+    // Fetch recent pull requests created by user (not merged, just created)
+    let pullRequests = []
     try {
-      const pinnedQuery = `
-        query($username: String!) {
-          user(login: $username) {
-            pinnedItems(first: 6, types: REPOSITORY) {
-              nodes {
-                ... on Repository {
-                  id
-                  name
-                  description
-                  url
-                  primaryLanguage {
-                    name
-                  }
-                  stargazerCount
-                  forkCount
-                  updatedAt
-                  repositoryTopics(first: 10) {
-                    nodes {
-                      topic {
-                        name
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      `
-
-      const pinnedResponse = await fetch('https://api.github.com/graphql', {
-        method: 'POST',
+      const prsResponse = await fetch(`https://api.github.com/search/issues?q=author:${username}+type:pr&sort=created&order=desc&per_page=20`, {
         headers: {
-          'Authorization': `bearer ${process.env.GITHUB_TOKEN}`,
-          'Content-Type': 'application/json',
+          'Accept': 'application/vnd.github.v3+json',
+          'Authorization': `token ${process.env.GITHUB_TOKEN}`,
           'User-Agent': 'DevFolio-GitHub-Activity/1.0'
-        },
-        body: JSON.stringify({
-          query: pinnedQuery,
-          variables: { username }
-        })
+        }
       })
 
-      if (pinnedResponse.ok) {
-        const pinnedData = await pinnedResponse.json()
-        // console.log('Pinned repos GraphQL response:', pinnedData) // Disabled to reduce terminal noise
+      if (prsResponse.ok) {
+        const prsData = await prsResponse.json()
         
-        if (pinnedData.data && pinnedData.data.user && pinnedData.data.user.pinnedItems) {
-          pinnedRepos = pinnedData.data.user.pinnedItems.nodes.map((repo: any) => ({
-            id: repo.id,
-            name: repo.name,
-            description: repo.description,
-            htmlUrl: repo.url,
-            language: repo.primaryLanguage?.name || 'Unknown',
-            stargazersCount: repo.stargazerCount,
-            forksCount: repo.forkCount,
-            updatedAt: repo.updatedAt,
-            topics: repo.repositoryTopics?.nodes?.map((topic: any) => topic.topic.name) || []
-          }))
-          console.log('Pinned repos processed:', pinnedRepos.length)
+        if (prsData.items && prsData.items.length > 0) {
+          // Fetch repo details for each PR to get logo
+          const prsWithRepoInfo = await Promise.all(
+            prsData.items.slice(0, 20).map(async (pr: any) => {
+              const repoUrl = pr.repository_url
+              const repoParts = repoUrl.split('/').slice(-2)
+              const owner = repoParts[0]
+              const repoName = repoParts[1]
+              
+              let repoLogo = ''
+              try {
+                const repoResponse = await fetch(`https://api.github.com/repos/${owner}/${repoName}`, {
+                  headers: {
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Authorization': `token ${process.env.GITHUB_TOKEN}`,
+                    'User-Agent': 'DevFolio-GitHub-Activity/1.0'
+                  }
+                })
+                
+                if (repoResponse.ok) {
+                  const repoData = await repoResponse.json()
+                  // Try to get owner's avatar as repo logo
+                  repoLogo = repoData.owner?.avatar_url || ''
+                }
+              } catch (error) {
+                // If repo fetch fails, continue without logo
+                console.log('Failed to fetch repo info for', repoName)
+              }
+              
+              return {
+                id: pr.id,
+                number: pr.number,
+                title: pr.title,
+                body: pr.body || '',
+                htmlUrl: pr.html_url,
+                state: pr.state,
+                mergedAt: pr.pull_request?.merged_at || null,
+                createdAt: pr.created_at,
+                repository: {
+                  name: repoName,
+                  fullName: `${owner}/${repoName}`,
+                  owner: owner,
+                  logo: repoLogo
+                },
+                user: {
+                  login: pr.user?.login || username,
+                  avatarUrl: pr.user?.avatar_url || ''
+                }
+              }
+            })
+          )
+          
+          pullRequests = prsWithRepoInfo
+          console.log('Pull requests processed:', pullRequests.length)
         } else {
-          console.log('No pinned repos found, trying regular repos')
-          // Fallback to regular repos if no pinned repos
-          const userReposResponse = await fetch(`https://api.github.com/users/${username}/repos?sort=updated&per_page=6`, {
-            headers: {
-              'Accept': 'application/vnd.github.v3+json',
-              'Authorization': `token ${process.env.GITHUB_TOKEN}`,
-              'User-Agent': 'DevFolio-GitHub-Activity/1.0'
-            }
-          })
-
-          if (userReposResponse.ok) {
-            const userReposData = await userReposResponse.json()
-            pinnedRepos = userReposData
-              .filter((repo: any) => !repo.fork && !repo.private && repo.owner.login === username)
-              .slice(0, 6)
-              .map((repo: any) => ({
-                id: repo.id,
-                name: repo.name,
-                description: repo.description,
-                htmlUrl: repo.html_url,
-                language: repo.language,
-                stargazersCount: repo.stargazers_count,
-                forksCount: repo.forks_count,
-                updatedAt: repo.updated_at,
-                topics: repo.topics || []
-              }))
-          }
+          console.log('No pull requests found')
+          pullRequests = []
         }
       } else {
-        // console.log('Pinned repos GraphQL failed, using empty array') // Disabled to reduce terminal noise
-        pinnedRepos = []
+        console.log('Pull requests API failed, using empty array')
+        pullRequests = []
       }
     } catch (error) {
-      console.log('Pinned repos API error, using empty array:', error)
-      pinnedRepos = []
+      console.log('Pull requests API error, using empty array:', error)
+      pullRequests = []
     }
 
-    console.log('Returning data with contributions:', contributionData.length, 'and repos:', pinnedRepos.length)
+    console.log('Returning data with contributions:', contributionData.length, 'and pull requests:', pullRequests.length)
 
     const responseData = {
       user: {
@@ -234,7 +214,7 @@ export async function GET(request: NextRequest) {
         createdAt: userData.created_at
       },
       contributions: contributionData,
-      pinnedRepos
+      pullRequests
     }
 
     // Cache the response

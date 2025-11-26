@@ -1,10 +1,10 @@
 "use client"
 
 import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Check, Palette, Moon, Sun, Sparkles } from 'lucide-react'
+import { Check, Palette, Moon, Sun, Sparkles, X } from 'lucide-react'
 import { THEMES, ThemeKey, ThemeConfig } from '@/lib/theme-config'
 
 interface ThemeSelectorProps {
@@ -61,6 +61,7 @@ export default function ThemeSelector({
   onboardingMode = false
 }: ThemeSelectorProps) {
   const [selectedTheme, setSelectedTheme] = useState<ThemeKey>(currentTheme)
+  const [fullViewImage, setFullViewImage] = useState<string | null>(null)
   
   // Use props if provided, otherwise use local state as fallback
   const backgroundColor = backgroundColorProp ?? null
@@ -92,7 +93,7 @@ export default function ThemeSelector({
     setBackgroundPattern(pattern)
   }
 
-  const selectableThemes: ThemeKey[] = ['light', 'modern']
+  const selectableThemes: ThemeKey[] = ['light', 'modern', 'acernity']
   const getPatternStyle = (pattern: string | null) => {
     if (!pattern) return {}
     
@@ -158,9 +159,24 @@ export default function ThemeSelector({
           <img
             src={themeConfig.previewImage}
             alt={`${themeConfig.name} preview`}
-            className="absolute inset-0 h-full w-full object-cover"
+            className="absolute inset-0 h-full w-full object-cover cursor-zoom-in"
             loading="lazy"
+            onClick={(e) => {
+              e.stopPropagation()
+              setFullViewImage(themeConfig.previewImage)
+            }}
           />
+          {/* Theme Name Badge */}
+          <div className="absolute top-2 right-2">
+            <div 
+              className="px-2 py-1 rounded-md text-[10px] font-semibold text-white shadow-sm"
+              style={{ 
+                backgroundColor: themeConfig.colors.accent
+              }}
+            >
+              {themeConfig.name}
+            </div>
+          </div>
         </div>
       )
     }
@@ -241,7 +257,7 @@ export default function ThemeSelector({
                   className="flex flex-col items-center gap-2"
                 >
                   <Card
-                    className={`relative mx-auto w-full max-w-[240px] cursor-pointer overflow-hidden rounded-3xl border-0  transition-all ${
+                    className={`relative mx-auto w-full max-w-[240px] cursor-pointer overflow-hidden rounded-3xl border-0 transition-all ${
                       !isSelectable ? 'cursor-not-allowed opacity-75' : ''
                     }`}
                     onClick={() => {
@@ -262,10 +278,15 @@ export default function ThemeSelector({
                       {getThemePreview(themeConfig)}
                     </CardContent>
                   </Card>
+                  
                   <Button
                     variant={isSelected ? "default" : "outline"}
                     className={`w-full max-w-[240px] rounded-full text-xs ${isSelected ? 'bg-orange-500 hover:bg-orange-600' : 'border-gray-200 text-gray-700 hover:bg-gray-100'}`}
                     disabled={!isSelectable || isSelected}
+                    onClick={() => {
+                      if (!isSelectable || isSelected) return
+                      handleThemeSelect(themeKey)
+                    }}
                   >
                     {isSelected ? (isSelectable ? "Selected" : "Active (Legacy)") : isSelectable ? "Use this layout" : "Not available"}
                   </Button>
@@ -419,6 +440,40 @@ export default function ThemeSelector({
           </div>
         </div>
       )}
+
+      {/* Full View Image Modal */}
+      <AnimatePresence>
+        {fullViewImage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+            onClick={() => setFullViewImage(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="relative max-w-6xl max-h-[85vh] w-full"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                onClick={() => setFullViewImage(null)}
+                className="absolute top-2 right-2 z-10 w-8 h-8 flex items-center justify-center rounded-full bg-black/50 hover:bg-black/70 text-white transition-colors backdrop-blur-sm"
+                aria-label="Close"
+              >
+                <X className="h-5 w-5" />
+              </button>
+              <img
+                src={fullViewImage}
+                alt="Theme preview"
+                className="w-full h-full object-contain rounded-lg"
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
