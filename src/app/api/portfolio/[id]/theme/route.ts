@@ -28,7 +28,33 @@ const THEMES = {
     layout: "LayoutLight",
     previewImage: "/themes/light-preview.png",
     description: "Clean light theme with blue accents"
-  }
+  },
+  modern: {
+    name: "Modern",
+    colors: {
+      background: "#ffffff",
+      text: "#0f172a",
+      accent: "#111111",
+      cardBg: "#f5f5f5",
+      border: "#d1d5db"
+    },
+    layout: "LayoutModern",
+    previewImage: "/themes/modern-preview.png",
+    description: "Minimal monochrome layout with bold sections"
+  },
+  acernity: {
+    name: "Acernity",
+    colors: {
+      background: "#ffffff",
+      text: "#0f172a",
+      accent: "#6366f1",
+      cardBg: "#f9fafb",
+      border: "#e5e7eb"
+    },
+    layout: "PortfolioLayout",
+    previewImage: "/themes/modern-preview.png",
+    description: "Beautiful minimal portfolio with smooth animations and modern design"
+  },
 } as const
 
 type ThemeKey = keyof typeof THEMES

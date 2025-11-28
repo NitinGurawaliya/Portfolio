@@ -3,6 +3,7 @@ import { twMerge } from "tailwind-merge"
 
 /**
  * Tailwind CSS classes को merge करता है
+ * Acernity UI components के लिए भी use होता है
  */
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
