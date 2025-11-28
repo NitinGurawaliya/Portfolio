@@ -145,7 +145,7 @@ export function GitHubActivity({ username, theme }: GitHubActivityProps) {
     return null
   }
 
-  const { contributions, pinnedRepos } = data
+  const { contributions, pinnedRepos = [] } = data
 
   // Group contributions by weeks
   const weeks = []

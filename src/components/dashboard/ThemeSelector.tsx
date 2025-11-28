@@ -281,7 +281,13 @@ export default function ThemeSelector({
                   
                   <Button
                     variant={isSelected ? "default" : "outline"}
-                    className={`w-full max-w-[240px] rounded-full text-xs ${isSelected ? 'bg-orange-500 hover:bg-orange-600' : 'border-gray-200 text-gray-700 hover:bg-gray-100'}`}
+                    className={`w-full max-w-[240px] rounded-full text-xs font-medium transition-all ${
+                      isSelected 
+                        ? 'bg-orange-500 hover:bg-orange-600 text-white border-2 border-orange-500 shadow-md hover:shadow-lg' 
+                        : isSelectable
+                        ? 'border-1 border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-orange-400 hover:text-orange-600 shadow-sm hover:shadow-md'
+                        : 'border-1 border-gray-200 text-gray-400 cursor-not-allowed opacity-60'
+                    }`}
                     disabled={!isSelectable || isSelected}
                     onClick={() => {
                       if (!isSelectable || isSelected) return
@@ -326,7 +332,11 @@ export default function ThemeSelector({
                   <Button
                     variant={isSelected ? "default" : "outline"}
                     size="sm"
-                    className={`w-full rounded-lg text-xs ${isSelected ? 'bg-orange-500 hover:bg-orange-600' : 'border-gray-200 text-gray-700 hover:bg-gray-100'}`}
+                    className={`w-full rounded-lg text-xs font-medium transition-all ${
+                      isSelected 
+                        ? 'bg-orange-500 hover:bg-orange-600 text-white border-1 border-orange-500 shadow-md hover:shadow-lg' 
+                        : 'border-1 border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-orange-400 hover:text-orange-600 shadow-sm hover:shadow-md'
+                    }`}
                     disabled={isSelected}
                   >
                     {isSelected ? "Selected" : "Use this layout"}

@@ -48,7 +48,7 @@ export const THEMES = {
       cardBg: "#f9fafb",
       border: "#e5e7eb"
     },
-    layout: "LayoutAcernity",
+    layout: "LayoutAcernity", 
     previewImage: "/themes/accernity-preview.png",
     description: "Beautiful minimal portfolio with smooth animations and modern design"
   }

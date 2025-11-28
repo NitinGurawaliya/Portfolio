@@ -230,14 +230,26 @@ export default function LayoutAcernity({ theme, portfolio }: LayoutAcernityProps
                   </div>
                   {/* Download Button - Visible on all screens, in name row */}
                   {portfolio.cvUrl && (
-                    <Button
-                      onClick={() => window.open(portfolio.cvUrl!, "_blank")}
-                      className="flex bg-white text-black hover:bg-gray-50 px-3 py-1.5 rounded-none border border-black items-center gap-2 flex-shrink-0"
-                    >
-                      <Download className="w-3.5 h-3.5" />
-                      <span className="text-xs sm:text-sm">Download CV</span>
-                    </Button>
-                  )}
+                <motion.div
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ duration: 0.8, delay: 0.7 }}
+                >
+                  <motion.button
+                    onClick={() => {
+                      window.open(portfolio.cvUrl!, '_blank')
+                    }}
+                    className="w-full flex items-center justify-between bg-white border border-gray-300 rounded-lg p-2 hover:bg-gray-50 transition-all duration-200 text-left"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <span className="text-sm font-medium text-gray-900">Download CV</span>
+                    <div className="bg-gray-100 rounded-md p-1.5">
+                      <Download className="h-4 w-4 text-gray-700" />
+                    </div>
+                  </motion.button>
+                </motion.div>
+              )}
                 </motion.div>
 
                 {/* Bio */}
@@ -317,7 +329,7 @@ export default function LayoutAcernity({ theme, portfolio }: LayoutAcernityProps
                 </p>
                 
                 {/* Social Links */}
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-1">
                   {portfolio.socials
                     .filter((social) => social.url)
                     .map((social) => {
@@ -409,11 +421,11 @@ export default function LayoutAcernity({ theme, portfolio }: LayoutAcernityProps
                       {/* Company Logo */}
                       <div className="flex-shrink-0">
                         {exp.faviconUrl ? (
-                          <div className="w-12 h-12 border border-gray-300 bg-white flex items-center justify-center">
+                          <div className="w-10 h-10 border border-gray-300 bg-white flex items-center justify-center">
                             <img src={exp.faviconUrl} alt={exp.companyName} className="w-8 h-8 object-contain" />
                           </div>
                         ) : (
-                          <div className="w-12 h-12 border border-gray-300 bg-gray-100 flex items-center justify-center">
+                          <div className="w-10 h-10 border border-gray-300 bg-gray-100 flex items-center justify-center">
                             <span className="text-gray-400 text-lg font-semibold">
                               {exp.companyName?.charAt(0) || "•"}
                             </span>

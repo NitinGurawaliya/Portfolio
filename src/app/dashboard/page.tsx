@@ -1035,7 +1035,7 @@ export default function DashboardPage() {
         {renderActiveSection}
       </DashboardLayout>
 
-        <ProfileCompletionWidget
+        {/* <ProfileCompletionWidget
           overallPercent={profileCompletion.overallPercent}
           sections={profileCompletion.sections}
           onNavigate={handleSectionChange}
@@ -1053,7 +1053,7 @@ export default function DashboardPage() {
             portfolioUrl={`https://devfolio.cc/${portfolio.portfolioData.customUsername || user?.githubUsername || ''}`}
             onClose={() => setShowShareWidget(false)}
           />
-        )}
+        )} */}
     </>
   )
 }

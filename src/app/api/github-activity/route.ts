@@ -201,7 +201,110 @@ export async function GET(request: NextRequest) {
       pullRequests = []
     }
 
-    console.log('Returning data with contributions:', contributionData.length, 'and pull requests:', pullRequests.length)
+    // Fetch pinned repositories using GraphQL API
+    let pinnedRepos = []
+    try {
+      const pinnedReposQuery = `
+        query($username: String!) {
+          user(login: $username) {
+            pinnedItems(first: 6, types: REPOSITORY) {
+              nodes {
+                ... on Repository {
+                  id
+                  name
+                  description
+                  url
+                  primaryLanguage {
+                    name
+                  }
+                  stargazerCount
+                  forkCount
+                  updatedAt
+                  repositoryTopics(first: 5) {
+                    nodes {
+                      topic {
+                        name
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      `
+
+      const pinnedResponse = await fetch('https://api.github.com/graphql', {
+        method: 'POST',
+        headers: {
+          'Authorization': `bearer ${process.env.GITHUB_TOKEN}`,
+          'Content-Type': 'application/json',
+          'User-Agent': 'DevFolio-GitHub-Activity/1.0'
+        },
+        body: JSON.stringify({
+          query: pinnedReposQuery,
+          variables: { username }
+        })
+      })
+
+      if (pinnedResponse.ok) {
+        const pinnedData = await pinnedResponse.json()
+        
+        if (pinnedData.data && pinnedData.data.user && pinnedData.data.user.pinnedItems) {
+          pinnedRepos = pinnedData.data.user.pinnedItems.nodes.map((repo: any) => ({
+            id: parseInt(repo.id.replace(/\D/g, '')) || 0,
+            name: repo.name,
+            description: repo.description || '',
+            htmlUrl: repo.url,
+            language: repo.primaryLanguage?.name || '',
+            stargazersCount: repo.stargazerCount || 0,
+            forksCount: repo.forkCount || 0,
+            updatedAt: repo.updatedAt,
+            topics: repo.repositoryTopics?.nodes?.map((node: any) => node.topic.name) || []
+          }))
+          console.log('Pinned repositories processed:', pinnedRepos.length)
+        } else {
+          console.log('No pinned repositories found')
+          pinnedRepos = []
+        }
+      } else {
+        // Fallback: fetch top repositories by stars if GraphQL fails
+        console.log('Pinned repos GraphQL API failed, trying fallback method')
+        try {
+          const reposResponse = await fetch(`https://api.github.com/users/${username}/repos?sort=stars&per_page=6&type=all`, {
+            headers: {
+              'Accept': 'application/vnd.github.v3+json',
+              'Authorization': `token ${process.env.GITHUB_TOKEN}`,
+              'User-Agent': 'DevFolio-GitHub-Activity/1.0'
+            }
+          })
+
+          if (reposResponse.ok) {
+            const reposData = await reposResponse.json()
+            pinnedRepos = reposData.map((repo: any) => ({
+              id: repo.id,
+              name: repo.name,
+              description: repo.description || '',
+              htmlUrl: repo.html_url,
+              language: repo.language || '',
+              stargazersCount: repo.stargazers_count || 0,
+              forksCount: repo.forks_count || 0,
+              updatedAt: repo.updated_at,
+              topics: repo.topics || []
+            }))
+            console.log('Fallback: Top repositories fetched:', pinnedRepos.length)
+          }
+        } catch (fallbackError) {
+          console.log('Fallback method also failed:', fallbackError)
+          pinnedRepos = []
+        }
+      }
+    } catch (error) {
+      console.log('Pinned repositories API error, using empty array:', error)
+      pinnedRepos = []
+    }
+
+    console.log('Returning data with contributions:', contributionData.length, ', pull requests:', pullRequests.length, ', and pinned repos:', pinnedRepos.length)
 
     const responseData = {
       user: {
@@ -214,7 +317,8 @@ export async function GET(request: NextRequest) {
         createdAt: userData.created_at
       },
       contributions: contributionData,
-      pullRequests
+      pullRequests,
+      pinnedRepos
     }
 
     // Cache the response
