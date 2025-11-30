@@ -52,6 +52,20 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
     profilePic: "",
     customUsername: "",
   })
+  
+  // Debug: Track portfolioData changes
+  useEffect(() => {
+    console.log("🔄 usePortfolio: portfolioData state changed:", {
+      displayName: portfolioData.displayName,
+      jobTitle: portfolioData.jobTitle,
+      bio: portfolioData.bio?.substring(0, 30),
+      profilePic: portfolioData.profilePic ? "✅" : "❌",
+      customUsername: portfolioData.customUsername,
+      hasDisplayName: !!portfolioData.displayName,
+      hasBio: !!portfolioData.bio,
+      hasProfilePic: !!portfolioData.profilePic
+    })
+  }, [portfolioData])
   const [selectedRepos, setSelectedRepos] = useState<number[]>([])
   const [skills, setSkills] = useState<Skill[]>([])
   const [socials, setSocials] = useState<Social[]>([])
@@ -307,37 +321,76 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
   const loadExistingData = async (username: string, initialData?: any) => {
     // Prevent multiple simultaneous calls
     if (isLoadingRef.current) {
-      console.log("⚠️ loadExistingData already in progress, skipping duplicate call")
+      console.log("⏸️ loadExistingData: Already loading, skipping...")
       return
     }
     
+    console.log("🔄 loadExistingData: Starting data load for username:", username)
     isLoadingRef.current = true
-    console.log("🚀 loadExistingPortfolioData called with:", { username, initialData })
-    console.log("🔍 Trying to load portfolio with username:", username)
-    
     setIsLoadingPortfolio(true)
     
     try {
       // OPTIMIZATION: Load basic data first for instant home section display
       // Then load sections in parallel in background
+      console.log("📡 loadExistingData: Fetching basic and sections data...")
       const [basicData, sectionsData] = await Promise.all([
-        loadBasicPortfolioData().catch(() => null),
-        loadSectionsData().catch(() => null)
+        loadBasicPortfolioData().catch((err) => {
+          console.error("❌ loadExistingData: Failed to load basic data:", err)
+          return null
+        }),
+        loadSectionsData().catch((err) => {
+          console.error("❌ loadExistingData: Failed to load sections data:", err)
+          return null
+        })
       ])
+      
+      console.log("📦 loadExistingData: Received data:", {
+        basicData: basicData ? "✅" : "❌",
+        sectionsData: sectionsData ? "✅" : "❌",
+        basicDataKeys: basicData ? Object.keys(basicData) : [],
+        sectionsDataKeys: sectionsData ? Object.keys(sectionsData) : [],
+        basicDataRaw: basicData,
+        sectionsDataRaw: sectionsData
+      })
+      
+      // CRITICAL: If no data, log and return early
+      if (!basicData && !sectionsData) {
+        console.error("❌ loadExistingData: NO DATA RECEIVED - both basicData and sectionsData are null!")
+        setIsLoadingPortfolio(false)
+        isLoadingRef.current = false
+        setIsInitialLoad(false)
+        return
+      }
       
       // If basic data exists, use it immediately
       if (basicData) {
-        console.log("✅ Basic portfolio data loaded:", basicData.id)
-        
-        // Update portfolio data immediately for instant UI
-        setPortfolioData({
+        const newPortfolioData = {
           displayName: basicData.displayName || "",
           jobTitle: basicData.jobTitle || "",
           bio: basicData.bio || "",
           profilePic: basicData.profilePic || "",
           customUsername: basicData.customUsername || user?.githubUsername || "",
           id: basicData.id
+        }
+        
+        console.log("✅ loadExistingData: Setting basic portfolio data:", {
+          displayName: newPortfolioData.displayName,
+          jobTitle: newPortfolioData.jobTitle,
+          bio: newPortfolioData.bio?.substring(0, 50) + "...",
+          profilePic: newPortfolioData.profilePic ? "✅" : "❌",
+          customUsername: newPortfolioData.customUsername,
+          fullData: newPortfolioData,
+          basicDataRaw: basicData
         })
+        
+        console.log("🔄 loadExistingData: Calling setPortfolioData NOW with:", newPortfolioData)
+        // Use functional update to ensure state updates
+        setPortfolioData(prev => {
+          console.log("🔄 loadExistingData: setPortfolioData callback - prev state:", prev)
+          console.log("🔄 loadExistingData: setPortfolioData callback - new state:", newPortfolioData)
+          return newPortfolioData
+        })
+        console.log("🔄 loadExistingData: setPortfolioData called, React should update state")
         
         // Set theme and customization if available
         if (basicData.selectedTheme !== undefined) {
@@ -361,29 +414,30 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
         }
       }
       
-      // If sections data exists, update sections
-      if (sectionsData) {
-        console.log("✅ Sections data loaded")
+        // If sections data exists, update sections
+        if (sectionsData) {
+          if (sectionsData.skills) {
+            console.log("✅ loadExistingData: Setting skills:", sectionsData.skills.length)
+            setSkills(sectionsData.skills.map((skill: any) => ({
+              id: skill.id.toString(),
+              name: skill.name,
+              category: skill.category || ""
+            })))
+          }
         
-        if (sectionsData.skills) {
-          setSkills(sectionsData.skills.map((skill: any) => ({
-            id: skill.id.toString(),
-            name: skill.name,
-            category: skill.category || ""
-          })))
-        }
-        
-        if (sectionsData.socials) {
-          setSocials(sectionsData.socials.map((social: any) => ({
-            id: social.id,
-            platform: social.platform,
-            username: social.username,
-            url: social.url,
-            isPinned: social.isPinned
-          })))
-        }
+          if (sectionsData.socials) {
+            console.log("✅ loadExistingData: Setting socials:", sectionsData.socials.length)
+            setSocials(sectionsData.socials.map((social: any) => ({
+              id: social.id,
+              platform: social.platform,
+              username: social.username,
+              url: social.url,
+              isPinned: social.isPinned
+            })))
+          }
         
           if (sectionsData.repositories) {
+            console.log("✅ loadExistingData: Setting repositories:", sectionsData.repositories.length)
             const { urls, names, descriptions, githubUrls: gUrls, categories, statuses, revenues, mrrs, users: usersMap, technologies: techsMap } = mapPortfolioRepositories(sectionsData.repositories)
             
             setDeployedUrls(urls)
@@ -397,19 +451,20 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
             setProjectUsers(usersMap)
             setProjectTechnologies(techsMap)
           
-          const imported = formatImportedProjects(sectionsData.repositories)
-          setImportedProjects(imported)
-          
-          const githubIds = sectionsData.repositories.map((repo: any) => 
-            parseInt(repo.repository.githubId)
-          )
-          setSelectedRepos(githubIds)
-          
-          const loadedRepoOrder = sectionsData.repositories.map((repo: any) => 
-            parseInt(repo.repository.githubId)
-          )
-          setRepoOrder(loadedRepoOrder)
-        }
+            const imported = formatImportedProjects(sectionsData.repositories)
+            setImportedProjects(imported)
+            
+            const githubIds = sectionsData.repositories.map((repo: any) => 
+              parseInt(repo.repository.githubId)
+            )
+            console.log("✅ loadExistingData: Setting selected repos:", githubIds.length)
+            setSelectedRepos(githubIds)
+            
+            const loadedRepoOrder = sectionsData.repositories.map((repo: any) => 
+              parseInt(repo.repository.githubId)
+            )
+            setRepoOrder(loadedRepoOrder)
+          }
       }
       
       // Fallback: Try to load full portfolio if basic/sections APIs failed
@@ -418,39 +473,14 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
         portfolio = await loadPortfolioData(username)
       }
       
-      if (portfolio) {
-        console.log("✅ Portfolio found with username:", username)
-        console.log("🔍 Portfolio details:", {
-          id: portfolio.id,
-          customUsername: portfolio.customUsername,
-          displayName: portfolio.displayName,
-          userGithubUsername: portfolio.user?.githubUsername
-        })
-      } else {
-        console.log("❌ No portfolio found with username:", username)
-        
+      if (!portfolio) {
         // If no portfolio found, try with GitHub username as fallback
         if (user?.githubUsername && username !== user.githubUsername) {
-          console.log("🔍 Trying fallback with GitHub username:", user.githubUsername)
           portfolio = await loadPortfolioData(user.githubUsername)
-          
-          if (portfolio) {
-            console.log("✅ Portfolio found with GitHub username fallback:", user.githubUsername)
-            console.log("🔍 Portfolio details:", {
-              id: portfolio.id,
-              customUsername: portfolio.customUsername,
-              displayName: portfolio.displayName,
-              userGithubUsername: portfolio.user?.githubUsername
-            })
-          } else {
-            console.log("❌ No portfolio found with GitHub username fallback either")
-          }
         }
       }
       
       if (portfolio) {
-        console.log("🔍 Found existing portfolio:", portfolio)
-        console.log("🔍 Portfolio customUsername:", portfolio.customUsername)
         
         // Update portfolio data
         setPortfolioData({
@@ -467,14 +497,6 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
           setExperiences((portfolio as any).experiences)
         }
         
-        console.log("🔍 Set portfolio data:", {
-          displayName: portfolio.displayName || "",
-          jobTitle: portfolio.jobTitle || "",
-          bio: portfolio.bio || "",
-          profilePic: portfolio.profilePic || "",
-          customUsername: portfolio.customUsername || user?.githubUsername || "",
-          id: portfolio.id
-        })
 
         // Load social accounts
         if (portfolio.socials && portfolio.socials.length > 0) {
@@ -587,11 +609,6 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
           experiences: (portfolio as any).experiences || []
         }))
         
-        console.log("💾 Setting original data from existing portfolio")
-        console.log("🔍 Portfolio ID in originalData:", originalDataToSet.id)
-        console.log("🔍 Portfolio object:", portfolio)
-        console.log("🔍 Portfolio ID from API:", portfolio.id)
-        console.log("🔍 Original data before normalize:", { id: portfolio.id })
         
         // Load analytics data along with portfolio data
         if (portfolio.id) {
@@ -599,7 +616,6 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
           const analyticsData = await loadAnalyticsData(portfolio.id)
           if (analyticsData) {
             setAnalytics(analyticsData)
-            console.log("✅ Analytics data loaded:", analyticsData)
           }
         }
         
@@ -608,8 +624,6 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
         setOriginalData(originalDataToSet)
         setIsLoadingPortfolio(false)
         isLoadingRef.current = false
-        console.log("✅ Initial load completed, enabling change tracking...")
-        
         // Delay enabling change detection to ensure originalData is set
         // Use multiple frames to ensure all state updates have completed
         requestAnimationFrame(() => {
@@ -620,15 +634,15 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
               if (typeof window !== 'undefined') {
                 window._lastChangeTrackingEnabled = Date.now()
               }
-              console.log("✅ Change tracking enabled")
             }, 100)
           })
         })
       } else if (basicData || sectionsData) {
+        // Handle optimized API response (basicData or sectionsData)
         // Optimized API path - set original data from split APIs
         const currentTheme = selectedTheme || 'light'
-          const sectionsRepoMap = sectionsData?.repositories ? mapPortfolioRepositories(sectionsData.repositories) : { urls: {}, names: {}, descriptions: {}, githubUrls: {}, categories: {}, statuses: {}, revenues: {}, mrrs: {}, users: {}, technologies: {} }
-          const originalDataToSet = normalizeData(createOrderedData({
+        const sectionsRepoMap = sectionsData?.repositories ? mapPortfolioRepositories(sectionsData.repositories) : { urls: {}, names: {}, descriptions: {}, githubUrls: {}, categories: {}, statuses: {}, revenues: {}, mrrs: {}, users: {}, technologies: {} }
+        const originalDataToSet = normalizeData(createOrderedData({
           id: basicData?.id || 0,
           portfolioData: {
             displayName: basicData?.displayName || "",
@@ -669,6 +683,7 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
           experiences: basicData?.experiences || []
         }))
         
+        console.log("✅ loadExistingData: Setting original data and completing load")
         setOriginalData(originalDataToSet)
         setIsLoadingPortfolio(false)
         isLoadingRef.current = false
@@ -686,6 +701,7 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
             setTimeout(() => {
+              console.log("✅ loadExistingData: Enabling change tracking")
               setIsInitialLoad(false)
               if (typeof window !== 'undefined') {
                 window._lastChangeTrackingEnabled = Date.now()
@@ -745,9 +761,23 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
           }, 50)
         })
       }
+      
+      // Ensure loading is set to false even if no data was found
+      if (!portfolio && !basicData && !sectionsData) {
+        console.log("⚠️ loadExistingData: No portfolio data found")
+        setIsLoadingPortfolio(false)
+        isLoadingRef.current = false
+        setIsInitialLoad(false)
+      } else {
+        console.log("✅ loadExistingData: Data load completed successfully")
+      }
     } catch (error) {
        console.error("❌ Error loading existing portfolio data:", error)
+       console.error("❌ Error details:", error instanceof Error ? error.message : String(error))
+       console.error("❌ Error stack:", error instanceof Error ? error.stack : "No stack")
        isLoadingRef.current = false // Reset loading flag
+       setIsLoadingPortfolio(false)
+       setIsInitialLoad(false)
        // Fallback
        const currentPortfolioData = initialData || portfolioData
        const currentTheme = selectedTheme || 'light'

@@ -5,7 +5,8 @@ import { useEffect, useState, type CSSProperties } from "react";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Download, ExternalLink, MapPin, Building2, Globe } from "lucide-react";
+import { Download, ExternalLink, MapPin, Building2, Globe, Edit2, Plus } from "lucide-react";
+import { ConsistentEditButton } from "@/components/portfolio/ConsistentEditButton";
 import {
   SiGithub,
   SiX,
@@ -64,6 +65,10 @@ interface PortfolioData {
 interface LayoutAcernityProps {
   theme: ThemeConfig;
   portfolio: PortfolioData;
+  onEditProfile?: () => void;
+  onAddSocial?: () => void;
+  onAddSkills?: () => void;
+  onAddProject?: () => void;
 }
 
 const getSocialIcon = (platform: string) => {
@@ -129,7 +134,7 @@ const getPatternStyle = (pattern: string | null) => {
   }
 };
 
-export default function LayoutAcernity({ theme, portfolio }: LayoutAcernityProps) {
+export default function LayoutAcernity({ theme, portfolio, onEditProfile, onAddSocial, onAddSkills, onAddProject }: LayoutAcernityProps) {
   const [displayedBio, setDisplayedBio] = useState("");
   const [bioIndex, setBioIndex] = useState(0);
   const [isTypingComplete, setIsTypingComplete] = useState(false);
@@ -187,9 +192,9 @@ export default function LayoutAcernity({ theme, portfolio }: LayoutAcernityProps
   };
 
   return (
-    <div className="min-h-screen" style={getBackgroundStyle()}>
-      <div className="w-full sm:w-full lg:w-3/5 lg:mx-auto mt-4">
-        <div className="px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16 border border-dashed border-gray-400">
+    <div className="min-h-screen relative" style={getBackgroundStyle()}>
+      <div className="w-full sm:w-full lg:w-3/5 lg:mx-auto mt-4 relative">
+        <div className="px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16 border border-dashed border-gray-400 relative">
           {/* Hero Section */}
           <motion.section
             initial={{ opacity: 0, y: 20 }}
@@ -257,7 +262,7 @@ export default function LayoutAcernity({ theme, portfolio }: LayoutAcernityProps
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ duration: 0.5, delay: 0.4 }}
-                  className="max-w-2xl"
+                  className="max-w-2xl relative"
                 >
                   {portfolio.jobTitle && (
                     <p className="text-sm sm:text-base lg:text-base text-black font-medium mb-2">
@@ -293,6 +298,15 @@ export default function LayoutAcernity({ theme, portfolio }: LayoutAcernityProps
                       />
                     )}
                   </p>
+                  {onEditProfile && (
+                    <div className="mt-2 mb-2">
+                      <ConsistentEditButton
+                        onClick={onEditProfile}
+                        label="Edit Profile"
+                        icon="edit"
+                      />
+                    </div>
+                  )}
                 </motion.div>
 
                 {/* Action Buttons */}
@@ -322,7 +336,7 @@ export default function LayoutAcernity({ theme, portfolio }: LayoutAcernityProps
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.5, delay: 0.6 }}
-                className="mt-6 pt-6 border-t border-gray-300"
+                className="mt-6 pt-6 border-t border-gray-300 relative"
               >
                 <p className="text-xs sm:text-xs lg:text-sm text-gray-600 mb-4">
                   Where to find me (digitally) if you wish to
@@ -353,22 +367,55 @@ export default function LayoutAcernity({ theme, portfolio }: LayoutAcernityProps
                       );
                     })}
                 </div>
+                {onAddSocial && (
+                  <div className="mt-2 mb-2">
+                    <ConsistentEditButton
+                      onClick={onAddSocial}
+                      label="Add Social"
+                      icon="add"
+                    />
+                  </div>
+                )}
+              </motion.div>
+            )}
+            {(!portfolio.socials || portfolio.socials.length === 0) && onAddSocial && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.5, delay: 0.6 }}
+                className="mt-6 pt-6 border-t border-gray-300"
+              >
+                <ConsistentEditButton
+                  onClick={onAddSocial}
+                  label="Add Social"
+                  icon="add"
+                />
               </motion.div>
             )}
           </motion.section>
 
           {/* Skills Section */}
-          {portfolio.skills && portfolio.skills.length > 0 && (
-            <motion.section
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5 }}
-              className="mb-12 sm:mb-16 lg:mb-20"
-            >
-              <h2 className="text-xl sm:text-2xl lg:text-2xl font-bold mb-6 text-black">
+          <motion.section
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="mb-12 sm:mb-16 lg:mb-20 relative"
+            style={{ position: 'relative', zIndex: 1 }}
+          >
+            <div className="flex items-center justify-between mb-6" style={{ position: 'relative', zIndex: 10000 }}>
+              <h2 className="text-xl sm:text-2xl lg:text-2xl font-bold text-black">
                 Skills
               </h2>
+              {onAddSkills && (
+                <ConsistentEditButton
+                  onClick={onAddSkills}
+                  label="Add Skills"
+                  icon="add"
+                />
+              )}
+            </div>
+            {portfolio.skills && portfolio.skills.length > 0 && (
               <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 gap-1.5">
                 {portfolio.skills.map((skill: any, index: number) => (
                   <motion.div
@@ -385,8 +432,8 @@ export default function LayoutAcernity({ theme, portfolio }: LayoutAcernityProps
                   </motion.div>
                 ))}
               </div>
-            </motion.section>
-          )}
+            )}
+          </motion.section>
 
           {/* Experience Section */}
           {hasExperience && (
@@ -467,19 +514,30 @@ export default function LayoutAcernity({ theme, portfolio }: LayoutAcernityProps
           )}
 
           {/* Projects Section */}
-          {hasProjects && (
-            <motion.section
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5 }}
-              className="mb-12 sm:mb-16 lg:mb-20"
-            >
-              <h2 className="text-xl sm:text-2xl lg:text-2xl font-bold mb-4 text-center text-black">
+          <motion.section
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="mb-12 sm:mb-16 lg:mb-20 relative"
+            style={{ position: 'relative', zIndex: 1 }}
+          >
+            <div className="flex items-center justify-between mb-4" style={{ position: 'relative', zIndex: 10000 }}>
+              <h2 className="text-xl sm:text-2xl lg:text-2xl font-bold text-black">
                 Featured Projects
               </h2>
-              <p className="text-sm sm:text-base lg:text-base text-gray-600 text-center mb-8">A selection of my recent work</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+              {onAddProject && (
+                <ConsistentEditButton
+                  onClick={onAddProject}
+                  label="Add Project"
+                  icon="add"
+                />
+              )}
+            </div>
+            {hasProjects && (
+              <>
+                <p className="text-sm sm:text-base lg:text-base text-gray-600 text-center mb-8">A selection of my recent work</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                 {visibleRepos.map((repo: any, index: number) => {
                   const projectSlug = projectSlugMap[repo.id];
                   const projectHref = projectSlug && portfolioSlug ? `/${portfolioSlug}/${projectSlug}` : undefined;
@@ -583,9 +641,10 @@ export default function LayoutAcernity({ theme, portfolio }: LayoutAcernityProps
 
                   return <div key={repo.id}>{cardContent}</div>;
                 })}
-              </div>
-            </motion.section>
-          )}
+                </div>
+              </>
+            )}
+          </motion.section>
 
           {/* GitHub Activity */}
           {hasGithub && (

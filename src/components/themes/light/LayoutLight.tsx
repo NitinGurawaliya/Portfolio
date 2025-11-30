@@ -2,7 +2,8 @@ import Link from "next/link"
 import { motion } from "framer-motion"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ProjectIcon } from "@/components/ui/project-icon"
-import { Building, Download, Code2, TrendingUp, Users as UsersIcon } from "lucide-react"
+import { Building, Download, Code2, TrendingUp, Users as UsersIcon, Edit2, Plus } from "lucide-react"
+import { ConsistentEditButton } from "@/components/portfolio/ConsistentEditButton"
 import { SiGithub, SiX, SiLinkedin, SiInstagram, SiFacebook, SiYoutube, SiGmail, SiStackoverflow, SiReddit } from "react-icons/si"
 import { Globe } from "lucide-react"
 import { SkillIcon, getSkillIcon } from "@/lib/skill-icons"
@@ -70,6 +71,10 @@ interface PortfolioData {
 interface LayoutLightProps {
   theme: ThemeConfig
   portfolio: PortfolioData
+  onEditProfile?: () => void
+  onAddSocial?: () => void
+  onAddSkills?: () => void
+  onAddProject?: () => void
 }
 
 const getSocialIcon = (platform: string) => {
@@ -135,7 +140,7 @@ const getPatternStyle = (pattern: string | null) => {
   }
 }
 
-export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
+export default function LayoutLight({ theme, portfolio, onEditProfile, onAddSocial, onAddSkills, onAddProject }: LayoutLightProps) {
   const [displayedBio, setDisplayedBio] = useState('')
   const [bioIndex, setBioIndex] = useState(0)
   const [isTypingComplete, setIsTypingComplete] = useState(false)
@@ -254,21 +259,32 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
               </motion.div>
 
               {/* Bio */}
-              <motion.p 
-                className="text-xs sm:text-sm md:text-base text-gray-600 leading-relaxed text-left mt-1"
+              <motion.div
+                className="relative"
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.8, delay: 0.6 }}
               >
-                {displayedBio}
-                {!isTypingComplete && (
-                  <motion.span
-                    className="inline-block w-0.5 h-5 bg-purple-600 ml-1"
-                    animate={{ opacity: [1, 0, 1] }}
-                    transition={{ duration: 0.8, repeat: Infinity }}
-                  />
+                <motion.p className="text-xs sm:text-sm md:text-base text-gray-600 leading-relaxed text-left mt-1">
+                  {displayedBio}
+                  {!isTypingComplete && (
+                    <motion.span
+                      className="inline-block w-0.5 h-5 bg-purple-600 ml-1"
+                      animate={{ opacity: [1, 0, 1] }}
+                      transition={{ duration: 0.8, repeat: Infinity }}
+                    />
+                  )}
+                </motion.p>
+                {onEditProfile && (
+                  <div className="mt-2">
+                    <ConsistentEditButton
+                      onClick={onEditProfile}
+                      label="Edit Profile"
+                      icon="edit"
+                    />
+                  </div>
                 )}
-              </motion.p>
+              </motion.div>
 
               {/* Download CV Button */}
               {portfolio.cvUrl && (
@@ -294,15 +310,17 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
               )}
 
               {/* Social Icons */}
-              {portfolio.socials && portfolio.socials.length > 0 && (
-                <motion.div 
-                  className="flex gap-1.5 justify-start flex-wrap"
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.8 }}
-                  viewport={{ once: true }}
-                  aria-label="Social media links"
-                >
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8 }}
+                viewport={{ once: true }}
+              >
+                {portfolio.socials && portfolio.socials.length > 0 && (
+                  <motion.div 
+                    className="flex gap-1.5 justify-start flex-wrap mb-2"
+                    aria-label="Social media links"
+                  >
               {portfolio.socials
                 .filter(social => social.username && social.username.trim())
                 .map((social, index) => {
@@ -401,22 +419,39 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
                     </motion.button>
                   )
                 })}
-                </motion.div>
-              )}
+                  </motion.div>
+                )}
+                {onAddSocial && (
+                  <ConsistentEditButton
+                    onClick={onAddSocial}
+                    label="Add Social"
+                    icon="add"
+                  />
+                )}
+              </motion.div>
 
               {/* Skills Section */}
-              {portfolio.skills && portfolio.skills.length > 0 && (
-                <motion.section 
-                  className="pt-2"
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.8 }}
-                  viewport={{ once: true }}
-                  aria-label="Technical skills"
-                >
-                    <h2 className="mb-3 text-base font-semibold text-gray-900 text-left">
+              <motion.section 
+                className="pt-2"
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8 }}
+                viewport={{ once: true }}
+                aria-label="Technical skills"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <h2 className="text-base font-semibold text-gray-900 text-left">
                     Skills
                   </h2>
+                  {onAddSkills && (
+                    <ConsistentEditButton
+                      onClick={onAddSkills}
+                      label="Add Skills"
+                      icon="add"
+                    />
+                  )}
+                </div>
+                {portfolio.skills && portfolio.skills.length > 0 && (
                     <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 sm:flex-wrap sm:overflow-visible sm:pb-0 sm:mx-0 sm:px-0">
                       {portfolio.skills.map((skill, index) => (
                         <motion.div
@@ -437,8 +472,8 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
                         </motion.div>
                       ))}
                     </div>
-                </motion.section>
-              )}
+                )}
+              </motion.section>
 
               {/* Work Experience Section */}
                 {portfolio.experiences && portfolio.experiences.length > 0 && (
@@ -520,15 +555,24 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
                   aria-label="Projects showcase"
                   className="mt-6 lg:mt-8"
                 >
-                    <motion.h2
-                      className="mb-3 text-base font-semibold text-gray-900 sm:mb-2"
-                      initial={{ opacity: 0, y: 20 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.6, delay: 0.2 }}
-                      viewport={{ once: true }}
-                    >
-                      Projects I've Made
-                    </motion.h2>
+                    <div className="flex items-center justify-between mb-3 sm:mb-2">
+                      <motion.h2
+                        className="text-base font-semibold text-gray-900"
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.6, delay: 0.2 }}
+                        viewport={{ once: true }}
+                      >
+                        Projects I've Made
+                      </motion.h2>
+                      {onAddProject && (
+                        <ConsistentEditButton
+                          onClick={onAddProject}
+                          label="Add Project"
+                          icon="add"
+                        />
+                      )}
+                    </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
                 {portfolio.repositories
                   .filter(repo => repo.isVisible)

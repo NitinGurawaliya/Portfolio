@@ -5,11 +5,38 @@ export async function middleware(request: NextRequest) {
   const hostname = request.headers.get('host') || ''
   const url = request.nextUrl
 
-  // Redirect old portfolio URLs to new format
+  // Portfolio editing pages that should NOT be redirected
+  const portfolioEditingPages = ['/portfolio/bio', '/portfolio/projects', '/portfolio/socials', '/portfolio/analytics']
+  
+  // Check if this is an editing page FIRST - if so, skip all redirects
+  const isEditingPage = portfolioEditingPages.some(page => {
+    const exactMatch = url.pathname === page
+    const startsWithMatch = url.pathname.startsWith(page + '/')
+    const result = exactMatch || startsWithMatch
+    if (result) {
+      console.log(`[Middleware] ✅ Allowing editing page: ${url.pathname} (matched: ${page})`)
+    }
+    return result
+  })
+  
+  // If it's an editing page, allow it through immediately
+  if (isEditingPage) {
+    return NextResponse.next()
+  }
+  
+  // Debug logging for portfolio paths
+  if (url.pathname.includes('bio')) {
+    console.log(`[Middleware] 🔍 Bio path detected: ${url.pathname}, isEditingPage: ${isEditingPage}`)
+  }
+
+  // Redirect old portfolio URLs to new format (only if NOT an editing page)
   if (url.pathname.startsWith('/portfolio/')) {
-    const username = url.pathname.replace('/portfolio/', '')
-    const newUrl = new URL(`/${username}`, request.url)
-    return NextResponse.redirect(newUrl, 301) // Permanent redirect
+    const pathAfterPortfolio = url.pathname.replace('/portfolio/', '')
+    // Only redirect if it looks like a username (no slashes)
+    if (pathAfterPortfolio && !pathAfterPortfolio.includes('/')) {
+      const newUrl = new URL(`/${pathAfterPortfolio}`, request.url)
+      return NextResponse.redirect(newUrl, 301) // Permanent redirect
+    }
   }
 
   // Skip custom domain logic for localhost and dev environment
