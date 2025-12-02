@@ -153,34 +153,37 @@ export function getRepositoryLogo(params: {
     return logo || null
   }
 
+  // Use a local variable that can be modified
+  let finalLogo = logo
+
   // If logo is a GitHub favicon, treat it as null (will generate OG image below)
-  if (logo && isGitHubFavicon(logo)) {
-    logo = null
+  if (finalLogo && isGitHubFavicon(finalLogo)) {
+    finalLogo = null
   }
 
   // If logo exists and is not a favicon, check if it's an opengraph URL
-  if (logo && logo.includes('opengraph.githubassets.com')) {
+  if (finalLogo && finalLogo.includes('opengraph.githubassets.com')) {
     // Convert to proxy URL
-    const proxyUrl = getGitHubOgImageProxyUrl({ htmlUrl, fullName, opengraphUrl: logo })
+    const proxyUrl = getGitHubOgImageProxyUrl({ htmlUrl, fullName, opengraphUrl: finalLogo })
     if (proxyUrl) {
       return proxyUrl
     }
     // If conversion fails, keep original (might be a valid URL we can't parse)
-    return logo
+    return finalLogo
   }
 
   // If it's already a proxy URL, return it
-  if (logo && logo.startsWith('/api/portfolio/github-og-image')) {
-    return logo
+  if (finalLogo && finalLogo.startsWith('/api/portfolio/github-og-image')) {
+    return finalLogo
   }
 
   // If logo is null but favicon is GitHub favicon, generate OG image
-  if (!logo && favicon && isGitHubFavicon(favicon)) {
+  if (!finalLogo && favicon && isGitHubFavicon(favicon)) {
     // Will generate OG image below
   }
 
   // If no logo exists, generate proxy URL for GitHub OG image
-  if (!logo) {
+  if (!finalLogo) {
     const proxyUrl = getGitHubOgImageProxyUrl({ htmlUrl, fullName })
     if (proxyUrl) {
       return proxyUrl
@@ -188,6 +191,6 @@ export function getRepositoryLogo(params: {
   }
 
   // Return logo if it exists and is valid, otherwise null
-  return logo || null
+  return finalLogo || null
 }
 
