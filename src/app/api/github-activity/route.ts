@@ -120,10 +120,91 @@ export async function GET(request: NextRequest) {
       contributionData = generateMockContributions()
     }
 
+    // Fetch recent pull requests created by user (not merged, just created)
+    let pullRequests = []
+    try {
+      const prsResponse = await fetch(`https://api.github.com/search/issues?q=author:${username}+type:pr&sort=created&order=desc&per_page=20`, {
+        headers: {
+          'Accept': 'application/vnd.github.v3+json',
+          'Authorization': `token ${process.env.GITHUB_TOKEN}`,
+          'User-Agent': 'DevFolio-GitHub-Activity/1.0'
+        }
+      })
+
+      if (prsResponse.ok) {
+        const prsData = await prsResponse.json()
+        
+        if (prsData.items && prsData.items.length > 0) {
+          // Fetch repo details for each PR to get logo
+          const prsWithRepoInfo = await Promise.all(
+            prsData.items.slice(0, 20).map(async (pr: any) => {
+              const repoUrl = pr.repository_url
+              const repoParts = repoUrl.split('/').slice(-2)
+              const owner = repoParts[0]
+              const repoName = repoParts[1]
+              
+              let repoLogo = ''
+              try {
+                const repoResponse = await fetch(`https://api.github.com/repos/${owner}/${repoName}`, {
+                  headers: {
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Authorization': `token ${process.env.GITHUB_TOKEN}`,
+                    'User-Agent': 'DevFolio-GitHub-Activity/1.0'
+                  }
+                })
+                
+                if (repoResponse.ok) {
+                  const repoData = await repoResponse.json()
+                  // Try to get owner's avatar as repo logo
+                  repoLogo = repoData.owner?.avatar_url || ''
+                }
+              } catch (error) {
+                // If repo fetch fails, continue without logo
+                console.log('Failed to fetch repo info for', repoName)
+              }
+              
+              return {
+                id: pr.id,
+                number: pr.number,
+                title: pr.title,
+                body: pr.body || '',
+                htmlUrl: pr.html_url,
+                state: pr.state,
+                mergedAt: pr.pull_request?.merged_at || null,
+                createdAt: pr.created_at,
+                repository: {
+                  name: repoName,
+                  fullName: `${owner}/${repoName}`,
+                  owner: owner,
+                  logo: repoLogo
+                },
+                user: {
+                  login: pr.user?.login || username,
+                  avatarUrl: pr.user?.avatar_url || ''
+                }
+              }
+            })
+          )
+          
+          pullRequests = prsWithRepoInfo
+          console.log('Pull requests processed:', pullRequests.length)
+        } else {
+          console.log('No pull requests found')
+          pullRequests = []
+        }
+      } else {
+        console.log('Pull requests API failed, using empty array')
+        pullRequests = []
+      }
+    } catch (error) {
+      console.log('Pull requests API error, using empty array:', error)
+      pullRequests = []
+    }
+
     // Fetch pinned repositories using GraphQL API
     let pinnedRepos = []
     try {
-      const pinnedQuery = `
+      const pinnedReposQuery = `
         query($username: String!) {
           user(login: $username) {
             pinnedItems(first: 6, types: REPOSITORY) {
@@ -139,7 +220,7 @@ export async function GET(request: NextRequest) {
                   stargazerCount
                   forkCount
                   updatedAt
-                  repositoryTopics(first: 10) {
+                  repositoryTopics(first: 5) {
                     nodes {
                       topic {
                         name
@@ -161,32 +242,36 @@ export async function GET(request: NextRequest) {
           'User-Agent': 'DevFolio-GitHub-Activity/1.0'
         },
         body: JSON.stringify({
-          query: pinnedQuery,
+          query: pinnedReposQuery,
           variables: { username }
         })
       })
 
       if (pinnedResponse.ok) {
         const pinnedData = await pinnedResponse.json()
-        // console.log('Pinned repos GraphQL response:', pinnedData) // Disabled to reduce terminal noise
         
         if (pinnedData.data && pinnedData.data.user && pinnedData.data.user.pinnedItems) {
           pinnedRepos = pinnedData.data.user.pinnedItems.nodes.map((repo: any) => ({
-            id: repo.id,
+            id: parseInt(repo.id.replace(/\D/g, '')) || 0,
             name: repo.name,
-            description: repo.description,
+            description: repo.description || '',
             htmlUrl: repo.url,
-            language: repo.primaryLanguage?.name || 'Unknown',
-            stargazersCount: repo.stargazerCount,
-            forksCount: repo.forkCount,
+            language: repo.primaryLanguage?.name || '',
+            stargazersCount: repo.stargazerCount || 0,
+            forksCount: repo.forkCount || 0,
             updatedAt: repo.updatedAt,
-            topics: repo.repositoryTopics?.nodes?.map((topic: any) => topic.topic.name) || []
+            topics: repo.repositoryTopics?.nodes?.map((node: any) => node.topic.name) || []
           }))
-          console.log('Pinned repos processed:', pinnedRepos.length)
+          console.log('Pinned repositories processed:', pinnedRepos.length)
         } else {
-          console.log('No pinned repos found, trying regular repos')
-          // Fallback to regular repos if no pinned repos
-          const userReposResponse = await fetch(`https://api.github.com/users/${username}/repos?sort=updated&per_page=6`, {
+          console.log('No pinned repositories found')
+          pinnedRepos = []
+        }
+      } else {
+        // Fallback: fetch top repositories by stars if GraphQL fails
+        console.log('Pinned repos GraphQL API failed, trying fallback method')
+        try {
+          const reposResponse = await fetch(`https://api.github.com/users/${username}/repos?sort=stars&per_page=6&type=all`, {
             headers: {
               'Accept': 'application/vnd.github.v3+json',
               'Authorization': `token ${process.env.GITHUB_TOKEN}`,
@@ -194,34 +279,32 @@ export async function GET(request: NextRequest) {
             }
           })
 
-          if (userReposResponse.ok) {
-            const userReposData = await userReposResponse.json()
-            pinnedRepos = userReposData
-              .filter((repo: any) => !repo.fork && !repo.private && repo.owner.login === username)
-              .slice(0, 6)
-              .map((repo: any) => ({
-                id: repo.id,
-                name: repo.name,
-                description: repo.description,
-                htmlUrl: repo.html_url,
-                language: repo.language,
-                stargazersCount: repo.stargazers_count,
-                forksCount: repo.forks_count,
-                updatedAt: repo.updated_at,
-                topics: repo.topics || []
-              }))
+          if (reposResponse.ok) {
+            const reposData = await reposResponse.json()
+            pinnedRepos = reposData.map((repo: any) => ({
+              id: repo.id,
+              name: repo.name,
+              description: repo.description || '',
+              htmlUrl: repo.html_url,
+              language: repo.language || '',
+              stargazersCount: repo.stargazers_count || 0,
+              forksCount: repo.forks_count || 0,
+              updatedAt: repo.updated_at,
+              topics: repo.topics || []
+            }))
+            console.log('Fallback: Top repositories fetched:', pinnedRepos.length)
           }
+        } catch (fallbackError) {
+          console.log('Fallback method also failed:', fallbackError)
+          pinnedRepos = []
         }
-      } else {
-        // console.log('Pinned repos GraphQL failed, using empty array') // Disabled to reduce terminal noise
-        pinnedRepos = []
       }
     } catch (error) {
-      console.log('Pinned repos API error, using empty array:', error)
+      console.log('Pinned repositories API error, using empty array:', error)
       pinnedRepos = []
     }
 
-    console.log('Returning data with contributions:', contributionData.length, 'and repos:', pinnedRepos.length)
+    console.log('Returning data with contributions:', contributionData.length, ', pull requests:', pullRequests.length, ', and pinned repos:', pinnedRepos.length)
 
     const responseData = {
       user: {
@@ -234,6 +317,7 @@ export async function GET(request: NextRequest) {
         createdAt: userData.created_at
       },
       contributions: contributionData,
+      pullRequests,
       pinnedRepos
     }
 
