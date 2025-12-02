@@ -6,12 +6,14 @@ import { lazy } from 'react'
 const LayoutDark = lazy(() => import('@/components/themes/dark/LayoutDark'))
 const LayoutLight = lazy(() => import('@/components/themes/light/LayoutLight'))
 const LayoutModern = lazy(() => import('@/components/themes/modern/LayoutModern'))
+const LayoutAcernity = lazy(() => import('@/components/themes/acernity/LayoutAcernity'))
 
 // Layout components mapping (client-side only)
 export const layouts = {
   LayoutDark,
   LayoutLight,
   LayoutModern,
+  LayoutAcernity,
 } as const
 
 // Helper function to get layout component (client-side only)

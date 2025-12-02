@@ -10,6 +10,8 @@ import { SocialsSection } from "@/components/dashboard/SocialsSection"
 import { AnalyticsSection } from "@/components/dashboard/AnalyticsSection"
 import { ShiplogSection } from "@/components/dashboard/ShiplogSection"
 import ThemeSelector from "@/components/dashboard/ThemeSelector"
+import { CustomDomainSection } from "@/components/dashboard/CustomDomainSection"
+import { DevFolioLoader } from "@/components/ui/DevFolioLoader"
 import { UpvoteNotificationsBell, UpvoteNotification } from "@/components/dashboard/UpvoteNotificationsBell"
 import { ProfileCompletionWidget } from "@/components/dashboard/ProfileCompletionWidget"
 import { SharePortfolioWidget } from "@/components/dashboard/SharePortfolioWidget"
@@ -24,10 +26,46 @@ import { publishPortfolio } from "@/lib/services/portfolio-service"
 import { playNotificationSound } from "@/lib/portfolio-utils"
 import { successToastConfig, errorToastConfig } from "@/lib/utils"
 import { loadFeedCache, saveFeedCache } from "@/lib/feed-cache"
+import type { Skill, Social, Repository } from "@/interface"
 
 
 export default function DashboardPage() {
   const [activeSection, setActiveSection] = useState("home")
+  
+  // Portfolio data state
+  const [portfolioData, setPortfolioData] = useState({
+    displayName: "",
+    jobTitle: "",
+    bio: "",
+    profilePic: "",
+    customUsername: "",
+  })
+  const [selectedRepos, setSelectedRepos] = useState<number[]>([])
+  const [skills, setSkills] = useState<Skill[]>([])
+  const [socials, setSocials] = useState<Social[]>([])
+  const [deployedUrls, setDeployedUrls] = useState<Record<number, string>>({})
+  const [importedProjects, setImportedProjects] = useState<Repository[]>([])
+  const [customNames, setCustomNames] = useState<Record<number, string>>({})
+  const [customDescriptions, setCustomDescriptions] = useState<Record<number, string>>({})
+  const [githubUrls, setGithubUrls] = useState<Record<number, string>>({})
+  const [selectedTheme, setSelectedTheme] = useState<string>('dark')
+  const [portfolioId, setPortfolioId] = useState<number | null>(null)
+  const [isPortfolioPublished, setIsPortfolioPublished] = useState(false)
+
+  // Change tracking state
+  const [originalData, setOriginalData] = useState<{
+    portfolioData: any
+    selectedRepos: number[]
+    skills: Skill[]
+    socials: Social[]
+    deployedUrls: Record<number, string>
+    customNames: Record<number, string>
+    customDescriptions: Record<number, string>
+    githubUrls: Record<number, string>
+    importedProjects: Repository[]
+    selectedTheme: string
+  } | null>(null)
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const [isPublishing, setIsPublishing] = useState(false)
   
   const router = useRouter()
@@ -361,6 +399,37 @@ export default function DashboardPage() {
     if (loading || !user?.id) return
     if (summaryFetchTriggeredRef.current) return
 
+    const loadExistingPortfolioData = async (username: string, initialPortfolioData?: any) => {
+      console.log("🚀 loadExistingPortfolioData called with:", { username, initialPortfolioData })
+      try {
+        const response = await fetch(`/api/portfolio/publish?username=${username}`)
+        console.log("📡 Portfolio fetch response:", response.status, response.ok)
+        
+        if (response.ok) {
+          const result = await response.json()
+          const portfolio = result.portfolio
+          console.log("🔍 Found existing portfolio:", !!portfolio)
+          
+          if (portfolio) {
+            // Set portfolio ID and published status
+            console.log('📋 Loading portfolio:', { id: portfolio.id, isPublished: portfolio.isPublished })
+            setPortfolioId(portfolio.id)
+            setIsPortfolioPublished(portfolio.isPublished)
+            // Update portfolio data with saved data
+            setPortfolioData({
+              displayName: portfolio.displayName || "",
+              jobTitle: portfolio.jobTitle || "",
+              bio: portfolio.bio || "",
+              profilePic: portfolio.profilePic || "",
+              customUsername: portfolio.customUsername || "",
+            })
+          }
+        }
+      } catch (error) {
+        console.error("Failed to load portfolio data:", error)
+      }
+    }
+
     summaryFetchTriggeredRef.current = true
 
     const controller = new AbortController()
@@ -513,14 +582,65 @@ export default function DashboardPage() {
         cvUrl: portfolio.cvUrl
       })
 
-      console.log('📊 Publish result:', result)
+      if (result.success) {
+        // Update published status and portfolio ID
+        setIsPortfolioPublished(true)
+        
+        // Fetch the portfolio ID after publishing
+        if (result.portfolioId) {
+          setPortfolioId(result.portfolioId)
+        } else {
+          // Fetch portfolio to get ID
+          const portfolioResponse = await fetch(`/api/portfolio/publish?username=${user?.githubUsername}`)
+          if (portfolioResponse.ok) {
+            const portfolioData = await portfolioResponse.json()
+            if (portfolioData.portfolio?.id) {
+              setPortfolioId(portfolioData.portfolio.id)
+            }
+          }
+        }
+        
+        // Update original data to match current data (no more unsaved changes)
+        // Make sure to sort arrays the same way as in change detection
+        setOriginalData({
+          portfolioData: { ...portfolio.portfolioData },
+          selectedRepos: [...portfolio.selectedRepos].sort(),
+          skills: [...portfolio.skills].sort((a, b) => a.id.localeCompare(b.id)),
+          socials: [...portfolio.socials].sort((a, b) => a.id - b.id),
+          deployedUrls: { ...portfolio.deployedUrls },
+          customNames: { ...portfolio.customNames },
+          customDescriptions: { ...portfolio.customDescriptions },
+          githubUrls: { ...portfolio.githubUrls },
+          selectedTheme: portfolio.selectedTheme,
+          importedProjects: [...portfolio.importedProjects].sort((a, b) => a.id - b.id)
+        })
+        setHasUnsavedChanges(false)
+        
+        // Show success toast and play sound
+        toast.success("🎉 Portfolio published successfully!", {
+          duration: 3000,
+          position: "top-left",
+          style: {
+            background: "#f97316",
+            color: "#fff",
+            fontWeight: "500",
+            border: "1px solid #ea580c",
+            borderRadius: "8px",
+          },
+          iconTheme: {
+            primary: "#fff",
+            secondary: "#f97316",
+          },
+        })
+        
+        // Play notification sound
+        playNotificationSound()
 
-      // Reset after publish
-      portfolio.resetAfterPublish()
-      
-      // Show success toast and play sound
-      toast.success("🎉 Portfolio published successfully!", successToastConfig)
-      playNotificationSound()
+        // Reset after publish
+        portfolio.resetAfterPublish()
+      } else {
+        throw new Error(result.error || "Failed to publish portfolio")
+      }
     } catch (error: any) {
       console.error("Error publishing portfolio:", error)
       
@@ -777,6 +897,13 @@ export default function DashboardPage() {
               setBackgroundPattern={portfolio.setBackgroundPattern}
             />
           )
+        case "domain":
+          return (
+            <CustomDomainSection
+              portfolioId={portfolioId || portfolio.originalData?.id || portfolio.portfolioData?.id || 0}
+              isPublished={isPortfolioPublished}
+            />
+          )
         case "feed":
           return null
         default:
@@ -951,7 +1078,7 @@ export default function DashboardPage() {
         {renderActiveSection}
       </DashboardLayout>
 
-        <ProfileCompletionWidget
+        {/* <ProfileCompletionWidget
           overallPercent={profileCompletion.overallPercent}
           sections={profileCompletion.sections}
           onNavigate={handleSectionChange}
@@ -969,7 +1096,7 @@ export default function DashboardPage() {
             portfolioUrl={`https://devfolio.cc/${portfolio.portfolioData.customUsername || user?.githubUsername || ''}`}
             onClose={() => setShowShareWidget(false)}
           />
-        )}
+        )} */}
     </>
   )
 }
