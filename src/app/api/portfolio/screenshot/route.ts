@@ -66,7 +66,7 @@ export async function POST(req: NextRequest) {
     screenshotUrl.searchParams.set('output', 'image')
     screenshotUrl.searchParams.set('file_type', 'png')
     screenshotUrl.searchParams.set('wait_for_event', 'load')
-    screenshotUrl.searchParams.set('delay', '2000') // Wait 2 seconds for page to load
+    screenshotUrl.searchParams.set('delay', '1000') // Wait 1 second for page to load (reduced to speed up)
     screenshotUrl.searchParams.set('viewport_width', '1200')
     screenshotUrl.searchParams.set('viewport_height', '630')
     
@@ -75,9 +75,9 @@ export async function POST(req: NextRequest) {
     // Remove the above screenshotapi.net specific params if using urlbox.io
 
     try {
-      // Use a shorter timeout to fail fast if service is unavailable
+      // Use a reasonable timeout - screenshot services can take 5-8 seconds
       const controller = new AbortController()
-      const timeout = setTimeout(() => controller.abort(), 15000) // 15 second timeout (reduced from 30)
+      const timeout = setTimeout(() => controller.abort(), 8000) // 8 second timeout (screenshot services need time)
       
       const screenshotResponse = await fetch(screenshotUrl.toString(), {
         method: 'GET',

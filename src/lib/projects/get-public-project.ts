@@ -256,9 +256,37 @@ export async function getPublicProjectPageData(
     return null
   }
 
-  // Priority: 1. Existing logo, 2. GitHub OG image (if GitHub repo), 3. null
+  // Priority: 1. Existing logo (if not GitHub favicon), 2. GitHub OG image (if GitHub repo), 3. null
   // Check logo field (githubOgImage is not in the select, so we generate it if needed)
   let projectLogo = project.repository?.logo || null
+  
+  // Helper to check if a URL is a GitHub favicon/icon
+  const isGitHubFavicon = (url: string | null): boolean => {
+    if (!url) return false
+    return url.includes('github.com') && (
+      url.includes('favicon') || 
+      url.includes('github-icon') || 
+      url.includes('octocat') ||
+      url.includes('github.com/favicon') ||
+      url.includes('github.githubassets.com') ||
+      url.match(/github\.com\/.*\/favicon/i) !== null
+    )
+  }
+  
+  // For old GitHub repos: if logo is a GitHub favicon URL, treat it as null and generate OG image instead
+  // This fixes the issue where old repos have GitHub favicon as logo instead of OG image
+  if (projectLogo && isGitHubFavicon(projectLogo) && !project.repository?.isImported) {
+    projectLogo = null // Treat GitHub favicon as no logo, will generate OG image below
+  }
+  
+  // Also check: if logo is null/empty but favicon is GitHub favicon, generate OG image
+  // This handles cases where old repos have favicon set but logo is null
+  if (!projectLogo && project.repository?.favicon && 
+      isGitHubFavicon(project.repository.favicon) && 
+      !project.repository?.isImported) {
+    // Logo is missing but favicon is GitHub, so generate OG image
+    projectLogo = null // Will be set below
+  }
   
   // If no logo exists, generate GitHub OG image for any GitHub repo (own or fork)
   // Only skip if it's an imported project (not from GitHub)

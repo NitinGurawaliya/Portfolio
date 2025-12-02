@@ -81,9 +81,32 @@ export function EditProjectModal({ open, onOpenChange, initial, onSave }: EditPr
   }, [open, initial])
 
   // Debounced metadata fetch on URL change
+  // Only fetch if logo doesn't exist (don't override existing screenshot/logo)
   useEffect(() => {
     if (!open) return
     if (!url || url.trim().length < 8) return
+    
+    // Check if we have a valid logo from initial props (don't refetch if logo already exists)
+    // Use initial.logo to check, not logo state (to avoid refetching when modal opens)
+    const currentLogo = logo || initial.logo || null
+    const hasValidLogo = currentLogo && 
+                         !currentLogo.startsWith('data:image/svg') && 
+                         !currentLogo.startsWith('data:image/svg+xml') &&
+                         !(currentLogo.startsWith('data:') && currentLogo.length > 50000) // Not a suspiciously long base64
+    
+    // If URL hasn't changed from initial and we have a valid logo, don't fetch at all
+    const urlChanged = url.trim() !== initial.url.trim()
+    
+    // Don't fetch if:
+    // 1. We have a valid logo AND URL hasn't changed (modal just opened)
+    // 2. We have a valid logo AND name/description are already filled
+    if (hasValidLogo && (!urlChanged || (name && description))) {
+      return // Exit early - don't fetch metadata
+    }
+    
+    // Only fetch if:
+    // 1. No valid logo exists, OR
+    // 2. URL changed and we need to update metadata
     const t = setTimeout(async () => {
       try {
         setIsLoading(true)
@@ -96,14 +119,17 @@ export function EditProjectModal({ open, onOpenChange, initial, onSave }: EditPr
           const { projectData, metadata } = await res.json()
           if (!name) setName(projectData?.name || metadata?.title || '')
           if (!description) setDescription(projectData?.description || metadata?.description || '')
-          setLogo(projectData?.logo || metadata?.ogImage || logo || null)
+          // Only set logo if we don't have a valid one already
+          if (!hasValidLogo) {
+            setLogo(projectData?.logo || metadata?.ogImage || currentLogo || null)
+          }
         }
       } finally {
         setIsLoading(false)
       }
     }, 500)
     return () => clearTimeout(t)
-  }, [url, open])
+  }, [url, open, initial.url, initial.logo]) // Removed logo, name, description from deps to prevent refetch on open
 
   const parseNumber = (value: string) => {
     if (!value.trim()) return null

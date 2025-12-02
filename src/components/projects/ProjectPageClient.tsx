@@ -169,7 +169,39 @@ export default function ProjectPageClient({
   // Only capture screenshot if logo is completely missing (not saved in DB)
   useEffect(() => {
     // If we already have a logo from data, use it (don't refetch)
+    // But check if it's a valid URL - if it's a GitHub favicon, treat as null
     if (data.project.logo) {
+      const isGitHubFavicon = data.project.logo.includes('github.com') && (
+        data.project.logo.includes('favicon') || 
+        data.project.logo.includes('github-icon') || 
+        data.project.logo.includes('octocat')
+      )
+      
+      if (isGitHubFavicon) {
+        // Don't use GitHub favicon as logo - will be handled by runtime logic
+        setProjectLogo(null)
+        return
+      }
+      
+      // If logo is from opengraph.githubassets.com, use proxy API to detect default logo
+      // The proxy API will try to get custom OG image from repository HTML first
+      if (data.project.logo.includes('opengraph.githubassets.com')) {
+        try {
+          const url = new URL(data.project.logo)
+          const pathParts = url.pathname.split('/').filter(Boolean)
+          if (pathParts.length >= 2) {
+            const owner = pathParts[0]
+            const repo = pathParts[1]
+            // Use proxy API which detects default logos and tries to get custom images
+            setProjectLogo(`/api/portfolio/github-og-image?owner=${encodeURIComponent(owner)}&repo=${encodeURIComponent(repo)}`)
+            return
+          }
+        } catch (e) {
+          // If URL parsing fails, use direct URL
+          console.warn('Failed to parse GitHub OG image URL:', e)
+        }
+      }
+      
       setProjectLogo(data.project.logo)
       return
     }
@@ -566,6 +598,35 @@ export default function ProjectPageClient({
                   alt={`${data.project.title} preview`}
                   className="relative z-10 w-full rounded-2xl border border-white/60 shadow-xl object-contain"
                   style={{ aspectRatio: "16 / 9" }}
+                  onLoad={(e) => {
+                    // Detect if this is the default GitHub Octocat logo
+                    // Default logos are usually square (1:1 aspect ratio) and have specific dimensions
+                    const img = e.currentTarget as HTMLImageElement
+                    const naturalWidth = img.naturalWidth
+                    const naturalHeight = img.naturalHeight
+                    
+                    // Default GitHub OG images are usually square (1200x1200 or 1280x640)
+                    // Custom repo OG images are usually wider (1200x630 or similar)
+                    const aspectRatio = naturalWidth / naturalHeight
+                    const isSquare = Math.abs(aspectRatio - 1) < 0.1 // Within 10% of 1:1
+                    const isDefaultSize = (naturalWidth === 1200 && naturalHeight === 1200) || 
+                                         (naturalWidth === 1280 && naturalHeight === 640)
+                    
+                    // If it's square and matches default dimensions, it's likely the default Octocat logo
+                    if (isSquare && isDefaultSize && projectLogo?.includes('opengraph.githubassets.com')) {
+                      // Hide the default logo and show placeholder
+                      img.style.display = 'none'
+                      const parent = img.parentElement
+                      if (parent) {
+                        parent.innerHTML = `
+                          <div class="flex min-h-[200px] w-full max-w-[520px] flex-col items-center justify-center gap-4 rounded-2xl bg-gradient-to-br from-slate-100 via-white to-slate-200 p-6 text-center shadow-inner">
+                            <div class="text-sm font-medium text-slate-600">Preview image unavailable</div>
+                            <div class="text-xs text-slate-500">This repository doesn't have a custom OG image</div>
+                          </div>
+                        `
+                      }
+                    }
+                  }}
                   onError={(e) => {
                     // If OG image fails to load, hide it and show placeholder
                     e.currentTarget.style.display = 'none'

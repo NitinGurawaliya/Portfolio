@@ -261,15 +261,78 @@ export async function getPublicPortfolio(username: string) {
     )
     const serializeTime = performance.now() - serializeStart
 
-    // Format repositories with githubId as string
+    // Format repositories with githubId as string and handle old GitHub repos
+    // Helper function to generate GitHub OG image URL
+    const getGitHubOgImage = (fullName: string | null | undefined): string | null => {
+      if (!fullName) return null
+      const [owner, repoName] = fullName.split('/')
+      if (owner && repoName) {
+        return `https://opengraph.githubassets.com/${owner}/${repoName}`
+      }
+      return null
+    }
+    
+    // Helper to check if a URL is a GitHub favicon/icon
+    const isGitHubFavicon = (url: string | null): boolean => {
+      if (!url) return false
+      return url.includes('github.com') && (
+        url.includes('favicon') || 
+        url.includes('github-icon') || 
+        url.includes('octocat') ||
+        url.includes('github.com/favicon') ||
+        url.includes('github.githubassets.com') ||
+        /github\.com\/.*\/favicon/i.test(url)
+      )
+    }
+    
     if (serializedPortfolio.repositories) {
-      serializedPortfolio.repositories = serializedPortfolio.repositories.map((pr: any) => ({
-        ...pr,
-        repository: {
-          ...pr.repository,
-          githubId: pr.repository.githubId ? pr.repository.githubId.toString() : pr.repository.githubId
+      serializedPortfolio.repositories = serializedPortfolio.repositories.map((pr: any) => {
+        let logo = pr.repository?.logo || null
+        
+        // For old GitHub repos: if logo is a GitHub favicon URL, treat it as null and generate OG image instead
+        if (logo && isGitHubFavicon(logo) && !pr.repository?.isImported) {
+          logo = null // Treat GitHub favicon as no logo, will generate OG image below
         }
-      }))
+        
+        // Also check: if logo is null/empty but favicon is GitHub favicon, generate OG image
+        // This handles cases where old repos have favicon set but logo is null
+        if (!logo && pr.repository?.favicon && 
+            isGitHubFavicon(pr.repository.favicon) && 
+            !pr.repository?.isImported) {
+          // Logo is missing but favicon is GitHub, so generate OG image
+          logo = null // Will be set below
+        }
+        
+        // If no logo exists, generate GitHub OG image for any GitHub repo (own or fork)
+        if (!logo && pr.repository?.fullName && !pr.repository?.isImported) {
+          logo = getGitHubOgImage(pr.repository.fullName)
+        }
+        
+        // If still no logo but we have htmlUrl, try to extract fullName from it
+        if (!logo && !pr.repository?.isImported && pr.repository?.htmlUrl) {
+          try {
+            const url = new URL(pr.repository.htmlUrl)
+            if (url.hostname === 'github.com') {
+              const pathParts = url.pathname.split('/').filter(Boolean)
+              if (pathParts.length >= 2) {
+                const extractedFullName = `${pathParts[0]}/${pathParts[1]}`
+                logo = getGitHubOgImage(extractedFullName)
+              }
+            }
+          } catch (e) {
+            // Ignore URL parsing errors
+          }
+        }
+        
+        return {
+          ...pr,
+          repository: {
+            ...pr.repository,
+            githubId: pr.repository.githubId ? pr.repository.githubId.toString() : pr.repository.githubId,
+            logo: logo // Include GitHub OG image fallback for old repos
+          }
+        }
+      })
     }
 
     const responseData = {

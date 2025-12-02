@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getPublicPortfolio } from "@/lib/portfolio/get-public-portfolio"
 
 // Enable Next.js route caching with revalidation
-export const revalidate = 300 // Revalidate every 5 minutes
+export const revalidate = 60 // Revalidate every 1 minute (reduced from 5 minutes)
 
 /**
  * Optimized public portfolio API - minimal data, fast loading
@@ -36,11 +36,39 @@ export async function GET(req: NextRequest) {
       return null
     }
     
+    // Helper to check if a URL is a GitHub favicon/icon
+    const isGitHubFavicon = (url: string | null): boolean => {
+      if (!url) return false
+      return url.includes('github.com') && (
+        url.includes('favicon') || 
+        url.includes('github-icon') || 
+        url.includes('octocat') ||
+        url.includes('github.com/favicon') ||
+        url.includes('github.githubassets.com') ||
+        url.match(/github\.com\/.*\/favicon/i) !== null
+      )
+    }
+    
     // Ensure repositories are properly formatted with all required fields
     if (portfolio?.repositories) {
       portfolio.repositories = portfolio.repositories.map((pr: any) => {
         // Backward compatibility: Add GitHub OG image if logo is missing and it's a GitHub repo
         let logo = pr.repository?.logo || null
+        
+        // For old GitHub repos: if logo is a GitHub favicon URL, treat it as null and generate OG image instead
+        // This fixes the issue where old repos have GitHub favicon as logo instead of OG image
+        if (logo && isGitHubFavicon(logo) && !pr.repository?.isImported) {
+          logo = null // Treat GitHub favicon as no logo, will generate OG image below
+        }
+        
+        // Also check: if logo is null/empty but favicon is GitHub favicon, generate OG image
+        // This handles cases where old repos have favicon set but logo is null
+        if (!logo && pr.repository?.favicon && 
+            isGitHubFavicon(pr.repository.favicon) && 
+            !pr.repository?.isImported) {
+          // Logo is missing but favicon is GitHub, so generate OG image
+          logo = null // Will be set below
+        }
         
         // If no logo exists, generate GitHub OG image for any GitHub repo (own or fork)
         // Only skip if it's an imported project (not from GitHub)
@@ -109,9 +137,9 @@ export async function GET(req: NextRequest) {
 
     const totalTime = performance.now() - startTime
     
-    // Add caching headers for better performance
+    // Add caching headers for better performance (reduced cache time for faster updates)
     const headers = new Headers()
-    headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600')
+    headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=120') // 1 min cache, 2 min stale
     
     console.log(`⚡ Public portfolio API: ${username}`, {
       totalTime: `${totalTime.toFixed(2)}ms`
