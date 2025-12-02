@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
 
     const repos = await githubRes.json()
     
-    // Fetch languages for each repository
+    // Fetch languages for each repository and add GitHub OG image URL
     const reposWithLanguages = await Promise.all(
       repos.map(async (repo: any) => {
         try {
@@ -59,6 +59,18 @@ export async function GET(req: NextRequest) {
           console.error(`Error fetching languages for ${repo.name}:`, error)
           repo.languages = repo.language ? [repo.language] : []
         }
+        
+        // Add GitHub OG image URL (the SEO preview image GitHub generates)
+        // Format: https://opengraph.githubassets.com/{timestamp}/{owner}/{repo}
+        if (repo.full_name) {
+          const [owner, repoName] = repo.full_name.split('/')
+          if (owner && repoName) {
+            // GitHub OG images use a timestamp for cache busting, but we can use a simple format
+            // The actual URL format is: https://opengraph.githubassets.com/{owner}/{repo}
+            repo.githubOgImage = `https://opengraph.githubassets.com/${owner}/${repoName}`
+          }
+        }
+        
         return repo
       })
     )

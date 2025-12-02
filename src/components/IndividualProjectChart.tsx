@@ -10,20 +10,20 @@ interface IndividualProjectChartProps {
   projectName: string
   className?: string
   size?: 'sm' | 'md' | 'lg'
-  period?: 'week' | 'month' | 'year'
+  period?: 'week' | 'month'
 }
 
-// Subtle, aesthetic colors for different projects
+// Darker, more visible colors for different projects
 const getProjectColor = (projectId: number) => {
   const colors = [
-    '#6366f1', // Indigo - softer blue
-    '#10b981', // Emerald - soft green
-    '#f59e0b', // Amber - warm yellow
-    '#ef4444', // Red - kept for contrast
-    '#a855f7', // Purple - softer purple
-    '#06b6d4', // Cyan - kept
-    '#84cc16', // Lime - kept
-    '#f97316', // Orange - kept
+    '#152f82', // Darker dark blue
+    '#036d4e', // Darker dark emerald
+    '#9f5804', // Darker dark amber
+    '#a31c1c', // Darker dark red
+    '#5c2bb3', // Darker dark purple
+    '#066c85', // Darker dark cyan
+    '#4c7a0a', // Darker dark lime
+    '#b54409', // Darker dark orange
   ]
   return colors[projectId % colors.length]
 }
@@ -69,11 +69,9 @@ export function IndividualProjectChart({
         let daysParam: string
         if (period === 'week') {
           daysParam = '7'
-        } else if (period === 'month') {
-          daysParam = '30'
         } else {
-          // year - use 'all' to get monthly summary
-          daysParam = 'all'
+          // month
+          daysParam = '30'
         }
 
         const params = new URLSearchParams({
@@ -235,10 +233,7 @@ export function IndividualProjectChart({
     
     // Format label based on period
     let label = ''
-    if (period === 'year') {
-      // For year, use month format
-      label = item.month || item.monthShort || item.date || ''
-    } else if (period === 'month') {
+    if (period === 'month') {
       // For month, show just day number for cleaner look
       if (item.date) {
         const date = new Date(item.date)
@@ -316,12 +311,12 @@ export function IndividualProjectChart({
           </div>
         )}
         
-        <div className="flex-1 w-full" style={{ overflow: 'visible', position: 'relative', paddingBottom: period === 'year' ? '20px' : '15px' }}>
+        <div className="flex-1 w-full" style={{ overflow: 'visible', position: 'relative', paddingBottom: '15px' }}>
           <div style={{ width: '100%', height: '170px', overflow: 'visible', position: 'relative' }}>
             <ResponsiveContainer width="100%" height={170} style={{ overflow: 'visible' }}>
             <AreaChart 
               data={displayData} 
-              margin={{ top: 5, right: 8, left: 8, bottom: period === 'year' ? 60 : 45 }}
+              margin={{ top: 5, right: 8, left: 8, bottom: 45 }}
             >
             <defs>
               {/* More visible gradient for area under line */}
@@ -336,12 +331,12 @@ export function IndividualProjectChart({
               axisLine={true}
               tickLine={true}
               mirror={false}
-              tick={{ fontSize: 9, fill: '#374151', fontWeight: 500, dy: period === 'year' ? 12 : 4 }}
-              tickMargin={period === 'year' ? 12 : 10}
-              height={period === 'year' ? 50 : 40}
-              interval={period === 'year' ? 'preserveStartEnd' : period === 'month' ? 2 : 0}
-              angle={period === 'year' ? -35 : 0}
-              textAnchor={period === 'year' ? "end" : "middle"}
+              tick={{ fontSize: 9, fill: '#374151', fontWeight: 500, dy: 4 }}
+              tickMargin={10}
+              height={40}
+              interval={period === 'month' ? 2 : 0}
+              angle={0}
+              textAnchor="middle"
               hide={displayData.length === 3 && projectData.length === 1}
               stroke="#9ca3af"
               strokeWidth={1.5}
@@ -389,22 +384,22 @@ export function IndividualProjectChart({
               stroke="none"
               isAnimationActive={true}
             />
-            {/* Main line - smoother with basis curve, more visible */}
+            {/* Main line - darker and more visible */}
             <Line 
               type="basis"
               dataKey="views" 
               stroke={projectColor} 
-              strokeWidth={3}
+              strokeWidth={3.5}
               strokeOpacity={1}
               dot={{ 
-                r: projectData.length <= 5 ? 4 : 0,
+                r: projectData.length <= 5 ? 4.5 : 0,
                 fill: projectColor,
                 strokeWidth: 2.5,
                 stroke: '#fff',
                 opacity: 1
               }}
               activeDot={{ 
-                r: 6, 
+                r: 7, 
                 fill: projectColor,
                 strokeWidth: 3,
                 stroke: '#fff',

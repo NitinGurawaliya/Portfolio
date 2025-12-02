@@ -141,6 +141,8 @@ export default function ProjectPageClient({
 }: {
   data: PublicProjectPageData
 }) {
+  const [projectLogo, setProjectLogo] = useState<string | null>(data.project.logo)
+  const [isCapturingScreenshot, setIsCapturingScreenshot] = useState(false)
   const pathname = usePathname()
   const { toast } = useToast()
 
@@ -162,6 +164,51 @@ export default function ProjectPageClient({
   const [upvoteCount, setUpvoteCount] = useState(data.stats.upvotes)
   const [hasUpvoted, setHasUpvoted] = useState(data.viewerHasUpvoted)
   const [upvotePending, setUpvotePending] = useState(false)
+
+  // Priority: 1. Existing logo, 2. OG image
+  // Only capture screenshot if logo is completely missing (not saved in DB)
+  useEffect(() => {
+    // If we already have a logo from data, use it (don't refetch)
+    if (data.project.logo) {
+      setProjectLogo(data.project.logo)
+      return
+    }
+    
+    // Only try to capture screenshot if:
+    // 1. No logo exists in database
+    // 2. Deployed URL exists
+    // 3. Not a GitHub URL
+    // 4. Not already capturing
+    if (
+      !data.project.logo &&
+      data.project.deployedUrl && 
+      !isCapturingScreenshot &&
+      !data.project.deployedUrl.includes('github.com')
+    ) {
+      setIsCapturingScreenshot(true)
+      fetch('/api/portfolio/screenshot', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          url: data.project.deployedUrl,
+          projectId: data.project.id // Pass project ID to save screenshot to DB
+        }),
+      })
+      .then(response => response.json())
+      .then(result => {
+        if (result.screenshot) {
+          setProjectLogo(result.screenshot)
+          // Screenshot is saved to DB by the API, so we won't refetch on next load
+        }
+      })
+      .catch(error => {
+        console.error('Failed to capture screenshot:', error)
+      })
+      .finally(() => {
+        setIsCapturingScreenshot(false)
+      })
+    }
+  }, [data.project.logo, data.project.deployedUrl, data.project.id, isCapturingScreenshot])
 
   const highlightStats = useMemo(() => {
     const rankValue = (metric: number) => {
@@ -505,33 +552,56 @@ export default function ProjectPageClient({
           <div className="relative overflow-hidden rounded-3xl  bg-white/80 p-0  md:h-full">
             <div className="absolute inset-0 bg-white/80 backdrop-blur-xl" />
             <div className="relative flex h-full items-center justify-center p-5">
-            {data.project.logo ? (
+            {projectLogo ? (
               <div className="relative flex w-full max-w-[520px] items-center justify-center overflow-hidden rounded-2xl bg-white/70 shadow-inner">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={data.project.logo}
+                  src={projectLogo}
                   alt=""
                   aria-hidden="true"
                   className="absolute inset-0 h-full w-full scale-125 blur-[36px] object-cover opacity-85"
                 />
                 <img
-                  src={data.project.logo}
+                  src={projectLogo}
                   alt={`${data.project.title} preview`}
-                  className="relative z-10 w-full rounded-2xl border border-white/60 shadow-xl object-cover"
+                  className="relative z-10 w-full rounded-2xl border border-white/60 shadow-xl object-contain"
                   style={{ aspectRatio: "16 / 9" }}
+                  onError={(e) => {
+                    // If OG image fails to load, hide it and show placeholder
+                    e.currentTarget.style.display = 'none'
+                    const parent = e.currentTarget.parentElement
+                    if (parent) {
+                      parent.innerHTML = `
+                        <div class="flex min-h-[200px] w-full max-w-[520px] flex-col items-center justify-center gap-4 rounded-2xl bg-gradient-to-br from-slate-100 via-white to-slate-200 p-6 text-center shadow-inner">
+                          <div class="text-sm font-medium text-slate-600">Preview image unavailable</div>
+                        </div>
+                      `
+                    }
+                  }}
                 />
               </div>
             ) : (
               <div className="flex min-h-[200px] w-full max-w-[520px] flex-col items-center justify-center gap-4 rounded-2xl bg-gradient-to-br from-slate-100 via-white to-slate-200 p-6 text-center shadow-inner">
-                <ProjectIcon
-                  favicon={data.project.favicon || undefined}
-                  logo={data.project.logo || undefined}
-                  title={data.project.title}
-                  size="lg"
-                />
-                <p className="text-sm font-medium text-slate-600">
-                  Preview image coming soon
-                </p>
+                {isCapturingScreenshot ? (
+                  <>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-600"></div>
+                    <p className="text-sm font-medium text-slate-600">
+                      Capturing preview...
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <ProjectIcon
+                      favicon={data.project.favicon || undefined}
+                      logo={data.project.logo || undefined}
+                      title={data.project.title}
+                      size="lg"
+                    />
+                    <p className="text-sm font-medium text-slate-600">
+                      Preview image coming soon
+                    </p>
+                  </>
+                )}
               </div>
             )}
             </div>

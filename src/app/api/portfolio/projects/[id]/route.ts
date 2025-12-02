@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { resolveCurrentUserId } from "@/app/api/feed/utils"
+import { invalidateCache, CacheKeys } from "@/lib/cache"
 
 export async function DELETE(
   req: NextRequest,
@@ -19,11 +20,12 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    // Get the portfolio repository with portfolio info
     const existing = await prisma.portfolioRepository.findUnique({
       where: { id: portfolioRepositoryId },
       select: {
         id: true,
-        deletedAt: true,
+        portfolioId: true,
         portfolio: {
           select: {
             userId: true,
@@ -40,19 +42,64 @@ export async function DELETE(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
-    if (existing.deletedAt) {
-      return NextResponse.json({ success: true, projectId: existing.id })
-    }
+    // HARD DELETE: Delete all related analytics data first, then the project itself
+    // This ensures complete removal with no orphaned data
+    
+    const projectIdBigInt = BigInt(portfolioRepositoryId)
+    
+    // Delete all analytics data related to this project
+    await Promise.all([
+      // Delete ProjectClick entries
+      prisma.projectClick.deleteMany({
+        where: {
+          portfolioId: existing.portfolioId,
+          projectId: projectIdBigInt,
+        },
+      }),
+      
+      // Delete DailyProjectViews entries
+      prisma.dailyProjectViews.deleteMany({
+        where: {
+          portfolioId: existing.portfolioId,
+          projectId: projectIdBigInt,
+        },
+      }),
+      
+      // Delete ProjectView entries
+      prisma.projectView.deleteMany({
+        where: {
+          portfolioId: existing.portfolioId,
+          projectId: projectIdBigInt,
+        },
+      }),
+    ])
 
-    await prisma.portfolioRepository.update({
+    // Delete the PortfolioRepository itself
+    // This will automatically:
+    // - Delete ProjectUpvote entries (onDelete: Cascade)
+    // - Set Shiplog.portfolioRepositoryId to null (onDelete: SetNull)
+    await prisma.portfolioRepository.delete({
       where: { id: portfolioRepositoryId },
-      data: {
-        deletedAt: new Date(),
-        isVisible: false,
-      },
     })
 
-    return NextResponse.json({ success: true, projectId: portfolioRepositoryId })
+    // Invalidate cache to ensure fresh data on next request
+    const user = await prisma.user.findUnique({
+      where: { id: currentUserId },
+      select: { githubUsername: true }
+    })
+    
+    if (user?.githubUsername) {
+      invalidateCache(CacheKeys.portfolio(`sections_${currentUserId}`))
+      invalidateCache(CacheKeys.portfolio(`basic_${currentUserId}`))
+      invalidateCache(CacheKeys.portfolio(user.githubUsername))
+      invalidateCache(CacheKeys.portfolio(`public_${user.githubUsername}`))
+    }
+
+    return NextResponse.json({ 
+      success: true, 
+      projectId: portfolioRepositoryId,
+      message: "Project and all related data deleted completely"
+    })
   } catch (error) {
     console.error("❌ Failed to delete portfolio project:", error)
     return NextResponse.json({ error: "Failed to delete project" }, { status: 500 })

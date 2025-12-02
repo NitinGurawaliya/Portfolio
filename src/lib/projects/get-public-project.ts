@@ -80,6 +80,7 @@ export async function getPublicProjectPageData(
             select: {
               id: true,
               name: true,
+              fullName: true, // Add fullName for GitHub OG image generation
               description: true,
               htmlUrl: true,
               githubUrl: true,
@@ -90,6 +91,7 @@ export async function getPublicProjectPageData(
               language: true,
               languages: true,
               siteName: true,
+              isImported: true, // Add isImported to check if it's a GitHub repo
             },
           },
         },
@@ -244,6 +246,48 @@ export async function getPublicProjectPageData(
     || project.repository?.htmlUrl 
     || null
 
+  // Backward compatibility: Generate GitHub OG image for old repos without logos
+  const getGitHubOgImage = (fullName: string | null | undefined): string | null => {
+    if (!fullName) return null
+    const [owner, repoName] = fullName.split('/')
+    if (owner && repoName) {
+      return `https://opengraph.githubassets.com/${owner}/${repoName}`
+    }
+    return null
+  }
+
+  // Priority: 1. Existing logo, 2. GitHub OG image (if GitHub repo), 3. null
+  // Check logo field (githubOgImage is not in the select, so we generate it if needed)
+  let projectLogo = project.repository?.logo || null
+  
+  // If no logo exists, generate GitHub OG image for any GitHub repo (own or fork)
+  // Only skip if it's an imported project (not from GitHub)
+  if (!projectLogo && project.repository?.fullName && !project.repository?.isImported) {
+    projectLogo = getGitHubOgImage(project.repository.fullName)
+  }
+  
+  // If still no logo but we have htmlUrl, try to extract fullName from it
+  if (!projectLogo && !project.repository?.isImported && project.repository?.htmlUrl) {
+    try {
+      const url = new URL(project.repository.htmlUrl)
+      if (url.hostname === 'github.com') {
+        const pathParts = url.pathname.split('/').filter(Boolean)
+        if (pathParts.length >= 2) {
+          const extractedFullName = `${pathParts[0]}/${pathParts[1]}`
+          projectLogo = getGitHubOgImage(extractedFullName)
+        }
+      }
+    } catch (e) {
+      // Ignore URL parsing errors
+    }
+  }
+
+  // For GitHub repos, don't use GitHub favicon - use null for fallback text
+  let projectFavicon = project.repository?.favicon ?? null
+  if (projectFavicon && projectFavicon.includes('github.com') && !project.repository?.isImported) {
+    projectFavicon = null // Use fallback text instead of GitHub icon
+  }
+
   return {
     slug: resolvedSlug,
     project: {
@@ -252,8 +296,8 @@ export async function getPublicProjectPageData(
       description: primaryDescription,
       deployedUrl: deployedUrl,
       githubUrl: project.repository?.githubUrl || project.repository?.htmlUrl,
-      favicon: project.repository?.favicon ?? null,
-      logo: project.repository?.logo ?? null,
+      favicon: projectFavicon,
+      logo: projectLogo, // Include GitHub OG image fallback for old repos
       technologies: project.technologies,
       languages,
       createdAt: project.createdAt.toISOString(),

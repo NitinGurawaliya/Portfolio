@@ -58,6 +58,10 @@ export async function GET(req: NextRequest) {
           }
         },
         repositories: {
+          where: {
+            deletedAt: null, // Exclude soft-deleted projects
+            isVisible: true   // Only show visible projects
+          },
           select: {
             id: true,
             deployedUrl: true,
@@ -81,10 +85,12 @@ export async function GET(req: NextRequest) {
                 htmlUrl: true,
                 githubUrl: true,
                 language: true,
+                languages: true, // Add languages for tech stack
                 stargazersCount: true,
                 forksCount: true,
                 favicon: true,
-                logo: true
+                logo: true,
+                isImported: true // Add isImported to check if it's a GitHub repo
               }
             }
           },
@@ -100,17 +106,85 @@ export async function GET(req: NextRequest) {
     }
 
     const serializeStart = performance.now()
+    
+    // Helper function to generate GitHub OG image URL
+    const getGitHubOgImage = (fullName: string | null | undefined): string | null => {
+      if (!fullName) return null
+      const [owner, repoName] = fullName.split('/')
+      if (owner && repoName) {
+        return `https://opengraph.githubassets.com/${owner}/${repoName}`
+      }
+      return null
+    }
+    
     const responseData = {
       success: true,
       skills: portfolio.skills,
       socials: portfolio.socials,
-      repositories: portfolio.repositories.map((pr: any) => ({
-        ...pr,
-        repository: {
-          ...pr.repository,
-          githubId: pr.repository.githubId.toString()
+      repositories: portfolio.repositories.map((pr: any) => {
+        // Backward compatibility: Add GitHub OG image if logo is missing and it's a GitHub repo
+        // Check both logo and githubOgImage fields
+        let logo = pr.repository.logo || pr.repository.githubOgImage || null
+        
+        // If no logo exists, generate GitHub OG image for any GitHub repo (own or fork)
+        // Only skip if it's an imported project (not from GitHub)
+        if (!logo && pr.repository.fullName && !pr.repository.isImported) {
+          logo = getGitHubOgImage(pr.repository.fullName)
         }
-      }))
+        
+        // If still no logo but we have htmlUrl, try to extract fullName from it
+        if (!logo && !pr.repository.isImported && pr.repository.htmlUrl) {
+          try {
+            const url = new URL(pr.repository.htmlUrl)
+            if (url.hostname === 'github.com') {
+              const pathParts = url.pathname.split('/').filter(Boolean)
+              if (pathParts.length >= 2) {
+                const fullName = `${pathParts[0]}/${pathParts[1]}`
+                logo = getGitHubOgImage(fullName)
+              }
+            }
+          } catch (e) {
+            // Ignore URL parsing errors
+          }
+        }
+        
+        // For GitHub repos, don't use GitHub favicon - use null for fallback text
+        let favicon = pr.repository.favicon
+        if (favicon && favicon.includes('github.com') && !pr.repository.isImported) {
+          favicon = null // Use fallback text instead of GitHub icon
+        }
+        
+        // Filter out GitHub's default description
+        const githubDefaultDescPattern = /^Contribute to .* development by creating an account on GitHub\.?$/i
+        let description = pr.repository.description || ""
+        if (description && githubDefaultDescPattern.test(description.trim())) {
+          description = "" // Remove GitHub's default description
+        }
+        
+        // Ensure languages is an array for tech stack display
+        let languages = pr.repository.languages
+        if (!languages) {
+          try {
+            languages = typeof pr.repository.languages === 'string' 
+              ? JSON.parse(pr.repository.languages) 
+              : (pr.repository.language ? [pr.repository.language] : [])
+          } catch {
+            languages = pr.repository.language ? [pr.repository.language] : []
+          }
+        }
+        
+        return {
+          ...pr,
+          repository: {
+            ...pr.repository,
+            githubId: pr.repository.githubId.toString(),
+            logo: logo, // Include GitHub OG image fallback
+            languages: languages, // Ensure languages array for tech stack
+            favicon: favicon, // Null for GitHub repos
+            description: description // Filtered GitHub default description
+          }
+        }
+      })
     }
     const serializeTime = performance.now() - serializeStart
 

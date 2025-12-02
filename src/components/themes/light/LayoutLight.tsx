@@ -574,7 +574,7 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
                             </div>
 
                             {/* Name */}
-                            <h3 className="text-sm xs:text-base font-semibold text-gray-900 break-words mb-2">
+                            <h3 className={`text-sm xs:text-base font-semibold text-gray-900 break-words ${descriptionText ? 'mb-2' : 'mb-3'}`}>
                               {repo.customName || repo.repository.name}
                             </h3>
 
@@ -596,54 +596,57 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
                               </div>
                             )} */}
 
-                            {/* Tech Stack */}
-                            {repo.technologies && (
-                              <div className="mb-2">
-                                <div className="flex items-center gap-1 mb-1.5">
-                                  <Code2 className="h-3 w-3 text-gray-500" />
-                                  <span className="text-[9px] font-medium text-gray-500 uppercase tracking-wide">Tech Stack</span>
-                                </div>
-                                <div className="flex flex-wrap gap-1.5">
-                                  {repo.technologies.split(',').map((tech: string, idx: number) => {
-                                    const techName = tech.trim()
-                                    const IconComponent = getSkillIcon(techName)
-                                    return (
-                                      <span key={idx} className="inline-flex items-center gap-1 text-[10px] font-medium rounded-md px-1.5 py-1 bg-slate-100 text-slate-700 border border-slate-200">
-                                        {IconComponent ? (
-                                          <SkillIcon skillName={techName} className="h-3 w-3" />
-                                        ) : null}
-                                        <span>{techName}</span>
-                                      </span>
-                                    )
-                                  })}
-                                </div>
-                              </div>
-                            )}
-
-                            <div className={`flex items-center flex-wrap gap-1.5 ${repo.technologies ? 'mt-auto pt-1.5' : 'mt-3 pt-2'}`}>
-                              {(() => {
-                                let languages: string[] = []
+                            {/* Tech Stack - Only show if there are technologies/languages to display */}
+                            {(() => {
+                              let techStackItems: string[] = []
+                              
+                              if (repo.technologies) {
+                                techStackItems = repo.technologies.split(',').map((t: string) => t.trim()).filter(Boolean)
+                              } else {
+                                // Fallback to GitHub languages
                                 if (repo.repository.languages) {
                                   try {
-                                    languages = JSON.parse(repo.repository.languages)
+                                    techStackItems = JSON.parse(repo.repository.languages)
                                   } catch (e) {
                                     if (repo.repository.language) {
-                                      languages = [repo.repository.language]
+                                      techStackItems = [repo.repository.language]
                                     }
                                   }
                                 } else if (repo.repository.language) {
-                                  languages = [repo.repository.language]
+                                  techStackItems = [repo.repository.language]
                                 }
+                              }
+                              
+                              // Filter out 'web' and empty items
+                              techStackItems = techStackItems.filter(lang => lang.toLowerCase() !== 'web' && lang.trim() !== '')
+                              
+                              // Only render if there are items to show
+                              if (techStackItems.length === 0) return null
+                              
+                              return (
+                                <div className={descriptionText ? "mb-2" : "mb-2"}>
+                                  <div className="flex items-center gap-1 mb-1.5">
+                                    <Code2 className="h-3 w-3 text-gray-500" />
+                                    <span className="text-[9px] font-medium text-gray-500 uppercase tracking-wide">Tech Stack</span>
+                                  </div>
+                                  <div className="flex flex-wrap gap-1.5">
+                                    {techStackItems.map((tech, idx) => {
+                                      const IconComponent = getSkillIcon(tech)
+                                      return (
+                                        <span key={idx} className="inline-flex items-center gap-1 text-[10px] font-medium rounded-md px-1.5 py-1 bg-slate-100 text-slate-700 border border-slate-200">
+                                          {IconComponent ? (
+                                            <SkillIcon skillName={tech} className="h-3 w-3" />
+                                          ) : null}
+                                          <span>{tech}</span>
+                                        </span>
+                                      )
+                                    })}
+                                  </div>
+                                </div>
+                              )
+                            })()}
 
-                                return languages
-                                  .filter(lang => lang.toLowerCase() !== 'web')
-                                  .map((lang, idx) => (
-                                    <span key={idx} className="rounded-full border border-gray-200 bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700 sm:text-sm">
-                                      {lang}
-                                    </span>
-                                  ))
-                              })()}
-                            </div>
+                            {/* Language badges removed - now shown in Tech Stack section above */}
                           </div>
                       </motion.article>
                     )

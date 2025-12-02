@@ -35,6 +35,7 @@ import {
 } from "lucide-react"
 import { IndividualProjectChart } from "@/components/IndividualProjectChart"
 import { AddProjectModal, ProjectInsightsPayload } from "./AddProjectModal"
+import { SkillIcon, getSkillIcon } from "@/lib/skill-icons"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -188,6 +189,32 @@ export function ReposSection({
   const [projectMrrsState, setProjectMrrsState] = useState<Record<number, number>>(initialProjectMrrs || {})
   const [projectUsersState, setProjectUsersState] = useState<Record<number, number>>(initialProjectUsers || {})
   const [customTechnologies, setCustomTechnologies] = useState<Record<number, string>>(initialProjectTechnologies || {})
+
+  // Sync props to state when they change (important for data loaded after initial render)
+  // Always sync, even if empty, to ensure state updates when data loads
+  useEffect(() => {
+    setProjectCategoriesState(initialProjectCategories || {})
+  }, [initialProjectCategories])
+
+  useEffect(() => {
+    setProjectStatusesState(initialProjectStatuses || {})
+  }, [initialProjectStatuses])
+
+  useEffect(() => {
+    setProjectRevenuesState(initialProjectRevenues || {})
+  }, [initialProjectRevenues])
+
+  useEffect(() => {
+    setProjectMrrsState(initialProjectMrrs || {})
+  }, [initialProjectMrrs])
+
+  useEffect(() => {
+    setProjectUsersState(initialProjectUsers || {})
+  }, [initialProjectUsers])
+
+  useEffect(() => {
+    setCustomTechnologies(initialProjectTechnologies || {})
+  }, [initialProjectTechnologies])
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [projectUrl, setProjectUrl] = useState("")
   const [isImportingUrl, setIsImportingUrl] = useState(false)
@@ -387,8 +414,11 @@ export function ReposSection({
       portfolioIdValid: portfolioId && portfolioId !== undefined
     })
     
-    if (!portfolioId || portfolioId === undefined) {
-      console.error('❌ ReposSection: portfolioId is undefined or invalid:', portfolioId)
+    // Only log error if portfolioId is needed but missing (not during initial load)
+    // portfolioId is optional and might not be available during initial load
+    if (!portfolioId && selectedRepositories.length > 0) {
+      // Only warn if we have repositories but no portfolioId (means we need it for analytics)
+      console.warn('⚠️ ReposSection: portfolioId is undefined but repositories are present. Analytics may not work correctly.')
     }
   }, [repositories, selectedRepos, localRepoOrder, selectedRepositories, portfolioId])
 
@@ -844,7 +874,7 @@ export function ReposSection({
                       layoutId={`repo-${repo.id}`}
                     >
                       <Card 
-                        className="hover:border-gray-600 transition-all duration-300 group h-[350px] relative bg-background"
+                        className="hover:border-gray-600 transition-all duration-300 group h-[420px] relative bg-background"
                         style={{ overflow: 'visible' }}
                       >
                         <CardContent className="p-0 h-full" style={{ overflow: 'visible' }}>
@@ -937,11 +967,25 @@ export function ReposSection({
                               </div>
                             </div>
 
-                            {/* Categories and Metrics - Below title/desc */}
-                            {(categoryValue || hasRevenue || hasMrr || hasUsers) && (
-                              <div className="mt-2 mb-2 flex flex-wrap items-center gap-1.5">
+                            {/* Row 1: Status and Users - Below title/desc */}
+                            {(statusValue || hasUsers) && (
+                              <div className="mt-1.5 mb-1.5 flex flex-wrap items-center gap-1.5">
+                                {statusValue && (
+                                  <span className="inline-flex items-center text-[9px] leading-none font-medium rounded px-2 py-1 bg-orange-50 text-orange-700 border border-orange-200">
+                                    {statusValue}
+                                  </span>
+                                )}
+                                {hasUsers && (
+                                  <span className="inline-flex items-center text-[9px] leading-none font-medium rounded px-1.5 py-0.5 bg-green-50 text-green-700 border border-green-200">
+                                    Users: {usersValue >= 1000 ? `${(usersValue / 1000).toFixed(1)}k` : usersValue}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+
+                            {/* Row 2: Categories - Below status/users */}
                                 {categoryValue && (
-                                  <div className="flex flex-wrap gap-1">
+                              <div className="mt-1.5 mb-1.5 flex flex-wrap items-center gap-1">
                                     {categoryValue.split(',').map((cat: string, idx: number) => (
                                       <span key={idx} className="inline-flex items-center text-[9px] leading-none font-medium rounded px-1.5 py-0.5 bg-gray-100 text-gray-700 border border-gray-200">
                                         {cat.trim()}
@@ -949,6 +993,10 @@ export function ReposSection({
                                     ))}
                                   </div>
                                 )}
+
+                            {/* Row 3: ARR and MRR - Below categories */}
+                            {(hasRevenue || hasMrr) && (
+                              <div className="mt-1.5 mb-2 flex flex-wrap items-center gap-1.5">
                                 {hasRevenue && (
                                   <span className="inline-flex items-center text-[9px] leading-none font-medium rounded px-1.5 py-0.5 bg-blue-50 text-blue-700 border border-blue-200">
                                     ARR: ${(revenueValue / 1000).toFixed(1)}k
@@ -959,11 +1007,94 @@ export function ReposSection({
                                     MRR: ${(mrrValue / 1000).toFixed(1)}k
                                   </span>
                                 )}
-                                {hasUsers && (
-                                  <span className="inline-flex items-center text-[9px] leading-none font-medium rounded px-1.5 py-0.5 bg-green-50 text-green-700 border border-green-200">
-                                    Users: {usersValue >= 1000 ? `${(usersValue / 1000).toFixed(1)}k` : usersValue}
-                                  </span>
-                                )}
+                              </div>
+                            )}
+
+                            {/* Placeholder for missing insights - Only show if no insights at all */}
+                            {!statusValue && !categoryValue && !hasRevenue && !hasMrr && !hasUsers && !customTechnologies[repo.id] && (
+                              <div className="mt-1.5 mb-2 p-2.5 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-md">
+                                <div className="flex items-start gap-2">
+                                  <Sparkles className="h-3.5 w-3.5 text-blue-600 mt-0.5 flex-shrink-0" />
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-[10px] font-medium text-blue-900 mb-0.5">
+                                      Enhance your project
+                                    </p>
+                                    <p className="text-[9px] text-blue-700 leading-tight">
+                                      Add status, tech stack, and metrics to make your project stand out
+                                    </p>
+                                    <button
+                                      onClick={() => {
+                                        const url = deployedUrls[repo.id] || repo.htmlUrl
+                                        setEditInitial({
+                                          id: repo.id,
+                                          url: url || '',
+                                          name: customName || repo.name,
+                                          description: customDescription || repo.description,
+                                          logo: logoOverrides[repo.id] ?? repo.repository.logo,
+                                          category: projectCategoriesState[repo.id] || "",
+                                          status: projectStatusesState[repo.id] || "",
+                                          revenue: projectRevenuesState[repo.id] ?? null,
+                                          mrr: projectMrrsState[repo.id] ?? null,
+                                          users: projectUsersState[repo.id] ?? null,
+                                          technologies: customTechnologies[repo.id] || null,
+                                        })
+                                        setIsEditOpen(true)
+                                      }}
+                                      className="mt-1.5 text-[9px] font-semibold text-blue-600 hover:text-blue-700 underline"
+                                    >
+                                      Add details →
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Language, Stars/Forks - Below metrics or placeholder */}
+                            <div className="mt-1.5 mb-2 flex flex-wrap items-center gap-2 text-[10px]">
+                              {/* Language Badge */}
+                              {(repo.repository.language || repo.language) && (
+                                <div className="inline-flex items-center gap-1">
+                                  <div className={`h-2 w-2 rounded-full ${getLanguageColor(repo.repository.language || repo.language)}`} />
+                                  <span className="text-gray-600">{repo.repository.language || repo.language}</span>
+                                </div>
+                              )}
+
+                              {/* Stars and Forks */}
+                              {(repo.repository.stargazersCount > 0 || repo.repository.forksCount > 0) && (
+                                <div className="inline-flex items-center gap-2 text-gray-600">
+                                  {repo.repository.stargazersCount > 0 && (
+                                    <div className="inline-flex items-center gap-0.5">
+                                      <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                                      <span>{repo.repository.stargazersCount >= 1000 ? `${(repo.repository.stargazersCount / 1000).toFixed(1)}k` : repo.repository.stargazersCount}</span>
+                                    </div>
+                                  )}
+                                  {repo.repository.forksCount > 0 && (
+                                    <div className="inline-flex items-center gap-0.5">
+                                      <GitFork className="h-3 w-3" />
+                                      <span>{repo.repository.forksCount >= 1000 ? `${(repo.repository.forksCount / 1000).toFixed(1)}k` : repo.repository.forksCount}</span>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Technologies with Icons - Below language/stars */}
+                            {customTechnologies[repo.id] && (
+                              <div className="mt-1.5 mb-2">
+                                <div className="flex flex-wrap gap-1.5">
+                                  {customTechnologies[repo.id].split(',').map((tech: string, idx: number) => {
+                                    const techName = tech.trim()
+                                    const IconComponent = getSkillIcon(techName)
+                                    return (
+                                      <span key={idx} className="inline-flex items-center gap-1 text-[10px] font-medium rounded-md px-1.5 py-1 bg-slate-100 text-slate-700 border border-slate-200">
+                                        {IconComponent ? (
+                                          <SkillIcon skillName={techName} className="h-3 w-3" />
+                                        ) : null}
+                                        <span>{techName}</span>
+                                      </span>
+                                    )
+                                  })}
+                                </div>
                               </div>
                             )}
 
@@ -996,18 +1127,6 @@ export function ReposSection({
                                   >
                                     1M
                                   </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => setChartPeriods(prev => ({ ...prev, [repo.id]: 'year' }))}
-                                    className={`h-6 px-2 text-[10px] ${
-                                      (chartPeriods[repo.id] || 'week') === 'year'
-                                        ? 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100'
-                                        : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
-                                    }`}
-                                  >
-                                    1Y
-                                  </Button>
                                 </div>
                                 <div className="w-full" style={{ overflow: 'visible' }}>
                                   <IndividualProjectChart 
@@ -1016,7 +1135,7 @@ export function ReposSection({
                                     projectName={customName || repo.repository.name}
                                     size="sm"
                                     className="w-full"
-                                    period={chartPeriods[repo.id] || 'week'}
+                                    period={chartPeriods[repo.id] as 'week' | 'month' | undefined}
                                   />
                                 </div>
                               </div>
@@ -1140,6 +1259,7 @@ export function ReposSection({
         open={isAddProjectOpen}
         onOpenChange={setIsAddProjectOpen}
         repositories={repositories}
+        selectedRepos={selectedRepos}
           onAddImportedProject={(p) => onAddImportedProject?.(p as any)}
           onCaptureInsights={handleCapturedInsights}
       />

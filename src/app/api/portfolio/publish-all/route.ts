@@ -472,7 +472,9 @@ export async function POST(req: NextRequest) {
 
     // Now do the fast portfolio operations in a transaction with extended timeout
     devLog("🔄 Starting database transaction...")
-    const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    // Increase transaction timeout to 60 seconds for large operations
+    const result = await prisma.$transaction(
+      async (tx: Prisma.TransactionClient) => {
 
       // Upsert portfolio (create or update) - ALL data at once
       devLog("💾 Creating/updating portfolio...")
@@ -600,6 +602,7 @@ export async function POST(req: NextRequest) {
 
         devLog(`📋 Using order array with ${orderToUse.length} items:`, orderToUse)
 
+        // Get ALL existing repos (including soft-deleted) so we can hard delete them if not selected
         const existingPortfolioRepos = await tx.portfolioRepository.findMany({
           where: { portfolioId: portfolio.id }
         })
@@ -728,17 +731,43 @@ export async function POST(req: NextRequest) {
         const selectedRepoIds = repoRecords.map((r) => r.id)
         for (const existing of existingPortfolioRepos) {
           if (!selectedRepoIds.includes(existing.repositoryId)) {
-            if (existing.isVisible) {
-              await tx.portfolioRepository.update({
-                where: { id: existing.id },
-                data: {
-                  isVisible: false
-                }
-              })
-              devLog(`✅ Soft deleted portfolio repo ${existing.id}`)
-            } else {
-              devLog(`⏭️ Skipped soft delete for repo ${existing.id} (already hidden)`)
-            }
+            // HARD DELETE: Remove project completely with all analytics
+            const projectIdBigInt = BigInt(existing.id)
+            
+            // Delete all analytics data related to this project
+            await Promise.all([
+              // Delete ProjectClick entries
+              tx.projectClick.deleteMany({
+                where: {
+                  portfolioId: existing.portfolioId,
+                  projectId: projectIdBigInt,
+                },
+              }),
+              
+              // Delete DailyProjectViews entries
+              tx.dailyProjectViews.deleteMany({
+                where: {
+                  portfolioId: existing.portfolioId,
+                  projectId: projectIdBigInt,
+                },
+              }),
+              
+              // Delete ProjectView entries
+              tx.projectView.deleteMany({
+                where: {
+                  portfolioId: existing.portfolioId,
+                  projectId: projectIdBigInt,
+                },
+              }),
+            ])
+            
+            // Delete the PortfolioRepository itself
+            // This will automatically delete ProjectUpvote (Cascade) and set Shiplog.portfolioRepositoryId to null
+            await tx.portfolioRepository.delete({
+              where: { id: existing.id },
+            })
+            
+            devLog(`✅ Hard deleted portfolio repo ${existing.id} with all analytics`)
           }
         }
       } else {
@@ -747,8 +776,8 @@ export async function POST(req: NextRequest) {
 
       return portfolio
     }, {
-      maxWait: 10000, // 10 seconds
-      timeout: 20000, // 20 seconds
+      maxWait: 30000, // 30 seconds - wait up to 30 seconds for transaction to start
+      timeout: 60000, // 60 seconds - transaction can run for up to 60 seconds
     })
 
     // Invalidate cached portfolio responses so public page reflects updates immediately

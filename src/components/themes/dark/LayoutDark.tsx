@@ -534,54 +534,57 @@ export default function LayoutDark({ theme, portfolio }: LayoutDarkProps) {
                               </div>
                             )}
 
-                            {/* Tech Stack */}
-                            {repo.technologies && (
-                              <div className="mb-2">
-                                <div className="flex items-center gap-1 mb-2">
-                                  <Code2 className="h-3 w-3 text-white/50" />
-                                  <span className="text-[9px] font-medium text-white/50 uppercase tracking-wide">Tech Stack</span>
-                                </div>
-                                <div className="flex flex-wrap gap-1.5">
-                                  {repo.technologies.split(',').map((tech: string, idx: number) => {
-                                    const techName = tech.trim()
-                                    const IconComponent = getSkillIcon(techName)
-                                    return (
-                                      <span key={idx} className="inline-flex items-center gap-1 text-xs font-medium rounded-md px-2 py-1 bg-white/5 text-white/80 border border-white/10 hover:bg-white/10 transition-colors">
-                                        {IconComponent ? (
-                                          <SkillIcon skillName={techName} className="h-3.5 w-3.5" />
-                                        ) : null}
-                                        <span>{techName}</span>
-                                      </span>
-                                    )
-                                  })}
-                                </div>
-                              </div>
-                            )}
-
-                            <div className={`flex items-center flex-wrap gap-2 ${repo.technologies ? 'mt-auto pt-2' : 'mt-3 pt-2'}`}>
-                              {(() => {
-                                let languages: string[] = []
+                            {/* Tech Stack - Only show if there are technologies/languages to display */}
+                            {(() => {
+                              let techStackItems: string[] = []
+                              
+                              if (repo.technologies) {
+                                techStackItems = repo.technologies.split(',').map((t: string) => t.trim()).filter(Boolean)
+                              } else {
+                                // Fallback to GitHub languages
                                 if (repo.repository.languages) {
                                   try {
-                                    languages = JSON.parse(repo.repository.languages)
+                                    techStackItems = JSON.parse(repo.repository.languages)
                                   } catch (e) {
                                     if (repo.repository.language) {
-                                      languages = [repo.repository.language]
+                                      techStackItems = [repo.repository.language]
                                     }
                                   }
                                 } else if (repo.repository.language) {
-                                  languages = [repo.repository.language]
+                                  techStackItems = [repo.repository.language]
                                 }
+                              }
+                              
+                              // Filter out 'web' and empty items
+                              techStackItems = techStackItems.filter(lang => lang.toLowerCase() !== 'web' && lang.trim() !== '')
+                              
+                              // Only render if there are items to show
+                              if (techStackItems.length === 0) return null
+                              
+                              return (
+                                <div className="mb-2">
+                                  <div className="flex items-center gap-1 mb-2">
+                                    <Code2 className="h-3 w-3 text-white/50" />
+                                    <span className="text-[9px] font-medium text-white/50 uppercase tracking-wide">Tech Stack</span>
+                                  </div>
+                                  <div className="flex flex-wrap gap-1.5">
+                                    {techStackItems.map((tech, idx) => {
+                                      const IconComponent = getSkillIcon(tech)
+                                      return (
+                                        <span key={idx} className="inline-flex items-center gap-1 text-xs font-medium rounded-md px-2 py-1 bg-white/5 text-white/80 border border-white/10 hover:bg-white/10 transition-colors">
+                                          {IconComponent ? (
+                                            <SkillIcon skillName={tech} className="h-3.5 w-3.5" />
+                                          ) : null}
+                                          <span>{tech}</span>
+                                        </span>
+                                      )
+                                    })}
+                                  </div>
+                                </div>
+                              )
+                            })()}
 
-                                return languages
-                                  .filter(lang => lang.toLowerCase() !== 'web')
-                                  .map((lang, idx) => (
-                                    <span key={idx} className="text-orange-300 text-xs sm:text-sm font-medium px-2 py-1 bg-orange-500/10 rounded border border-orange-500/30">
-                                      {lang}
-                                    </span>
-                                  ))
-                              })()}
-                            </div>
+                            {/* Language badges removed - now shown in Tech Stack section above */}
                           </div>
                       </motion.article>
                     )

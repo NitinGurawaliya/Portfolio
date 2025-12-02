@@ -178,10 +178,26 @@ export async function GET(request: NextRequest) {
       try {
         console.log('🔍 API: Looking for projectId:', projectId, 'type:', typeof projectId)
         
+        // Check if projectId is too large (likely an imported project with Date.now() ID)
+        const projectIdNum = parseInt(projectId)
+        const MAX_INT4 = 2147483647 // Maximum value for INT4 (32-bit signed integer)
+        
+        if (projectIdNum > MAX_INT4) {
+          console.log('⚠️ API: ProjectId too large for INT4, likely imported project:', projectId)
+          // For imported projects, we need to find by repositoryId or skip analytics
+          // Imported projects should be saved to DB first before tracking analytics
+          return NextResponse.json({
+            success: true,
+            data: [],
+            totalViews: 0,
+            message: 'Imported project - analytics will be available after saving to portfolio'
+          })
+        }
+        
         // Try to use projectId directly as PortfolioRepository ID first
         const portfolioRepo = await prisma.portfolioRepository.findFirst({
           where: {
-            id: parseInt(projectId),
+            id: projectIdNum,
             portfolioId: parseInt(portfolioId),
             deletedAt: null // Only include non-deleted projects
           },
