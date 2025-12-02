@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getPublicPortfolio } from "@/lib/portfolio/get-public-portfolio"
+import { getRepositoryLogo, isGitHubFavicon } from "@/lib/github-og-image-utils"
 
 // Enable Next.js route caching with revalidation
 export const revalidate = 60 // Revalidate every 1 minute (reduced from 5 minutes)
@@ -26,71 +27,17 @@ export async function GET(req: NextRequest) {
     }
 
     // Format repositories with additional processing (GitHub OG images, favicon filtering, etc.)
-    // Helper function to generate GitHub OG image URL
-    const getGitHubOgImage = (fullName: string | null | undefined): string | null => {
-      if (!fullName) return null
-      const [owner, repoName] = fullName.split('/')
-      if (owner && repoName) {
-        return `https://opengraph.githubassets.com/${owner}/${repoName}`
-      }
-      return null
-    }
-    
-    // Helper to check if a URL is a GitHub favicon/icon
-    const isGitHubFavicon = (url: string | null): boolean => {
-      if (!url) return false
-      return url.includes('github.com') && (
-        url.includes('favicon') || 
-        url.includes('github-icon') || 
-        url.includes('octocat') ||
-        url.includes('github.com/favicon') ||
-        url.includes('github.githubassets.com') ||
-        url.match(/github\.com\/.*\/favicon/i) !== null
-      )
-    }
-    
     // Ensure repositories are properly formatted with all required fields
     if (portfolio?.repositories) {
       portfolio.repositories = portfolio.repositories.map((pr: any) => {
-        // Backward compatibility: Add GitHub OG image if logo is missing and it's a GitHub repo
-        let logo = pr.repository?.logo || null
-        
-        // For old GitHub repos: if logo is a GitHub favicon URL, treat it as null and generate OG image instead
-        // This fixes the issue where old repos have GitHub favicon as logo instead of OG image
-        if (logo && isGitHubFavicon(logo) && !pr.repository?.isImported) {
-          logo = null // Treat GitHub favicon as no logo, will generate OG image below
-        }
-        
-        // Also check: if logo is null/empty but favicon is GitHub favicon, generate OG image
-        // This handles cases where old repos have favicon set but logo is null
-        if (!logo && pr.repository?.favicon && 
-            isGitHubFavicon(pr.repository.favicon) && 
-            !pr.repository?.isImported) {
-          // Logo is missing but favicon is GitHub, so generate OG image
-          logo = null // Will be set below
-        }
-        
-        // If no logo exists, generate GitHub OG image for any GitHub repo (own or fork)
-        // Only skip if it's an imported project (not from GitHub)
-        if (!logo && pr.repository?.fullName && !pr.repository?.isImported) {
-          logo = getGitHubOgImage(pr.repository.fullName)
-        }
-        
-        // If still no logo but we have htmlUrl, try to extract fullName from it
-        if (!logo && !pr.repository?.isImported && pr.repository?.htmlUrl) {
-          try {
-            const url = new URL(pr.repository.htmlUrl)
-            if (url.hostname === 'github.com') {
-              const pathParts = url.pathname.split('/').filter(Boolean)
-              if (pathParts.length >= 2) {
-                const fullName = `${pathParts[0]}/${pathParts[1]}`
-                logo = getGitHubOgImage(fullName)
-              }
-            }
-          } catch (e) {
-            // Ignore URL parsing errors
-          }
-        }
+        // Use shared utility to get repository logo (handles all edge cases)
+        const logo = getRepositoryLogo({
+          logo: pr.repository?.logo || null,
+          favicon: pr.repository?.favicon || null,
+          htmlUrl: pr.repository?.htmlUrl || null,
+          fullName: pr.repository?.fullName || null,
+          isImported: pr.repository?.isImported || false
+        })
         
         // For GitHub repos, don't use GitHub favicon - use null for fallback text
         let favicon = pr.repository?.favicon

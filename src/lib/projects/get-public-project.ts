@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma"
 import { getProjectSlugMap, matchProjectBySlug } from "@/lib/project-slug"
 import type { PublicProjectPageData } from "@/types/public-project"
+import { getRepositoryLogo, isGitHubFavicon } from "@/lib/github-og-image-utils"
 
 const reservedRoutes = ["dashboard", "auth", "api", "_next", "favicon.ico"]
 
@@ -246,69 +247,14 @@ export async function getPublicProjectPageData(
     || project.repository?.htmlUrl 
     || null
 
-  // Backward compatibility: Generate GitHub OG image for old repos without logos
-  const getGitHubOgImage = (fullName: string | null | undefined): string | null => {
-    if (!fullName) return null
-    const [owner, repoName] = fullName.split('/')
-    if (owner && repoName) {
-      return `https://opengraph.githubassets.com/${owner}/${repoName}`
-    }
-    return null
-  }
-
-  // Priority: 1. Existing logo (if not GitHub favicon), 2. GitHub OG image (if GitHub repo), 3. null
-  // Check logo field (githubOgImage is not in the select, so we generate it if needed)
-  let projectLogo = project.repository?.logo || null
-  
-  // Helper to check if a URL is a GitHub favicon/icon
-  const isGitHubFavicon = (url: string | null): boolean => {
-    if (!url) return false
-    return url.includes('github.com') && (
-      url.includes('favicon') || 
-      url.includes('github-icon') || 
-      url.includes('octocat') ||
-      url.includes('github.com/favicon') ||
-      url.includes('github.githubassets.com') ||
-      url.match(/github\.com\/.*\/favicon/i) !== null
-    )
-  }
-  
-  // For old GitHub repos: if logo is a GitHub favicon URL, treat it as null and generate OG image instead
-  // This fixes the issue where old repos have GitHub favicon as logo instead of OG image
-  if (projectLogo && isGitHubFavicon(projectLogo) && !project.repository?.isImported) {
-    projectLogo = null // Treat GitHub favicon as no logo, will generate OG image below
-  }
-  
-  // Also check: if logo is null/empty but favicon is GitHub favicon, generate OG image
-  // This handles cases where old repos have favicon set but logo is null
-  if (!projectLogo && project.repository?.favicon && 
-      isGitHubFavicon(project.repository.favicon) && 
-      !project.repository?.isImported) {
-    // Logo is missing but favicon is GitHub, so generate OG image
-    projectLogo = null // Will be set below
-  }
-  
-  // If no logo exists, generate GitHub OG image for any GitHub repo (own or fork)
-  // Only skip if it's an imported project (not from GitHub)
-  if (!projectLogo && project.repository?.fullName && !project.repository?.isImported) {
-    projectLogo = getGitHubOgImage(project.repository.fullName)
-  }
-  
-  // If still no logo but we have htmlUrl, try to extract fullName from it
-  if (!projectLogo && !project.repository?.isImported && project.repository?.htmlUrl) {
-    try {
-      const url = new URL(project.repository.htmlUrl)
-      if (url.hostname === 'github.com') {
-        const pathParts = url.pathname.split('/').filter(Boolean)
-        if (pathParts.length >= 2) {
-          const extractedFullName = `${pathParts[0]}/${pathParts[1]}`
-          projectLogo = getGitHubOgImage(extractedFullName)
-        }
-      }
-    } catch (e) {
-      // Ignore URL parsing errors
-    }
-  }
+  // Use shared utility to get repository logo (handles all edge cases)
+  const projectLogo = getRepositoryLogo({
+    logo: project.repository?.logo || null,
+    favicon: project.repository?.favicon || null,
+    htmlUrl: project.repository?.htmlUrl || null,
+    fullName: project.repository?.fullName || null,
+    isImported: project.repository?.isImported || false
+  })
 
   // For GitHub repos, don't use GitHub favicon - use null for fallback text
   let projectFavicon = project.repository?.favicon ?? null

@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from "next/server"
 import * as cheerio from "cheerio"
+import { isValidGitHubIdentifier } from "@/lib/github-og-image-utils"
 
 /**
  * Proxy endpoint for GitHub OG images
  * Fetches the actual OG image by parsing the repository HTML page
  * Falls back to opengraph.githubassets.com if parsing fails
  */
+
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url)
@@ -15,6 +17,17 @@ export async function GET(req: NextRequest) {
     if (!owner || !repo) {
       return NextResponse.json(
         { error: "Owner and repo parameters are required" },
+        { status: 400 }
+      )
+    }
+    
+    // Validate that owner and repo are not hashes or invalid values
+    if (!isValidGitHubIdentifier(owner) || !isValidGitHubIdentifier(repo)) {
+      return NextResponse.json(
+        { 
+          error: "Invalid owner or repo format",
+          message: "Owner and repo must be valid GitHub usernames/repository names, not hashes or invalid identifiers"
+        },
         { status: 400 }
       )
     }
@@ -141,9 +154,26 @@ export async function GET(req: NextRequest) {
       // Get the image as a buffer
       const imageBuffer = await imageResponse.arrayBuffer()
       
-      // Check if this is the default GitHub logo by checking file size
+      // Check if this is the default GitHub logo
+      // More accurate detection: check URL source first, then file size
+      const isFromRepositoryImages = ogImageUrl.includes('repository-images.githubusercontent.com')
       const bufferSize = imageBuffer.byteLength
-      const isLikelyDefaultLogo = bufferSize < 50000 // Default logos are usually < 50KB
+      
+      // Only mark as default if:
+      // 1. NOT from repository-images (custom OG images are always from repository-images)
+      // 2. AND file size is suspiciously small (< 30KB - default logos are usually very small)
+      // 3. AND URL is from opengraph.githubassets.com (not a custom domain)
+      const isLikelyDefaultLogo = !isFromRepositoryImages && 
+                                  bufferSize < 30000 && 
+                                  ogImageUrl.includes('opengraph.githubassets.com')
+      
+      console.log(`🔍 OG Image Detection for ${owner}/${repo}:`, {
+        url: ogImageUrl,
+        size: bufferSize,
+        isFromRepositoryImages,
+        isLikelyDefaultLogo,
+        source: isFromRepositoryImages ? 'custom' : 'default'
+      })
       
       // Determine content type from response or default to PNG
       const contentType = imageResponse.headers.get('content-type') || 'image/png'
@@ -156,7 +186,7 @@ export async function GET(req: NextRequest) {
           'Cache-Control': 'public, max-age=86400, s-maxage=86400', // Cache for 24 hours
           'X-GitHub-OG-Image': 'true',
           'X-Is-Default-Logo': isLikelyDefaultLogo ? 'true' : 'false',
-          'X-OG-Image-Source': ogImageUrl.includes('repository-images') ? 'custom' : 'default',
+          'X-OG-Image-Source': isFromRepositoryImages ? 'custom' : 'default',
           'X-Actual-OG-Image-URL': ogImageUrl, // The actual OG image URL that was fetched (for saving to DB)
         },
       })
