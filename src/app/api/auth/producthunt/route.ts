@@ -20,8 +20,16 @@ export async function GET(request: NextRequest) {
     }
 
     // Get redirect URI - use production URL
+    // Note: Must match exactly what's configured in ProductHunt dashboard
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin
-    const redirectUri = `${baseUrl}/api/auth/producthunt/callback`
+    // Ensure no trailing slash, then add callback path
+    const cleanBaseUrl = baseUrl.replace(/\/$/, '')
+    const redirectUri = `${cleanBaseUrl}/api/auth/producthunt/callback`
+    
+    // Log redirect URI for debugging
+    console.log('🔗 ProductHunt OAuth Redirect URI:', redirectUri)
+    console.log('🔗 Base URL from env:', process.env.NEXT_PUBLIC_APP_URL)
+    console.log('🔗 Request origin:', request.nextUrl.origin)
     
     // Generate state for CSRF protection
     const state = Buffer.from(JSON.stringify({

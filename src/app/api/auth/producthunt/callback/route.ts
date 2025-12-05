@@ -45,9 +45,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(new URL('/dashboard?error=producthunt_config_missing', request.url))
     }
 
-    // Get redirect URI
+    // Get redirect URI (must match exactly what was sent in authorization request)
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin
-    const redirectUri = `${baseUrl}/api/auth/producthunt/callback`
+    // Remove trailing slash if present
+    const cleanBaseUrl = baseUrl.replace(/\/$/, '')
+    const redirectUri = `${cleanBaseUrl}/api/auth/producthunt/callback`
+    
+    // Log redirect URI for debugging
+    console.log('🔗 ProductHunt OAuth Callback Redirect URI:', redirectUri)
 
     // Exchange code for access token
     const tokenResponse = await fetch('https://api.producthunt.com/v2/oauth/token', {
