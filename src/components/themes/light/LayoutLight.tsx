@@ -59,7 +59,8 @@ interface PortfolioData {
   backgroundColor?: string | null
   backgroundPattern?: string | null
   cvUrl?: string | null
-    shiplogs?: any[]
+  shiplogs?: any[]
+  productHuntUsername?: string | null
   user: {
     githubUsername: string
     location: string
