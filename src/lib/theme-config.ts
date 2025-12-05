@@ -1,18 +1,5 @@
 // Theme configuration object (without client component imports)
 export const THEMES = {
-  dark: {
-    name: "Dark",
-    colors: {
-      background: "#000000",
-      text: "#ffffff",
-      accent: "#f97316", // orange-500
-      cardBg: "#1f2937",
-      border: "#374151"
-    },
-    layout: "LayoutDark",
-    previewImage: "/themes/dark-preview.png",
-    description: "Professional dark theme with orange accents"
-  },
   light: {
     name: "Light",
     colors: {
@@ -80,4 +67,4 @@ export function getTheme(themeKey: ThemeKey): ThemeConfig {
 export const DEFAULT_THEME: ThemeKey = 'light'
 
 // Available themes array for easy iteration
-export const AVAILABLE_THEMES = ['light', 'modern', 'demo', 'acernity'] as ThemeKey[]
+export const AVAILABLE_THEMES = ['light', 'modern', 'acernity'] as ThemeKey[]

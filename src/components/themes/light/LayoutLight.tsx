@@ -12,6 +12,7 @@ import { GitHubActivity } from "@/components/GitHubActivity"
 import { trackProjectClick } from "@/lib/analytics-utils"
 import { getProjectSlugMap } from "@/lib/project-slug"
 import { truncateWords } from "@/lib/text"
+import { ProductHuntProjects } from "@/components/external-work/ProductHuntProjects"
 
 const formatCurrency = (value?: number | null) => {
   if (value === null || value === undefined) return null
@@ -402,6 +403,20 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
                   )
                 })}
                 </motion.div>
+              )}
+
+              {/* Show Your Work - ProductHunt Section */}
+              {portfolio.productHuntUsername && (
+                <motion.section
+                  className="pt-6"
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8 }}
+                  viewport={{ once: true }}
+                  aria-label="Show your work"
+                >
+                  <ProductHuntProjects username={portfolio.productHuntUsername} />
+                </motion.section>
               )}
 
               {/* Skills Section */}

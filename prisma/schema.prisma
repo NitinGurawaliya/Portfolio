@@ -76,11 +76,12 @@ model Portfolio {
   profilePic        String?
   customUsername    String?
   isPublished       Boolean               @default(false)
-  selectedTheme     String                @default("dark") // Theme identifier (dark, light)
+  selectedTheme     String                @default("light") // Theme identifier (light, modern, acernity)
   themeConfig       Json? // Custom theme overrides (colors, fonts, etc.)
   backgroundColor   String? // Background color customization
   backgroundPattern String? // Background pattern option
   cvUrl             String? // CV/Resume download URL
+  productHuntUsername String? // ProductHunt username for showcasing projects
   createdAt         DateTime              @default(now())
   updatedAt         DateTime              @updatedAt
   user              User                  @relation(fields: [userId], references: [id], onDelete: Cascade)

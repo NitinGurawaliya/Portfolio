@@ -43,6 +43,7 @@ export async function getPublicPortfolio(username: string) {
         backgroundColor: true,
         backgroundPattern: true,
         cvUrl: true,
+        productHuntUsername: true,
         user: {
           select: {
             id: true,

@@ -2,7 +2,7 @@
 
 import { Suspense } from "react"
 import { getLayoutComponent } from "@/lib/theme-layouts"
-import { getTheme } from "@/lib/theme-config"
+import { getTheme, ThemeKey } from "@/lib/theme-config"
 import { DevFolioLoader } from "@/components/ui/DevFolioLoader"
 
 interface Portfolio {
@@ -40,8 +40,8 @@ export function PortfolioPreview({ username, previewMode, portfolio }: Portfolio
     )
   }
 
-  // Get the selected theme or default to dark
-  const themeKey = (portfolio.selectedTheme || 'light') as 'dark' | 'light'
+  // Get the selected theme or default to light
+  const themeKey = (portfolio.selectedTheme || 'light') as ThemeKey
   const theme = getTheme(themeKey)
   const LayoutComponent = getLayoutComponent(theme.layout as any)
 

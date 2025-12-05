@@ -48,9 +48,10 @@ export default function DashboardPage() {
   const [customNames, setCustomNames] = useState<Record<number, string>>({})
   const [customDescriptions, setCustomDescriptions] = useState<Record<number, string>>({})
   const [githubUrls, setGithubUrls] = useState<Record<number, string>>({})
-  const [selectedTheme, setSelectedTheme] = useState<string>('dark')
+  const [selectedTheme, setSelectedTheme] = useState<string>('light')
   const [portfolioId, setPortfolioId] = useState<number | null>(null)
   const [isPortfolioPublished, setIsPortfolioPublished] = useState(false)
+  const [productHuntUsername, setProductHuntUsername] = useState<string | null>(null)
 
   // Change tracking state
   const [originalData, setOriginalData] = useState<{
@@ -423,6 +424,10 @@ export default function DashboardPage() {
               profilePic: portfolio.profilePic || "",
               customUsername: portfolio.customUsername || "",
             })
+            // Load ProductHunt username if available
+            if (portfolio.productHuntUsername) {
+              setProductHuntUsername(portfolio.productHuntUsername)
+            }
           }
         }
       } catch (error) {
@@ -874,6 +879,19 @@ export default function DashboardPage() {
               onUpdateSocial={handlers.handleUpdateSocial}
               isLoading={portfolio.isLoadingPortfolio}
               onNavigateToSection={handleSectionChange}
+              productHuntUsername={productHuntUsername}
+              onProductHuntUsernameChange={async (username) => {
+                setProductHuntUsername(username)
+                try {
+                  await fetch('/api/portfolio/producthunt', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ productHuntUsername: username || null })
+                  })
+                } catch (error) {
+                  console.error('Failed to update ProductHunt username:', error)
+                }
+              }}
             />
           )
         case "analytics":

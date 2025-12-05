@@ -362,6 +362,7 @@ export async function GET(req: NextRequest) {
           experiences: {
             orderBy: { createdAt: 'desc' }
           },
+          productHuntUsername: true,
           repositories: {
             where: {
               deletedAt: null, // Exclude soft-deleted projects

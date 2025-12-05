@@ -11,7 +11,12 @@ interface PortfolioLayoutProps {
 
 export function PortfolioLayout({ portfolio }: PortfolioLayoutProps) {
   // Dynamic theme rendering (client-side)
-  const themeKey = (portfolio.selectedTheme as ThemeKey) || 'light'
+  // Handle legacy 'dark' theme by converting to 'light'
+  let selectedTheme = portfolio.selectedTheme || 'light'
+  if (selectedTheme === 'dark') {
+    selectedTheme = 'light'
+  }
+  const themeKey = selectedTheme as ThemeKey
   const theme = getTheme(themeKey)
   const Layout = getLayoutComponent(theme.layout)
 

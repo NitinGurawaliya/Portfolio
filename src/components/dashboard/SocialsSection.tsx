@@ -23,7 +23,8 @@ import {
   Users,
   Globe,
   Phone,
-  ArrowRight
+  ArrowRight,
+  TrendingUp
 } from "lucide-react"
 import { SiStackoverflow, SiReddit } from "react-icons/si"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -44,6 +45,8 @@ interface SocialsSectionProps {
   onUpdateSocial: (socialId: number, updates: Partial<Social>) => void
   isLoading?: boolean
   onNavigateToSection?: (section: string) => void
+  productHuntUsername?: string | null
+  onProductHuntUsernameChange?: (username: string) => void
 }
 
 // Platform configurations with authentic brand styling
@@ -178,7 +181,9 @@ export function SocialsSection({
   onTogglePin, 
   onUpdateSocial,
   isLoading = false,
-  onNavigateToSection
+  onNavigateToSection,
+  productHuntUsername,
+  onProductHuntUsernameChange
 }: SocialsSectionProps) {
   // Create state for all platform usernames
   const [platformUsernames, setPlatformUsernames] = useState<Record<string, string>>({})
@@ -463,6 +468,65 @@ export function SocialsSection({
           </Button>
         </div>
       )}
+
+      {/* Show Your Work Section - ProductHunt */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.2 }}
+        className="mt-6"
+      >
+        <Card className="transition-all duration-300 bg-background">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg text-black flex items-center font-bold dark:text-white">
+              <TrendingUp className="h-5 w-5 mr-2 text-orange-500" />
+              Show Your Work
+            </CardTitle>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              Showcase your projects from ProductHunt, LeetCode, Codeforces, and Medium
+            </p>
+          </CardHeader>
+          <CardContent className="pt-2">
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="producthunt-username" className="text-sm font-medium mb-2 block">
+                  ProductHunt Username
+                </Label>
+                <div className="flex items-center gap-3">
+                  <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-orange-500">
+                    <TrendingUp className="h-6 w-6 text-white" />
+                  </div>
+                  <Input
+                    id="producthunt-username"
+                    value={productHuntUsername || ''}
+                    onChange={(e) => onProductHuntUsernameChange?.(e.target.value)}
+                    placeholder="your-producthunt-username"
+                    className="h-12 flex-1"
+                  />
+                </div>
+                <p className="text-xs text-gray-500 mt-2">
+                  Your ProductHunt projects will be displayed on your portfolio
+                </p>
+                {!productHuntUsername && (
+                  <Button
+                    onClick={() => window.location.href = '/api/auth/producthunt'}
+                    className="mt-3 w-full"
+                    variant="outline"
+                  >
+                    <TrendingUp className="h-4 w-4 mr-2" />
+                    Connect ProductHunt Account
+                  </Button>
+                )}
+                {productHuntUsername && (
+                  <p className="text-xs text-green-600 mt-2">
+                    ✓ Connected as @{productHuntUsername}
+                  </p>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
     </motion.div>
   )
 }
