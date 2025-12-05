@@ -22,8 +22,9 @@ export async function GET(request: NextRequest) {
     // Get redirect URI - use production URL
     // Note: Must match exactly what's configured in ProductHunt dashboard
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin
-    // Ensure no trailing slash, then add callback path
-    const cleanBaseUrl = baseUrl.replace(/\/$/, '')
+    // Remove www prefix to ensure consistency (ProductHunt requires exact match)
+    // Remove trailing slash, then add callback path
+    const cleanBaseUrl = baseUrl.replace(/\/$/, '').replace(/^https?:\/\/www\./, 'https://')
     const redirectUri = `${cleanBaseUrl}/api/auth/producthunt/callback`
     
     // Log redirect URI for debugging

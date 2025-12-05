@@ -47,8 +47,9 @@ export async function GET(request: NextRequest) {
 
     // Get redirect URI (must match exactly what was sent in authorization request)
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin
+    // Remove www prefix to ensure consistency (must match authorization request)
     // Remove trailing slash if present
-    const cleanBaseUrl = baseUrl.replace(/\/$/, '')
+    const cleanBaseUrl = baseUrl.replace(/\/$/, '').replace(/^https?:\/\/www\./, 'https://')
     const redirectUri = `${cleanBaseUrl}/api/auth/producthunt/callback`
     
     // Log redirect URI for debugging
