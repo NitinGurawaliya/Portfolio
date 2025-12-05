@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma"
 import { getProjectSlugMap, matchProjectBySlug } from "@/lib/project-slug"
 import type { PublicProjectPageData } from "@/types/public-project"
+import { getRepositoryLogo, isGitHubFavicon } from "@/lib/github-og-image-utils"
 
 const reservedRoutes = ["dashboard", "auth", "api", "_next", "favicon.ico"]
 
@@ -80,6 +81,7 @@ export async function getPublicProjectPageData(
             select: {
               id: true,
               name: true,
+              fullName: true, // Add fullName for GitHub OG image generation
               description: true,
               htmlUrl: true,
               githubUrl: true,
@@ -90,6 +92,7 @@ export async function getPublicProjectPageData(
               language: true,
               languages: true,
               siteName: true,
+              isImported: true, // Add isImported to check if it's a GitHub repo
             },
           },
         },
@@ -244,6 +247,21 @@ export async function getPublicProjectPageData(
     || project.repository?.htmlUrl 
     || null
 
+  // Use shared utility to get repository logo (handles all edge cases)
+  const projectLogo = getRepositoryLogo({
+    logo: project.repository?.logo || null,
+    favicon: project.repository?.favicon || null,
+    htmlUrl: project.repository?.htmlUrl || null,
+    fullName: project.repository?.fullName || null,
+    isImported: project.repository?.isImported || false
+  })
+
+  // For GitHub repos, don't use GitHub favicon - use null for fallback text
+  let projectFavicon = project.repository?.favicon ?? null
+  if (projectFavicon && projectFavicon.includes('github.com') && !project.repository?.isImported) {
+    projectFavicon = null // Use fallback text instead of GitHub icon
+  }
+
   return {
     slug: resolvedSlug,
     project: {
@@ -252,8 +270,8 @@ export async function getPublicProjectPageData(
       description: primaryDescription,
       deployedUrl: deployedUrl,
       githubUrl: project.repository?.githubUrl || project.repository?.htmlUrl,
-      favicon: project.repository?.favicon ?? null,
-      logo: project.repository?.logo ?? null,
+      favicon: projectFavicon,
+      logo: projectLogo, // Include GitHub OG image fallback for old repos
       technologies: project.technologies,
       languages,
       createdAt: project.createdAt.toISOString(),

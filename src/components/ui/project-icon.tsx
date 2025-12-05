@@ -18,8 +18,16 @@ export function ProjectIcon({
   className,
   size = "md" 
 }: ProjectIconProps) {
-  // Determine which image to use (favicon takes priority over logo)
-  const imageSrc = favicon || logo
+  // For GitHub repos, prioritize logo (OG image) over favicon
+  // Check if favicon is a GitHub favicon - if so, skip it and use logo
+  const isGitHubFavicon = favicon && (
+    favicon.includes('github.com') || 
+    favicon.includes('githubassets') ||
+    favicon.includes('githubusercontent')
+  )
+  
+  // Determine which image to use: logo (OG image) takes priority for GitHub repos, otherwise favicon then logo
+  const imageSrc = (isGitHubFavicon ? null : favicon) || logo
   
   // Generate fallback text from first 2 words of title
   const words = title.split(' ').slice(0, 2).filter(word => word.length > 0)

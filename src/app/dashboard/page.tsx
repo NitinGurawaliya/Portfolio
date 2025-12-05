@@ -744,8 +744,43 @@ export default function DashboardPage() {
             ...portfolio.importedProjects,
             ...(user?.repositories || []),
           ]
-          const mergedRepositories = allRepositories.reduce((acc, repo) => {
-            const existingIndex = acc.findIndex((r) => r.id === repo.id)
+          
+          // Ensure all repositories have githubOgImage field
+          const enrichedRepositories = allRepositories.map((repo: any) => {
+            // If githubOgImage is missing, generate it from fullName or htmlUrl
+            if (!repo.githubOgImage && !repo.isImported) {
+              let githubOgImage: string | null = null
+              
+              if (repo.fullName) {
+                const [owner, repoName] = repo.fullName.split('/')
+                if (owner && repoName) {
+                  githubOgImage = `https://opengraph.githubassets.com/${owner}/${repoName}`
+                }
+              } else if (repo.htmlUrl) {
+                try {
+                  const url = new URL(repo.htmlUrl)
+                  if (url.hostname === 'github.com') {
+                    const pathParts = url.pathname.split('/').filter(Boolean)
+                    if (pathParts.length >= 2) {
+                      const owner = pathParts[0]
+                      const repoName = pathParts[1]
+                      githubOgImage = `https://opengraph.githubassets.com/${owner}/${repoName}`
+                    }
+                  }
+                } catch (e) {
+                  // Ignore URL parsing errors
+                }
+              }
+              
+              if (githubOgImage) {
+                return { ...repo, githubOgImage }
+              }
+            }
+            return repo
+          })
+          
+          const mergedRepositories = enrichedRepositories.reduce((acc, repo) => {
+            const existingIndex = acc.findIndex((r: any) => r.id === repo.id)
             if (existingIndex === -1) {
               acc.push(repo)
             } else if (repo.portfolioRepositoryId && !acc[existingIndex].portfolioRepositoryId) {
@@ -754,13 +789,21 @@ export default function DashboardPage() {
             return acc
           }, [] as any[])
 
-          const portfolioId = portfolio.originalData?.id || portfolio.portfolioData.id
-          console.log("🔍 Dashboard - Portfolio ID for ReposSection:", {
-            originalDataId: portfolio.originalData?.id,
-            portfolioDataId: portfolio.portfolioData.id,
-            finalPortfolioId: portfolioId,
-            portfolioIdType: typeof portfolioId,
-          })
+          // Get portfolio ID - try multiple sources
+          const portfolioId = portfolio.originalData?.id || 
+                              portfolio.portfolioData?.id ||
+                              undefined
+          
+          // Only log if portfolioId is missing and we're not in initial load
+          if (!portfolioId && portfolio.isInitialLoad === false) {
+            console.warn("⚠️ Dashboard - Portfolio ID not found:", {
+              originalDataId: portfolio.originalData?.id,
+              portfolioDataId: portfolio.portfolioData?.id,
+              portfolioData: portfolio.portfolioData,
+              isLoading: portfolio.isLoadingPortfolio,
+              isInitialLoad: portfolio.isInitialLoad
+            })
+          }
 
           return (
             <ReposSection

@@ -138,17 +138,31 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const portfolioId = searchParams.get('portfolioId')
     const projectId = searchParams.get('projectId')
-    const days = parseInt(searchParams.get('days') || '7')
+    const daysParam = searchParams.get('days')
+    const getAllData = daysParam === 'all'
 
-    console.log('🚀 API GET: Starting request', { portfolioId, projectId, days })
+    console.log('🚀 API GET: Starting request', { portfolioId, projectId, days: daysParam, getAllData })
 
     if (!portfolioId) {
       return NextResponse.json({ error: 'Portfolio ID is required' }, { status: 400 })
     }
 
-    const startDate = new Date()
-    startDate.setDate(startDate.getDate() - days)
-    startDate.setHours(0, 0, 0, 0)
+    let startDate: Date
+    let shouldSummarizeByMonth = false
+    if (getAllData) {
+      // For 'all', get last 12 months for year view
+      startDate = new Date()
+      startDate.setMonth(startDate.getMonth() - 12)
+      startDate.setDate(1) // Start from first day of that month
+      startDate.setHours(0, 0, 0, 0)
+      shouldSummarizeByMonth = true
+    } else {
+      const days = parseInt(daysParam || '7')
+      startDate = new Date()
+      startDate.setDate(startDate.getDate() - days)
+      startDate.setHours(0, 0, 0, 0)
+      shouldSummarizeByMonth = false
+    }
 
     let whereClause: any = {
       portfolioId: parseInt(portfolioId),
@@ -157,14 +171,33 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // Get current project name for matching - needed for data extraction
+    let currentProjectName: string | null = null
+
     if (projectId) {
       try {
         console.log('🔍 API: Looking for projectId:', projectId, 'type:', typeof projectId)
         
+        // Check if projectId is too large (likely an imported project with Date.now() ID)
+        const projectIdNum = parseInt(projectId)
+        const MAX_INT4 = 2147483647 // Maximum value for INT4 (32-bit signed integer)
+        
+        if (projectIdNum > MAX_INT4) {
+          console.log('⚠️ API: ProjectId too large for INT4, likely imported project:', projectId)
+          // For imported projects, we need to find by repositoryId or skip analytics
+          // Imported projects should be saved to DB first before tracking analytics
+          return NextResponse.json({
+            success: true,
+            data: [],
+            totalViews: 0,
+            message: 'Imported project - analytics will be available after saving to portfolio'
+          })
+        }
+        
         // Try to use projectId directly as PortfolioRepository ID first
         const portfolioRepo = await prisma.portfolioRepository.findFirst({
           where: {
-            id: parseInt(projectId),
+            id: projectIdNum,
             portfolioId: parseInt(portfolioId),
             deletedAt: null // Only include non-deleted projects
           },
@@ -248,42 +281,110 @@ export async function GET(request: NextRequest) {
       viewsByDate[dateKey][view.projectName] = view.views
     })
 
-    // Create chart data
-    const chartData = []
-    for (let i = 0; i < days; i++) {
-      const date = new Date()
-      date.setDate(date.getDate() - (days - 1 - i))
-      const dateKey = date.toISOString().split('T')[0]
+    // Get all unique project names from data
+    const projectNames = new Set<string>()
+    filteredViews.forEach(view => {
+      projectNames.add(view.projectName)
+    })
+
+    // Use the first name as the primary key (current or most recent)
+    // If we have currentProjectName, use it; otherwise use the first name from data
+    const primaryProjectName = currentProjectName || Array.from(projectNames)[0] || ''
+
+    let chartData: any[] = []
+
+    if (shouldSummarizeByMonth) {
+      // Summarize by month, skip months with no views
+      const viewsByMonth: { [key: string]: { [key: string]: number } } = {}
       
-      const dayData: any = {
-        date: dateKey,
-        day: date.toLocaleDateString('en-US', { weekday: 'short' })
-      }
-
-      // Get all unique project names
-      const projectNames = new Set<string>()
       filteredViews.forEach(view => {
-        projectNames.add(view.projectName)
+        const date = new Date(view.date)
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+        if (!viewsByMonth[monthKey]) {
+          viewsByMonth[monthKey] = {}
+        }
+        
+        // Aggregate all project names (in case name changed over time)
+        const viewProjectName = view.projectName
+        if (!viewsByMonth[monthKey][viewProjectName]) {
+          viewsByMonth[monthKey][viewProjectName] = 0
+        }
+        viewsByMonth[monthKey][viewProjectName] += view.views
+        
+        // Also add to primary name if different (for name changes)
+        // This ensures data is accessible by current project name even if it changed
+        if (primaryProjectName && viewProjectName !== primaryProjectName) {
+          if (!viewsByMonth[monthKey][primaryProjectName]) {
+            viewsByMonth[monthKey][primaryProjectName] = 0
+          }
+          viewsByMonth[monthKey][primaryProjectName] += view.views
+        }
       })
 
-      // Add views for each project
-      projectNames.forEach(projectName => {
-        dayData[projectName] = viewsByDate[dateKey]?.[projectName] || 0
-      })
+      // Convert to chart data, only include months with views
+      const sortedMonths = Object.keys(viewsByMonth).sort()
+      
+      sortedMonths.forEach(monthKey => {
+        const [year, month] = monthKey.split('-')
+        const date = new Date(parseInt(year), parseInt(month) - 1, 1)
+        
+        const monthData: any = {
+          date: monthKey,
+          month: date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+          monthShort: date.toLocaleDateString('en-US', { month: 'short' })
+        }
 
-      chartData.push(dayData)
+        // Use primary project name for consistent data access
+        if (primaryProjectName) {
+          monthData[primaryProjectName] = viewsByMonth[monthKey]?.[primaryProjectName] || 0
+        }
+
+        // Only add if there are views
+        const hasViews = primaryProjectName && (viewsByMonth[monthKey]?.[primaryProjectName] || 0) > 0
+        if (hasViews) {
+          chartData.push(monthData)
+        }
+      })
+    } else {
+      // Original daily data logic
+      const days = parseInt(daysParam || '7')
+      for (let i = 0; i < days; i++) {
+        const date = new Date()
+        date.setDate(date.getDate() - (days - 1 - i))
+        const dateKey = date.toISOString().split('T')[0]
+        
+        const dayData: any = {
+          date: dateKey,
+          day: date.toLocaleDateString('en-US', { weekday: 'short' })
+        }
+
+        // Use primary project name for consistent data access
+        if (primaryProjectName) {
+          dayData[primaryProjectName] = viewsByDate[dateKey]?.[primaryProjectName] || 0
+        }
+
+        chartData.push(dayData)
+      }
     }
-
+    
     const totalViews = filteredViews.reduce((sum, view) => sum + view.views, 0)
     
-    console.log('✅ API GET: Returning response with', chartData.length, 'days,', totalViews, 'total views')
-
-    return NextResponse.json({
+    // Add metadata about which project name to use
+    const responseData: any = {
       success: true, 
       data: chartData,
       totalViews,
       validProjectsCount: validProjectIds.size
-    })
+    }
+    
+    if (primaryProjectName) {
+      responseData.projectName = primaryProjectName
+    }
+    
+    console.log('✅ API GET: Returning response with', chartData.length, 'data points,', totalViews, 'total views')
+    console.log('✅ API GET: Primary project name:', primaryProjectName)
+
+    return NextResponse.json(responseData)
   } catch (error) {
     console.error('❌ API GET: Error:', error instanceof Error ? error.message : 'Unknown error')
     return NextResponse.json({ 

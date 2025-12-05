@@ -487,44 +487,38 @@ export default function LayoutDark({ theme, portfolio }: LayoutDarkProps) {
                         whileHover={{ scale: 1.02, y: -4 }}
                       >
                           <div className={`relative bg-transparent border border-orange-500/30 rounded-lg p-4 sm:p-4 hover:border-orange-500/40 transition-all duration-300 flex flex-col w-full ${repo.technologies ? 'h-full min-h-[190px]' : ''}`}>
-                            {/* Top Right: Status + Users */}
-                            {(repo.projectStatus || typeof repo.projectUsers === "number") && (
-                              <div className="absolute top-4 right-4 sm:top-4 sm:right-4 flex items-center gap-1.5 z-10">
-                                {repo.projectStatus && (
-                                  <span className="inline-flex items-center text-[10px] font-semibold rounded-full px-2 py-0.5 bg-emerald-500/10 text-emerald-200 border border-emerald-400/30 whitespace-nowrap">
-                                    <span className="mr-1">●</span>
-                                    {repo.projectStatus}
-                                  </span>
-                                )}
+                            {/* Top Row: Logo, Users, Status */}
+                            <div className="flex items-center justify-between mb-3">
+                              <ProjectIcon
+                                favicon={repo.repository.favicon}
+                                logo={repo.repository.logo}
+                                title={repo.customName || repo.repository.name}
+                                size="sm"
+                              />
+                              <div className="flex items-center gap-1.5">
                                 {typeof repo.projectUsers === "number" && (
                                   <span className="inline-flex items-center text-[10px] font-semibold rounded-full px-2 py-0.5 bg-blue-500/10 text-blue-300 border border-blue-500/30 whitespace-nowrap">
                                     <UsersIcon className="h-2.5 w-2.5 mr-1 flex-shrink-0" />
                                     {repo.projectUsers.toLocaleString()}
                                   </span>
                                 )}
-                              </div>
-                            )}
-
-                            {/* Header: Icon/Name */}
-                            <div className={`flex items-start mb-2 ${(repo.projectStatus && typeof repo.projectUsers === "number") ? "pr-32" : (repo.projectStatus || typeof repo.projectUsers === "number") ? "pr-28" : "pr-3"}`}>
-                              <div className="flex-1 min-w-0">
-                                <div className="mb-2">
-                                  <ProjectIcon
-                                    favicon={repo.repository.favicon}
-                                    logo={repo.repository.logo}
-                                    title={repo.customName || repo.repository.name}
-                                    size="sm"
-                                  />
-                                </div>
-                                <h3 className="text-base sm:text-lg font-semibold text-white group-hover:text-orange-300 transition-colors duration-300 break-words mb-1.5">
-                                  {repo.customName || repo.repository.name}
-                                </h3>
+                                {repo.projectStatus && (
+                                  <span className="inline-flex items-center text-[10px] font-semibold rounded-full px-2 py-0.5 bg-emerald-500/10 text-emerald-200 border border-emerald-400/30 whitespace-nowrap">
+                                    <span className="mr-1">●</span>
+                                    {repo.projectStatus}
+                                  </span>
+                                )}
                               </div>
                             </div>
 
+                            {/* Name */}
+                            <h3 className="text-base sm:text-lg font-semibold text-white group-hover:text-orange-300 transition-colors duration-300 break-words mb-2">
+                              {repo.customName || repo.repository.name}
+                            </h3>
+
                             {/* Description */}
                             {descriptionText && (
-                              <p className="text-gray-400 text-sm leading-relaxed mb-2 break-words line-clamp-2">
+                              <p className="text-gray-400 text-sm leading-relaxed mb-3 break-words line-clamp-2">
                                 {descriptionText}
                               </p>
                             )}
@@ -540,54 +534,57 @@ export default function LayoutDark({ theme, portfolio }: LayoutDarkProps) {
                               </div>
                             )}
 
-                            {/* Tech Stack */}
-                            {repo.technologies && (
-                              <div className="mb-3">
-                                <div className="flex items-center gap-1 mb-2">
-                                  <Code2 className="h-3 w-3 text-white/50" />
-                                  <span className="text-[9px] font-medium text-white/50 uppercase tracking-wide">Tech Stack</span>
-                                </div>
-                                <div className="flex flex-wrap gap-1.5">
-                                  {repo.technologies.split(',').map((tech: string, idx: number) => {
-                                    const techName = tech.trim()
-                                    const IconComponent = getSkillIcon(techName)
-                                    return (
-                                      <span key={idx} className="inline-flex items-center gap-1 text-xs font-medium rounded-md px-2 py-1 bg-white/5 text-white/80 border border-white/10 hover:bg-white/10 transition-colors">
-                                        {IconComponent ? (
-                                          <SkillIcon skillName={techName} className="h-3.5 w-3.5" />
-                                        ) : null}
-                                        <span>{techName}</span>
-                                      </span>
-                                    )
-                                  })}
-                                </div>
-                              </div>
-                            )}
-
-                            <div className={`flex items-center flex-wrap gap-2 ${repo.technologies ? 'mt-auto pt-2' : 'mt-3 pt-2'}`}>
-                              {(() => {
-                                let languages: string[] = []
+                            {/* Tech Stack - Only show if there are technologies/languages to display */}
+                            {(() => {
+                              let techStackItems: string[] = []
+                              
+                              if (repo.technologies) {
+                                techStackItems = repo.technologies.split(',').map((t: string) => t.trim()).filter(Boolean)
+                              } else {
+                                // Fallback to GitHub languages
                                 if (repo.repository.languages) {
                                   try {
-                                    languages = JSON.parse(repo.repository.languages)
+                                    techStackItems = JSON.parse(repo.repository.languages)
                                   } catch (e) {
                                     if (repo.repository.language) {
-                                      languages = [repo.repository.language]
+                                      techStackItems = [repo.repository.language]
                                     }
                                   }
                                 } else if (repo.repository.language) {
-                                  languages = [repo.repository.language]
+                                  techStackItems = [repo.repository.language]
                                 }
+                              }
+                              
+                              // Filter out 'web' and empty items
+                              techStackItems = techStackItems.filter(lang => lang.toLowerCase() !== 'web' && lang.trim() !== '')
+                              
+                              // Only render if there are items to show
+                              if (techStackItems.length === 0) return null
+                              
+                              return (
+                                <div className="mb-2">
+                                  <div className="flex items-center gap-1 mb-2">
+                                    <Code2 className="h-3 w-3 text-white/50" />
+                                    <span className="text-[9px] font-medium text-white/50 uppercase tracking-wide">Tech Stack</span>
+                                  </div>
+                                  <div className="flex flex-wrap gap-1.5">
+                                    {techStackItems.map((tech, idx) => {
+                                      const IconComponent = getSkillIcon(tech)
+                                      return (
+                                        <span key={idx} className="inline-flex items-center gap-1 text-xs font-medium rounded-md px-2 py-1 bg-white/5 text-white/80 border border-white/10 hover:bg-white/10 transition-colors">
+                                          {IconComponent ? (
+                                            <SkillIcon skillName={tech} className="h-3.5 w-3.5" />
+                                          ) : null}
+                                          <span>{tech}</span>
+                                        </span>
+                                      )
+                                    })}
+                                  </div>
+                                </div>
+                              )
+                            })()}
 
-                                return languages
-                                  .filter(lang => lang.toLowerCase() !== 'web')
-                                  .map((lang, idx) => (
-                                    <span key={idx} className="text-orange-300 text-xs sm:text-sm font-medium px-2 py-1 bg-orange-500/10 rounded border border-orange-500/30">
-                                      {lang}
-                                    </span>
-                                  ))
-                              })()}
-                            </div>
+                            {/* Language badges removed - now shown in Tech Stack section above */}
                           </div>
                       </motion.article>
                     )

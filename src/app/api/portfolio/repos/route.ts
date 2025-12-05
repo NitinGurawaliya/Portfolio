@@ -87,30 +87,58 @@ export async function POST(req: NextRequest) {
     
     if (repositories && repositories.length > 0) {
       try {
-        const repositoryData = repositories.map((repo: any) => ({
-          githubId: BigInt(repo.id),
-          name: repo.name,
-          fullName: repo.fullName,
-          description: repo.description,
-          htmlUrl: repo.htmlUrl,
-          cloneUrl: repo.cloneUrl || repo.htmlUrl + (repo.isImported ? '' : '.git'),
-          language: repo.language,
-          stargazersCount: repo.stargazersCount,
-          forksCount: repo.forksCount,
-          size: repo.size || 0,
-          isPrivate: repo.isPrivate,
-          isFork: repo.isFork,
-          isImported: repo.isImported || false,
-          favicon: repo.favicon || null,
-          logo: repo.logo || null,
-          siteName: repo.siteName || null,
-          keywords: repo.keywords || null,
-          author: repo.author || null,
-          userId: user.id,
-          createdAt: new Date(repo.createdAt),
-          updatedAt: new Date(repo.updatedAt),
-          pushedAt: repo.pushedAt ? new Date(repo.pushedAt) : null,
-        }))
+        const repositoryData = repositories.map((repo: any) => {
+          // Ensure fullName is set - extract from htmlUrl if missing
+          let fullName = repo.fullName
+          if (!fullName && repo.htmlUrl && !repo.isImported) {
+            try {
+              const url = new URL(repo.htmlUrl)
+              if (url.hostname === 'github.com') {
+                const pathParts = url.pathname.split('/').filter(Boolean)
+                if (pathParts.length >= 2) {
+                  fullName = `${pathParts[0]}/${pathParts[1]}`
+                }
+              }
+            } catch (e) {
+              // Ignore URL parsing errors
+            }
+          }
+          
+          // Generate GitHub OG image if not provided and it's a GitHub repo
+          let logo = repo.githubOgImage || repo.logo || null
+          if (!logo && fullName && !repo.isImported) {
+            const [owner, repoName] = fullName.split('/')
+            if (owner && repoName) {
+              logo = `https://opengraph.githubassets.com/${owner}/${repoName}`
+            }
+          }
+          
+          return {
+            githubId: BigInt(repo.id),
+            name: repo.name,
+            fullName: fullName || repo.name, // Ensure fullName is always set
+            description: repo.description,
+            htmlUrl: repo.htmlUrl,
+            cloneUrl: repo.cloneUrl || repo.htmlUrl + (repo.isImported ? '' : '.git'),
+            language: repo.language,
+            stargazersCount: repo.stargazersCount,
+            forksCount: repo.forksCount,
+            size: repo.size || 0,
+            isPrivate: repo.isPrivate,
+            isFork: repo.isFork,
+            isImported: repo.isImported || false,
+            favicon: repo.favicon || null,
+            // Always use GitHub OG image for GitHub repos (own and forks)
+            logo: logo,
+            siteName: repo.siteName || null,
+            keywords: repo.keywords || null,
+            author: repo.author || null,
+            userId: user.id,
+            createdAt: new Date(repo.createdAt),
+            updatedAt: new Date(repo.updatedAt),
+            pushedAt: repo.pushedAt ? new Date(repo.pushedAt) : null,
+          }
+        })
 
         // Use createMany for better performance
         await prisma.repository.createMany({

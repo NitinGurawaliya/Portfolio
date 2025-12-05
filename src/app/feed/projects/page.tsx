@@ -11,7 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { useToast } from "@/hooks/use-toast"
 import { useSession } from "@/hooks/useSession"
 import { cn } from "@/lib/utils"
-import { ArrowUp, RefreshCcw, Sparkles, PenSquare, FolderOpen } from "lucide-react"
+import { ArrowUp, RefreshCcw, Sparkles, PenSquare, FolderOpen, Users as UsersIcon } from "lucide-react"
 import { loadFeedCache, saveFeedCache } from "@/lib/feed-cache"
 
 type SortOption = "newest" | "most_upvoted" | "most_viewed"
@@ -438,6 +438,13 @@ export default function ProjectFeedPage() {
             >
               <FolderOpen className="h-4 w-4" />
               Projects
+            </Link>
+            <Link
+              href="/feed/users"
+              className="group flex mt-1 items-center gap-3 rounded-2xl border border-transparent px-4 py-3 hover:border-border/70 hover:bg-muted/40"
+            >
+              <UsersIcon className="h-4 w-4 text-foreground" />
+              <span className="text-foreground">Users</span>
             </Link>
           </nav>
         </Card>

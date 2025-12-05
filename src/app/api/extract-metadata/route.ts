@@ -198,19 +198,56 @@ export async function POST(req: NextRequest) {
 
     // Extract OpenGraph/Twitter image (preview image)
     try {
-      const baseUrl = new URL(url).origin
+      const urlObj = new URL(url)
+      const baseUrl = urlObj.origin
+      const baseUrlWithPath = urlObj.origin + urlObj.pathname.substring(0, urlObj.pathname.lastIndexOf('/') + 1)
+      
       const ogCandidates = [
         $('meta[property="og:image"]').attr('content'),
         $('meta[name="twitter:image"]').attr('content'),
-        $('meta[name="twitter:image:src"]').attr('content')
+        $('meta[name="twitter:image:src"]').attr('content'),
+        $('meta[property="og:image:url"]').attr('content'),
+        $('meta[property="og:image:secure_url"]').attr('content')
       ].filter(Boolean) as string[]
+      
+      console.log(`🔍 OG image candidates found: ${ogCandidates.length}`, ogCandidates)
+      
       if (ogCandidates.length > 0) {
-        const first = ogCandidates[0]!
-        const full = first.startsWith('http') ? first : new URL(first, baseUrl).href
+        const first = ogCandidates[0]!.trim()
+        console.log(`🔍 Processing OG image candidate: "${first}"`)
+        
+        // Handle relative URLs and protocol-relative URLs
+        let full: string
+        if (first.startsWith('http://') || first.startsWith('https://')) {
+          // Already a full URL
+          full = first
+          console.log(`✅ OG image is already a full URL: ${full}`)
+        } else if (first.startsWith('//')) {
+          // Protocol-relative URL
+          full = `https:${first}`
+          console.log(`✅ OG image is protocol-relative, converted to: ${full}`)
+        } else if (first.startsWith('/')) {
+          // Absolute path from root
+          full = `${baseUrl}${first}`
+          console.log(`✅ OG image is absolute path, converted to: ${full}`)
+        } else {
+          // Relative path - use base URL with current path
+          full = new URL(first, baseUrlWithPath).href
+          console.log(`✅ OG image is relative path, converted to: ${full}`)
+        }
+        
+        // Clean up any double slashes (except after protocol)
+        full = full.replace(/([^:]\/)\/+/g, '$1')
+        
         metadata.ogImage = full
         metadata.logo = full // use as large preview image for public card
+        console.log(`✅ Extracted OG image for ${url}: ${full}`)
+      } else {
+        console.log(`⚠️ No OG image found in meta tags for ${url}`)
       }
-    } catch {}
+    } catch (error) {
+      console.error(`❌ Error extracting OG image for ${url}:`, error)
+    }
 
     // Extract and validate favicon - uses whatever the site has in their browser tab
     try {
@@ -219,9 +256,13 @@ export async function POST(req: NextRequest) {
       // Error extracting favicon
     }
 
-    // Generate logo as fallback if no favicon found
-    if (!metadata.favicon) {
+    // Generate logo as fallback ONLY if no OG image and no favicon found
+    // Don't overwrite OG image with generated logo
+    if (!metadata.logo && !metadata.favicon) {
       metadata.logo = generateLogoBase64(metadata.title)
+    } else if (!metadata.favicon && metadata.ogImage) {
+      // If we have OG image but no favicon, use OG image for both
+      metadata.favicon = null // Keep favicon as null, logo already set to OG image
     }
 
     // Generate a unique ID for the imported project
@@ -253,6 +294,16 @@ export async function POST(req: NextRequest) {
       author: metadata.author,
     }
 
+    // Log the response being sent
+    console.log(`📤 Sending response for ${url}:`, {
+      hasOgImage: !!metadata.ogImage,
+      ogImage: metadata.ogImage,
+      hasLogo: !!metadata.logo,
+      logo: metadata.logo,
+      title: metadata.title,
+      description: metadata.description?.substring(0, 50) + '...'
+    })
+    
     return NextResponse.json({
       success: true,
       metadata,

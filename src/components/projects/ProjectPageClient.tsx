@@ -141,6 +141,10 @@ export default function ProjectPageClient({
 }: {
   data: PublicProjectPageData
 }) {
+  // Simply use the logo from data - if it works elsewhere, it will work here too
+  // get-public-project.ts already handles all the conversion logic, so we can trust the logo value
+  const projectLogo = data.project.logo
+  const [isCapturingScreenshot, setIsCapturingScreenshot] = useState(false)
   const pathname = usePathname()
   const { toast } = useToast()
 
@@ -162,6 +166,49 @@ export default function ProjectPageClient({
   const [upvoteCount, setUpvoteCount] = useState(data.stats.upvotes)
   const [hasUpvoted, setHasUpvoted] = useState(data.viewerHasUpvoted)
   const [upvotePending, setUpvotePending] = useState(false)
+
+  // Only capture screenshot if logo is completely missing (not saved in DB)
+  useEffect(() => {
+    // Only try to capture screenshot if no logo exists
+    if (projectLogo) {
+      return // Logo exists, don't capture screenshot
+    }
+    
+    // Only try to capture screenshot if:
+    // 1. No logo exists in database
+    // 2. Deployed URL exists
+    // 3. Not a GitHub URL
+    // 4. Not already capturing
+    if (
+      !data.project.logo &&
+      data.project.deployedUrl && 
+      !isCapturingScreenshot &&
+      !data.project.deployedUrl.includes('github.com')
+    ) {
+      setIsCapturingScreenshot(true)
+      fetch('/api/portfolio/screenshot', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          url: data.project.deployedUrl,
+          projectId: data.project.id // Pass project ID to save screenshot to DB
+        }),
+      })
+      .then(response => response.json())
+      .then(result => {
+        if (result.screenshot) {
+          // Screenshot is saved to DB by the API, so we won't refetch on next load
+          // The logo will be available on next page load
+        }
+      })
+      .catch(error => {
+        console.error('Failed to capture screenshot:', error)
+      })
+      .finally(() => {
+        setIsCapturingScreenshot(false)
+      })
+    }
+  }, [data.project.logo, data.project.deployedUrl, data.project.id, isCapturingScreenshot])
 
   const highlightStats = useMemo(() => {
     const rankValue = (metric: number) => {
@@ -505,33 +552,67 @@ export default function ProjectPageClient({
           <div className="relative overflow-hidden rounded-3xl  bg-white/80 p-0  md:h-full">
             <div className="absolute inset-0 bg-white/80 backdrop-blur-xl" />
             <div className="relative flex h-full items-center justify-center p-5">
-            {data.project.logo ? (
+            {projectLogo ? (
               <div className="relative flex w-full max-w-[520px] items-center justify-center overflow-hidden rounded-2xl bg-white/70 shadow-inner">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={data.project.logo}
+                  src={projectLogo}
                   alt=""
                   aria-hidden="true"
                   className="absolute inset-0 h-full w-full scale-125 blur-[36px] object-cover opacity-85"
                 />
                 <img
-                  src={data.project.logo}
+                  src={projectLogo}
                   alt={`${data.project.title} preview`}
-                  className="relative z-10 w-full rounded-2xl border border-white/60 shadow-xl object-cover"
+                  className="relative z-10 w-full rounded-2xl border border-white/60 shadow-xl object-contain"
                   style={{ aspectRatio: "16 / 9" }}
+                  onLoad={(e) => {
+                    // Don't hide images on slug page - let all images display
+                    // The proxy API already handles default logo detection and returns appropriate images
+                    // If an image loads successfully, it means it's valid (even if it's a default logo)
+                    // We only show placeholder on error, not on successful load
+                    
+                    // Note: We removed the default logo detection here because:
+                    // 1. Valid OG images were being incorrectly hidden
+                    // 2. The proxy API already filters and returns appropriate images
+                    // 3. Better to show a default logo than hide a valid one
+                  }}
+                  onError={(e) => {
+                    // If OG image fails to load, hide it and show placeholder
+                    e.currentTarget.style.display = 'none'
+                    const parent = e.currentTarget.parentElement
+                    if (parent) {
+                      parent.innerHTML = `
+                        <div class="flex min-h-[200px] w-full max-w-[520px] flex-col items-center justify-center gap-4 rounded-2xl bg-gradient-to-br from-slate-100 via-white to-slate-200 p-6 text-center shadow-inner">
+                          <div class="text-sm font-medium text-slate-600">Preview image unavailable</div>
+                        </div>
+                      `
+                    }
+                  }}
                 />
               </div>
             ) : (
               <div className="flex min-h-[200px] w-full max-w-[520px] flex-col items-center justify-center gap-4 rounded-2xl bg-gradient-to-br from-slate-100 via-white to-slate-200 p-6 text-center shadow-inner">
-                <ProjectIcon
-                  favicon={data.project.favicon || undefined}
-                  logo={data.project.logo || undefined}
-                  title={data.project.title}
-                  size="lg"
-                />
-                <p className="text-sm font-medium text-slate-600">
-                  Preview image coming soon
-                </p>
+                {isCapturingScreenshot ? (
+                  <>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-600"></div>
+                    <p className="text-sm font-medium text-slate-600">
+                      Capturing preview...
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <ProjectIcon
+                      favicon={data.project.favicon || undefined}
+                      logo={data.project.logo || undefined}
+                      title={data.project.title}
+                      size="lg"
+                    />
+                    <p className="text-sm font-medium text-slate-600">
+                      Preview image coming soon
+                    </p>
+                  </>
+                )}
               </div>
             )}
             </div>

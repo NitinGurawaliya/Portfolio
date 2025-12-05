@@ -137,19 +137,71 @@ export const mapPortfolioRepositories = (portfolioRepos: any[]) => {
 /**
  * Imported projects को format करता है database data से
  */
+/**
+ * Generate GitHub OG image URL from fullName
+ */
+const getGitHubOgImage = (fullName: string | null | undefined): string | null => {
+  if (!fullName) return null
+  const [owner, repoName] = fullName.split('/')
+  if (owner && repoName) {
+    return `https://opengraph.githubassets.com/${owner}/${repoName}`
+  }
+  return null
+}
+
 export const formatImportedProjects = (portfolioRepos: any[]): Repository[] => {
   return portfolioRepos
     .map((repo: any) => {
       const languages = parseRepositoryLanguages(repo)
       const githubId = parseInt(repo.repository.githubId)
+      const fullName = repo.repository.fullName || repo.repository.name
+      
+      // Backward compatibility: If no logo but has fullName (GitHub repo), use GitHub OG image
+      // Also check githubOgImage field for old repos
+      let logo = repo.repository.logo || repo.repository.githubOgImage || null
+      
+      // If no logo exists, generate GitHub OG image for any GitHub repo (own or fork)
+      // Only skip if it's an imported project (not from GitHub)
+      if (!logo && fullName && !repo.repository.isImported) {
+        logo = getGitHubOgImage(fullName)
+      }
+      
+      // If still no logo but we have htmlUrl, try to extract fullName from it
+      if (!logo && !repo.repository.isImported && repo.repository.htmlUrl) {
+        try {
+          const url = new URL(repo.repository.htmlUrl)
+          if (url.hostname === 'github.com') {
+            const pathParts = url.pathname.split('/').filter(Boolean)
+            if (pathParts.length >= 2) {
+              const extractedFullName = `${pathParts[0]}/${pathParts[1]}`
+              logo = getGitHubOgImage(extractedFullName)
+            }
+          }
+        } catch (e) {
+          // Ignore URL parsing errors
+        }
+      }
+      
+      // For GitHub repos, don't use GitHub favicon - use null for fallback text
+      let favicon = repo.repository.favicon
+      if (favicon && favicon.includes('github.com') && !repo.repository.isImported) {
+        favicon = null // Use fallback text instead of GitHub icon
+      }
+      
+      // Filter out GitHub's default description
+      const githubDefaultDescPattern = /^Contribute to .* development by creating an account on GitHub\.?$/i
+      let description = repo.repository.description || ""
+      if (description && githubDefaultDescPattern.test(description.trim())) {
+        description = "" // Remove GitHub's default description
+      }
       
       return {
         id: githubId, // Use GitHub ID as the main ID
         githubId: githubId, // Also store as githubId property
         portfolioRepositoryId: repo.id, // Store PortfolioRepository ID for analytics
-        name: repo.repository.name,
-        fullName: repo.repository.fullName || repo.repository.name,
-        description: repo.repository.description || "",
+        name: repo.repository.name, // Just the repo name, not "GitHub - owner/repo"
+        fullName: fullName,
+        description: description,
         htmlUrl: repo.repository.htmlUrl,
         homepage: repo.deployedUrl || "",
         language: repo.repository.language || "",
@@ -162,10 +214,10 @@ export const formatImportedProjects = (portfolioRepos: any[]): Repository[] => {
         createdAt: repo.repository.createdAt,
         updatedAt: repo.repository.updatedAt,
         pushedAt: repo.repository.pushedAt || repo.repository.updatedAt,
-        favicon: repo.repository.favicon,
-        logo: repo.repository.logo,
+        favicon: favicon, // Null for GitHub repos to show fallback text
+        logo: logo, // Use GitHub OG image as fallback
         githubUrl: repo.repository.githubUrl,
-        isImported: true
+        isImported: repo.repository.isImported || false
       }
     })
 }

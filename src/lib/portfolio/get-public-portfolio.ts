@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma"
 import { CacheKeys, CacheTTL, getCachedData, setCachedData } from "@/lib/cache"
+import { getRepositoryLogo, isGitHubFavicon } from "@/lib/github-og-image-utils"
 
 /**
  * Optimized server-side function to fetch public portfolio
@@ -261,15 +262,27 @@ export async function getPublicPortfolio(username: string) {
     )
     const serializeTime = performance.now() - serializeStart
 
-    // Format repositories with githubId as string
+    // Format repositories with githubId as string and handle old GitHub repos
     if (serializedPortfolio.repositories) {
-      serializedPortfolio.repositories = serializedPortfolio.repositories.map((pr: any) => ({
-        ...pr,
-        repository: {
-          ...pr.repository,
-          githubId: pr.repository.githubId ? pr.repository.githubId.toString() : pr.repository.githubId
+      serializedPortfolio.repositories = serializedPortfolio.repositories.map((pr: any) => {
+        // Use shared utility to get repository logo (handles all edge cases)
+        const logo = getRepositoryLogo({
+          logo: pr.repository?.logo || null,
+          favicon: pr.repository?.favicon || null,
+          htmlUrl: pr.repository?.htmlUrl || null,
+          fullName: pr.repository?.fullName || null,
+          isImported: pr.repository?.isImported || false
+        })
+        
+        return {
+          ...pr,
+          repository: {
+            ...pr.repository,
+            githubId: pr.repository.githubId ? pr.repository.githubId.toString() : pr.repository.githubId,
+            logo: logo // Include GitHub OG image fallback for old repos
+          }
         }
-      }))
+      })
     }
 
     const responseData = {
