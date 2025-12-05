@@ -71,6 +71,12 @@ export default function DashboardPage() {
   
   const router = useRouter()
 
+  // Session hook - redirect to auth if session is invalid
+  const { user, loading } = useSession({ redirectOnAuthFailure: true })
+  
+  // Portfolio hook
+  const portfolio = usePortfolio(user)
+
   // Handle username assignment feedback from OAuth callback
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -78,6 +84,7 @@ export default function DashboardPage() {
     const params = new URLSearchParams(window.location.search)
     const usernameUpdated = params.get('username_updated')
     const usernameConflict = params.get('username_conflict')
+    const producthuntConnected = params.get('producthunt_connected')
     
     if (usernameUpdated) {
       toast.success(`✅ Custom username claimed: /${usernameUpdated}`, successToastConfig)
@@ -87,14 +94,26 @@ export default function DashboardPage() {
       toast.error(`❌ Username '${usernameConflict}' was already taken. You can set a different one in your profile settings.`, errorToastConfig)
       // Clean up URL
       window.history.replaceState({}, '', '/dashboard')
+    } else if (producthuntConnected === 'true') {
+      // Refresh portfolio data after ProductHunt OAuth
+      toast.success('✅ ProductHunt account connected successfully!', successToastConfig)
+      // Reload portfolio data to get updated productHuntUsername
+      if (user?.githubUsername) {
+        portfolio.loadExistingData(user.githubUsername, portfolio.portfolioData)
+        // Also fetch portfolio data directly
+        fetch(`/api/portfolio/publish?username=${user.githubUsername}`)
+          .then(res => res.json())
+          .then(data => {
+            if (data.portfolio?.productHuntUsername) {
+              setProductHuntUsername(data.portfolio.productHuntUsername)
+            }
+          })
+          .catch(err => console.error('Failed to refresh portfolio data:', err))
+      }
+      // Clean up URL
+      window.history.replaceState({}, '', '/dashboard')
     }
-  }, [])
-
-  // Session hook - redirect to auth if session is invalid
-  const { user, loading } = useSession({ redirectOnAuthFailure: true })
-  
-  // Portfolio hook
-  const portfolio = usePortfolio(user)
+  }, [user, portfolio])
   
   const feedPrefetchStartedRef = useRef(false)
   type SummaryProject = {

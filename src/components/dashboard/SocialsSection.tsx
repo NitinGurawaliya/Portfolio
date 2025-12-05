@@ -488,41 +488,69 @@ export function SocialsSection({
           </CardHeader>
           <CardContent className="pt-2">
             <div className="space-y-4">
-              <div>
-                <Label htmlFor="producthunt-username" className="text-sm font-medium mb-2 block">
-                  ProductHunt Username
-                </Label>
-                <div className="flex items-center gap-3">
-                  <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-orange-500">
-                    <TrendingUp className="h-6 w-6 text-white" />
+              {productHuntUsername ? (
+                <div className="rounded-lg border border-green-200 bg-green-50 p-4">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-orange-500">
+                      <TrendingUp className="h-5 w-5 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-green-900">
+                        ProductHunt Connected
+                      </p>
+                      <p className="text-xs text-green-700">
+                        Connected as @{productHuntUsername}
+                      </p>
+                    </div>
                   </div>
-                  <Input
-                    id="producthunt-username"
-                    value={productHuntUsername || ''}
-                    onChange={(e) => onProductHuntUsernameChange?.(e.target.value)}
-                    placeholder="your-producthunt-username"
-                    className="h-12 flex-1"
-                  />
+                  <p className="text-xs text-green-600 mt-2">
+                    Your ProductHunt projects will be displayed on your portfolio
+                  </p>
+                  <Button
+                    onClick={() => {
+                      // Clear username and disconnect
+                      onProductHuntUsernameChange?.('')
+                    }}
+                    className="mt-3 w-full"
+                    variant="outline"
+                    size="sm"
+                  >
+                    Disconnect Account
+                  </Button>
                 </div>
-                <p className="text-xs text-gray-500 mt-2">
-                  Your ProductHunt projects will be displayed on your portfolio
-                </p>
-                {!productHuntUsername && (
+              ) : (
+                <div>
+                  <Label htmlFor="producthunt-username" className="text-sm font-medium mb-2 block">
+                    ProductHunt Username
+                  </Label>
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-orange-500">
+                      <TrendingUp className="h-6 w-6 text-white" />
+                    </div>
+                    <Input
+                      id="producthunt-username"
+                      value={productHuntUsername || ''}
+                      onChange={(e) => onProductHuntUsernameChange?.(e.target.value)}
+                      placeholder="your-producthunt-username"
+                      className="h-12 flex-1"
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">
+                    Your ProductHunt projects will be displayed on your portfolio
+                  </p>
                   <Button
                     onClick={() => window.location.href = '/api/auth/producthunt'}
                     className="mt-3 w-full"
                     variant="outline"
                   >
                     <TrendingUp className="h-4 w-4 mr-2" />
-                    Connect ProductHunt Account
+                    Connect ProductHunt Account (Recommended)
                   </Button>
-                )}
-                {productHuntUsername && (
-                  <p className="text-xs text-green-600 mt-2">
-                    ✓ Connected as @{productHuntUsername}
+                  <p className="text-xs text-gray-400 mt-2 text-center">
+                    Or enter your username manually
                   </p>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
