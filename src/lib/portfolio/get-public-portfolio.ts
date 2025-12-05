@@ -27,7 +27,7 @@ export async function getPublicPortfolio(username: string) {
     const cacheCheckTime = performance.now() - startTime
     
     const dbQueryStart = performance.now()
-    let portfolio = await prisma.portfolio.findFirst({
+    let portfolio: any = await prisma.portfolio.findFirst({
       where: {
         customUsername: username,
         isPublished: true
@@ -154,6 +154,7 @@ export async function getPublicPortfolio(username: string) {
           backgroundColor: true,
           backgroundPattern: true,
           cvUrl: true,
+          productHuntUsername: true,
           user: {
             select: {
               id: true,
