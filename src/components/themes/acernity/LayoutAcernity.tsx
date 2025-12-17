@@ -23,6 +23,7 @@ import { getProjectSlugMap } from "@/lib/project-slug";
 import { truncateWords } from "@/lib/text";
 import { Code2, Users as UsersIcon } from "lucide-react";
 import { CustomGitHubActivity } from "@/components/themes/acernity/CustomGitHubActivity";
+import { ProductHuntProjects } from "@/components/external-work/ProductHuntProjects";
 
 interface ThemeConfig {
   name: string;
@@ -53,6 +54,7 @@ interface PortfolioData {
   backgroundPattern?: string | null;
   cvUrl?: string | null;
   shiplogs?: any[];
+  productHuntUsername?: string | null;
   user: {
     githubUsername: string;
     location: string;
@@ -354,6 +356,20 @@ export default function LayoutAcernity({ theme, portfolio }: LayoutAcernityProps
                     })}
                 </div>
               </motion.div>
+            )}
+
+            {/* Show Your Work - ProductHunt Section */}
+            {portfolio.productHuntUsername && (
+              <motion.section
+                className="pt-6"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8 }}
+                viewport={{ once: true }}
+                aria-label="Show your work"
+              >
+                <ProductHuntProjects username={portfolio.productHuntUsername} />
+              </motion.section>
             )}
           </motion.section>
 

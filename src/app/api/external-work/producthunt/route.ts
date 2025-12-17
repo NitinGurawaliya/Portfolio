@@ -27,26 +27,88 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Validate session (optional - can work for public portfolios too)
-    const sessionValidation = await validateSession(request)
-    
-    // For now, we'll fetch without OAuth token (public data)
-    // TODO: In production, retrieve stored OAuth token from database
-    // and use it to fetch user's made posts via GraphQL API
+    // Try to find portfolio by portfolio username first (customUsername or githubUsername)
+    // Then fallback to ProductHunt username if not found
+    // For public portfolios, only fetch if published
+    let portfolio = await prisma.portfolio.findFirst({
+      where: {
+        OR: [
+          { customUsername: username, isPublished: true },
+          { user: { githubUsername: username }, isPublished: true }
+        ]
+      },
+      include: {
+        user: true
+      }
+    })
+
+    // If not found by portfolio username, try ProductHunt username
+    if (!portfolio) {
+      portfolio = await prisma.portfolio.findFirst({
+        where: {
+          productHuntUsername: username,
+          isPublished: true
+        },
+        include: {
+          user: true
+        }
+      })
+    }
+
+    if (!portfolio || !portfolio.userId) {
+      return NextResponse.json({
+        success: true,
+        projects: [],
+        username,
+        message: 'Portfolio not found or not published'
+      })
+    }
+
+    // Get ProductHunt username from portfolio
+    const productHuntUsername = portfolio.productHuntUsername
+    if (!productHuntUsername) {
+      return NextResponse.json({
+        success: true,
+        projects: [],
+        username,
+        message: 'ProductHunt username not found in portfolio'
+      })
+    }
+
+    // Get OAuth token from database
+    // Note: After adding OAuthToken model, run: npx prisma generate
+    const oauthToken = await (prisma as any).oAuthToken.findUnique({
+      where: { userId: portfolio.userId }
+    })
+
+    if (!oauthToken || oauthToken.platform !== 'producthunt') {
+      return NextResponse.json({
+        success: true,
+        projects: [],
+        username,
+        message: 'ProductHunt account not connected. Please connect your account first.'
+      })
+    }
+
+    // Check if token is expired
+    if (oauthToken.expiresAt && oauthToken.expiresAt < new Date()) {
+      // TODO: Implement token refresh logic
+      return NextResponse.json({
+        success: true,
+        projects: [],
+        username,
+        message: 'ProductHunt token expired. Please reconnect your account.'
+      })
+    }
 
     try {
-      // ProductHunt GraphQL API endpoint
-      // Note: This requires OAuth token for private data (user's made posts)
-      // For public data, we can use their public API endpoints
-      
-      // Since we don't have OAuth token stored yet, we'll return empty
-      // Once OAuth is implemented, use this query:
-      /*
+      // Fetch user's made posts using ProductHunt GraphQL API
+      // Use the ProductHunt username from portfolio (not the portfolio username)
       const response = await fetch('https://api.producthunt.com/v2/api/graphql', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken}`
+          'Authorization': `Bearer ${oauthToken.accessToken}`
         },
         body: JSON.stringify({
           query: `
@@ -69,22 +131,36 @@ export async function GET(request: NextRequest) {
               }
             }
           `,
-          variables: { username }
+          variables: { username: productHuntUsername }
         })
       })
-      */
 
-      // For MVP, return empty array until OAuth tokens are stored
-      // User needs to connect their ProductHunt account first
-      const projects: ProductHuntProject[] = []
+      if (!response.ok) {
+        console.error('ProductHunt API error:', response.status, await response.text())
+        return NextResponse.json({
+          success: true,
+          projects: [],
+          username,
+          message: 'Failed to fetch projects from ProductHunt'
+        })
+      }
+
+      const data = await response.json()
+      
+      // Transform GraphQL response to our format
+      const projects: ProductHuntProject[] = (data?.data?.user?.madePosts?.edges || []).map((edge: any) => ({
+        id: edge.node.id,
+        name: edge.node.name,
+        tagline: edge.node.tagline || '',
+        votes: edge.node.votesCount || 0,
+        url: edge.node.url || `https://www.producthunt.com/posts/${edge.node.id}`,
+        thumbnail: edge.node.thumbnail?.imageUrl || ''
+      }))
       
       return NextResponse.json({
         success: true,
         projects,
-        username,
-        message: sessionValidation.valid 
-          ? 'Please connect your ProductHunt account to see your projects' 
-          : 'ProductHunt projects will be displayed after account connection'
+        username
       })
 
     } catch (fetchError) {

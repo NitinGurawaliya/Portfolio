@@ -103,37 +103,57 @@ export async function GET(request: NextRequest) {
       })
     })
 
+    let username: string | null = null
+
     if (!profileResponse.ok) {
       console.error('Failed to fetch ProductHunt profile:', profileResponse.status)
       // Still save the token, user can manually enter username
     } else {
       const profileData = await profileResponse.json()
-      const username = profileData?.data?.me?.username
-
-      if (username) {
-        // Update user's portfolio with ProductHunt username
-        await prisma.portfolio.upsert({
-          where: { userId: sessionValidation.user.id },
-          update: {
-            productHuntUsername: username,
-            updatedAt: new Date()
-          },
-          create: {
-            userId: sessionValidation.user.id,
-            displayName: sessionValidation.user.name || '',
-            productHuntUsername: username,
-            isPublished: false
-          }
-        })
-      }
+      username = profileData?.data?.me?.username
     }
 
-    // TODO: Store access_token and refresh_token securely in database
-    // For now, we'll just save the username
-    // In production, you should:
-    // 1. Create OAuthToken model in Prisma
-    // 2. Encrypt tokens before storing
-    // 3. Store refresh_token for token renewal
+    // Calculate token expiration time
+    const expiresAt = expires_in 
+      ? new Date(Date.now() + expires_in * 1000)
+      : null
+
+    // Store OAuth tokens in database
+    // Note: After adding OAuthToken model, run: npx prisma generate
+    await (prisma as any).oAuthToken.upsert({
+      where: { userId: sessionValidation.user.id },
+      update: {
+        platform: 'producthunt',
+        accessToken: access_token,
+        refreshToken: refresh_token || null,
+        expiresAt: expiresAt,
+        updatedAt: new Date()
+      },
+      create: {
+        userId: sessionValidation.user.id,
+        platform: 'producthunt',
+        accessToken: access_token,
+        refreshToken: refresh_token || null,
+        expiresAt: expiresAt
+      }
+    })
+
+    // Update user's portfolio with ProductHunt username if available
+    if (username) {
+      await prisma.portfolio.upsert({
+        where: { userId: sessionValidation.user.id },
+        update: {
+          productHuntUsername: username,
+          updatedAt: new Date()
+        },
+        create: {
+          userId: sessionValidation.user.id,
+          displayName: sessionValidation.user.name || '',
+          productHuntUsername: username,
+          isPublished: false
+        }
+      })
+    }
 
     // Clear the state cookie
     const response = NextResponse.redirect(new URL('/dashboard?producthunt_connected=true', request.url))
