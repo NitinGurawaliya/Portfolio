@@ -3,19 +3,6 @@ import { prisma } from '@/lib/prisma'
 
 // Define themes directly in API route to avoid client component imports
 const THEMES = {
-  dark: {
-    name: "Dark",
-    colors: {
-      background: "#000000",
-      text: "#ffffff",
-      accent: "#f97316",
-      cardBg: "#1f2937",
-      border: "#374151"
-    },
-    layout: "LayoutDark",
-    previewImage: "/themes/dark-preview.png",
-    description: "Professional dark theme with orange accents"
-  },
   light: {
     name: "Light",
     colors: {

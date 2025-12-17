@@ -25,6 +25,7 @@ import { PublicShiplogList } from "@/components/shiplog/PublicShiplogList"
 import { getProjectSlugMap } from "@/lib/project-slug"
 import { truncateWords } from "@/lib/text"
 import { Code2, TrendingUp, Users as UsersIcon } from "lucide-react"
+import { ProductHuntProjects } from "@/components/external-work/ProductHuntProjects"
 
 const formatCurrency = (value?: number | null) => {
   if (value === null || value === undefined) return null
@@ -73,6 +74,7 @@ interface PortfolioData {
   backgroundPattern?: string | null
   cvUrl?: string | null
   shiplogs?: any[]
+  productHuntUsername?: string | null
   user: {
     githubUsername: string
     location: string
@@ -410,6 +412,20 @@ export default function LayoutModern({ theme, portfolio }: LayoutModernProps) {
                   </div>
                 )}
               </div>
+
+              {/* Show Your Work - ProductHunt Section */}
+              {portfolio.productHuntUsername && (
+                <motion.section
+                  className="pt-6"
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8 }}
+                  viewport={{ once: true }}
+                  aria-label="Show your work"
+                >
+                  <ProductHuntProjects username={portfolio.productHuntUsername} />
+                </motion.section>
+              )}
 
               {hasProjects && (
                 <div className="space-y-4 xs:space-y-5 sm:space-y-6">

@@ -48,9 +48,10 @@ export default function DashboardPage() {
   const [customNames, setCustomNames] = useState<Record<number, string>>({})
   const [customDescriptions, setCustomDescriptions] = useState<Record<number, string>>({})
   const [githubUrls, setGithubUrls] = useState<Record<number, string>>({})
-  const [selectedTheme, setSelectedTheme] = useState<string>('dark')
+  const [selectedTheme, setSelectedTheme] = useState<string>('light')
   const [portfolioId, setPortfolioId] = useState<number | null>(null)
   const [isPortfolioPublished, setIsPortfolioPublished] = useState(false)
+  const [productHuntUsername, setProductHuntUsername] = useState<string | null>(null)
 
   // Change tracking state
   const [originalData, setOriginalData] = useState<{
@@ -70,6 +71,12 @@ export default function DashboardPage() {
   
   const router = useRouter()
 
+  // Session hook - redirect to auth if session is invalid
+  const { user, loading } = useSession({ redirectOnAuthFailure: true })
+  
+  // Portfolio hook
+  const portfolio = usePortfolio(user)
+
   // Handle username assignment feedback from OAuth callback
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -77,6 +84,7 @@ export default function DashboardPage() {
     const params = new URLSearchParams(window.location.search)
     const usernameUpdated = params.get('username_updated')
     const usernameConflict = params.get('username_conflict')
+    const producthuntConnected = params.get('producthunt_connected')
     
     if (usernameUpdated) {
       toast.success(`✅ Custom username claimed: /${usernameUpdated}`, successToastConfig)
@@ -86,14 +94,26 @@ export default function DashboardPage() {
       toast.error(`❌ Username '${usernameConflict}' was already taken. You can set a different one in your profile settings.`, errorToastConfig)
       // Clean up URL
       window.history.replaceState({}, '', '/dashboard')
+    } else if (producthuntConnected === 'true') {
+      // Refresh portfolio data after ProductHunt OAuth
+      toast.success('✅ ProductHunt account connected successfully!', successToastConfig)
+      // Reload portfolio data to get updated productHuntUsername
+      if (user?.githubUsername) {
+        portfolio.loadExistingData(user.githubUsername, portfolio.portfolioData)
+        // Also fetch portfolio data directly
+        fetch(`/api/portfolio/publish?username=${user.githubUsername}`)
+          .then(res => res.json())
+          .then(data => {
+            if (data.portfolio?.productHuntUsername) {
+              setProductHuntUsername(data.portfolio.productHuntUsername)
+            }
+          })
+          .catch(err => console.error('Failed to refresh portfolio data:', err))
+      }
+      // Clean up URL
+      window.history.replaceState({}, '', '/dashboard')
     }
-  }, [])
-
-  // Session hook - redirect to auth if session is invalid
-  const { user, loading } = useSession({ redirectOnAuthFailure: true })
-  
-  // Portfolio hook
-  const portfolio = usePortfolio(user)
+  }, [user, portfolio])
   
   const feedPrefetchStartedRef = useRef(false)
   type SummaryProject = {
@@ -423,6 +443,10 @@ export default function DashboardPage() {
               profilePic: portfolio.profilePic || "",
               customUsername: portfolio.customUsername || "",
             })
+            // Load ProductHunt username if available
+            if (portfolio.productHuntUsername) {
+              setProductHuntUsername(portfolio.productHuntUsername)
+            }
           }
         }
       } catch (error) {
@@ -874,6 +898,19 @@ export default function DashboardPage() {
               onUpdateSocial={handlers.handleUpdateSocial}
               isLoading={portfolio.isLoadingPortfolio}
               onNavigateToSection={handleSectionChange}
+              productHuntUsername={productHuntUsername}
+              onProductHuntUsernameChange={async (username) => {
+                setProductHuntUsername(username)
+                try {
+                  await fetch('/api/portfolio/producthunt', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ productHuntUsername: username || null })
+                  })
+                } catch (error) {
+                  console.error('Failed to update ProductHunt username:', error)
+                }
+              }}
             />
           )
         case "analytics":
