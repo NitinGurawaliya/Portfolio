@@ -27,15 +27,20 @@ export async function GET(request: NextRequest) {
       )
     }
 
+    // Check if this is a dashboard request (authenticated user viewing their own data)
+    const sessionValidation = await validateSession(request)
+    const isAuthenticated = sessionValidation.valid && sessionValidation.user
+
     // Try to find portfolio by portfolio username first (customUsername or githubUsername)
-    // Then fallback to ProductHunt username if not found
+    // For authenticated users (dashboard), don't require isPublished
     // For public portfolios, only fetch if published
     let portfolio = await prisma.portfolio.findFirst({
       where: {
         OR: [
-          { customUsername: username, isPublished: true },
-          { user: { githubUsername: username }, isPublished: true }
-        ]
+          { customUsername: username },
+          { user: { githubUsername: username } }
+        ],
+        ...(isAuthenticated ? {} : { isPublished: true })
       },
       include: {
         user: true
@@ -47,7 +52,19 @@ export async function GET(request: NextRequest) {
       portfolio = await prisma.portfolio.findFirst({
         where: {
           productHuntUsername: username,
-          isPublished: true
+          ...(isAuthenticated ? {} : { isPublished: true })
+        },
+        include: {
+          user: true
+        }
+      })
+    }
+
+    // For authenticated users, also try to find by their own userId
+    if (!portfolio && isAuthenticated) {
+      portfolio = await prisma.portfolio.findFirst({
+        where: {
+          userId: sessionValidation.user!.id
         },
         include: {
           user: true
@@ -56,6 +73,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (!portfolio || !portfolio.userId) {
+      console.log('❌ Portfolio not found:', { username, isAuthenticated })
       return NextResponse.json({
         success: true,
         projects: [],
@@ -67,6 +85,7 @@ export async function GET(request: NextRequest) {
     // Get ProductHunt username from portfolio
     const productHuntUsername = portfolio.productHuntUsername
     if (!productHuntUsername) {
+      console.log('❌ ProductHunt username not found in portfolio:', { portfolioId: portfolio.id, userId: portfolio.userId })
       return NextResponse.json({
         success: true,
         projects: [],
@@ -74,6 +93,8 @@ export async function GET(request: NextRequest) {
         message: 'ProductHunt username not found in portfolio'
       })
     }
+
+    console.log('✅ Found portfolio:', { portfolioId: portfolio.id, productHuntUsername, userId: portfolio.userId })
 
     // Get OAuth token from database
     // Note: After adding OAuthToken model, run: npx prisma generate
@@ -97,6 +118,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (!oauthToken) {
+      console.log('❌ OAuth token not found:', { userId: portfolio.userId, platform: 'producthunt' })
       return NextResponse.json({
         success: true,
         projects: [],
@@ -104,6 +126,8 @@ export async function GET(request: NextRequest) {
         message: 'ProductHunt account not connected. Please connect your account first.'
       })
     }
+
+    console.log('✅ OAuth token found:', { userId: portfolio.userId, hasAccessToken: !!oauthToken.accessToken, expiresAt: oauthToken.expiresAt })
 
     // Check if token is expired
     if (oauthToken.expiresAt && oauthToken.expiresAt < new Date()) {
@@ -161,6 +185,13 @@ export async function GET(request: NextRequest) {
       }
 
       const data = await response.json()
+      
+      console.log('📊 ProductHunt API response:', { 
+        hasData: !!data?.data, 
+        hasUser: !!data?.data?.user,
+        hasMadePosts: !!data?.data?.user?.madePosts,
+        edgesCount: data?.data?.user?.madePosts?.edges?.length || 0
+      })
       
       // Transform GraphQL response to our format
       const projects: ProductHuntProject[] = (data?.data?.user?.madePosts?.edges || []).map((edge: any) => ({

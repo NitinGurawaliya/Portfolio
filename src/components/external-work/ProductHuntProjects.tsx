@@ -37,14 +37,20 @@ export function ProductHuntProjects({ username }: ProductHuntProjectsProps) {
         const response = await fetch(`/api/external-work/producthunt?username=${encodeURIComponent(username)}`)
         const data = await response.json()
         
+        console.log('ProductHunt API response:', { success: data.success, projectsCount: data.projects?.length, message: data.message })
+        
         if (data.success && data.projects) {
           setProjects(data.projects)
+          if (data.projects.length === 0 && data.message) {
+            // Show message if no projects but API call was successful
+            setError(data.message)
+          }
         } else {
-          setError(data.message || 'Failed to fetch projects')
+          setError(data.message || data.error || 'Failed to fetch projects')
         }
       } catch (err) {
         console.error('Error fetching ProductHunt projects:', err)
-        setError('Failed to load projects')
+        setError('Failed to load projects. Please try again later.')
       } finally {
         setLoading(false)
       }
@@ -77,15 +83,21 @@ export function ProductHuntProjects({ username }: ProductHuntProjectsProps) {
     )
   }
 
-  if (error) {
+  if (error && !loading) {
     return (
-      <div className="text-sm text-gray-500 py-4">
-        {error}
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+          <TrendingUp className="h-5 w-5 text-orange-500" />
+          Show Your Work
+        </h3>
+        <div className="text-sm text-gray-500 py-4 bg-gray-50 rounded-lg px-4">
+          {error}
+        </div>
       </div>
     )
   }
 
-  if (projects.length === 0) {
+  if (projects.length === 0 && !loading && !error) {
     return null
   }
 
