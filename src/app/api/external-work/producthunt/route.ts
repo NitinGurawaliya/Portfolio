@@ -77,11 +77,26 @@ export async function GET(request: NextRequest) {
 
     // Get OAuth token from database
     // Note: After adding OAuthToken model, run: npx prisma generate
-    const oauthToken = await (prisma as any).oAuthToken.findUnique({
-      where: { userId: portfolio.userId }
-    })
+    let oauthToken = null
+    try {
+      oauthToken = await (prisma as any).oAuthToken.findFirst({
+        where: { 
+          userId: portfolio.userId,
+          platform: 'producthunt'
+        }
+      })
+    } catch (tokenError) {
+      console.error('Error fetching OAuth token:', tokenError)
+      // If OAuthToken model doesn't exist or Prisma client not regenerated, return empty
+      return NextResponse.json({
+        success: true,
+        projects: [],
+        username,
+        message: 'ProductHunt integration not available. Please contact support.'
+      })
+    }
 
-    if (!oauthToken || oauthToken.platform !== 'producthunt') {
+    if (!oauthToken) {
       return NextResponse.json({
         success: true,
         projects: [],

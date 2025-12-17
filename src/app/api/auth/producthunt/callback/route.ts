@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { validateSession } from '@/lib/session-validator'
 import { prisma } from '@/lib/prisma'
+import { invalidateCache, CacheKeys } from '@/lib/cache'
 
 /**
  * ProductHunt OAuth Callback Endpoint
@@ -139,8 +140,9 @@ export async function GET(request: NextRequest) {
     })
 
     // Update user's portfolio with ProductHunt username if available
+    let portfolio = null
     if (username) {
-      await prisma.portfolio.upsert({
+      portfolio = await prisma.portfolio.upsert({
         where: { userId: sessionValidation.user.id },
         update: {
           productHuntUsername: username,
@@ -151,8 +153,34 @@ export async function GET(request: NextRequest) {
           displayName: sessionValidation.user.name || '',
           productHuntUsername: username,
           isPublished: false
+        },
+        include: {
+          user: {
+            select: {
+              githubUsername: true
+            }
+          }
         }
       })
+
+      // Invalidate cache for public portfolio pages
+      // This ensures ProductHunt data shows up immediately
+      const usernamesToInvalidate: string[] = []
+      if (portfolio.customUsername) {
+        usernamesToInvalidate.push(`public_${portfolio.customUsername}`)
+        usernamesToInvalidate.push(CacheKeys.portfolio(portfolio.customUsername))
+      }
+      if (portfolio.user?.githubUsername) {
+        usernamesToInvalidate.push(`public_${portfolio.user.githubUsername}`)
+        usernamesToInvalidate.push(CacheKeys.portfolio(portfolio.user.githubUsername))
+      }
+      
+      // Invalidate all related cache keys
+      for (const usernameKey of usernamesToInvalidate) {
+        invalidateCache(usernameKey)
+      }
+      
+      console.log(`✅ ProductHunt connected and cache invalidated for:`, usernamesToInvalidate)
     }
 
     // Clear the state cookie

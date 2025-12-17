@@ -43,7 +43,7 @@ export async function getPublicPortfolio(username: string) {
         backgroundColor: true,
         backgroundPattern: true,
         cvUrl: true,
-        productHuntUsername: true,
+        productHuntUsername: true, // Temporarily removed - add back after running migration
         user: {
           select: {
             id: true,
@@ -154,7 +154,7 @@ export async function getPublicPortfolio(username: string) {
           backgroundColor: true,
           backgroundPattern: true,
           cvUrl: true,
-          productHuntUsername: true,
+          productHuntUsername: true, // Temporarily removed - add back after running migration
           user: {
             select: {
               id: true,
@@ -252,6 +252,10 @@ export async function getPublicPortfolio(username: string) {
     const dbQueryTime = performance.now() - dbQueryStart
 
     if (!portfolio) {
+      console.log(`❌ Portfolio not found: ${username}`, {
+        searchedBy: 'customUsername and githubUsername',
+        isPublished: 'true (required)'
+      })
       return null
     }
 
