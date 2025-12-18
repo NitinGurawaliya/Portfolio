@@ -7,10 +7,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { verifyDomainComplete } from '@/lib/domain-verification';
 import { cacheDomain, invalidateDomainCache } from '@/lib/domain-cache';
-import { cookies } from 'next/headers';
 import { sendEmail } from '@/lib/sendEmail';
 import { domainVerifiedEmail } from '@/lib/templates/customDomainEmails';
 import { addDomainToVercel } from '@/lib/vercel-api';
+import { validateSession } from '@/lib/session-validator';
 
 export async function POST(
   req: NextRequest,
@@ -20,49 +20,15 @@ export async function POST(
     // Await params in Next.js 15
     const { id: domainId } = await params;
     
-    // Get user session
-    const cookieStore = await cookies();
-    const sessionCookie = cookieStore.get('github-session');
-    
-    if (!sessionCookie) {
+    const sessionValidation = await validateSession(req);
+    if (!sessionValidation.valid || !sessionValidation.user) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
+        { error: sessionValidation.error || 'Unauthorized' },
         { status: 401 }
       );
     }
 
-    let session;
-    try {
-      session = JSON.parse(sessionCookie.value);
-    } catch {
-      return NextResponse.json(
-        { error: 'Invalid session' },
-        { status: 401 }
-      );
-    }
-
-    const githubId = session?.user?.id;
-    if (!githubId) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
-    // Find the actual database user ID by GitHub ID
-    const dbUser = await prisma.user.findUnique({
-      where: { githubId: githubId },
-      select: { id: true },
-    });
-
-    if (!dbUser) {
-      return NextResponse.json(
-        { error: 'User not found in database' },
-        { status: 404 }
-      );
-    }
-
-    const userIdInt = dbUser.id;
+    const userIdInt = sessionValidation.user.id;
 
     // Find the custom domain
       const customDomain = await prisma.customDomain.findUnique({

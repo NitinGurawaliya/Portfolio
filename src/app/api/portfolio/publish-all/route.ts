@@ -3,9 +3,10 @@ import { prisma } from "@/lib/prisma"
 import { devLog } from "@/lib/logger"
 import type { Prisma } from "@prisma/client"
 import { sendEmail } from "@/lib/sendEmail"
-import { invalidateCache, CacheKeys } from "@/lib/cache"
 import { generatePortfolioPublishedEmail } from "@/lib/templates/welcomeEmail"
 import { validateSession } from "@/lib/session-validator"
+import { normalizeUserEmail, isPlaceholderEmail } from "@/lib/utils/user-utils"
+import { PortfolioCache } from "@/lib/cache/portfolio-cache"
 
 const normalizeValue = (value?: string | null) => {
   if (value === null || value === undefined) return ""
@@ -171,21 +172,11 @@ export async function POST(req: NextRequest) {
       where: { githubId: userId!.toString() }
     })
     
-    // Determine email: prefer existing DB email (from auth), fallback to userData, then placeholder
-    let userEmail: string
-    if (existingUser?.email && !existingUser.email.includes('@placeholder.com')) {
-      // Use existing real email from database (saved during auth)
-      userEmail = existingUser.email
-      devLog("✅ Using existing real email from database:", userEmail)
-    } else if (userData?.email && userData.email.trim()) {
-      // Use email from frontend if available
-      userEmail = userData.email.trim()
-      devLog("📧 Using email from frontend:", userEmail)
-    } else {
-      // Fallback to placeholder
-      userEmail = `github-${userId}@placeholder.com`
-      devLog("⚠️ No real email found, using placeholder:", userEmail)
-    }
+    const userEmail = normalizeUserEmail({
+      userId,
+      existingUserEmail: existingUser?.email,
+      incomingEmail: userData?.email,
+    })
     
     devLog("📧 Final email to use:", userEmail)
     
@@ -781,27 +772,16 @@ export async function POST(req: NextRequest) {
     })
 
     // Invalidate cached portfolio responses so public page reflects updates immediately
-    try {
-      const usernamesToInvalidate = new Set<string>()
-      const addKeysForUsername = (username?: string | null) => {
-        if (!username) return
-        usernamesToInvalidate.add(CacheKeys.portfolio(username))
-        usernamesToInvalidate.add(CacheKeys.portfolio(`public_${username}`))
-      }
-      addKeysForUsername(user.githubUsername)
-      addKeysForUsername(portfolioData?.customUsername)
-      addKeysForUsername((result as any)?.customUsername)
-      for (const key of usernamesToInvalidate) {
-        invalidateCache(key)
-      }
-    } catch (e) {
-      console.warn("Cache invalidation failed", e)
-    }
+    PortfolioCache.invalidate({
+      githubUsername: user.githubUsername,
+      customUsername: (result as any)?.customUsername ?? portfolioData?.customUsername,
+      userId: user.id,
+    })
 
     // Send email on every publish (non-blocking)
-    devLog("📧 Portfolio published! Email:", userEmail, "| isPlaceholder:", userEmail.includes('@placeholder.com'))
+    devLog("📧 Portfolio published! Email:", userEmail, "| isPlaceholder:", isPlaceholderEmail(userEmail))
     
-    if (!userEmail.includes('@placeholder.com')) {
+    if (!isPlaceholderEmail(userEmail)) {
       devLog("🎉 Sending portfolio published email to:", userEmail)
       
       const requestUrl = new URL(req.url)

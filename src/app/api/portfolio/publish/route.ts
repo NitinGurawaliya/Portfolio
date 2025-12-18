@@ -6,6 +6,8 @@ import { sendEmail } from "@/lib/sendEmail"
 import { generatePortfolioPublishedEmail } from "@/lib/templates/welcomeEmail"
 import { cache, CacheKeys, CacheTTL, getCachedData, setCachedData, invalidateCache } from "@/lib/cache"
 import { validateSessionOptional } from "@/lib/session-validator"
+import { normalizeUserEmail, isPlaceholderEmail } from "@/lib/utils/user-utils"
+import { PortfolioCache } from "@/lib/cache/portfolio-cache"
 
 export async function POST(req: NextRequest) {
   try {
@@ -32,18 +34,11 @@ export async function POST(req: NextRequest) {
       where: { githubId: userId.toString() }
     })
     
-    // Determine email: prefer existing DB email (from auth), fallback to userData, then placeholder
-    let userEmail: string
-    if (existingUser?.email && !existingUser.email.includes('@placeholder.com')) {
-      // Use existing real email from database (saved during auth)
-      userEmail = existingUser.email
-    } else if (userData?.email && userData.email.trim()) {
-      // Use email from frontend if available
-      userEmail = userData.email.trim()
-    } else {
-      // Fallback to placeholder
-      userEmail = `github-${userId}@placeholder.com`
-    }
+    const userEmail = normalizeUserEmail({
+      userId: userId.toString(),
+      existingUserEmail: existingUser?.email,
+      incomingEmail: userData?.email,
+    })
     
     // Start a transaction to ensure data consistency
     const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
@@ -165,7 +160,7 @@ export async function POST(req: NextRequest) {
     })
 
     // Send email on every publish (non-blocking)
-    if (!result.user.email.includes('@placeholder.com')) {
+    if (!isPlaceholderEmail(result.user.email)) {
       
       const requestUrl = new URL(req.url)
       const baseUrl = `${requestUrl.protocol}//${requestUrl.host}`
@@ -194,11 +189,11 @@ export async function POST(req: NextRequest) {
         })
     }
 
-    // Invalidate cache for this portfolio
-    const portfolioUsername = result.portfolio.customUsername || result.user.githubUsername
-    if (portfolioUsername) {
-      invalidateCache(portfolioUsername)
-    }
+    PortfolioCache.invalidate({
+      githubUsername: result.user.githubUsername,
+      customUsername: result.portfolio.customUsername,
+      userId: result.user.id,
+    })
 
     return NextResponse.json({
       success: true,

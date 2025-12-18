@@ -5,54 +5,20 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { cookies } from 'next/headers';
 import { generateDNSRecords } from '@/lib/dns-config';
+import { validateSession } from '@/lib/session-validator';
 
 export async function GET(req: NextRequest) {
   try {
-    // Get user session
-    const cookieStore = await cookies();
-    const sessionCookie = cookieStore.get('github-session');
-    
-    if (!sessionCookie) {
+    const sessionValidation = await validateSession(req);
+    if (!sessionValidation.valid || !sessionValidation.user) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
+        { error: sessionValidation.error || 'Unauthorized' },
         { status: 401 }
       );
     }
 
-    let session;
-    try {
-      session = JSON.parse(sessionCookie.value);
-    } catch {
-      return NextResponse.json(
-        { error: 'Invalid session' },
-        { status: 401 }
-      );
-    }
-
-    const githubId = session?.user?.id;
-    if (!githubId) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
-    // Find the actual database user ID by GitHub ID
-    const dbUser = await prisma.user.findUnique({
-      where: { githubId: githubId },
-      select: { id: true },
-    });
-
-    if (!dbUser) {
-      return NextResponse.json(
-        { error: 'User not found in database' },
-        { status: 404 }
-      );
-    }
-
-    const userIdInt = dbUser.id;
+    const userIdInt = sessionValidation.user.id;
 
     // Get portfolioId from query params
     const { searchParams } = new URL(req.url);

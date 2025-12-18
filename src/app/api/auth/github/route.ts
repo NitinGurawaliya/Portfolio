@@ -4,6 +4,7 @@ import { devLog } from "@/lib/logger"
 import { prisma } from "@/lib/prisma"
 import { sendEmail } from "@/lib/sendEmail"
 import { generateWelcomeEmail } from "@/lib/templates/welcomeEmail"
+import { isPlaceholderEmail, normalizeUserEmail } from "@/lib/utils/user-utils"
 
 const sanitizeUsername = (value?: string | null) => {
   if (!value) return null
@@ -99,8 +100,8 @@ export async function GET(req: NextRequest) {
       devLog("Saving user to database:", userData.login)
       
       // Try to get user's email from GitHub (including private emails)
-      let userEmail = userData.email && userData.email.trim() 
-        ? userData.email.trim() 
+      let userEmail: string | null = userData.email && userData.email.trim()
+        ? userData.email.trim()
         : null
       
       // If no public email, try to fetch from emails endpoint
@@ -127,15 +128,16 @@ export async function GET(req: NextRequest) {
         }
       }
       
-      // Fallback to placeholder if still no email
-      if (!userEmail) {
-        userEmail = `github-${userData.id}@placeholder.com`
-        devLog("⚠️ No email found, using placeholder:", userEmail)
-      }
-      
       // Check if user already exists
       const existingUser = await prisma.user.findUnique({
         where: { githubId: userData.id.toString() }
+      })
+
+      // Normalize email consistently across the app
+      userEmail = normalizeUserEmail({
+        userId: userData.id.toString(),
+        existingUserEmail: existingUser?.email,
+        incomingEmail: userEmail,
       })
       
       isNewUser = !existingUser
@@ -236,10 +238,10 @@ export async function GET(req: NextRequest) {
         }
       
       // Debug logs
-      devLog("📧 Email check - isNewUser:", isNewUser, "| userEmail:", userEmail, "| isPlaceholder:", userEmail.includes('@placeholder.com'))
+      devLog("📧 Email check - isNewUser:", isNewUser, "| userEmail:", userEmail, "| isPlaceholder:", isPlaceholderEmail(userEmail))
       
       // Send welcome email for new users (non-blocking, production-ready)
-      if (isNewUser && !userEmail.includes('@placeholder.com')) {
+      if (isNewUser && !isPlaceholderEmail(userEmail)) {
         devLog("🎉 New user detected! Sending welcome email to:", userEmail)
         
         // Get current base URL for portfolio link

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import type { Prisma } from "@prisma/client"
+import { validateSession } from "@/lib/session-validator"
+import { normalizeUserEmail } from "@/lib/utils/user-utils"
 
 // Platform URL generators
 const generatePlatformUrl = (platform: string, username: string): string => {
@@ -19,15 +21,35 @@ const generatePlatformUrl = (platform: string, username: string): string => {
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json()
-    const { socials, userId, userData } = body
-
-    if (!userId) {
+    const sessionValidation = await validateSession(req)
+    if (!sessionValidation.valid || !sessionValidation.userId) {
       return NextResponse.json(
-        { error: "User ID is required" },
-        { status: 400 }
+        { error: sessionValidation.error || "Unauthorized" },
+        { status: 401 }
       )
     }
+
+    const body = await req.json()
+    const { socials, userId: requestedUserId, userData } = body
+
+    if (requestedUserId && requestedUserId.toString() !== sessionValidation.userId) {
+      return NextResponse.json(
+        { error: "Unauthorized: You can only modify your own portfolio" },
+        { status: 403 }
+      )
+    }
+
+    const userId = sessionValidation.userId
+    const existingUser = await prisma.user.findUnique({
+      where: { githubId: userId.toString() },
+      select: { email: true },
+    })
+
+    const userEmail = normalizeUserEmail({
+      userId: userId.toString(),
+      existingUserEmail: existingUser?.email,
+      incomingEmail: userData?.email,
+    })
 
     const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // Ensure user exists
@@ -35,7 +57,7 @@ export async function POST(req: NextRequest) {
         where: { githubId: userId.toString() },
         update: {
           name: userData?.name || "",
-          email: userData?.email || "",
+          email: userEmail,
           githubUsername: userData?.githubUsername || "",
           avatarUrl: userData?.avatarUrl || "",
           bio: userData?.bio || "",
@@ -50,7 +72,7 @@ export async function POST(req: NextRequest) {
         create: {
           githubId: userId.toString(),
           name: userData?.name || "",
-          email: userData?.email || "",
+          email: userEmail,
           githubUsername: userData?.githubUsername || "",
           avatarUrl: userData?.avatarUrl || "",
           bio: userData?.bio || "",
@@ -114,6 +136,14 @@ export async function POST(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   try {
+    const sessionValidation = await validateSession(req)
+    if (!sessionValidation.valid || !sessionValidation.userId) {
+      return NextResponse.json(
+        { error: sessionValidation.error || "Unauthorized" },
+        { status: 401 }
+      )
+    }
+
     const { searchParams } = new URL(req.url)
     const userId = searchParams.get("userId")
 
@@ -121,6 +151,13 @@ export async function GET(req: NextRequest) {
       return NextResponse.json(
         { error: "User ID is required" },
         { status: 400 }
+      )
+    }
+
+    if (userId !== sessionValidation.userId) {
+      return NextResponse.json(
+        { error: "Unauthorized: You can only view your own socials" },
+        { status: 403 }
       )
     }
 
