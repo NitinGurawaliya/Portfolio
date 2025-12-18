@@ -120,11 +120,9 @@ export async function GET(request: NextRequest) {
       : null
 
     // Store OAuth tokens in database
-    // Note: After adding OAuthToken model, run: npx prisma generate
-    await (prisma as any).oAuthToken.upsert({
-      where: { userId: sessionValidation.user.id },
+    await prisma.oAuthToken.upsert({
+      where: { userId_platform: { userId: sessionValidation.user.id, platform: 'producthunt' } },
       update: {
-        platform: 'producthunt',
         accessToken: access_token,
         refreshToken: refresh_token || null,
         expiresAt: expiresAt,
