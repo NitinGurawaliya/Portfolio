@@ -27,17 +27,35 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Update portfolio with ProductHunt username
-    const portfolio = await prisma.portfolio.update({
+    const normalizedUsername =
+      typeof productHuntUsername === 'string' && productHuntUsername.trim() !== ''
+        ? productHuntUsername.trim()
+        : null
+
+    const portfolio = await prisma.portfolio.upsert({
       where: { userId: user.id },
-      data: {
-        productHuntUsername: productHuntUsername || null,
+      update: {
+        productHuntUsername: normalizedUsername,
         updatedAt: new Date()
+      },
+      create: {
+        userId: user.id,
+        displayName: user.name || '',
+        productHuntUsername: normalizedUsername,
+        isPublished: false
       },
       select: {
         id: true,
         productHuntUsername: true
       }
     })
+
+    // If user clears username, treat as disconnect and remove stored token as well
+    if (!normalizedUsername) {
+      await prisma.oAuthToken.deleteMany({
+        where: { userId: user.id, platform: 'producthunt' }
+      })
+    }
 
     return NextResponse.json({
       success: true,

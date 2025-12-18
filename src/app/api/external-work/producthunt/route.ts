@@ -11,6 +11,251 @@ export interface ProductHuntProject {
   thumbnail: string
 }
 
+type GraphQLError = { message?: string }
+
+const PH_GRAPHQL_URL = 'https://api.producthunt.com/v2/api/graphql'
+
+type UnknownRecord = Record<string, unknown>
+
+const isRecord = (value: unknown): value is UnknownRecord =>
+  typeof value === 'object' && value !== null
+
+const getRecord = (value: unknown): UnknownRecord | null => (isRecord(value) ? value : null)
+
+const getString = (value: unknown): string | null =>
+  typeof value === 'string' ? value : null
+
+const getNumber = (value: unknown): number | null =>
+  typeof value === 'number' && Number.isFinite(value) ? value : null
+
+const makeGraphQLRequest = async ({
+  accessToken,
+  query,
+  variables
+}: {
+  accessToken: string
+  query: string
+  variables: Record<string, unknown>
+}) => {
+  const response = await fetch(PH_GRAPHQL_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${accessToken}`
+    },
+    body: JSON.stringify({ query, variables })
+  })
+
+  // Product Hunt GraphQL often returns 200 with `errors`
+  const payload: unknown = await response.json().catch(() => null)
+  return { ok: response.ok, status: response.status, payload }
+}
+
+const extractProjectsFromUserPayload = (payload: unknown): ProductHuntProject[] => {
+  const root = getRecord(payload)
+  const data = getRecord(root?.data)
+  const user = getRecord(data?.user)
+  if (!user) return []
+
+  // Support multiple possible shapes (schema changes / connection styles)
+  const connection =
+    user.madePosts ??
+    user.posts ??
+    user.createdPosts ??
+    null
+
+  const connectionRecord = getRecord(connection)
+  const edges = connectionRecord?.edges
+  const nodes = connectionRecord?.nodes
+
+  const rawNodes: unknown[] = Array.isArray(edges)
+    ? edges
+        .map((e) => (getRecord(e)?.node as unknown))
+        .filter((n): n is unknown => Boolean(n))
+    : Array.isArray(nodes)
+      ? nodes
+      : []
+
+  return rawNodes
+    .map((node) => {
+      const nodeRecord = getRecord(node)
+      if (!nodeRecord) return null
+
+      const votes =
+        getNumber(nodeRecord.votesCount) ??
+        getNumber(nodeRecord.votes_count) ??
+        getNumber(nodeRecord.votes) ??
+        0
+
+      const url =
+        getString(nodeRecord.url) ??
+        getString(nodeRecord.website) ??
+        ''
+
+      const thumbnailRecord = getRecord(nodeRecord.thumbnail)
+      const thumbnail =
+        getString(thumbnailRecord?.imageUrl) ??
+        getString(thumbnailRecord?.url) ??
+        getString(nodeRecord.thumbnailImageUrl) ??
+        ''
+
+      const id = getString(nodeRecord.id) ?? ''
+      const name = getString(nodeRecord.name) ?? ''
+      const tagline = getString(nodeRecord.tagline) ?? ''
+
+      if (!id || !name) return null
+
+      return {
+        id,
+        name,
+        tagline,
+        votes,
+        url,
+        thumbnail
+      }
+    })
+    .filter((p): p is ProductHuntProject => Boolean(p))
+}
+
+const fetchProductHuntProjects = async ({
+  accessToken,
+  username
+}: {
+  accessToken: string
+  username: string
+}): Promise<{ projects: ProductHuntProject[]; message?: string }> => {
+  // Try a few query variants to tolerate Product Hunt schema evolution.
+  // We intentionally keep the selection set minimal for compatibility.
+  const variants: Array<{ label: string; query: string; variables: Record<string, unknown> }> = [
+    {
+      label: 'madePosts + thumbnail.imageUrl',
+      query: `
+        query($username: String!, $first: Int!) {
+          user(username: $username) {
+            madePosts(first: $first) {
+              edges {
+                node {
+                  id
+                  name
+                  tagline
+                  votesCount
+                  url
+                  thumbnail { imageUrl }
+                }
+              }
+            }
+          }
+        }
+      `,
+      variables: { username, first: 30 }
+    },
+    {
+      label: 'posts + thumbnail.imageUrl',
+      query: `
+        query($username: String!, $first: Int!) {
+          user(username: $username) {
+            posts(first: $first) {
+              edges {
+                node {
+                  id
+                  name
+                  tagline
+                  votesCount
+                  url
+                  thumbnail { imageUrl }
+                }
+              }
+            }
+          }
+        }
+      `,
+      variables: { username, first: 30 }
+    },
+    {
+      label: 'madePosts + thumbnail.url',
+      query: `
+        query($username: String!, $first: Int!) {
+          user(username: $username) {
+            madePosts(first: $first) {
+              edges {
+                node {
+                  id
+                  name
+                  tagline
+                  votesCount
+                  url
+                  thumbnail { url }
+                }
+              }
+            }
+          }
+        }
+      `,
+      variables: { username, first: 30 }
+    },
+    {
+      label: 'posts + thumbnail.url',
+      query: `
+        query($username: String!, $first: Int!) {
+          user(username: $username) {
+            posts(first: $first) {
+              edges {
+                node {
+                  id
+                  name
+                  tagline
+                  votesCount
+                  url
+                  thumbnail { url }
+                }
+              }
+            }
+          }
+        }
+      `,
+      variables: { username, first: 30 }
+    }
+  ]
+
+  let lastErrors: GraphQLError[] | undefined
+
+  for (const variant of variants) {
+    const { ok, status, payload } = await makeGraphQLRequest({
+      accessToken,
+      query: variant.query,
+      variables: variant.variables
+    })
+
+    const payloadRecord = getRecord(payload)
+    const errors = payloadRecord?.errors as unknown
+    const graphQLErrors: GraphQLError[] | undefined = Array.isArray(errors) ? (errors as GraphQLError[]) : undefined
+    const hasFatal = !ok
+
+    if (hasFatal) {
+      console.error('ProductHunt API HTTP error:', status, payload)
+      return { projects: [], message: 'Failed to fetch projects from ProductHunt' }
+    }
+
+    if (Array.isArray(graphQLErrors) && graphQLErrors.length > 0) {
+      lastErrors = graphQLErrors
+      // If it's a schema mismatch ("Cannot query field ..."), try next variant.
+      const joined = graphQLErrors.map((e) => e?.message || '').join(' | ')
+      console.warn(`⚠️ ProductHunt GraphQL errors (${variant.label}):`, joined)
+      continue
+    }
+
+    const projects = extractProjectsFromUserPayload(payload)
+    return { projects }
+  }
+
+  const fallbackMessage =
+    lastErrors && lastErrors.length > 0
+      ? lastErrors.map((e) => e?.message).filter(Boolean).join(' | ')
+      : 'Failed to fetch projects from ProductHunt'
+
+  return { projects: [], message: fallbackMessage }
+}
+
 /**
  * Fetch ProductHunt projects for a user
  * Requires OAuth token (user must connect their ProductHunt account first)
@@ -97,25 +342,14 @@ export async function GET(request: NextRequest) {
     console.log('✅ Found portfolio:', { portfolioId: portfolio.id, productHuntUsername, userId: portfolio.userId })
 
     // Get OAuth token from database
-    // Note: After adding OAuthToken model, run: npx prisma generate
-    let oauthToken = null
-    try {
-      oauthToken = await (prisma as any).oAuthToken.findFirst({
-        where: { 
+    const oauthToken = await prisma.oAuthToken.findUnique({
+      where: {
+        userId_platform: {
           userId: portfolio.userId,
           platform: 'producthunt'
         }
-      })
-    } catch (tokenError) {
-      console.error('Error fetching OAuth token:', tokenError)
-      // If OAuthToken model doesn't exist or Prisma client not regenerated, return empty
-      return NextResponse.json({
-        success: true,
-        projects: [],
-        username,
-        message: 'ProductHunt integration not available. Please contact support.'
-      })
-    }
+      }
+    })
 
     if (!oauthToken) {
       console.log('❌ OAuth token not found:', { userId: portfolio.userId, platform: 'producthunt' })
@@ -141,68 +375,21 @@ export async function GET(request: NextRequest) {
     }
 
     try {
-      // Fetch user's made posts using ProductHunt GraphQL API
-      // Use the ProductHunt username from portfolio (not the portfolio username)
-      const response = await fetch('https://api.producthunt.com/v2/api/graphql', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${oauthToken.accessToken}`
-        },
-        body: JSON.stringify({
-          query: `
-            query($username: String!) {
-              user(username: $username) {
-                madePosts {
-                  edges {
-                    node {
-                      id
-                      name
-                      tagline
-                      votesCount
-                      url
-                      thumbnail {
-                        imageUrl
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          `,
-          variables: { username: productHuntUsername }
-        })
+      // Fetch user's posts via ProductHunt GraphQL API (schema-tolerant)
+      const { projects, message } = await fetchProductHuntProjects({
+        accessToken: oauthToken.accessToken,
+        username: productHuntUsername
       })
-
-      if (!response.ok) {
-        console.error('ProductHunt API error:', response.status, await response.text())
+      
+      if (message) {
         return NextResponse.json({
           success: true,
-          projects: [],
+          projects,
           username,
-          message: 'Failed to fetch projects from ProductHunt'
+          message
         })
       }
 
-      const data = await response.json()
-      
-      console.log('📊 ProductHunt API response:', { 
-        hasData: !!data?.data, 
-        hasUser: !!data?.data?.user,
-        hasMadePosts: !!data?.data?.user?.madePosts,
-        edgesCount: data?.data?.user?.madePosts?.edges?.length || 0
-      })
-      
-      // Transform GraphQL response to our format
-      const projects: ProductHuntProject[] = (data?.data?.user?.madePosts?.edges || []).map((edge: any) => ({
-        id: edge.node.id,
-        name: edge.node.name,
-        tagline: edge.node.tagline || '',
-        votes: edge.node.votesCount || 0,
-        url: edge.node.url || `https://www.producthunt.com/posts/${edge.node.id}`,
-        thumbnail: edge.node.thumbnail?.imageUrl || ''
-      }))
-      
       return NextResponse.json({
         success: true,
         projects,
