@@ -15,6 +15,7 @@ import { DevFolioLoader } from "@/components/ui/DevFolioLoader"
 import { UpvoteNotificationsBell, UpvoteNotification } from "@/components/dashboard/UpvoteNotificationsBell"
 import { ProfileCompletionWidget } from "@/components/dashboard/ProfileCompletionWidget"
 import { SharePortfolioWidget } from "@/components/dashboard/SharePortfolioWidget"
+import { PracticeSection } from "@/components/dashboard/PracticeSection"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import toast, { Toaster } from "react-hot-toast"
@@ -77,6 +78,7 @@ export default function DashboardPage() {
     const params = new URLSearchParams(window.location.search)
     const usernameUpdated = params.get('username_updated')
     const usernameConflict = params.get('username_conflict')
+    const initialSection = params.get("section")
     
     if (usernameUpdated) {
       toast.success(`✅ Custom username claimed: /${usernameUpdated}`, successToastConfig)
@@ -86,6 +88,12 @@ export default function DashboardPage() {
       toast.error(`❌ Username '${usernameConflict}' was already taken. You can set a different one in your profile settings.`, errorToastConfig)
       // Clean up URL
       window.history.replaceState({}, '', '/dashboard')
+    } else if (initialSection) {
+      // Allow deep-linking back to a specific dashboard section (e.g. from quizzes)
+      setActiveSection(initialSection)
+      params.delete("section")
+      const next = params.toString()
+      window.history.replaceState({}, "", `/dashboard${next ? `?${next}` : ""}`)
     }
   }, [])
 
@@ -739,6 +747,8 @@ export default function DashboardPage() {
           )
         case "shiplog":
           return <ShiplogSection />
+        case "practice":
+          return <PracticeSection />
         case "repos": {
           const allRepositories = [
             ...portfolio.importedProjects,
