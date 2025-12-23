@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
+import { resolvePortfolioRepositoryId } from "@/lib/analytics/project-id"
 
 export async function POST(req: NextRequest) {
   try {
@@ -11,6 +12,11 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       )
     }
+
+    const portfolioIdNum = Number.parseInt(String(portfolioId), 10)
+    if (!Number.isFinite(portfolioIdNum)) {
+      return NextResponse.json({ error: "Invalid portfolioId" }, { status: 400 })
+    }
     
     // Get client info
     const ipAddress = req.headers.get("x-forwarded-for") || 
@@ -19,73 +25,28 @@ export async function POST(req: NextRequest) {
     const userAgent = req.headers.get("user-agent") || "unknown"
     const referrer = req.headers.get("referer") || "direct"
     
-    console.log(`📊 Analytics: Tracking project click for portfolio ${portfolioId}, project ${projectName}`)
-    console.log(`🔍 DEBUG: Received data:`, { portfolioId, projectId, projectName })
-    console.log(`🔍 DEBUG: Data types:`, { 
-      portfolioIdType: typeof portfolioId, 
-      projectIdType: typeof projectId, 
-      projectNameType: typeof projectName 
+    const resolved = await resolvePortfolioRepositoryId({
+      portfolioId: portfolioIdNum,
+      projectId,
     })
-    
-    // Try to find portfolio repository - projectId should be PortfolioRepository ID
-    let portfolioRepo = await prisma.portfolioRepository.findFirst({
-      where: {
-        id: parseInt(projectId),
-        portfolioId: parseInt(portfolioId),
-        deletedAt: null // Only use non-deleted projects
-      },
-      select: {
-        id: true,
-        customName: true,
-        repository: {
-          select: {
-            name: true
-          }
-        }
-      }
-    })
-    
-    // If not found by direct ID, try by GitHub ID (fallback for old tracking)
-    if (!portfolioRepo) {
-      portfolioRepo = await prisma.portfolioRepository.findFirst({
-        where: {
-          portfolioId: parseInt(portfolioId),
-          repository: {
-            githubId: BigInt(projectId)
-          },
-          deletedAt: null
-        },
-        select: {
-          id: true,
-          customName: true,
-          repository: {
-            select: {
-              name: true
-            }
-          }
-        }
-      })
-      
-      if (portfolioRepo) {
-        console.log(`⚠️ Using fallback: Found portfolio repository ${portfolioRepo.id} for GitHub ID ${projectId}`)
-      }
+
+    if (resolved.kind === "imported") {
+      // Imported project IDs are not persisted yet -> ignore tracking.
+      return NextResponse.json({ success: true })
     }
-    
-    if (!portfolioRepo) {
-      console.log(`❌ No valid portfolio repository found for projectId ${projectId} in portfolio ${portfolioId}`)
+
+    if (resolved.kind !== "ok") {
       return NextResponse.json(
         { error: "Project not found in portfolio or has been removed" },
         { status: 404 }
       )
     }
     
-    console.log(`✅ Using portfolio repository ID ${portfolioRepo.id}`)
-    
     // Create project click record with portfolio repository ID
     await prisma.projectClick.create({
       data: {
-        portfolioId,
-        projectId: portfolioRepo.id, // Use portfolio repository ID
+        portfolioId: portfolioIdNum,
+        projectId: resolved.portfolioRepositoryId, // Use portfolio repository ID
         projectName,
         ipAddress,
         userAgent,
@@ -100,8 +61,8 @@ export async function POST(req: NextRequest) {
     await prisma.dailyProjectViews.upsert({
       where: {
         portfolioId_projectId_date: {
-          portfolioId: parseInt(portfolioId),
-          projectId: BigInt(portfolioRepo.id),
+          portfolioId: portfolioIdNum,
+          projectId: BigInt(resolved.portfolioRepositoryId),
           date: today
         }
       },
@@ -112,15 +73,13 @@ export async function POST(req: NextRequest) {
         updatedAt: new Date()
       },
       create: {
-        portfolioId: parseInt(portfolioId),
-        projectId: BigInt(portfolioRepo.id),
+        portfolioId: portfolioIdNum,
+        projectId: BigInt(resolved.portfolioRepositoryId),
         projectName,
         date: today,
         views: 1
       }
     })
-    
-    console.log(`✅ Analytics: Project click recorded for ${projectName}`)
     
     return NextResponse.json({ success: true })
     
@@ -141,10 +100,13 @@ export async function GET(request: NextRequest) {
     const daysParam = searchParams.get('days')
     const getAllData = daysParam === 'all'
 
-    console.log('🚀 API GET: Starting request', { portfolioId, projectId, days: daysParam, getAllData })
-
     if (!portfolioId) {
       return NextResponse.json({ error: 'Portfolio ID is required' }, { status: 400 })
+    }
+
+    const portfolioIdNum = Number.parseInt(portfolioId, 10)
+    if (!Number.isFinite(portfolioIdNum)) {
+      return NextResponse.json({ error: "Invalid portfolioId" }, { status: 400 })
     }
 
     let startDate: Date
@@ -164,8 +126,14 @@ export async function GET(request: NextRequest) {
       shouldSummarizeByMonth = false
     }
 
-    let whereClause: any = {
-      portfolioId: parseInt(portfolioId),
+    type DailyViewsWhere = {
+      portfolioId: number
+      date: { gte: Date }
+      projectId?: bigint
+    }
+
+    const whereClause: DailyViewsWhere = {
+      portfolioId: portfolioIdNum,
       date: {
         gte: startDate
       }
@@ -175,66 +143,40 @@ export async function GET(request: NextRequest) {
     let currentProjectName: string | null = null
 
     if (projectId) {
-      try {
-        console.log('🔍 API: Looking for projectId:', projectId, 'type:', typeof projectId)
-        
-        // Check if projectId is too large (likely an imported project with Date.now() ID)
-        const projectIdNum = parseInt(projectId)
-        const MAX_INT4 = 2147483647 // Maximum value for INT4 (32-bit signed integer)
-        
-        if (projectIdNum > MAX_INT4) {
-          console.log('⚠️ API: ProjectId too large for INT4, likely imported project:', projectId)
-          // For imported projects, we need to find by repositoryId or skip analytics
-          // Imported projects should be saved to DB first before tracking analytics
-          return NextResponse.json({
-            success: true,
-            data: [],
-            totalViews: 0,
-            message: 'Imported project - analytics will be available after saving to portfolio'
-          })
-        }
-        
-        // Try to use projectId directly as PortfolioRepository ID first
-        const portfolioRepo = await prisma.portfolioRepository.findFirst({
-          where: {
-            id: projectIdNum,
-            portfolioId: parseInt(portfolioId),
-            deletedAt: null // Only include non-deleted projects
-          },
-          select: { id: true }
-        })
-        
-        console.log('🔍 API: Found portfolio repository with ID:', portfolioRepo?.id)
-        
-        if (portfolioRepo) {
-          whereClause.projectId = BigInt(portfolioRepo.id)
-          console.log('🔍 API: Using projectId in whereClause:', whereClause.projectId.toString())
-        } else {
-          console.log('⚠️ API: No portfolio repository found for projectId:', projectId, 'in portfolio:', portfolioId)
-          // Don't continue with invalid IDs - this prevents orphaned data
-          return NextResponse.json({
-            success: true,
-            data: [],
-            totalViews: 0
-          })
-        }
-      } catch (error) {
-        console.error('❌ Error finding portfolio repository:', error)
-        // Return empty data instead of continuing with invalid IDs
+      const resolved = await resolvePortfolioRepositoryId({
+        portfolioId: portfolioIdNum,
+        projectId,
+      })
+
+      if (resolved.kind === "imported") {
         return NextResponse.json({
           success: true,
           data: [],
-          totalViews: 0
+          totalViews: 0,
+          message: resolved.message,
         })
       }
-    }
 
-    // Serialize whereClause for logging (handle BigInt)
-    const whereClauseLog = { ...whereClause }
-    if (whereClauseLog.projectId) {
-      whereClauseLog.projectId = whereClauseLog.projectId.toString()
+      if (resolved.kind !== "ok") {
+        return NextResponse.json({
+          success: true,
+          data: [],
+          totalViews: 0,
+        })
+      }
+
+      whereClause.projectId = BigInt(resolved.portfolioRepositoryId)
+
+      // Best-effort: fetch current project name for stable chart key
+      const pr = await prisma.portfolioRepository.findUnique({
+        where: { id: resolved.portfolioRepositoryId },
+        select: {
+          customName: true,
+          repository: { select: { name: true } },
+        },
+      })
+      currentProjectName = pr?.customName || pr?.repository?.name || null
     }
-    console.log('📊 API GET: Final whereClause before query:', JSON.stringify(whereClauseLog, null, 2))
 
     // Filter out views for deleted projects
     const dailyViews = await prisma.dailyProjectViews.findMany({
@@ -249,7 +191,7 @@ export async function GET(request: NextRequest) {
     if (portfolioId) {
       const validProjects = await prisma.portfolioRepository.findMany({
         where: {
-          portfolioId: parseInt(portfolioId),
+          portfolioId: portfolioIdNum,
           deletedAt: null
         },
         select: { id: true }
@@ -260,15 +202,6 @@ export async function GET(request: NextRequest) {
     const filteredViews = dailyViews.filter(view => 
       !portfolioId || !projectId || validProjectIds.has(Number(view.projectId))
     )
-
-    console.log('📊 API GET: Found daily views:', filteredViews.length, '(filtered from', dailyViews.length, 'total)')
-    
-    // Convert BigInt to string for logging
-    const dailyViewsLog = dailyViews.map(view => ({
-      ...view,
-      projectId: view.projectId.toString()
-    }))
-    console.log('📊 API GET: Daily views data:', JSON.stringify(dailyViewsLog, null, 2))
 
     // Group by date and project
     const viewsByDate: { [key: string]: { [key: string]: number } } = {}
@@ -291,7 +224,8 @@ export async function GET(request: NextRequest) {
     // If we have currentProjectName, use it; otherwise use the first name from data
     const primaryProjectName = currentProjectName || Array.from(projectNames)[0] || ''
 
-    let chartData: any[] = []
+    type ChartPoint = Record<string, string | number>
+    const chartData: ChartPoint[] = []
 
     if (shouldSummarizeByMonth) {
       // Summarize by month, skip months with no views
@@ -328,7 +262,7 @@ export async function GET(request: NextRequest) {
         const [year, month] = monthKey.split('-')
         const date = new Date(parseInt(year), parseInt(month) - 1, 1)
         
-        const monthData: any = {
+        const monthData: ChartPoint = {
           date: monthKey,
           month: date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
           monthShort: date.toLocaleDateString('en-US', { month: 'short' })
@@ -353,7 +287,7 @@ export async function GET(request: NextRequest) {
         date.setDate(date.getDate() - (days - 1 - i))
         const dateKey = date.toISOString().split('T')[0]
         
-        const dayData: any = {
+        const dayData: ChartPoint = {
           date: dateKey,
           day: date.toLocaleDateString('en-US', { weekday: 'short' })
         }
@@ -370,7 +304,13 @@ export async function GET(request: NextRequest) {
     const totalViews = filteredViews.reduce((sum, view) => sum + view.views, 0)
     
     // Add metadata about which project name to use
-    const responseData: any = {
+    const responseData: {
+      success: true
+      data: ChartPoint[]
+      totalViews: number
+      validProjectsCount: number
+      projectName?: string
+    } = {
       success: true, 
       data: chartData,
       totalViews,
@@ -381,9 +321,6 @@ export async function GET(request: NextRequest) {
       responseData.projectName = primaryProjectName
     }
     
-    console.log('✅ API GET: Returning response with', chartData.length, 'data points,', totalViews, 'total views')
-    console.log('✅ API GET: Primary project name:', primaryProjectName)
-
     return NextResponse.json(responseData)
   } catch (error) {
     console.error('❌ API GET: Error:', error instanceof Error ? error.message : 'Unknown error')

@@ -1,28 +1,45 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
+import { validateSession } from "@/lib/session-validator"
+import { normalizeUserEmail } from "@/lib/utils/user-utils"
 
 export async function POST(req: NextRequest) {
   try {
+    const sessionValidation = await validateSession(req)
+    if (!sessionValidation.valid || !sessionValidation.userId) {
+      return NextResponse.json(
+        { error: sessionValidation.error || "Unauthorized" },
+        { status: 401 }
+      )
+    }
+
     const body = await req.json()
     const { 
       selectedRepos,
       deployedUrls,
       repositories,
-      userId,
+      userId: requestedUserId,
       userData 
     } = body
 
-    if (!userId) {
+    if (requestedUserId && requestedUserId.toString() !== sessionValidation.userId) {
       return NextResponse.json(
-        { error: "User ID is required" },
-        { status: 400 }
+        { error: "Unauthorized: You can only modify your own portfolio" },
+        { status: 403 }
       )
     }
 
-    // Handle empty email to avoid unique constraint issues
-    const userEmail = userData?.email && userData.email.trim() 
-      ? userData.email.trim() 
-      : `github-${userId}@placeholder.com`
+    const userId = sessionValidation.userId
+    const existingUser = await prisma.user.findUnique({
+      where: { githubId: userId.toString() },
+      select: { email: true },
+    })
+
+    const userEmail = normalizeUserEmail({
+      userId: userId.toString(),
+      existingUserEmail: existingUser?.email,
+      incomingEmail: userData?.email,
+    })
 
     // First, ensure user exists
     const user = await prisma.user.upsert({

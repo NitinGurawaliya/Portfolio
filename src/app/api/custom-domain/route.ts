@@ -13,64 +13,26 @@ import {
   generateVerificationToken,
   isOwnDomain,
 } from '@/lib/domain-utils';
-import { cookies } from 'next/headers';
 import { sendEmail } from '@/lib/sendEmail';
 import { domainAddedEmail } from '@/lib/templates/customDomainEmails';
+import { validateSession } from '@/lib/session-validator';
 
 /**
  * Add a new custom domain
  */
 export async function POST(req: NextRequest) {
   try {
-    // Get user session
-    const cookieStore = await cookies();
-    const sessionCookie = cookieStore.get('github-session');
-    
-    if (!sessionCookie) {
+    const sessionValidation = await validateSession(req);
+    if (!sessionValidation.valid || !sessionValidation.user) {
       return NextResponse.json(
-        { error: 'Unauthorized - No session found' },
+        { error: sessionValidation.error || 'Unauthorized - No session found' },
         { status: 401 }
       );
     }
 
-    let session;
-    try {
-      session = JSON.parse(sessionCookie.value);
-    } catch {
-      return NextResponse.json(
-        { error: 'Invalid session' },
-        { status: 401 }
-      );
-    }
-
-    const githubId = session?.user?.id;
-    if (!githubId) {
-      return NextResponse.json(
-        { error: 'Unauthorized - No user ID in session' },
-        { status: 401 }
-      );
-    }
-
-    // Find the actual database user ID by GitHub ID
-      const dbUser = await prisma.user.findUnique({
-        where: { githubId: githubId },
-        select: {
-          id: true,
-          email: true,
-          name: true,
-        },
-      });
-
-    if (!dbUser) {
-      return NextResponse.json(
-        { error: 'User not found in database' },
-        { status: 404 }
-      );
-    }
-
-      const userIdInt = dbUser.id;
-      const userEmail = dbUser.email;
-      const userNameFromDb = dbUser.name;
+    const userIdInt = sessionValidation.user.id;
+    const userEmail = sessionValidation.user.email;
+    const userNameFromDb = sessionValidation.user.name;
 
     // Parse request body
     const body = await req.json();
@@ -253,7 +215,7 @@ export async function POST(req: NextRequest) {
       if (userEmail) {
         try {
           const emailHtml = domainAddedEmail({
-            userName: userNameFromDb || session?.user?.name || userEmail,
+            userName: userNameFromDb || userEmail,
             domain: customDomain.domain,
             verificationToken,
           });
@@ -296,49 +258,15 @@ export async function POST(req: NextRequest) {
  */
 export async function GET(req: NextRequest) {
   try {
-    // Get user session
-    const cookieStore = await cookies();
-    const sessionCookie = cookieStore.get('github-session');
-    
-    if (!sessionCookie) {
+    const sessionValidation = await validateSession(req);
+    if (!sessionValidation.valid || !sessionValidation.user) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
+        { error: sessionValidation.error || 'Unauthorized' },
         { status: 401 }
       );
     }
 
-    let session;
-    try {
-      session = JSON.parse(sessionCookie.value);
-    } catch {
-      return NextResponse.json(
-        { error: 'Invalid session' },
-        { status: 401 }
-      );
-    }
-
-    const githubId = session?.user?.id;
-    if (!githubId) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
-    // Find the actual database user ID by GitHub ID
-    const dbUser = await prisma.user.findUnique({
-      where: { githubId: githubId },
-      select: { id: true },
-    });
-
-    if (!dbUser) {
-      return NextResponse.json(
-        { error: 'User not found in database' },
-        { status: 404 }
-      );
-    }
-
-    const userIdInt = dbUser.id;
+    const userIdInt = sessionValidation.user.id;
 
     // Get all custom domains for user
     const customDomains = await prisma.customDomain.findMany({

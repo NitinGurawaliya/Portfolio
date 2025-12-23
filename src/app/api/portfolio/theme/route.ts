@@ -1,72 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { invalidateCache, CacheKeys } from '@/lib/cache'
-
-// Define themes directly in API route to avoid client component imports
-const THEMES = {
-  dark: {
-    name: "Dark",
-    colors: {
-      background: "#000000",
-      text: "#ffffff",
-      accent: "#f97316",
-      cardBg: "#1f2937",
-      border: "#374151"
-    },
-    layout: "LayoutDark",
-    previewImage: "/themes/dark-preview.png",
-    description: "Professional dark theme with orange accents"
-  },
-  light: {
-    name: "Light",
-    colors: {
-      background: "#ffffff",
-      text: "#1f2937",
-      accent: "#2563eb",
-      cardBg: "#f9fafb",
-      border: "#e5e7eb"
-    },
-    layout: "LayoutLight",
-    previewImage: "/themes/light-preview.png",
-    description: "Clean light theme with blue accents"
-  },
-  modern: {
-    name: "Modern",
-    colors: {
-      background: "#ffffff",
-      text: "#0f172a",
-      accent: "#111111",
-      cardBg: "#f5f5f5",
-      border: "#d1d5db"
-    },
-    layout: "LayoutModern",
-    previewImage: "/themes/modern-preview.png",
-    description: "Minimal monochrome layout with bold sections"
-  },
-  acernity: {
-    name: "Acernity",
-    colors: {
-      background: "#ffffff",
-      text: "#0f172a",
-      accent: "#6366f1",
-      cardBg: "#f9fafb",
-      border: "#e5e7eb"
-    },
-    layout: "PortfolioLayout",
-    previewImage: "/themes/modern-preview.png",
-    description: "Beautiful minimal portfolio with smooth animations and modern design"
-  },
-} as const
-
-type ThemeKey = keyof typeof THEMES
+import { PortfolioCache } from '@/lib/cache/portfolio-cache'
+import { THEMES, isThemeKey, type ThemeKey } from '@/lib/portfolio/themes'
+import { validateSession } from '@/lib/session-validator'
 
 export async function PATCH(request: NextRequest) {
   try {
+    const sessionValidation = await validateSession(request)
+    if (!sessionValidation.valid || !sessionValidation.userId) {
+      return NextResponse.json(
+        { error: sessionValidation.error || "Unauthorized" },
+        { status: 401 }
+      )
+    }
+
     const body = await request.json()
     const { theme, userId } = body
 
     // Validate theme
-    if (!theme || !Object.keys(THEMES).includes(theme)) {
+    if (!isThemeKey(theme)) {
       return NextResponse.json(
         { error: 'Invalid theme. Must be one of: ' + Object.keys(THEMES).join(', ') },
         { status: 400 }
@@ -78,6 +30,14 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json(
         { error: 'User ID is required' },
         { status: 400 }
+      )
+    }
+
+    // Authorization: only allow updating own theme
+    if (userId.toString() !== sessionValidation.userId) {
+      return NextResponse.json(
+        { error: "Unauthorized: You can only modify your own portfolio" },
+        { status: 403 }
       )
     }
 
@@ -112,6 +72,7 @@ export async function PATCH(request: NextRequest) {
       select: {
         id: true,
         customUsername: true,
+        userId: true,
         user: {
           select: {
             githubUsername: true
@@ -120,24 +81,11 @@ export async function PATCH(request: NextRequest) {
       }
     })
 
-    // Invalidate cache for public portfolio pages
-    // This ensures theme changes show up immediately on public pages
-    const usernamesToInvalidate: string[] = []
-    if (updatedPortfolio.customUsername) {
-      usernamesToInvalidate.push(`public_${updatedPortfolio.customUsername}`)
-      usernamesToInvalidate.push(CacheKeys.portfolio(updatedPortfolio.customUsername))
-    }
-    if (updatedPortfolio.user?.githubUsername) {
-      usernamesToInvalidate.push(`public_${updatedPortfolio.user.githubUsername}`)
-      usernamesToInvalidate.push(CacheKeys.portfolio(updatedPortfolio.user.githubUsername))
-    }
-    
-    // Invalidate all related cache keys
-    for (const username of usernamesToInvalidate) {
-      invalidateCache(username)
-    }
-
-    console.log(`✅ Theme updated and cache invalidated for:`, usernamesToInvalidate)
+    PortfolioCache.invalidate({
+      githubUsername: updatedPortfolio.user?.githubUsername,
+      customUsername: updatedPortfolio.customUsername,
+      userId: updatedPortfolio.userId,
+    })
 
     return NextResponse.json({
       success: true,
@@ -155,6 +103,14 @@ export async function PATCH(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
+    const sessionValidation = await validateSession(request)
+    if (!sessionValidation.valid || !sessionValidation.userId) {
+      return NextResponse.json(
+        { error: sessionValidation.error || "Unauthorized" },
+        { status: 401 }
+      )
+    }
+
     const { searchParams } = new URL(request.url)
     const userId = searchParams.get('userId')
 
@@ -162,6 +118,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         { error: 'User ID is required' },
         { status: 400 }
+      )
+    }
+
+    // Authorization: only allow fetching own theme
+    if (userId !== sessionValidation.userId) {
+      return NextResponse.json(
+        { error: "Unauthorized: You can only view your own theme" },
+        { status: 403 }
       )
     }
 

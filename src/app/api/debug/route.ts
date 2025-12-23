@@ -4,6 +4,10 @@ import { devLog } from "@/lib/logger"
 
 export async function GET(req: NextRequest) {
   try {
+    if (process.env.NODE_ENV === "production") {
+      return NextResponse.json({ error: "Not found" }, { status: 404 })
+    }
+
     devLog("🔍 Debug endpoint called...")
     
     // Test database connection
