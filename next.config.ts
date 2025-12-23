@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  compiler: {
+    // Strip console logs/warns in production bundles (keep errors)
+    removeConsole: { exclude: ["error"] },
+  },
   eslint: {
     // Disable ESLint during builds to avoid third-party package issues
     ignoreDuringBuilds: true,

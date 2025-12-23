@@ -20,6 +20,13 @@ const eslintConfig = [
       "next-env.d.ts",
     ],
   },
+  {
+    files: ["src/**/*.{js,jsx,ts,tsx}"],
+    rules: {
+      // Prefer `devLog/devWarn/devError` from `src/lib/logger.ts`
+      "no-console": ["warn", { allow: ["error"] }],
+    },
+  },
 ];
 
 export default eslintConfig;

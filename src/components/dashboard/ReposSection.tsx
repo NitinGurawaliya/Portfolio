@@ -45,6 +45,7 @@ import {
 import { EditProjectModal as EditModal } from "./EditProjectModal"
 import { Skeleton } from "@/components/ui/skeleton"
 import toast from "react-hot-toast"
+import { devLog, devWarn } from "@/lib/logger"
 interface Repository {
   id: number
   portfolioRepositoryId?: number // PortfolioRepository ID for analytics
@@ -404,7 +405,7 @@ export function ReposSection({
 
   // Debug logging
   useEffect(() => {
-    console.log("🔍 ReposSection Debug:", {
+    devLog("🔍 ReposSection Debug:", {
       repositories: repositories.length,
       selectedRepos,
       localRepoOrder,
@@ -418,7 +419,7 @@ export function ReposSection({
     // portfolioId is optional and might not be available during initial load
     if (!portfolioId && selectedRepositories.length > 0) {
       // Only warn if we have repositories but no portfolioId (means we need it for analytics)
-      console.warn('⚠️ ReposSection: portfolioId is undefined but repositories are present. Analytics may not work correctly.')
+      devWarn('⚠️ ReposSection: portfolioId is undefined but repositories are present. Analytics may not work correctly.')
     }
   }, [repositories, selectedRepos, localRepoOrder, selectedRepositories, portfolioId])
 
@@ -477,19 +478,19 @@ export function ReposSection({
       hasInitializedFromProps.current = false
     }
     
-    console.log("ReposSection - Selected repos:", selectedRepos)
-    console.log("ReposSection - Deployed URLs:", deployedUrls)
-    console.log("ReposSection - Selected repositories:", selectedRepositories.map(r => ({ id: r.id, name: r.name })))
+    devLog("ReposSection - Selected repos:", selectedRepos)
+    devLog("ReposSection - Deployed URLs:", deployedUrls)
+    devLog("ReposSection - Selected repositories:", selectedRepositories.map(r => ({ id: r.id, name: r.name })))
   }, [selectedRepos, isInitialized])
 
   useEffect(() => {
     if (initialDeployedUrls && Object.keys(initialDeployedUrls).length > 0) {
-      console.log("Syncing deployed URLs from props:", initialDeployedUrls)
+      devLog("Syncing deployed URLs from props:", initialDeployedUrls)
       setDeployedUrls(prev => {
         // Only update if there are actual differences
         const hasChanges = JSON.stringify(prev) !== JSON.stringify(initialDeployedUrls)
         if (hasChanges) {
-          console.log("Deployed URLs changed, updating...")
+          devLog("Deployed URLs changed, updating...")
           return initialDeployedUrls
         }
         return prev
@@ -688,14 +689,14 @@ export function ReposSection({
       
       // Add to imported projects if callback is provided
       if (onAddImportedProject) {
-        console.log("🔄 Adding imported project:", projectData)
+        devLog("🔄 Adding imported project:", projectData)
         onAddImportedProject(projectData)
       }
       
       // Set deployed URL to the original URL since this is the live project
       const newDeployedUrls = { ...deployedUrls, [projectData.id]: projectUrl.trim() }
       setDeployedUrls(newDeployedUrls)
-      console.log("✅ Imported project setup complete for ID:", projectData.id)
+      devLog("✅ Imported project setup complete for ID:", projectData.id)
       
       // Clear the input
       setProjectUrl("")
@@ -1283,7 +1284,7 @@ export function ReposSection({
             technologies?: string | null;
           }) => {
             // payload.id is the GitHub ID
-            console.log('🔄 EditProjectModal save called:', { 
+            devLog("🔄 EditProjectModal save called:", { 
               id: payload.id, 
               url: payload.url, 
               name: payload.name, 
@@ -1312,12 +1313,12 @@ export function ReposSection({
             // Update logo override in local state
             if (payload.logo) {
               setLogoOverrides(prev => ({ ...prev, [payload.id]: payload.logo! }))
-              console.log('✅ Logo override set in local state for ID:', payload.id)
+              devLog("✅ Logo override set in local state for ID:", payload.id)
             }
             // Also bubble up to parent to track in portfolio state
             if (onUpdateLogo) {
               onUpdateLogo(payload.id, payload.logo || null)
-              console.log('✅ Logo override sent to parent for ID:', payload.id)
+              devLog("✅ Logo override sent to parent for ID:", payload.id)
             }
           }}
         />

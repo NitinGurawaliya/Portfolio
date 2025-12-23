@@ -26,6 +26,7 @@ import { publishPortfolio } from "@/lib/services/portfolio-service"
 import { playNotificationSound } from "@/lib/portfolio-utils"
 import { successToastConfig, errorToastConfig } from "@/lib/utils"
 import { loadFeedCache, saveFeedCache } from "@/lib/feed-cache"
+import { devLog, devWarn } from "@/lib/logger"
 import type { Skill, Social, Repository } from "@/interface"
 
 
@@ -400,19 +401,19 @@ export default function DashboardPage() {
     if (summaryFetchTriggeredRef.current) return
 
     const loadExistingPortfolioData = async (username: string, initialPortfolioData?: any) => {
-      console.log("🚀 loadExistingPortfolioData called with:", { username, initialPortfolioData })
+      devLog("🚀 loadExistingPortfolioData called with:", { username, initialPortfolioData })
       try {
         const response = await fetch(`/api/portfolio/publish?username=${username}`)
-        console.log("📡 Portfolio fetch response:", response.status, response.ok)
+        devLog("📡 Portfolio fetch response:", response.status, response.ok)
         
         if (response.ok) {
           const result = await response.json()
           const portfolio = result.portfolio
-          console.log("🔍 Found existing portfolio:", !!portfolio)
+          devLog("🔍 Found existing portfolio:", !!portfolio)
           
           if (portfolio) {
             // Set portfolio ID and published status
-            console.log('📋 Loading portfolio:', { id: portfolio.id, isPublished: portfolio.isPublished })
+            devLog("📋 Loading portfolio:", { id: portfolio.id, isPublished: portfolio.isPublished })
             setPortfolioId(portfolio.id)
             setIsPortfolioPublished(portfolio.isPublished)
             // Update portfolio data with saved data
@@ -796,7 +797,7 @@ export default function DashboardPage() {
           
           // Only log if portfolioId is missing and we're not in initial load
           if (!portfolioId && portfolio.isInitialLoad === false) {
-            console.warn("⚠️ Dashboard - Portfolio ID not found:", {
+            devWarn("⚠️ Dashboard - Portfolio ID not found:", {
               originalDataId: portfolio.originalData?.id,
               portfolioDataId: portfolio.portfolioData?.id,
               portfolioData: portfolio.portfolioData,
@@ -877,7 +878,7 @@ export default function DashboardPage() {
             />
           )
         case "analytics":
-          console.log("🔍 Analytics Section - Portfolio ID:", portfolio.originalData?.id)
+          devLog("🔍 Analytics Section - Portfolio ID:", portfolio.originalData?.id)
           return (
             <AnalyticsSection
               portfolioId={portfolio.originalData?.id || portfolio.portfolioData?.id || 0}
