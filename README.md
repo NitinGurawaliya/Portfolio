@@ -1,6 +1,6 @@
-![Portfolio](./public/favicon-d.svg)
 
-## DevFolio
+## DevFolio  ![Portfolio](./public/favicon-d.svg)
+
 
 
 **DevFolio** helps developers create a polished portfolio in minutes: import GitHub projects, customize your profile, publish, track analytics, and optionally connect a custom domain.
