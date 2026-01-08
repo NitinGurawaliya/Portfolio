@@ -1,5 +1,5 @@
 
-##    ![Portfolio](./public/favicon-d.svg) DevFolio 
+## DevFolio 
 
 
 
