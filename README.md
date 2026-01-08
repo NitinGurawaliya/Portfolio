@@ -1,14 +1,12 @@
 ## DevFolio
 
-![DevFolio Logo](./public/devfolio-high-resolution-logo.png)
 
 **DevFolio** helps developers create a polished portfolio in minutes: import GitHub projects, customize your profile, publish, track analytics, and optionally connect a custom domain.
 
-![DevFolio Preview](./public/og-image.png)
 
 ---
 
-## Screenshots
+## Features
 
 ![Portfolio](./public/landing/ss_portfolio.png)
 ![Customize layout](./public/landing/customize_layout.png)
