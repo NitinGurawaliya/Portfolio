@@ -1,104 +1,128 @@
 import { Metadata } from "next"
+import { buildPortfolioFaviconUrl } from "@/lib/portfolio/favicon-utils"
 
-// This is a server component that generates dynamic metadata
-export async function generateMetadata({ 
-  params 
-}: { 
-  params: Promise<{ username: string }> 
+const reservedRoutes = ["dashboard", "auth", "api", "_next", "favicon.ico"]
+
+interface MetadataPortfolioSkill {
+  name?: string | null
+}
+
+interface MetadataPortfolioSocial {
+  platform?: string | null
+  username?: string | null
+}
+
+interface MetadataPortfolioRepository {
+  repository?: {
+    language?: string | null
+  } | null
+}
+
+interface MetadataPortfolio {
+  displayName?: string | null
+  jobTitle?: string | null
+  bio?: string | null
+  profilePic?: string | null
+  skills?: MetadataPortfolioSkill[]
+  socials?: MetadataPortfolioSocial[]
+  repositories?: MetadataPortfolioRepository[]
+}
+
+interface PublicPortfolioApiResponse {
+  portfolio?: MetadataPortfolio | null
+}
+
+function getInvalidPortfolioMetadata(): Metadata {
+  return {
+    title: "Invalid Portfolio",
+    description: "This username is reserved and cannot be used for portfolios.",
+    robots: {
+      index: false,
+      follow: false,
+    },
+  }
+}
+
+function getMissingPortfolioMetadata(username: string): Metadata {
+  return {
+    title: `${username} | DevFolio`,
+    description: "Developer portfolio not found. Create your own stunning portfolio with DevFolio.",
+    robots: {
+      index: false,
+      follow: false,
+    },
+  }
+}
+
+function normalizeCommaList(values: Array<string | null | undefined>): string {
+  const uniqueValues = Array.from(new Set(values.filter((value): value is string => Boolean(value && value.trim()))))
+  return uniqueValues.join(", ")
+}
+
+function getTwitterCreatorHandle(socials?: MetadataPortfolioSocial[]): string {
+  const twitterSocial = socials?.find((social) => {
+    const platform = social.platform?.toLowerCase()
+    return platform === "twitter" || platform === "x"
+  })
+
+  if (!twitterSocial?.username) {
+    return "@devfolio"
+  }
+
+  return `@${twitterSocial.username}`
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ username: string }>
 }): Promise<Metadata> {
   const { username } = await params
-  
-  // Reserved routes should not have custom metadata
-  const reservedRoutes = ['dashboard', 'auth', 'api', '_next', 'favicon.ico']
+
   if (reservedRoutes.includes(username)) {
-    return {
-      title: "Invalid Portfolio",
-      description: "This username is reserved and cannot be used for portfolios.",
-      robots: {
-        index: false,
-        follow: false,
-      },
-    }
+    return getInvalidPortfolioMetadata()
   }
 
   try {
-    // Fetch portfolio data to generate metadata
-    // Use public API for metadata generation (no authentication required)
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"
     const response = await fetch(`${baseUrl}/api/portfolio/public?username=${username}`, {
-      cache: 'no-store' // Always fetch fresh data for metadata
+      cache: "no-store",
     })
 
     if (!response.ok) {
-      return {
-        title: `${username} | DevFolio`,
-        description: "Developer portfolio not found. Create your own stunning portfolio with DevFolio.",
-        robots: {
-          index: false,
-          follow: false,
-        },
-      }
+      return getMissingPortfolioMetadata(username)
     }
 
-    const result = await response.json()
+    const result = (await response.json()) as PublicPortfolioApiResponse
     const portfolio = result.portfolio
-
     if (!portfolio) {
-      return {
-        title: `${username} | DevFolio`,
-        description: "Developer portfolio not found. Create your own stunning portfolio with DevFolio.",
-        robots: {
-          index: false,
-          follow: false,
-        },
-      }
+      return getMissingPortfolioMetadata(username)
     }
 
-    // Generate rich metadata from portfolio data
     const displayName = portfolio.displayName || username
     const jobTitle = portfolio.jobTitle || "Developer"
     const bio = portfolio.bio || `Check out ${displayName}'s developer portfolio`
     const profilePic = portfolio.profilePic || `${baseUrl}/default-avatar.png`
-    
-    // Generate dynamic OG image URL - Use absolute URL for better social media support
-    const ogImageUrl = `${baseUrl}/api/og?username=${encodeURIComponent(username)}&displayName=${encodeURIComponent(displayName)}&jobTitle=${encodeURIComponent(jobTitle)}&bio=${encodeURIComponent(bio.slice(0, 100))}&profilePic=${encodeURIComponent(profilePic)}&v=${Math.floor(Date.now() / 3600000)}`
-    
-    // Generate dynamic favicon URL using user's profile picture
-    // Use profilePic URL hash for cache busting - ensures favicon updates when profile picture changes
-    const generateCacheBuster = (url: string): string => {
-      // Simple hash function to generate cache busting parameter from profilePic URL
-      let hash = 0
-      for (let i = 0; i < url.length; i++) {
-        const char = url.charCodeAt(i)
-        hash = ((hash << 5) - hash) + char
-        hash = hash & hash // Convert to 32bit integer
-      }
-      return Math.abs(hash).toString(36).slice(0, 8)
-    }
-    
-    // Generate favicon URL with strong cache busting
-    const faviconHash = profilePic && profilePic.startsWith('http') 
-      ? generateCacheBuster(profilePic)
-      : null
-    
-    const faviconUrl = faviconHash
-      ? `${baseUrl}/api/favicon?url=${encodeURIComponent(profilePic)}&username=${encodeURIComponent(username)}&hash=${faviconHash}&t=${Date.now()}&v=2`
-      : `${baseUrl}/favicon-d.svg`
-    
-    // Extract skills for keywords
-    const skills = portfolio.skills?.map((s: any) => s.name).join(", ") || ""
-    const languages = portfolio.repositories
-      ?.map((r: any) => r.repository.language)
-      .filter((l: string) => l)
-      .filter((l: string, i: number, arr: string[]) => arr.indexOf(l) === i)
-      .join(", ") || ""
 
-    // Create comprehensive description
+    const skills = normalizeCommaList(portfolio.skills?.map((skill) => skill.name || "") || [])
+    const languages = normalizeCommaList(
+      portfolio.repositories?.map((portfolioRepository) => portfolioRepository.repository?.language || "") || []
+    )
+
     const description = `${displayName}${jobTitle ? ` - ${jobTitle}` : ""}. ${bio}${skills ? ` | Skills: ${skills}` : ""}${languages ? ` | ${languages}` : ""}`
+
+    const ogImageUrl = `${baseUrl}/api/og?username=${encodeURIComponent(username)}&displayName=${encodeURIComponent(displayName)}&jobTitle=${encodeURIComponent(jobTitle)}&bio=${encodeURIComponent(bio.slice(0, 100))}&profilePic=${encodeURIComponent(profilePic)}&v=${Math.floor(Date.now() / 3600000)}`
+
+    const faviconUrl = buildPortfolioFaviconUrl({
+      baseUrl,
+      username,
+      profilePic,
+      includeTimestamp: true,
+    })
 
     return {
       title: displayName,
-      description: description.slice(0, 160), // Limit to 160 chars for SEO
+      description: description.slice(0, 160),
       keywords: [
         displayName,
         username,
@@ -123,8 +147,8 @@ export async function generateMetadata({
             width: 1200,
             height: 630,
             alt: `${displayName}'s developer portfolio`,
-            type: 'image/png',
-          }
+            type: "image/png",
+          },
         ],
       },
       twitter: {
@@ -132,9 +156,7 @@ export async function generateMetadata({
         title: `${displayName}${jobTitle ? ` - ${jobTitle}` : ""}`,
         description: bio,
         images: [ogImageUrl],
-        creator: portfolio.socials?.find((s: any) => s.platform === 'twitter' || s.platform === 'x')?.username 
-          ? `@${portfolio.socials.find((s: any) => s.platform === 'twitter' || s.platform === 'x').username}` 
-          : "@devfolio"
+        creator: getTwitterCreatorHandle(portfolio.socials),
       },
       robots: {
         index: true,
@@ -149,12 +171,12 @@ export async function generateMetadata({
       },
       icons: {
         icon: [
-          { url: faviconUrl, type: 'image/png' },
-          { url: faviconUrl, sizes: '32x32', type: 'image/png' },
-          { url: faviconUrl, sizes: '16x16', type: 'image/png' },
+          { url: faviconUrl, type: "image/png" },
+          { url: faviconUrl, sizes: "32x32", type: "image/png" },
+          { url: faviconUrl, sizes: "16x16", type: "image/png" },
         ],
         shortcut: faviconUrl,
-        apple: faviconUrl, // Use profile pic for apple touch icon too
+        apple: faviconUrl,
       },
     }
   } catch (error) {

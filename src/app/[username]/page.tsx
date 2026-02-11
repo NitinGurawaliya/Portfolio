@@ -1,9 +1,11 @@
 import { notFound } from "next/navigation"
 import { Suspense } from "react"
-import { StructuredData } from "@/components/StructuredData"
 import { Portfolio } from "@/interface"
 import { getPublicPortfolio } from "@/lib/portfolio/get-public-portfolio"
-import { PublicPortfolioClient } from "./PublicPortfolioClient"
+import { PublicPortfolioClient } from "@/components/portfolio/PublicPortfolioClient"
+import { PortfolioError } from "./components/PortfolioError"
+import { PortfolioLoading } from "./components/PortfolioLoading"
+import { PortfolioSEO } from "./components/PortfolioSEO"
 import { PortfolioLayout } from "./PortfolioLayout"
 
 // Enable static generation with revalidation
@@ -26,28 +28,10 @@ async function PortfolioContent({ username }: { username: string }) {
 
   return (
     <>
-      {/* Structured Data for SEO */}
-      <StructuredData
-        type="Person"
-        data={{
-          name: portfolio.displayName,
-          jobTitle: portfolio.jobTitle,
-          bio: portfolio.bio,
-          image: portfolio.profilePic,
-          url: undefined, // URL will be set on client side
-          sameAs: portfolio.socials?.map((s: { url?: string }) => s.url).filter(Boolean),
-          worksFor: portfolio.user.company ? {
-            name: portfolio.user.company,
-          } : undefined,
-          location: portfolio.user.location,
-          skills: portfolio.skills?.map((s: { name: string }) => s.name),
-        }}
-      />
+      <PortfolioSEO portfolio={portfolio as Portfolio} />
     
-      {/* Dynamic Theme Layout - Client Component */}
       <PortfolioLayout portfolio={portfolio as Portfolio} />
       
-      {/* Client component for share button and analytics */}
       <PublicPortfolioClient portfolio={portfolio as Portfolio} />
     </>
   )
@@ -59,21 +43,16 @@ export default async function PublicPortfolioPage({ params }: PublicPortfolioPag
   // Check for reserved routes
   if (reservedRoutes.includes(username)) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-center max-w-md mx-auto px-4">
-          <h1 className="text-2xl font-bold text-white mb-4">Invalid Portfolio URL</h1>
-          <p className="text-gray-400 mb-6">This username is reserved and cannot be used for portfolios.</p>
-        </div>
-      </div>
+      <PortfolioError
+        title="Invalid Portfolio URL"
+        description="This username is reserved and cannot be used for portfolios."
+        showActions={false}
+      />
     )
   }
 
   return (
-    <Suspense fallback={
-      <div className="fixed top-4 left-4 z-50">
-        <p className="text-sm font-medium text-gray-700">loading...</p>
-      </div>
-    }>
+    <Suspense fallback={<PortfolioLoading />}>
       <div className="scroll-smooth" style={{ scrollBehavior: 'smooth' }}>
         <PortfolioContent username={username} />
       </div>
