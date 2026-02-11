@@ -2,14 +2,13 @@
 
 import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
-import { ArrowRight } from "lucide-react"
-import { Button } from "@/components/ui/button"
 import { devLog } from "@/lib/logger"
 import { HomeSectionSkeleton } from "@/components/dashboard/home/HomeSectionSkeleton"
 import { ProfileBasicsCard } from "@/components/dashboard/home/ProfileBasicsCard"
 import { CvUrlModal } from "@/components/dashboard/home/CvUrlModal"
 import { WorkExperienceSection } from "@/components/dashboard/home/WorkExperienceSection"
 import { CvResumeSection } from "@/components/dashboard/home/CvResumeSection"
+import { HomeNextButton } from "@/components/dashboard/home/HomeNextButton"
 import type { ExperienceItem, HomeFormData, UsernameAvailability } from "@/components/dashboard/home/types"
 
 interface HomeUser {
@@ -55,15 +54,12 @@ export function HomeSection({
     customUsername: "",
   })
   const [hasInitialized, setHasInitialized] = useState(false)
-
   const [isAddExpOpen, setIsAddExpOpen] = useState(false)
   const [experiences, setExperiences] = useState<ExperienceItem[]>(experiencesProp)
   const [editingExperience, setEditingExperience] = useState<ExperienceItem | null>(null)
-
   const [isCvModalOpen, setIsCvModalOpen] = useState(false)
   const [isEditingCv, setIsEditingCv] = useState(false)
   const [tempCvUrl, setTempCvUrl] = useState<string>(cvUrlProp || "")
-
   const bioLimit = 150
   const bioCharacterCount = formData.bio.length
 
@@ -108,7 +104,6 @@ export function HomeSection({
   useEffect(() => {
     if (!hasInitialized || isInitialLoad) return
     if (!portfolioData || Object.keys(portfolioData).length === 0) return
-
     devLog("🔍 Portfolio data updated after initialization, updating formData:", portfolioData)
     setFormData((prev) => ({
       ...prev,
@@ -184,7 +179,6 @@ export function HomeSection({
   if (isLoading || !user) {
     return <HomeSectionSkeleton />
   }
-
   const experienceUserId = String(user?.githubId || user?.githubUsername || "")
 
   return (
@@ -213,19 +207,7 @@ export function HomeSection({
         />
       </motion.div>
 
-      {onNavigateToSection && (
-        <div className="pointer-events-none fixed bottom-6 right-6 z-40">
-          <Button
-            variant="default"
-            size="sm"
-            onClick={() => onNavigateToSection("repos")}
-            className="pointer-events-auto flex items-center gap-2 rounded-full bg-black px-4 py-2 text-xs font-semibold text-white shadow-lg transition hover:bg-black/85 focus-visible:ring-2 focus-visible:ring-orange-400"
-          >
-            Next: Projects
-            <ArrowRight className="h-3.5 w-3.5" />
-          </Button>
-        </div>
-      )}
+      {onNavigateToSection && <HomeNextButton onNavigate={() => onNavigateToSection("repos")} />}
 
       <CvUrlModal
         open={isCvModalOpen}
