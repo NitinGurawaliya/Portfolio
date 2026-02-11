@@ -169,7 +169,7 @@ export function HomeSection({
   }
 
   const handleExperienceAdded = (experience: ExperienceItem) => {
-    const withId: ExperienceItem = { id: experience.id || Date.now(), ...experience }
+    const withId: ExperienceItem = { ...experience, id: experience.id || Date.now() }
     const next = [withId, ...experiences]
     setExperiences(next)
     onExperiencesChange?.(next)
