@@ -79,7 +79,15 @@ interface DashboardSectionHandlers {
 
 interface DashboardSectionRendererProps {
   activeSection: string
-  user: { id?: number; repositories?: unknown[] } | null
+  user: {
+    id?: number
+    name?: string | null
+    githubUsername?: string | null
+    bio?: string | null
+    avatarUrl?: string | null
+    githubId?: string | number | null
+    repositories?: unknown[]
+  } | null
   portfolio: DashboardSectionPortfolio
   handlers: DashboardSectionHandlers
   portfolioId: number | null
