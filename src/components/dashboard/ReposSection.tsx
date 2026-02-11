@@ -46,6 +46,7 @@ import { EditProjectModal as EditModal } from "./EditProjectModal"
 import { Skeleton } from "@/components/ui/skeleton"
 import toast from "react-hot-toast"
 import { devLog, devWarn } from "@/lib/logger"
+import { getLanguageColor } from "@/lib/repos/repos-utils"
 interface Repository {
   id: number
   portfolioRepositoryId?: number // PortfolioRepository ID for analytics
@@ -731,45 +732,6 @@ export function ReposSection({
       [repoId]: url
     }))
     onUpdateGithubUrl?.(repoId, url)
-  }
-
-  const getLanguageColor = (language: string) => {
-    const colors: Record<string, string> = {
-      'JavaScript': 'bg-yellow-400',
-      'TypeScript': 'bg-blue-500',
-      'Python': 'bg-green-500',
-      'Java': 'bg-orange-500',
-      'React': 'bg-cyan-500',
-      'Vue': 'bg-emerald-500',
-      'Angular': 'bg-red-500',
-      'Node.js': 'bg-green-600',
-      'Go': 'bg-cyan-600',
-      'Rust': 'bg-orange-600',
-      'C++': 'bg-blue-600',
-      'C#': 'bg-purple-500',
-      'CSS': 'bg-pink-500',
-      'HTML': 'bg-orange-400',
-      'PHP': 'bg-indigo-500',
-      'Ruby': 'bg-red-600',
-      'Swift': 'bg-orange-500',
-      'Kotlin': 'bg-purple-600',
-    }
-    return colors[language] || 'bg-gray-500'
-  }
-
-  const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes'
-    const k = 1024
-    const sizes = ['Bytes', 'KB', 'MB', 'GB']
-    const i = Math.floor(Math.log(bytes) / Math.log(k))
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
-  }
-
-  const formatMoney = (value?: number | null) => {
-    if (value === null || value === undefined) return null
-    if (value >= 1000000) return `$${(value / 1000000).toFixed(1)}M`
-    if (value >= 1000) return `$${(value / 1000).toFixed(1)}k`
-    return `$${value.toLocaleString()}`
   }
 
   const containerVariants = {
