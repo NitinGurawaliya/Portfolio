@@ -16,6 +16,20 @@ interface UseDashboardNotificationsParams {
   loading: boolean
 }
 
+interface NotificationApiItem {
+  id: string | number
+  projectId: number
+  projectName: string
+  totalUpvotes: number
+  createdAt: string
+  actor?: {
+    id: number
+    name: string | null
+    githubUsername: string | null
+    avatarUrl: string | null
+  } | null
+}
+
 export function useDashboardNotifications({
   userId,
   loading,
@@ -87,7 +101,7 @@ export function useDashboardNotifications({
           return
         }
 
-        const mapped: UpvoteNotification[] = data.notifications.map((item: any) => ({
+        const mapped: UpvoteNotification[] = (data.notifications as NotificationApiItem[]).map((item) => ({
           id: String(item.id),
           projectId: item.projectId,
           projectName: item.projectName,

@@ -22,7 +22,7 @@ export function useDashboardFeedPrefetch({
     if (isLoadingPortfolio || isInitialLoad) return
     if (feedPrefetchStartedRef.current) return
 
-    const cached = loadFeedCache<any[]>("newest")
+    const cached = loadFeedCache<unknown[]>("newest")
     if (cached && Array.isArray(cached.projects)) {
       feedPrefetchStartedRef.current = true
       return

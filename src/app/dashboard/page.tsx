@@ -82,7 +82,7 @@ export default function DashboardPage() {
       portfolio.setPortfolioData(initialData)
       portfolio.loadExistingData(user.githubUsername, initialData)
     }
-  }, [user])
+  }, [user, portfolio])
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -171,10 +171,14 @@ export default function DashboardPage() {
       } else {
         throw new Error(result.error || "Failed to publish portfolio")
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error publishing portfolio:", error)
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to publish portfolio. Please try again."
       toast.error(
-        error.message || "Failed to publish portfolio. Please try again.", 
+        errorMessage,
         errorToastConfig
       )
     } finally {
@@ -195,7 +199,7 @@ export default function DashboardPage() {
 
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [isPublishing, portfolio, user])
+  }, [isPublishing, handlePublishAll])
 
   useDashboardFeedPrefetch({
     loading,

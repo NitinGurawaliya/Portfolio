@@ -6,13 +6,82 @@ import { AnalyticsSection } from "@/components/dashboard/AnalyticsSection"
 import { ShiplogSection } from "@/components/dashboard/ShiplogSection"
 import ThemeSelector from "@/components/dashboard/ThemeSelector"
 import { CustomDomainSection } from "@/components/dashboard/CustomDomainSection"
+import type { ComponentProps, Dispatch, SetStateAction } from "react"
+import type { ThemeKey } from "@/lib/theme-config"
 import { devLog, devWarn } from "@/lib/logger"
+
+type HomeSectionProps = ComponentProps<typeof HomeSection>
+type ReposSectionProps = ComponentProps<typeof ReposSection>
+type SkillsSectionProps = ComponentProps<typeof SkillsSection>
+type SocialsSectionProps = ComponentProps<typeof SocialsSection>
+type AnalyticsSectionProps = ComponentProps<typeof AnalyticsSection>
+type RepositoryList = ReposSectionProps["repositories"]
+type RepositoryItem = RepositoryList[number] & { githubOgImage?: string | null }
+
+interface DashboardSectionPortfolio {
+  portfolioData: HomeSectionProps["portfolioData"] & { id?: number }
+  isLoadingPortfolio: boolean
+  isInitialLoad: boolean
+  experiences: HomeSectionProps["experiences"]
+  setExperiences: NonNullable<HomeSectionProps["onExperiencesChange"]>
+  cvUrl: HomeSectionProps["cvUrl"]
+  setCvUrl: NonNullable<HomeSectionProps["setCvUrl"]>
+  importedProjects: RepositoryList
+  selectedRepos: ReposSectionProps["selectedRepos"]
+  deployedUrls: ReposSectionProps["deployedUrls"]
+  customNames: ReposSectionProps["customNames"]
+  customDescriptions: ReposSectionProps["customDescriptions"]
+  githubUrls: ReposSectionProps["githubUrls"]
+  projectCategories: ReposSectionProps["projectCategories"]
+  projectStatuses: ReposSectionProps["projectStatuses"]
+  projectRevenues: ReposSectionProps["projectRevenues"]
+  projectMrrs: ReposSectionProps["projectMrrs"]
+  projectUsers: ReposSectionProps["projectUsers"]
+  projectTechnologies: ReposSectionProps["projectTechnologies"]
+  repoOrder: ReposSectionProps["repoOrder"]
+  analytics: ReposSectionProps["analytics"] & AnalyticsSectionProps["analyticsData"]
+  logoOverrides: ReposSectionProps["logoOverrides"] & Record<number, string>
+  setLogoOverrides: Dispatch<SetStateAction<Record<number, string>>>
+  skills: SkillsSectionProps["skills"]
+  socials: SocialsSectionProps["socials"]
+  selectedTheme: string
+  backgroundColor: string | null
+  backgroundPattern: string | null
+  setBackgroundColor: (value: string | null) => void
+  setBackgroundPattern: (value: string | null) => void
+  originalData?: { id?: number } | null
+}
+
+interface DashboardSectionHandlers {
+  handleUpdatePortfolioData: HomeSectionProps["onUpdate"]
+  usernameAvailability: HomeSectionProps["usernameAvailability"]
+  handleToggleRepo: ReposSectionProps["onToggleRepo"]
+  handleUpdateDeployedUrl: ReposSectionProps["onUpdateDeployedUrl"]
+  handleUpdateCustomName: ReposSectionProps["onUpdateCustomName"]
+  handleUpdateCustomDescription: ReposSectionProps["onUpdateCustomDescription"]
+  handleUpdateGithubUrl: ReposSectionProps["onUpdateGithubUrl"]
+  handleUpdateProjectCategory: ReposSectionProps["onUpdateProjectCategory"]
+  handleUpdateProjectStatus: ReposSectionProps["onUpdateProjectStatus"]
+  handleUpdateProjectRevenue: ReposSectionProps["onUpdateProjectRevenue"]
+  handleUpdateProjectMrr: ReposSectionProps["onUpdateProjectMrr"]
+  handleUpdateProjectUsers: ReposSectionProps["onUpdateProjectUsers"]
+  handleUpdateProjectTechnologies: ReposSectionProps["onUpdateProjectTechnologies"]
+  handleUpdateRepoOrder: ReposSectionProps["onUpdateRepoOrder"]
+  handleAddImportedProject: ReposSectionProps["onAddImportedProject"]
+  handleAddSkill: SkillsSectionProps["onAddSkill"]
+  handleRemoveSkill: SkillsSectionProps["onRemoveSkill"]
+  handleAddSocial: SocialsSectionProps["onAddSocial"]
+  handleRemoveSocial: SocialsSectionProps["onRemoveSocial"]
+  handleTogglePin: SocialsSectionProps["onTogglePin"]
+  handleUpdateSocial: SocialsSectionProps["onUpdateSocial"]
+  handleThemeChange: (theme: string) => void
+}
 
 interface DashboardSectionRendererProps {
   activeSection: string
-  user: any
-  portfolio: any
-  handlers: any
+  user: { id?: number; repositories?: unknown[] } | null
+  portfolio: DashboardSectionPortfolio
+  handlers: DashboardSectionHandlers
   portfolioId: number | null
   isPortfolioPublished: boolean
   onSectionChange: (section: string) => void
@@ -47,12 +116,13 @@ export function DashboardSectionRenderer({
     case "shiplog":
       return <ShiplogSection />
     case "repos": {
-      const allRepositories = [
+      const repositoriesFromUser = (user?.repositories || []) as RepositoryItem[]
+      const allRepositories: RepositoryItem[] = [
         ...portfolio.importedProjects,
-        ...(user?.repositories || []),
+        ...repositoriesFromUser,
       ]
 
-      const enrichedRepositories = allRepositories.map((repo: any) => {
+      const enrichedRepositories = allRepositories.map((repo) => {
         if (!repo.githubOgImage && !repo.isImported) {
           let githubOgImage: string | null = null
 
@@ -84,15 +154,15 @@ export function DashboardSectionRenderer({
         return repo
       })
 
-      const mergedRepositories = enrichedRepositories.reduce((acc, repo) => {
-        const existingIndex = acc.findIndex((r: any) => r.id === repo.id)
+      const mergedRepositories = enrichedRepositories.reduce<RepositoryList>((acc, repo) => {
+        const existingIndex = acc.findIndex((r) => r.id === repo.id)
         if (existingIndex === -1) {
           acc.push(repo)
         } else if (repo.portfolioRepositoryId && !acc[existingIndex].portfolioRepositoryId) {
           acc[existingIndex] = repo
         }
         return acc
-      }, [] as any[])
+      }, [])
 
       const resolvedPortfolioId = portfolio.originalData?.id ||
         portfolio.portfolioData?.id ||
@@ -190,7 +260,7 @@ export function DashboardSectionRenderer({
     case "theme":
       return (
         <ThemeSelector
-          currentTheme={portfolio.selectedTheme as any}
+          currentTheme={portfolio.selectedTheme as ThemeKey}
           userId={user?.id || 0}
           onThemeChange={handlers.handleThemeChange}
           portfolioId={portfolio.originalData?.id || portfolio.portfolioData.id}
