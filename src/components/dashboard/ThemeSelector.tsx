@@ -10,9 +10,7 @@ import { SELECTABLE_THEME_KEYS } from "@/lib/themes/theme-selector-constants"
 
 export default function ThemeSelector({
   currentTheme,
-  userId: _userId,
   onThemeChange,
-  portfolioId: _portfolioId,
   backgroundColor: backgroundColorProp,
   backgroundPattern: backgroundPatternProp,
   setBackgroundColor: setBackgroundColorProp,

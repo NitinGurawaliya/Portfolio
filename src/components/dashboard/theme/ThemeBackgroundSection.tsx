@@ -91,7 +91,7 @@ export function ThemeBackgroundSection({
             </div>
             <div>
               <h4 className="text-sm font-semibold text-orange-900">Customization</h4>
-              <p className="mt-1 text-sm text-orange-700">Changes will be applied when you click "Publish 🔥"</p>
+              <p className="mt-1 text-sm text-orange-700">Changes will be applied when you click &quot;Publish 🔥&quot;</p>
             </div>
           </div>
         </div>
