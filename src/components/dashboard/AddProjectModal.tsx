@@ -10,7 +10,7 @@ import { Github, Link as LinkIcon, Search, Loader2, DollarSign, TrendingUp, User
 import { cn } from "@/lib/utils"
 import { TechStackSelector } from "@/components/ui/TechStackSelector"
 
-interface RepositoryLike {
+export interface RepositoryLike {
   id: number
   name: string
   fullName?: string

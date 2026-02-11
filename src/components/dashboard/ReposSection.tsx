@@ -11,6 +11,37 @@ import { ReposLoadingSkeleton } from "@/components/dashboard/repos/ReposLoadingS
 import { ReposEmptyState } from "@/components/dashboard/repos/ReposEmptyState"
 import { useReposManagement } from "@/hooks/useReposManagement"
 import type { ReposSectionProps } from "@/components/dashboard/repos/types"
+import type { RepositoryLike } from "./AddProjectModal"
+
+const normalizeImportedProject = (project: RepositoryLike): ReposSectionProps["repositories"][number] => {
+  const now = new Date().toISOString()
+
+  return {
+    id: project.id,
+    portfolioRepositoryId: undefined,
+    name: project.name || "Untitled Project",
+    fullName: project.fullName || project.name || "imported/project",
+    description: project.description || "",
+    htmlUrl: project.htmlUrl || "",
+    homepage: project.homepage || "",
+    language: project.language || "",
+    languages: project.languages || [],
+    stargazersCount: project.stargazersCount ?? 0,
+    forksCount: project.forksCount ?? 0,
+    isPrivate: project.isPrivate ?? false,
+    isFork: project.isFork ?? false,
+    size: project.size ?? 0,
+    createdAt: project.createdAt || now,
+    updatedAt: project.updatedAt || now,
+    pushedAt: project.pushedAt || project.updatedAt || now,
+    isImported: project.isImported ?? true,
+    favicon: project.favicon ?? undefined,
+    logo: project.logo ?? undefined,
+    siteName: undefined,
+    keywords: undefined,
+    author: undefined,
+  }
+}
 
 export function ReposSection({
   repositories,
@@ -175,7 +206,10 @@ export function ReposSection({
         onOpenChange={setIsAddProjectOpen}
         repositories={repositories}
         selectedRepos={selectedRepos}
-        onAddImportedProject={(p) => onAddImportedProject?.(p)}
+        onAddImportedProject={(project) => {
+          if (!onAddImportedProject) return
+          onAddImportedProject(normalizeImportedProject(project))
+        }}
         onCaptureInsights={handleCapturedInsights}
       />
 
