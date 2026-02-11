@@ -89,7 +89,15 @@ export function WorkExperienceSection({
               if (!open) setEditingExperience(null)
             }}
             userId={userId}
-            initial={editingExperience}
+            initial={{
+              id: editingExperience.id,
+              companyName: editingExperience.companyName || "",
+              companyUrl: (editingExperience.companyUrl as string | null | undefined) || null,
+              faviconUrl: editingExperience.faviconUrl || null,
+              role: editingExperience.role || null,
+              duration: editingExperience.duration || null,
+              description: editingExperience.description || null,
+            }}
             onSave={onExperienceSaved}
           />
         )}
