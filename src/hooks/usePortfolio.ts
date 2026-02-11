@@ -34,8 +34,8 @@ const loadAnalyticsData = async (portfolioId: number) => {
       detailed: detailedData
     }
     
-    console.log("📊 Analytics data loaded:", combinedData)
-    console.log("📊 Detailed analytics:", detailedData)
+    devLog("📊 Analytics data loaded:", combinedData)
+    devLog("📊 Detailed analytics:", detailedData)
     return combinedData
   } catch (error) {
     console.error("Error loading analytics data:", error)
@@ -142,13 +142,13 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
   useEffect(() => {
     // Skip change detection during initial load or if no original data
     if (isInitialLoad) {
-      console.log("📊 Skipping change detection - initial load")
+      devLog("📊 Skipping change detection - initial load")
       setHasUnsavedChanges(false)
       return
     }
     
     if (!originalData || isLoadingPortfolio) {
-      console.log("📊 Skipping change detection - no original data or still loading")
+      devLog("📊 Skipping change detection - no original data or still loading")
       setHasUnsavedChanges(false)
       return
     }
@@ -167,7 +167,7 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
     }
     
     if (skipIfRecentlyEnabled()) {
-      console.log("📊 Skipping change detection - recently enabled (child components still initializing)")
+      devLog("📊 Skipping change detection - recently enabled (child components still initializing)")
       return
     }
     
@@ -255,7 +255,7 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
     
     const hasChanges = JSON.stringify(cleanCurrentDataWithCv) !== JSON.stringify(cleanOriginalDataWithCv)
      
-    console.log("📊 Change detection:", { 
+    devLog("📊 Change detection:", { 
       hasChanges, 
       isInitialLoad, 
       isPublishComplete,
@@ -264,7 +264,7 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
      
     // Don't set changes during initial load
     if (isInitialLoad) {
-      console.log("📊 Skipping change detection - isInitialLoad")
+      devLog("📊 Skipping change detection - isInitialLoad")
       setHasUnsavedChanges(false)
       return
     }
@@ -278,7 +278,7 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
       
       // If changes detected and enough time has passed (2 seconds), user made a real change
       if (hasChanges && timeSincePublish > 2000) {
-        console.log("📊 Real changes detected after publish - resetting isPublishComplete flag")
+        devLog("📊 Real changes detected after publish - resetting isPublishComplete flag")
         setIsPublishComplete(false)
         publishCompleteTimestamp.current = null
         setHasUnsavedChanges(true)
@@ -287,16 +287,16 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
       
       // If no changes or changes detected too soon after publish, keep button disabled
       if (!hasChanges) {
-        console.log("📊 Skipping change detection - publish complete with no changes")
+        devLog("📊 Skipping change detection - publish complete with no changes")
       } else {
-        console.log("📊 Ignoring changes detected too soon after publish (likely false positive)")
+        devLog("📊 Ignoring changes detected too soon after publish (likely false positive)")
       }
       setHasUnsavedChanges(false)
       return
     }
     
     // Normal change detection
-    console.log("📊 Setting hasUnsavedChanges to:", hasChanges)
+    devLog("📊 Setting hasUnsavedChanges to:", hasChanges)
     setHasUnsavedChanges(hasChanges)
     }, [portfolioData, selectedRepos, skills, socials, deployedUrls, customNames, customDescriptions, githubUrls, projectCategories, projectStatuses, projectRevenues, projectMrrs, projectUsers, projectTechnologies, importedProjects, selectedTheme, backgroundColor, backgroundPattern, repoOrder, experiences, cvUrl, originalData, isInitialLoad, isPublishComplete])
 
@@ -307,13 +307,13 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
   const loadExistingData = async (username: string, initialData?: any) => {
     // Prevent multiple simultaneous calls
     if (isLoadingRef.current) {
-      console.log("⚠️ loadExistingData already in progress, skipping duplicate call")
+      devLog("⚠️ loadExistingData already in progress, skipping duplicate call")
       return
     }
     
     isLoadingRef.current = true
-    console.log("🚀 loadExistingPortfolioData called with:", { username, initialData })
-    console.log("🔍 Trying to load portfolio with username:", username)
+    devLog("🚀 loadExistingPortfolioData called with:", { username, initialData })
+    devLog("🔍 Trying to load portfolio with username:", username)
     
     setIsLoadingPortfolio(true)
     
@@ -327,7 +327,7 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
       
       // If basic data exists, use it immediately
       if (basicData) {
-        console.log("✅ Basic portfolio data loaded:", basicData.id)
+        devLog("✅ Basic portfolio data loaded:", basicData.id)
         
         // Update portfolio data immediately for instant UI
         setPortfolioData({
@@ -363,7 +363,7 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
       
       // If sections data exists, update sections
       if (sectionsData) {
-        console.log("✅ Sections data loaded")
+        devLog("✅ Sections data loaded")
         
         if (sectionsData.skills) {
           setSkills(sectionsData.skills.map((skill: any) => ({
@@ -419,38 +419,38 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
       }
       
       if (portfolio) {
-        console.log("✅ Portfolio found with username:", username)
-        console.log("🔍 Portfolio details:", {
+        devLog("✅ Portfolio found with username:", username)
+        devLog("🔍 Portfolio details:", {
           id: portfolio.id,
           customUsername: portfolio.customUsername,
           displayName: portfolio.displayName,
           userGithubUsername: portfolio.user?.githubUsername
         })
       } else {
-        console.log("❌ No portfolio found with username:", username)
+        devLog("❌ No portfolio found with username:", username)
         
         // If no portfolio found, try with GitHub username as fallback
         if (user?.githubUsername && username !== user.githubUsername) {
-          console.log("🔍 Trying fallback with GitHub username:", user.githubUsername)
+          devLog("🔍 Trying fallback with GitHub username:", user.githubUsername)
           portfolio = await loadPortfolioData(user.githubUsername)
           
           if (portfolio) {
-            console.log("✅ Portfolio found with GitHub username fallback:", user.githubUsername)
-            console.log("🔍 Portfolio details:", {
+            devLog("✅ Portfolio found with GitHub username fallback:", user.githubUsername)
+            devLog("🔍 Portfolio details:", {
               id: portfolio.id,
               customUsername: portfolio.customUsername,
               displayName: portfolio.displayName,
               userGithubUsername: portfolio.user?.githubUsername
             })
           } else {
-            console.log("❌ No portfolio found with GitHub username fallback either")
+            devLog("❌ No portfolio found with GitHub username fallback either")
           }
         }
       }
       
       if (portfolio) {
-        console.log("🔍 Found existing portfolio:", portfolio)
-        console.log("🔍 Portfolio customUsername:", portfolio.customUsername)
+        devLog("🔍 Found existing portfolio:", portfolio)
+        devLog("🔍 Portfolio customUsername:", portfolio.customUsername)
         
         // Update portfolio data
         setPortfolioData({
@@ -467,7 +467,7 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
           setExperiences((portfolio as any).experiences)
         }
         
-        console.log("🔍 Set portfolio data:", {
+        devLog("🔍 Set portfolio data:", {
           displayName: portfolio.displayName || "",
           jobTitle: portfolio.jobTitle || "",
           bio: portfolio.bio || "",
@@ -587,19 +587,19 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
           experiences: (portfolio as any).experiences || []
         }))
         
-        console.log("💾 Setting original data from existing portfolio")
-        console.log("🔍 Portfolio ID in originalData:", originalDataToSet.id)
-        console.log("🔍 Portfolio object:", portfolio)
-        console.log("🔍 Portfolio ID from API:", portfolio.id)
-        console.log("🔍 Original data before normalize:", { id: portfolio.id })
+        devLog("💾 Setting original data from existing portfolio")
+        devLog("🔍 Portfolio ID in originalData:", originalDataToSet.id)
+        devLog("🔍 Portfolio object:", portfolio)
+        devLog("🔍 Portfolio ID from API:", portfolio.id)
+        devLog("🔍 Original data before normalize:", { id: portfolio.id })
         
         // Load analytics data along with portfolio data
         if (portfolio.id) {
-          console.log("📊 Loading analytics data for portfolio ID:", portfolio.id)
+          devLog("📊 Loading analytics data for portfolio ID:", portfolio.id)
           const analyticsData = await loadAnalyticsData(portfolio.id)
           if (analyticsData) {
             setAnalytics(analyticsData)
-            console.log("✅ Analytics data loaded:", analyticsData)
+            devLog("✅ Analytics data loaded:", analyticsData)
           }
         }
         
@@ -608,7 +608,7 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
         setOriginalData(originalDataToSet)
         setIsLoadingPortfolio(false)
         isLoadingRef.current = false
-        console.log("✅ Initial load completed, enabling change tracking...")
+        devLog("✅ Initial load completed, enabling change tracking...")
         
         // Delay enabling change detection to ensure originalData is set
         // Use multiple frames to ensure all state updates have completed
@@ -620,7 +620,7 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
               if (typeof window !== 'undefined') {
                 window._lastChangeTrackingEnabled = Date.now()
               }
-              console.log("✅ Change tracking enabled")
+              devLog("✅ Change tracking enabled")
             }, 100)
           })
         })
@@ -803,8 +803,8 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
 
   // Reset after publish
   const resetAfterPublish = () => {
-    console.log("🔄 resetAfterPublish called")
-    console.log("🔄 Current portfolio data:", portfolioData)
+    devLog("🔄 resetAfterPublish called")
+    devLog("🔄 Current portfolio data:", portfolioData)
     
     const normalizedImportedProjects = importedProjects.map(project => ({
       ...project,
@@ -835,7 +835,7 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
       repoOrder: [...repoOrder],
     }))
     
-    console.log("🔄 Setting new original data (normalized):", newOriginalData)
+    devLog("🔄 Setting new original data (normalized):", newOriginalData)
     
     // Set publish complete flag and timestamp to prevent change detection from running
     setIsPublishComplete(true)
@@ -847,7 +847,7 @@ export const usePortfolio = (user: User | null, initialPortfolioData?: Portfolio
     // Update originalData - this will trigger change detection, but it will be skipped due to isPublishComplete flag
     setOriginalData(newOriginalData)
     
-    console.log("🔄 Publish complete - publish button disabled, isPublishComplete set to true")
+    devLog("🔄 Publish complete - publish button disabled, isPublishComplete set to true")
     
     // Note: isPublishComplete will remain true until:
     // 1. User makes a real change (detected after 2 second grace period)

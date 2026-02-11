@@ -27,6 +27,7 @@ import { debounce } from "lodash"
 import { AddExperienceModal } from "./AddExperienceModal"
 import { EditExperienceModal } from "./EditExperienceModal"
 import { Skeleton } from "@/components/ui/skeleton"
+import { devLog } from "@/lib/logger"
 
 interface HomeSectionProps {
   user: any
@@ -159,7 +160,7 @@ export function HomeSection({
   // Skip if still in initial load to prevent triggering change detection
   useEffect(() => {
     if (portfolioData && Object.keys(portfolioData).length > 0 && isInitialized && hasInitialized && !isInitialLoad) {
-      console.log("🔍 Portfolio data updated after initialization, updating formData:", portfolioData)
+      devLog("🔍 Portfolio data updated after initialization, updating formData:", portfolioData)
       setFormData(prev => ({
         ...prev,
         displayName: portfolioData.displayName || prev.displayName,

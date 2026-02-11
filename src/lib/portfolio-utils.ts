@@ -1,10 +1,11 @@
 import { Repository, Skill, Social } from "@/interface"
+import { devLog } from "@/lib/logger"
 
 /**
  * Data को normalize करता है - null/undefined values remove करता है
  */
 export const normalizeData = (data: any) => {
-  console.log("🔍 DEBUG: normalizeData input:", data)
+  devLog("🔍 DEBUG: normalizeData input:", data)
   const result = JSON.parse(JSON.stringify(data, (key, value) => {
     // Remove null/undefined
     if (value === null || value === undefined) return undefined
@@ -19,7 +20,7 @@ export const normalizeData = (data: any) => {
     }
     return value
   }))
-  console.log("🔍 DEBUG: normalizeData output:", result)
+  devLog("🔍 DEBUG: normalizeData output:", result)
   return result
 }
 
@@ -60,7 +61,7 @@ export const playNotificationSound = () => {
       oscillator.stop(audioContext.currentTime + index * 0.05 + 0.8)
     })
   } catch (error) {
-    console.log("Could not play notification sound:", error)
+    devLog("Could not play notification sound:", error)
   }
 }
 

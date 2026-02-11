@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { Line, LineChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend } from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { devLog } from "@/lib/logger"
 // Remove the import since we'll use the existing API directly
 
 interface ProjectViewsChartProps {
@@ -43,12 +44,12 @@ export function ProjectViewsChart({
 
         const result = await response.json()
         
-        console.log('📊 ProjectViewsChart API Response:', result)
+        devLog("📊 ProjectViewsChart API Response:", result)
         
         if (result.success) {
           setChartData(result.data)
           setTotalViews(result.totalViews)
-          console.log('📊 Chart data set:', result.data)
+          devLog("📊 Chart data set:", result.data)
         }
       } catch (error) {
         console.error('Error fetching project views data:', error)

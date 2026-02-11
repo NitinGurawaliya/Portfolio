@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { DevFolioLoader } from "@/components/ui/DevFolioLoader";
 import { Card, CardContent } from "@/components/ui/card";
+import { devLog } from "@/lib/logger";
 
 function AuthContent() {
   const router = useRouter()
@@ -27,7 +28,7 @@ function AuthContent() {
           }
         }
       } catch (error) {
-        console.log("No active session")
+        devLog("No active session")
       } finally {
         setIsChecking(false)
       }

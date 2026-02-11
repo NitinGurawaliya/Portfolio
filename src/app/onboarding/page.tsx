@@ -16,6 +16,7 @@ import { publishPortfolio } from "@/lib/services/portfolio-service"
 import ThemeSelector from "@/components/dashboard/ThemeSelector"
 import type { ThemeKey } from "@/lib/theme-config"
 import { Repository, Skill, skillsDatabase } from "@/interface"
+import { devWarn } from "@/lib/logger"
 
 const onboardingSteps = [
   {
@@ -94,7 +95,7 @@ function OnboardingContent() {
     
     // Validate length (3-20 characters)
     if (sanitized.length < 3 || sanitized.length > 20) {
-      console.warn("Invalid username length from URL:", rawUsername)
+      devWarn("Invalid username length from URL:", rawUsername)
       return ""
     }
     

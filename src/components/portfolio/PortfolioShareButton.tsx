@@ -8,6 +8,7 @@ import { FaFacebookF, FaLinkedinIn, FaRedditAlien, FaTwitter, FaWhatsapp } from 
 import { MdEmail } from "react-icons/md"
 import type { IconType } from "react-icons"
 import { cn } from "@/lib/utils"
+import { devWarn } from "@/lib/logger"
 
 type ShareTarget = "native" | "facebook" | "whatsapp" | "twitter" | "linkedin" | "reddit" | "email"
 
@@ -79,7 +80,7 @@ export function PortfolioShareButton({ url, portfolioName, className }: Portfoli
           })
           return
         } catch (error) {
-          console.warn("Native share cancelled", error)
+          devWarn("Native share cancelled", error)
         }
       }
       await handleCopy()
