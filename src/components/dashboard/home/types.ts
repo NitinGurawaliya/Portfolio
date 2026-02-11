@@ -13,7 +13,7 @@ export interface UsernameAvailability {
 }
 
 export interface ExperienceItem {
-  id: number | string
+  id: number
   companyName?: string
   role?: string
   duration?: string
