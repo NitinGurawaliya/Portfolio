@@ -12,8 +12,16 @@ import { WorkExperienceSection } from "@/components/dashboard/home/WorkExperienc
 import { CvResumeSection } from "@/components/dashboard/home/CvResumeSection"
 import type { ExperienceItem, HomeFormData, UsernameAvailability } from "@/components/dashboard/home/types"
 
+interface HomeUser {
+  name?: string | null
+  githubUsername?: string | null
+  bio?: string | null
+  avatarUrl?: string | null
+  githubId?: string | number | null
+}
+
 interface HomeSectionProps {
-  user: any
+  user: HomeUser | null
   portfolioData?: Partial<HomeFormData>
   onUpdate: (data: Partial<HomeFormData>) => void
   usernameAvailability?: UsernameAvailability
