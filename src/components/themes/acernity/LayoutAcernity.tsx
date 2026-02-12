@@ -269,7 +269,7 @@ export default function LayoutAcernity({ theme, portfolio }: LayoutAcernityProps
                   >
                     <Button
                       variant="outline"
-                      onClick={() => window.open(portfolio.user.websiteUrl, "_blank")}
+                      onClick={() => window.open(portfolio.user.websiteUrl || undefined, "_blank")}
                       className="border border-black text-black hover:bg-black hover:text-white px-4 py-2 rounded-none flex items-center gap-2"
                     >
                       <Globe className="w-4 h-4" />

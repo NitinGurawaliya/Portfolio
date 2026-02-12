@@ -492,7 +492,7 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
                       transition={{ duration: 0.6, delay: 0.2 }}
                       viewport={{ once: true }}
                     >
-                      Projects I've Made
+                      Projects I&apos;ve Made
                     </motion.h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
                 {portfolio.repositories
