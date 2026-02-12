@@ -24,13 +24,15 @@ async function PortfolioContent({ username }: { username: string }) {
     notFound()
   }
 
+  const typedPortfolio = portfolio as unknown as Portfolio
+
   return (
     <>
-      <PortfolioSEO portfolio={portfolio as Portfolio} />
+      <PortfolioSEO portfolio={typedPortfolio} />
     
-      <PortfolioLayout portfolio={portfolio as Portfolio} />
+      <PortfolioLayout portfolio={typedPortfolio} />
       
-      <PublicPortfolioClient portfolio={portfolio as Portfolio} />
+      <PublicPortfolioClient portfolio={typedPortfolio} />
     </>
   )
 }
