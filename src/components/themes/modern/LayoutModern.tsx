@@ -5,18 +5,7 @@ import { useEffect, useMemo, useState, type CSSProperties } from "react"
 import { motion } from "framer-motion"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { Download, ExternalLink, Globe } from "lucide-react"
-import {
-  SiGithub,
-  SiX,
-  SiLinkedin,
-  SiInstagram,
-  SiFacebook,
-  SiYoutube,
-  SiGmail,
-  SiStackoverflow,
-  SiReddit,
-} from "react-icons/si"
+import { Download, ExternalLink } from "lucide-react"
 import { SkillIcon, getSkillIcon } from "@/lib/skill-icons"
 import { ProjectIcon } from "@/components/ui/project-icon"
 import { GitHubActivity } from "@/components/GitHubActivity"
@@ -25,8 +14,9 @@ import { PublicShiplogList } from "@/components/shiplog/PublicShiplogList"
 import { getProjectSlugMap } from "@/lib/project-slug"
 import { truncateWords } from "@/lib/text"
 import { Code2, TrendingUp, Users as UsersIcon } from "lucide-react"
-import type { SocialIconComponent, ThemeConfig, ThemePortfolioData } from "@/components/themes/types"
-import { getRepositoryLanguages } from "@/components/themes/utils"
+import type { ThemeConfig, ThemePortfolioData } from "@/components/themes/shared/types"
+import { getRepositoryLanguages } from "@/components/themes/shared/repository"
+import { getSocialIcon } from "@/components/themes/shared/social-icons"
 
 const formatCurrency = (value?: number | null) => {
   if (value === null || value === undefined) return null
@@ -49,22 +39,6 @@ const isGitHubUrl = (url?: string | null) => {
 interface LayoutModernProps {
   theme: ThemeConfig
   portfolio: ThemePortfolioData
-}
-
-const getSocialIcon = (platform: string) => {
-  const icons: Record<string, SocialIconComponent> = {
-    github: SiGithub,
-    email: SiGmail,
-    twitter: SiX,
-    x: SiX,
-    linkedin: SiLinkedin,
-    instagram: SiInstagram,
-    facebook: SiFacebook,
-    youtube: SiYoutube,
-    stackoverflow: SiStackoverflow,
-    reddit: SiReddit,
-  }
-  return icons[platform] || Globe
 }
 
 const getPatternStyle = (pattern: string | null) => {

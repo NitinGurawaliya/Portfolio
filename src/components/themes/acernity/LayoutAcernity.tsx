@@ -5,46 +5,20 @@ import { useEffect, useState, type CSSProperties } from "react";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Download, ExternalLink, MapPin, Building2, Globe } from "lucide-react";
-import {
-  SiGithub,
-  SiX,
-  SiLinkedin,
-  SiInstagram,
-  SiFacebook,
-  SiYoutube,
-  SiGmail,
-  SiStackoverflow,
-  SiReddit,
-} from "react-icons/si";
+import { Download, ExternalLink, MapPin, Building2 } from "lucide-react";
 import { SkillIcon } from "@/lib/skill-icons";
 import { ProjectIcon } from "@/components/ui/project-icon";
 import { getProjectSlugMap } from "@/lib/project-slug";
 import { truncateWords } from "@/lib/text";
 import { Code2, Users as UsersIcon } from "lucide-react";
 import { CustomGitHubActivity } from "@/components/themes/acernity/CustomGitHubActivity";
-import type { SocialIconComponent, ThemeConfig, ThemePortfolioData } from "@/components/themes/types";
+import type { ThemeConfig, ThemePortfolioData } from "@/components/themes/shared/types";
+import { getSocialIcon } from "@/components/themes/shared/social-icons";
 
 interface LayoutAcernityProps {
   theme: ThemeConfig;
   portfolio: ThemePortfolioData;
 }
-
-const getSocialIcon = (platform: string) => {
-  const icons: Record<string, SocialIconComponent> = {
-    github: SiGithub,
-    email: SiGmail,
-    twitter: SiX,
-    x: SiX,
-    linkedin: SiLinkedin,
-    instagram: SiInstagram,
-    facebook: SiFacebook,
-    youtube: SiYoutube,
-    stackoverflow: SiStackoverflow,
-    reddit: SiReddit,
-  };
-  return icons[platform.toLowerCase()] || Globe;
-};
 
 const getPatternStyle = (pattern: string | null) => {
   if (!pattern) return {};

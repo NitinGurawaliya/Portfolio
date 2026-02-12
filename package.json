@@ -9,6 +9,8 @@
     "vercel-build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
+    "quality:size": "node scripts/check-size-standards.js --staged",
+    "quality:size:all": "node scripts/check-size-standards.js --all",
     "postinstall": "prisma generate",
     "resolve-migration": "node scripts/resolve-migration.js",
     "deploy-migrations": "node scripts/deploy-migrations.js",
