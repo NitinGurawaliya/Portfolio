@@ -2,6 +2,7 @@ import { notFound } from "next/navigation"
 import { Suspense } from "react"
 import { Portfolio } from "@/interface"
 import { getPublicPortfolio } from "@/lib/portfolio/get-public-portfolio"
+import { isReservedPortfolioRoute } from "@/lib/portfolio/public-route-utils"
 import { PublicPortfolioClient } from "@/components/portfolio/PublicPortfolioClient"
 import { PortfolioError } from "./components/PortfolioError"
 import { PortfolioLoading } from "./components/PortfolioLoading"
@@ -10,9 +11,6 @@ import { PortfolioLayout } from "./PortfolioLayout"
 
 // Enable static generation with revalidation
 export const revalidate = 300 // Revalidate every 5 minutes
-
-// Reserved routes that should not be treated as portfolio usernames
-const reservedRoutes = ['dashboard', 'auth', 'api', '_next', 'favicon.ico']
 
 interface PublicPortfolioPageProps {
   params: Promise<{ username: string }>
@@ -41,7 +39,7 @@ export default async function PublicPortfolioPage({ params }: PublicPortfolioPag
   const { username } = await params
 
   // Check for reserved routes
-  if (reservedRoutes.includes(username)) {
+  if (isReservedPortfolioRoute(username)) {
     return (
       <PortfolioError
         title="Invalid Portfolio URL"

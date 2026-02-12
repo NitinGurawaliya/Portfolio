@@ -1,7 +1,6 @@
 import { Metadata } from "next"
 import { buildPortfolioFaviconUrl } from "@/lib/portfolio/favicon-utils"
-
-const reservedRoutes = ["dashboard", "auth", "api", "_next", "favicon.ico"]
+import { isReservedPortfolioRoute } from "@/lib/portfolio/public-route-utils"
 
 interface MetadataPortfolioSkill {
   name?: string | null
@@ -79,7 +78,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { username } = await params
 
-  if (reservedRoutes.includes(username)) {
+  if (isReservedPortfolioRoute(username)) {
     return getInvalidPortfolioMetadata()
   }
 
