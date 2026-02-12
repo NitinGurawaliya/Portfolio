@@ -26,6 +26,7 @@ import { getProjectSlugMap } from "@/lib/project-slug"
 import { truncateWords } from "@/lib/text"
 import { Code2, TrendingUp, Users as UsersIcon } from "lucide-react"
 import type { SocialIconComponent, ThemeConfig, ThemePortfolioData } from "@/components/themes/types"
+import { getRepositoryLanguages } from "@/components/themes/utils"
 
 const formatCurrency = (value?: number | null) => {
   if (value === null || value === undefined) return null
@@ -457,17 +458,7 @@ export default function LayoutModern({ theme, portfolio }: LayoutModernProps) {
                                   techStackItems = repo.technologies.split(',').map((t: string) => t.trim()).filter(Boolean)
                                 } else {
                                   // Fallback to GitHub languages
-                                  if (repo.repository.languages) {
-                                    try {
-                                      techStackItems = JSON.parse(repo.repository.languages)
-                                    } catch (e) {
-                                      if (repo.repository.language) {
-                                        techStackItems = [repo.repository.language]
-                                      }
-                                    }
-                                  } else if (repo.repository.language) {
-                                    techStackItems = [repo.repository.language]
-                                  }
+                                techStackItems = getRepositoryLanguages(repo.repository)
                                 }
                                 
                                 // Filter out 'web' and empty items
