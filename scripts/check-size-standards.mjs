@@ -1,7 +1,10 @@
-const fs = require("fs")
-const path = require("path")
-const { execSync } = require("child_process")
+import fs from "fs"
+import path from "path"
+import { execSync } from "child_process"
+import { fileURLToPath } from "url"
 
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 const rootDir = path.resolve(__dirname, "..")
 const exceptionsPath = path.join(rootDir, "config", "component-size-exceptions.json")
 

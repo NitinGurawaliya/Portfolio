@@ -5,7 +5,7 @@ import { useEffect, useState, type CSSProperties } from "react";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Download, ExternalLink, MapPin, Building2 } from "lucide-react";
+import { Download, ExternalLink, MapPin, Building2, Globe } from "lucide-react";
 import { SkillIcon } from "@/lib/skill-icons";
 import { ProjectIcon } from "@/components/ui/project-icon";
 import { getProjectSlugMap } from "@/lib/project-slug";
