@@ -146,7 +146,7 @@ export default function LayoutModern({ theme, portfolio }: LayoutModernProps) {
     }
   }, [bioIndex, portfolio.bio])
 
-  const getBackgroundStyle = (portfolio: PortfolioData): CSSProperties => {
+  const getBackgroundStyle = (portfolio: ThemePortfolioData): CSSProperties => {
     const baseStyle: CSSProperties = {}
     const bgColor = portfolio.backgroundColor || null
 
