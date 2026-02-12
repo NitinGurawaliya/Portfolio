@@ -31,6 +31,23 @@ Check all files under `src`:
 npm run quality:size:all
 ```
 
+Run pre-commit quality checks manually:
+
+```bash
+npm run quality:precommit
+```
+
+Enable project git hooks:
+
+```bash
+npm run hooks:install
+```
+
+After hook installation, every commit runs:
+
+1. size check on staged files
+2. eslint on staged JS/TS files
+
 ## Exceptions
 
 Temporary exceptions for legacy oversized files are listed in:
