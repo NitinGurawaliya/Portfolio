@@ -385,7 +385,7 @@ export default function LayoutDark({ theme, portfolio }: LayoutDarkProps) {
                           <div className="border border-orange-500/30 rounded-lg p-2.5 bg-transparent">
                             <div className="flex items-start gap-2">
                               {exp.faviconUrl ? (
-                                <img src={exp.faviconUrl} alt={exp.companyName} className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                                <img src={exp.faviconUrl} alt={exp.companyName || "Company"} className="h-4 w-4 mt-0.5 flex-shrink-0" />
                               ) : (
                                 <div className="h-4 w-4 mt-0.5 rounded bg-gray-700 flex-shrink-0" />
                               )}

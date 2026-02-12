@@ -441,7 +441,7 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
                               <div className="flex items-start gap-3">
                                 {exp.faviconUrl ? (
                                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-50">
-                                    <img src={exp.faviconUrl} alt={exp.companyName} className="h-4 w-4" />
+                                    <img src={exp.faviconUrl} alt={exp.companyName || "Company"} className="h-4 w-4" />
                                   </div>
                                 ) : (
                                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100 text-xs font-semibold text-gray-500">

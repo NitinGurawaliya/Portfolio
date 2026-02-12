@@ -277,7 +277,7 @@ export default function LayoutModern({ theme, portfolio }: LayoutModernProps) {
                               <div className="flex h-8 xs:h-9 w-8 xs:w-9 flex-shrink-0 items-center justify-center rounded-full border border-neutral-200 bg-white">
                                 <img
                                   src={exp.faviconUrl || "/placeholder.svg"}
-                                  alt={exp.companyName}
+                                  alt={exp.companyName || "Company"}
                                   className="h-3.5 xs:h-4 w-3.5 xs:w-4 object-contain"
                                 />
                               </div>

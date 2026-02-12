@@ -386,7 +386,11 @@ export default function LayoutAcernity({ theme, portfolio }: LayoutAcernityProps
                       <div className="flex-shrink-0">
                         {exp.faviconUrl ? (
                           <div className="w-10 h-10 border border-gray-300 bg-white flex items-center justify-center">
-                            <img src={exp.faviconUrl} alt={exp.companyName} className="w-8 h-8 object-contain" />
+                            <img
+                              src={exp.faviconUrl || "/placeholder.svg"}
+                              alt={exp.companyName || "Company"}
+                              className="w-8 h-8 object-contain"
+                            />
                           </div>
                         ) : (
                           <div className="w-10 h-10 border border-gray-300 bg-gray-100 flex items-center justify-center">
