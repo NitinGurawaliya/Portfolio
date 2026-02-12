@@ -12,6 +12,7 @@ import { GitHubActivity } from "@/components/GitHubActivity"
 import { trackProjectClick } from "@/lib/analytics-utils"
 import { getProjectSlugMap } from "@/lib/project-slug"
 import { truncateWords } from "@/lib/text"
+import type { SocialIconComponent, ThemeConfig, ThemePortfolioData } from "@/components/themes/types"
 
 const formatCurrency = (value?: number | null) => {
   if (value === null || value === undefined) return null
@@ -31,49 +32,13 @@ const isGitHubUrl = (url?: string | null) => {
   }
 }
 
-interface ThemeConfig {
-  name: string
-  colors: {
-    background: string
-    text: string
-    accent: string
-    cardBg?: string
-    border?: string
-  }
-  layout: string
-  previewImage: string
-}
-
-interface PortfolioData {
-  id: number
-  displayName: string
-  jobTitle?: string
-  bio: string
-  profilePic: string
-  customUsername?: string | null
-  skills: any[]
-  socials: any[]
-  repositories: any[]
-  experiences?: any[]
-  backgroundColor?: string | null
-  backgroundPattern?: string | null
-  cvUrl?: string | null
-    shiplogs?: any[]
-  user: {
-    githubUsername: string
-    location: string
-    company: string
-    websiteUrl: string
-  }
-}
-
 interface LayoutDarkProps {
   theme: ThemeConfig
-  portfolio: PortfolioData
+  portfolio: ThemePortfolioData
 }
 
 const getSocialIcon = (platform: string) => {
-  const icons: Record<string, any> = {
+  const icons: Record<string, SocialIconComponent> = {
     github: SiGithub,
     email: SiGmail,
     twitter: SiX,
@@ -409,7 +374,7 @@ export default function LayoutDark({ theme, portfolio }: LayoutDarkProps) {
                   <div className="relative">
                     <div className="absolute left-3 top-0 bottom-0 w-px bg-orange-500/20" />
                     <div className="space-y-3">
-                      {portfolio.experiences.map((exp: any, idx: number) => (
+                      {portfolio.experiences.map((exp, idx: number) => (
                         <motion.div key={idx} className="relative pl-8"
                           initial={{ opacity: 0, y: 10 }}
                           whileInView={{ opacity: 1, y: 0 }}

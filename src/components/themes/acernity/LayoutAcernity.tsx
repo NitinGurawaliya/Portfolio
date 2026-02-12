@@ -23,51 +23,15 @@ import { getProjectSlugMap } from "@/lib/project-slug";
 import { truncateWords } from "@/lib/text";
 import { Code2, Users as UsersIcon } from "lucide-react";
 import { CustomGitHubActivity } from "@/components/themes/acernity/CustomGitHubActivity";
-
-interface ThemeConfig {
-  name: string;
-  colors: {
-    background: string;
-    text: string;
-    accent: string;
-    cardBg?: string;
-    border?: string;
-  };
-  layout: string;
-  previewImage: string;
-  description: string;
-}
-
-interface PortfolioData {
-  id: number;
-  displayName: string;
-  jobTitle?: string;
-  bio: string;
-  profilePic: string;
-  customUsername?: string | null;
-  skills: any[];
-  socials: any[];
-  repositories: any[];
-  experiences?: any[];
-  backgroundColor?: string | null;
-  backgroundPattern?: string | null;
-  cvUrl?: string | null;
-  shiplogs?: any[];
-  user: {
-    githubUsername: string;
-    location: string;
-    company: string;
-    websiteUrl: string;
-  };
-}
+import type { SocialIconComponent, ThemeConfig, ThemePortfolioData } from "@/components/themes/types";
 
 interface LayoutAcernityProps {
   theme: ThemeConfig;
-  portfolio: PortfolioData;
+  portfolio: ThemePortfolioData;
 }
 
 const getSocialIcon = (platform: string) => {
-  const icons: Record<string, any> = {
+  const icons: Record<string, SocialIconComponent> = {
     github: SiGithub,
     email: SiGmail,
     twitter: SiX,
@@ -151,7 +115,7 @@ export default function LayoutAcernity({ theme, portfolio }: LayoutAcernityProps
     }
   }, [bioIndex, portfolio.bio]);
 
-  const visibleRepos = (portfolio.repositories || []).filter((repo: any) => repo.isVisible);
+  const visibleRepos = (portfolio.repositories || []).filter((repo) => repo.isVisible);
   const hasProjects = visibleRepos.length > 0;
   const experiences = portfolio.experiences || [];
   const hasExperience = experiences.length > 0;
@@ -370,7 +334,7 @@ export default function LayoutAcernity({ theme, portfolio }: LayoutAcernityProps
                 Skills
               </h2>
               <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 gap-1.5">
-                {portfolio.skills.map((skill: any, index: number) => (
+                {portfolio.skills.map((skill, index: number) => (
                   <motion.div
                     key={skill.id}
                     initial={{ opacity: 0, scale: 0.8 }}
@@ -402,7 +366,7 @@ export default function LayoutAcernity({ theme, portfolio }: LayoutAcernityProps
                 Work Experience
               </h2>
               <div className="space-y-8">
-                {experiences.map((exp: any, index: number) => {
+                {experiences.map((exp, index: number) => {
                   // Check if currently working - check duration field for "currently" or "present"
                   const durationLower = exp.duration?.toLowerCase() || '';
                   const isCurrentlyWorking = durationLower.includes('currently') || 
@@ -480,7 +444,7 @@ export default function LayoutAcernity({ theme, portfolio }: LayoutAcernityProps
               </h2>
               <p className="text-sm sm:text-base lg:text-base text-gray-600 text-center mb-8">A selection of my recent work</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                {visibleRepos.map((repo: any, index: number) => {
+                {visibleRepos.map((repo, index: number) => {
                   const projectSlug = projectSlugMap[repo.id];
                   const projectHref = projectSlug && portfolioSlug ? `/${portfolioSlug}/${projectSlug}` : undefined;
                   // For acernity layout, prioritize deployedUrl over slug page

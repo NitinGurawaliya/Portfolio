@@ -25,6 +25,7 @@ import { PublicShiplogList } from "@/components/shiplog/PublicShiplogList"
 import { getProjectSlugMap } from "@/lib/project-slug"
 import { truncateWords } from "@/lib/text"
 import { Code2, TrendingUp, Users as UsersIcon } from "lucide-react"
+import type { SocialIconComponent, ThemeConfig, ThemePortfolioData } from "@/components/themes/types"
 
 const formatCurrency = (value?: number | null) => {
   if (value === null || value === undefined) return null
@@ -44,50 +45,13 @@ const isGitHubUrl = (url?: string | null) => {
   }
 }
 
-interface ThemeConfig {
-  name: string
-  colors: {
-    background: string
-    text: string
-    accent: string
-    cardBg?: string
-    border?: string
-  }
-  layout: string
-  previewImage: string
-  description: string
-}
-
-interface PortfolioData {
-  id: number
-  displayName: string
-  jobTitle?: string
-  bio: string
-  profilePic: string
-  customUsername?: string | null
-  skills: any[]
-  socials: any[]
-  repositories: any[]
-  experiences?: any[]
-  backgroundColor?: string | null
-  backgroundPattern?: string | null
-  cvUrl?: string | null
-  shiplogs?: any[]
-  user: {
-    githubUsername: string
-    location: string
-    company: string
-    websiteUrl: string
-  }
-}
-
 interface LayoutModernProps {
   theme: ThemeConfig
-  portfolio: PortfolioData
+  portfolio: ThemePortfolioData
 }
 
 const getSocialIcon = (platform: string) => {
-  const icons: Record<string, any> = {
+  const icons: Record<string, SocialIconComponent> = {
     github: SiGithub,
     email: SiGmail,
     twitter: SiX,
@@ -204,7 +168,7 @@ export default function LayoutModern({ theme, portfolio }: LayoutModernProps) {
     }
   }
 
-  const visibleRepos = (portfolio.repositories || []).filter((repo: any) => repo.isVisible)
+  const visibleRepos = (portfolio.repositories || []).filter((repo) => repo.isVisible)
   const hasProjects = visibleRepos.length > 0
   const experiences = portfolio.experiences || []
   const hasExperience = experiences.length > 0
@@ -260,7 +224,7 @@ export default function LayoutModern({ theme, portfolio }: LayoutModernProps) {
                     <div className="space-y-2 xs:space-y-3">
                       <p className="text-xs uppercase tracking-[0.3em] text-neutral-400">Capabilities</p>
                       <div className="flex flex-wrap gap-1.5 xs:gap-2">
-                        {portfolio.skills.map((skill: any) => (
+                        {portfolio.skills.map((skill) => (
                           <span
                             key={skill.id}
                             className="flex items-center gap-1.5 xs:gap-2 rounded-full border border-neutral-200 bg-white px-2.5 xs:px-3 py-1 xs:py-1.5 text-xs font-medium uppercase tracking-widest text-neutral-700"
@@ -287,7 +251,7 @@ export default function LayoutModern({ theme, portfolio }: LayoutModernProps) {
                   </h2>
                   <div className="relative mt-4 xs:mt-6 pl-4 xs:pl-6 space-y-4 xs:space-y-5">
                     <span className="absolute left-[10px] xs:left-[11px] top-1 bottom-1 w-px bg-neutral-200" />
-                    {experiences.map((exp: any, index: number) => (
+                    {experiences.map((exp, index: number) => (
                       <motion.div
                         key={index}
                         className="relative"
@@ -422,7 +386,7 @@ export default function LayoutModern({ theme, portfolio }: LayoutModernProps) {
                     </p>
                   </div>
                   <div className="grid grid-cols-1 gap-3 xs:gap-4 sm:gap-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4">
-                      {visibleRepos.map((repo: any, index: number) => {
+                      {visibleRepos.map((repo, index: number) => {
                         const projectSlug = projectSlugMap[repo.id]
                         const projectHref =
                           projectSlug && portfolioSlug

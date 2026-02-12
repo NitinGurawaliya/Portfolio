@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma"
 import { CacheKeys, CacheTTL, getCachedData, setCachedData } from "@/lib/cache"
 import { getRepositoryLogo } from "@/lib/github-og-image-utils"
 
-interface PublicRepositoryPayload {
+export interface PublicRepositoryPayload {
   githubId?: string | number | bigint | null
   logo?: string | null
   favicon?: string | null
@@ -13,12 +13,12 @@ interface PublicRepositoryPayload {
   [key: string]: unknown
 }
 
-interface PublicPortfolioRepositoryRecord {
+export interface PublicPortfolioRepositoryRecord {
   repository?: PublicRepositoryPayload | null
   [key: string]: unknown
 }
 
-interface SerializedPublicPortfolio {
+export interface SerializedPublicPortfolio {
   id?: number
   repositories?: PublicPortfolioRepositoryRecord[]
   [key: string]: unknown
