@@ -345,7 +345,7 @@ export default function LayoutModern({ theme, portfolio }: LayoutModernProps) {
                   {portfolio.user?.websiteUrl && (
                     <Button
                       variant="outline"
-                      onClick={() => window.open(portfolio.user.websiteUrl, "_blank")}
+                      onClick={() => window.open(portfolio.user.websiteUrl || undefined, "_blank")}
                       className="rounded-full border-neutral-300 text-neutral-700 px-5 xs:px-6 py-2 xs:py-2.5 h-auto text-xs xs:text-sm hover:bg-neutral-100"
                     >
                       Portfolio Site
