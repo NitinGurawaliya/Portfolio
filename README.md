@@ -1,8 +1,6 @@
 
 ## DevFolio 
 
-
-https://roadmap.sh/projects/basic-dns
 **DevFolio** helps developers create a polished portfolio in minutes: import GitHub projects, customize your profile, publish, track analytics, and optionally connect a custom domain.
 
 
