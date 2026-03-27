@@ -21,12 +21,28 @@ import {
   Pencil,
   Trash2,
   Plus,
-  ArrowRight
+  ArrowRight,
+  Github,
+  Twitter,
+  Linkedin,
+  Instagram,
+  Facebook,
+  Youtube,
+  Mail,
+  Globe
 } from "lucide-react"
 import { debounce } from "lodash"
 import { AddExperienceModal } from "./AddExperienceModal"
 import { EditExperienceModal } from "./EditExperienceModal"
 import { Skeleton } from "@/components/ui/skeleton"
+
+interface Social {
+  id?: number
+  platform: string
+  username: string
+  url: string
+  isPinned: boolean
+}
 
 interface HomeSectionProps {
   user: any
@@ -43,6 +59,11 @@ interface HomeSectionProps {
   onExperiencesChange?: (exps: any[]) => void
   cvUrl?: string | null
   setCvUrl?: (url: string | null) => void
+  socials?: Social[]
+  onAddSocial?: (social: Omit<Social, 'id'>) => void
+  onRemoveSocial?: (socialId: number) => void
+  onTogglePin?: (socialId: number) => void
+  onUpdateSocial?: (socialId: number, updates: Partial<Social>) => void
   onNavigateToSection?: (section: string) => void
 }
 
@@ -57,6 +78,11 @@ export function HomeSection({
   onExperiencesChange,
   cvUrl: cvUrlProp,
   setCvUrl: setCvUrlProp,
+  socials: socialsProp = [],
+  onAddSocial,
+  onRemoveSocial,
+  onTogglePin,
+  onUpdateSocial,
   onNavigateToSection,
 }: HomeSectionProps) {
   // Initialize formData - will be updated by useEffect when user/portfolioData loads
@@ -74,6 +100,8 @@ export function HomeSection({
   const [isCvModalOpen, setIsCvModalOpen] = useState(false)
   const [tempCvUrl, setTempCvUrl] = useState<string>(cvUrlProp || "")
   const [isEditingCv, setIsEditingCv] = useState(false)
+  const [socials, setSocials] = useState<Social[]>(socialsProp)
+  const [platformUsernames, setPlatformUsernames] = useState<Record<string, string>>({})
   const bioLimit = 150
 
   // Sync cvUrl with prop
@@ -132,12 +160,41 @@ export function HomeSection({
 
   useEffect(() => {
     // Initialize formData immediately when user or portfolioData is available
-    // This ensures data shows instantly without skeleton flicker
+    // ALWAYS prioritize portfolioData over user data (portfolio data is from DB, more accurate)
     if (user && !hasInitialized) {
-      const displayName = portfolioData?.displayName || user.name || user.githubUsername || ""
-      const bio = portfolioData?.bio || user.bio || ""
-      const profilePic = portfolioData?.profilePic || user.avatarUrl || ""
+      // CRITICAL: If isLoading is true, wait for portfolio data to load
+      // Don't use GitHub fallback if we're still loading portfolio data
+      if (isLoading) {
+        console.log("⏳ HomeSection: Still loading portfolio data, waiting...")
+        return
+      }
+      
+      // If portfolioData exists (even if empty), use it exclusively (don't fallback to user data)
+      // Only use user data if portfolioData is completely missing AND not loading
+      const hasPortfolioData = portfolioData && (
+        portfolioData.displayName || 
+        portfolioData.bio || 
+        portfolioData.profilePic ||
+        portfolioData.jobTitle ||
+        portfolioData.customUsername
+      )
+      
+      console.log("🔄 HomeSection: Initializing formData", {
+        hasPortfolioData,
+        isLoading,
+        isInitialLoad,
+        portfolioDataKeys: portfolioData ? Object.keys(portfolioData) : [],
+        displayName: portfolioData?.displayName || "empty",
+        customUsername: portfolioData?.customUsername || "empty"
+      })
+      
+      // ALWAYS use portfolioData if it exists, even if fields are empty
+      // This ensures we don't fallback to GitHub data when portfolio data is loaded
+      const displayName = portfolioData?.displayName || ""
+      const bio = portfolioData?.bio || ""
+      const profilePic = portfolioData?.profilePic || ""
       const jobTitle = portfolioData?.jobTitle || ""
+      // CRITICAL: Use customUsername from portfolioData, not GitHub username
       const customUsername = portfolioData?.customUsername || user.githubUsername || ""
 
       // Set formData immediately for instant display
@@ -151,7 +208,32 @@ export function HomeSection({
       setIsInitialized(true)
       setHasInitialized(true)
     }
-  }, [user, portfolioData, hasInitialized])
+  }, [user, portfolioData, hasInitialized, isLoading, isInitialLoad])
+
+  // Update formData when portfolioData loads/updates (prioritize portfolio data)
+  // This is critical - ALWAYS use portfolioData, never fallback to GitHub data
+  useEffect(() => {
+    if (user && hasInitialized && portfolioData) {
+      // ALWAYS update from portfolioData - don't check if it's empty
+      // This ensures portfolio data (even if empty) takes precedence over GitHub data
+      console.log("🔄 HomeSection: Updating formData from portfolioData", {
+        isLoading,
+        displayName: portfolioData?.displayName || "empty",
+        customUsername: portfolioData?.customUsername || "empty",
+        bio: portfolioData?.bio?.substring(0, 30) || "empty"
+      })
+      
+      // Always use portfolioData - never fallback to GitHub data
+      setFormData(prev => ({
+        displayName: portfolioData?.displayName ?? prev.displayName ?? "",
+        jobTitle: portfolioData?.jobTitle ?? prev.jobTitle ?? "",
+        bio: portfolioData?.bio ?? prev.bio ?? "",
+        profilePic: portfolioData?.profilePic ?? prev.profilePic ?? "",
+        // CRITICAL: Use customUsername from portfolioData, not GitHub username
+        customUsername: portfolioData?.customUsername ?? prev.customUsername ?? user.githubUsername ?? "",
+      }))
+    }
+  }, [portfolioData?.displayName, portfolioData?.jobTitle, portfolioData?.bio, portfolioData?.profilePic, portfolioData?.customUsername, user, hasInitialized, isLoading])
 
 
   // Additional effect to handle portfolioData updates after initialization
@@ -214,6 +296,56 @@ export function HomeSection({
   useEffect(() => {
     setExperiences(experiencesProp || [])
   }, [experiencesProp])
+
+  // Sync socials with prop
+  useEffect(() => {
+    setSocials(socialsProp || [])
+  }, [socialsProp])
+
+  // Initialize platform usernames from socials
+  useEffect(() => {
+    const usernames: Record<string, string> = {}
+    socials.forEach(social => {
+      usernames[social.platform] = social.username
+    })
+    setPlatformUsernames(usernames)
+  }, [socials])
+
+  // Platform configurations
+  const platformConfigs = [
+    { id: "github", name: "GitHub", icon: Github, color: "#24292e", urlPrefix: "github.com/", urlPattern: "https://github.com/{username}" },
+    { id: "twitter", name: "Twitter/X", icon: Twitter, color: "#1d9bf0", urlPrefix: "twitter.com/", urlPattern: "https://twitter.com/{username}" },
+    { id: "linkedin", name: "LinkedIn", icon: Linkedin, color: "#0077b5", urlPrefix: "linkedin.com/in/", urlPattern: "https://linkedin.com/in/{username}" },
+    { id: "instagram", name: "Instagram", icon: Instagram, color: "#E4405F", urlPrefix: "instagram.com/", urlPattern: "https://instagram.com/{username}" },
+    { id: "facebook", name: "Facebook", icon: Facebook, color: "#1877f2", urlPrefix: "facebook.com/", urlPattern: "https://facebook.com/{username}" },
+    { id: "youtube", name: "YouTube", icon: Youtube, color: "#ff0000", urlPrefix: "youtube.com/@", urlPattern: "https://youtube.com/@{username}" },
+    { id: "email", name: "Email", icon: Mail, color: "#6B7280", urlPrefix: "", urlPattern: "mailto:{username}" },
+    { id: "other", name: "Website", icon: Globe, color: "#8B5CF6", urlPrefix: "", urlPattern: "{username}" },
+  ]
+
+  const handleSocialUsernameChange = (platform: string, username: string) => {
+    setPlatformUsernames(prev => ({ ...prev, [platform]: username }))
+    
+    const existingSocial = socials.find(s => s.platform === platform)
+    const platformConfig = platformConfigs.find(p => p.id === platform)
+    
+    if (username.trim() && platformConfig && onAddSocial && onUpdateSocial) {
+      const socialData = {
+        platform,
+        username: username.trim(),
+        url: platformConfig.urlPattern.replace('{username}', username.trim()),
+        isPinned: false
+      }
+      
+      if (existingSocial && existingSocial.id) {
+        onUpdateSocial(existingSocial.id, socialData)
+      } else {
+        onAddSocial(socialData)
+      }
+    } else if (!username.trim() && existingSocial && existingSocial.id && onRemoveSocial) {
+      onRemoveSocial(existingSocial.id)
+    }
+  }
 
   const handleExperienceAdded = (exp: any) => {
     const withId = { id: exp.id || Date.now(), ...exp }
@@ -322,70 +454,53 @@ export function HomeSection({
           <Card className="rounded-2xl bg-transparent shadow-none border-none">
             <CardContent className="space-y-3.5 sm:space-y-4.5 p-4 sm:p-5">
               {/* Profile Photo Section */}
-              <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
-                <Avatar className="h-14 w-14 sm:h-16 sm:w-16">
+              <div className="flex items-center gap-3">
+                <Avatar className="h-10 w-10 sm:h-12 sm:w-12">
                   <AvatarImage src={formData.profilePic} alt={formData.displayName || "Profile"} />
-                  <AvatarFallback className="text-lg">{(formData.displayName || "U").charAt(0)}</AvatarFallback>
+                  <AvatarFallback className="text-base">{(formData.displayName || "U").charAt(0)}</AvatarFallback>
                 </Avatar>
-                <div className="flex flex-col gap-2">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => document.getElementById("profilePicInput")?.click()}
-                      className="rounded-lg px-3"
-                    >
-                      Change photo
-                    </Button>
-                    <span className="text-xs text-muted-foreground">
-                      PNG, JPG or GIF (max 2MB)
-                    </span>
-                  </div>
-                  <input
-                    id="profilePicInput"
-                    type="file"
-                    accept="image/jpeg,image/png,image/gif"
-                    className="hidden"
-                    onChange={handlePhotoChange}
-                  />
+                <div className="flex flex-col gap-1">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => document.getElementById("profilePicInput")?.click()}
+                    className="h-7 rounded-lg px-2 text-xs"
+                  >
+                    Change photo
+                  </Button>
+                  <span className="text-[10px] text-muted-foreground">
+                    PNG, JPG or GIF (max 2MB)
+                  </span>
                 </div>
+                <input
+                  id="profilePicInput"
+                  type="file"
+                  accept="image/jpeg,image/png,image/gif"
+                  className="hidden"
+                  onChange={handlePhotoChange}
+                />
               </div>
 
               {/* Two-Column Form */}
               <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2">
                 {/* Display Name */}
-                <div className="space-y-1">
-                  <Label htmlFor="displayName" className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    Display name
+                <div className="space-y-1 max-w-[300px]">
+                  <Label htmlFor="displayName" className="text-sm font-semibold text-black tracking-wide">
+                    Full Name 
                   </Label>
                   <Input
                     id="displayName"
                     value={formData.displayName}
                     onChange={(e) => handleInputChange("displayName", e.target.value)}
-                    className="h-9 rounded-lg border-border/60 bg-muted/30 text-[13px] focus-visible:ring-2 focus-visible:ring-primary"
+                    className="h-9 rounded-lg border border-gray-300 bg-muted/30 text-[13px] focus-visible:ring-0 hover:shadow-md focus:outline-none"
                     placeholder="Your name"
                   />
                 </div>
 
-                {/* Job Title */}
-                <div className="space-y-1">
-                  <Label htmlFor="jobTitle" className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    Job title
-                  </Label>
-                  <Input
-                    id="jobTitle"
-                    value={formData.jobTitle}
-                    onChange={(e) => handleInputChange("jobTitle", e.target.value)}
-                    className="h-9 rounded-lg border-border/60 bg-muted/30 text-[13px] focus-visible:ring-2 focus-visible:ring-primary"
-                    placeholder="e.g. • Full Stack Developer"
-                    maxLength={50}
-                  />
-                </div>
-
-                {/* Portfolio Username */}
-                <div className="space-y-1">
-                  <Label htmlFor="customUsername" className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                {/* Portfolio Username - Above Job Title */}
+                <div className="space-y-1 max-w-[300px]">
+                  <Label htmlFor="customUsername" className="text-sm font-semibold text-black tracking-wide">
                     Portfolio username
                   </Label>
                   <div className="relative">
@@ -393,7 +508,7 @@ export function HomeSection({
                       id="customUsername"
                       value={portfolioData?.customUsername || user?.githubUsername || ""}
                       onChange={(e) => handleUsernameChange(e.target.value)}
-                      className="h-9 rounded-lg border-border/60 bg-muted/30 pl-7 text-[13px] focus-visible:ring-2 focus-visible:ring-primary"
+                      className="h-9 rounded-lg border border-gray-300 bg-muted/30 pl-7 text-[13px] focus-visible:ring-0 hover:shadow-md focus:outline-none"
                       placeholder="Choose a unique username"
                     />
                     <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[13px] text-muted-foreground">
@@ -427,26 +542,41 @@ export function HomeSection({
                   )}
                 </div>
 
-                {/* Bio */}
-                <div className="space-y-1">
-                  <Label htmlFor="bio" className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    Bio <span className="ml-1 text-[11px] normal-case text-muted-foreground">(max {bioLimit} characters)</span>
+                {/* Job Title */}
+                <div className="space-y-1 max-w-[300px]">
+                  <Label htmlFor="jobTitle" className="text-sm font-semibold text-black tracking-wide">
+                    Job title
                   </Label>
-                  <Textarea
-                    id="bio"
-                    value={formData.bio}
-                    onChange={(e) => handleInputChange("bio", e.target.value)}
-                    className="rounded-lg border-border/60 bg-muted/30 text-[13px] focus-visible:ring-2 focus-visible:ring-primary"
-                  placeholder="Share your story, mission, or current focus…"
-                    rows={3}
-                    maxLength={bioLimit}
+                  <Input
+                    id="jobTitle"
+                    value={formData.jobTitle}
+                    onChange={(e) => handleInputChange("jobTitle", e.target.value)}
+                    className="h-9 rounded-lg border border-gray-300 bg-muted/30 text-[13px] focus-visible:ring-0 hover:shadow-md focus:outline-none"
+                    placeholder="e.g. • Full Stack Developer"
+                    maxLength={50}
                   />
-                  <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-                    <span>This text appears in your live portfolio hero section.</span>
-                    <span>
-                      {bioCharacterCount}/{bioLimit}
-                    </span>
-                  </div>
+                </div>
+              </div>
+
+              {/* Bio - Full Width */}
+              <div className="space-y-1">
+                <Label htmlFor="bio" className="text-sm font-semibold text-black tracking-wide">
+                  Bio <span className="ml-1 text-[11px] normal-case text-muted-foreground font-normal">(max {bioLimit} characters)</span>
+                </Label>
+                <Textarea
+                  id="bio"
+                  value={formData.bio}
+                  onChange={(e) => handleInputChange("bio", e.target.value)}
+                  className="rounded-lg border border-gray-300 bg-muted/30 text-[13px] focus-visible:ring-0 hover:shadow-md focus:outline-none"
+                  placeholder="Share your story, mission, or current focus…"
+                  rows={3}
+                  maxLength={bioLimit}
+                />
+                <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                  <span>This text appears in your live portfolio hero section.</span>
+                  <span>
+                    {bioCharacterCount}/{bioLimit}
+                  </span>
                 </div>
               </div>
             </CardContent>
@@ -509,135 +639,186 @@ export function HomeSection({
         </div>
       )}
 
-      {/* Work Experience and CV/Resume - Aligned with columns above */}
+      {/* Work Experience Section */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.15 }}
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Work Experience Section - Left (below Display Name & Job Title) */}
-          <Card className="bg-white dark:bg-background shadow-none border-card/80">
-            <CardContent className="pt-4 space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="text-base font-semibold text-gray-900 dark:text-gray-100">Work Experience</div>
-                <Button onClick={() => setIsAddExpOpen(true)} className="bg-black text-white hover:bg-gray-800 h-8 px-3 text-xs rounded-lg"><Plus className="h-4 w-4" /> Add Experience</Button>
-              </div>
-              <div className="space-y-3">
-                {experiences.map(exp => (
-                  <div key={exp.id} className="border rounded-lg p-4 flex items-start gap-3">
-                    {exp.faviconUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={exp.faviconUrl} alt={exp.companyName} className="h-6 w-6 mt-0.5" />
-                    ) : (
-                      <div className="h-6 w-6 rounded bg-gray-200 mt-0.5" />
-                    )}
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between">
-                        <div className="font-semibold text-sm text-black">
-                          {exp.companyName}
-                          {exp.role ? <span className="text-gray-500 font-normal"> • {exp.role}</span> : null}
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Button variant="secondary" className="h-8 rounded-lg text-xs" onClick={() => setEditingExp(exp)}>Edit</Button>
-                        </div>
+        <Card className="bg-white dark:bg-background shadow-none border-card/80">
+          <CardContent className="pt-4 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="text-base font-semibold text-gray-900 dark:text-gray-100">Work Experience</div>
+              <Button onClick={() => setIsAddExpOpen(true)} className="bg-black text-white hover:bg-gray-800 h-8 px-3 text-xs rounded-lg"><Plus className="h-4 w-4" /> Add Experience</Button>
+            </div>
+            <div className="space-y-3">
+              {experiences.map(exp => (
+                <div key={exp.id} className="border rounded-lg p-4 flex items-start gap-3">
+                  {exp.faviconUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={exp.faviconUrl} alt={exp.companyName} className="h-6 w-6 mt-0.5" />
+                  ) : (
+                    <div className="h-6 w-6 rounded bg-gray-200 mt-0.5" />
+                  )}
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between">
+                      <div className="font-semibold text-sm text-black">
+                        {exp.companyName}
+                        {exp.role ? <span className="text-gray-500 font-normal"> • {exp.role}</span> : null}
                       </div>
-                      {exp.duration ? (
-                        <div className="text-[11px] text-gray-500 mt-0.5">{exp.duration}</div>
-                      ) : null}
-                      {exp.description ? (
-                        <div className="text-xs text-gray-600 mt-1 whitespace-pre-line">{exp.description}</div>
-                      ) : null}
+                      <div className="flex items-center gap-2">
+                        <Button variant="secondary" className="h-8 rounded-lg text-xs" onClick={() => setEditingExp(exp)}>Edit</Button>
+                      </div>
                     </div>
+                    {exp.duration ? (
+                      <div className="text-[11px] text-gray-500 mt-0.5">{exp.duration}</div>
+                    ) : null}
+                    {exp.description ? (
+                      <div className="text-xs text-gray-600 mt-1 whitespace-pre-line">{exp.description}</div>
+                    ) : null}
                   </div>
-                ))}
-                {experiences.length === 0 && (
-                  <div className="text-xs text-gray-500">No experiences added yet.</div>
-                )}
-              </div>
-
-              <AddExperienceModal
-                open={isAddExpOpen}
-                onOpenChange={setIsAddExpOpen}
-                userId={((user as any)?.githubId?.toString?.() || (user as any)?.githubUsername) as string}
-                onAdded={handleExperienceAdded}
-              />
-              {editingExp && (
-                <EditExperienceModal
-                  open={!!editingExp}
-                  onOpenChange={(o) => !o && setEditingExp(null)}
-                  userId={((user as any)?.githubId?.toString?.() || (user as any)?.githubUsername) as string}
-                  initial={editingExp}
-                  onSave={handleExperienceSaved}
-                />
+                </div>
+              ))}
+              {experiences.length === 0 && (
+                <div className="text-xs text-gray-500">No experiences added yet.</div>
               )}
-            </CardContent>
-          </Card>
+            </div>
 
-          {/* CV/Resume Section - Right (below Portfolio Username & Bio) */}
-          <Card className="bg-white dark:bg-background shadow-none border-card/80">
-            <CardContent className="pt-4 space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="text-base font-semibold text-gray-900 dark:text-gray-100">CV/Resume</div>
-                <Button
-                  type="button"
-                  onClick={() => setIsCvModalOpen(true)}
-                  disabled={!!cvUrlProp}
-                  className={`h-8 px-3 text-xs ${cvUrlProp ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-black text-white hover:bg-gray-800'}`}
-                >
-                  <Plus className="h-4 w-4" />
-                  Add CV
-                </Button>
-              </div>
+            <AddExperienceModal
+              open={isAddExpOpen}
+              onOpenChange={setIsAddExpOpen}
+              userId={((user as any)?.githubId?.toString?.() || (user as any)?.githubUsername) as string}
+              onAdded={handleExperienceAdded}
+            />
+            {editingExp && (
+              <EditExperienceModal
+                open={!!editingExp}
+                onOpenChange={(o) => !o && setEditingExp(null)}
+                userId={((user as any)?.githubId?.toString?.() || (user as any)?.githubUsername) as string}
+                initial={editingExp}
+                onSave={handleExperienceSaved}
+              />
+            )}
+          </CardContent>
+        </Card>
+      </motion.div>
 
-              {/* CV Cards */}
-              <div className="space-y-3">
-                {cvUrlProp && (
-                  <div className="border border-gray-200 rounded-lg p-4 flex items-center gap-4 bg-white shadow-sm">
-                    {/* Document Icon */}
-                    <div className="h-12 w-12 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
-                      <FileText className="h-6 w-6 text-gray-700" />
-                    </div>
+      {/* CV/Resume Section */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.2 }}
+      >
+        <Card className="bg-white dark:bg-background shadow-none border-card/80">
+          <CardContent className="pt-4 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="text-base font-semibold text-gray-900 dark:text-gray-100">CV/Resume</div>
+              <Button
+                type="button"
+                onClick={() => setIsCvModalOpen(true)}
+                disabled={!!cvUrlProp}
+                className={`h-8 px-3 text-xs ${cvUrlProp ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-black text-white hover:bg-gray-800'}`}
+              >
+                <Plus className="h-4 w-4" />
+                Add CV
+              </Button>
+            </div>
 
-                    {/* CV Info */}
-                    <div className="flex-1 min-w-0">
-                      <div className="font-semibold text-sm text-black mb-0.5">CV Document</div>
-                      <div className="text-xs text-gray-500 truncate">{cvUrlProp}</div>
-                    </div>
+            {/* CV Cards */}
+            <div className="space-y-3">
+              {cvUrlProp && (
+                <div className="border border-gray-200 rounded-lg p-4 flex items-center gap-4 bg-white shadow-sm">
+                  {/* Document Icon */}
+                  <div className="h-12 w-12 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
+                    <FileText className="h-6 w-6 text-gray-700" />
+                  </div>
 
-                    {/* Action Buttons */}
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleEditCv}
-                        className="h-8 w-8 p-0 rounded-lg bg-gray-100 hover:bg-gray-200"
-                      >
-                        <Pencil className="h-4 w-4 text-gray-700" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          if (setCvUrlProp) {
-                            setCvUrlProp(null)
-                          }
+                  {/* CV Info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-sm text-black mb-0.5">CV Document</div>
+                    <div className="text-xs text-gray-500 truncate">{cvUrlProp}</div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleEditCv}
+                      className="h-8 w-8 p-0 rounded-lg bg-gray-100 hover:bg-gray-200"
+                    >
+                      <Pencil className="h-4 w-4 text-gray-700" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        if (setCvUrlProp) {
+                          setCvUrlProp(null)
+                        }
+                      }}
+                      className="h-8 w-8 p-0 rounded-lg bg-red-50 hover:bg-red-100"
+                    >
+                      <Trash2 className="h-4 w-4 text-red-600" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {!cvUrlProp && (
+                <div className="text-xs text-gray-500">No CV/Resume added yet.</div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      {/* Social Media Section */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.25 }}
+      >
+        <Card className="bg-white dark:bg-background shadow-none border-card/80">
+          <CardContent className="pt-4 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="text-base font-semibold text-gray-900 dark:text-gray-100">Social Media</div>
+            </div>
+            <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2">
+              {platformConfigs.map((platform) => {
+                const Icon = platform.icon
+                const username = platformUsernames[platform.id] || ""
+                const showPrefix = platform.urlPrefix && (platform.id !== "email" && platform.id !== "other")
+                const prefixWidth = showPrefix ? platform.urlPrefix.length * 7.5 : 0
+                
+                return (
+                  <div key={platform.id} className="space-y-1 max-w-[300px]">
+                    <div className="relative">
+                      <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none z-10">
+                        <Icon className="h-4 w-4" style={{ color: platform.color }} />
+                      </div>
+                      {showPrefix && (
+                        <div className="absolute left-10 top-1/2 -translate-y-1/2 pointer-events-none text-[13px] text-gray-500 font-medium">
+                          {platform.urlPrefix}
+                        </div>
+                      )}
+                      <Input
+                        id={`social-${platform.id}`}
+                        value={username}
+                        onChange={(e) => handleSocialUsernameChange(platform.id, e.target.value)}
+                        className="h-9 rounded-lg border border-gray-300 bg-muted/30 pr-3 text-[13px] focus-visible:ring-0 hover:shadow-md focus:outline-none"
+                        style={{ 
+                          paddingLeft: showPrefix ? `${40 + prefixWidth}px` : '40px'
                         }}
-                        className="h-8 w-8 p-0 rounded-lg bg-red-50 hover:bg-red-100"
-                      >
-                        <Trash2 className="h-4 w-4 text-red-600" />
-                      </Button>
+                        placeholder={platform.id === "email" ? "email@example.com" : platform.id === "other" ? "https://yoursite.com" : "username"}
+                      />
                     </div>
                   </div>
-                )}
-
-                {!cvUrlProp && (
-                  <div className="text-xs text-gray-500">No CV/Resume added yet.</div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+                )
+              })}
+            </div>
+          </CardContent>
+        </Card>
       </motion.div>
 
     </motion.div>

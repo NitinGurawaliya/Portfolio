@@ -82,7 +82,7 @@ function ContributionSquare({ day, theme, getContributionColor, delay }: Contrib
             exit={{ opacity: 0, scale: 0.8, y: 10 }}
             transition={{ duration: 0.2 }}
           >
-            <div className={`px-3 py-2 rounded-lg shadow-lg border text-xs font-medium ${
+            <div className={`px-3 py-2 rounded-lg  border text-xs font-medium ${
               theme === 'dark' 
                 ? 'bg-gray-800 border-gray-700 text-white' 
                 : 'bg-white border-gray-200 text-gray-900'
@@ -247,8 +247,8 @@ export function GitHubActivity({ username, theme }: GitHubActivityProps) {
 
   const isDark = theme === "dark"
   const cardClasses = isDark
-    ? "border border-gray-800 bg-gray-900/70 shadow-2xl"
-    : "border border-gray-200 bg-white shadow-xl"
+    ? "border border-gray-800 bg-gray-900/70 "
+    : "border border-gray-200 bg-white "
   const sectionHeading = isDark ? "text-white" : "text-gray-900"
   const sectionSubheading = isDark ? "text-gray-400" : "text-gray-600"
   const subCardClasses = isDark

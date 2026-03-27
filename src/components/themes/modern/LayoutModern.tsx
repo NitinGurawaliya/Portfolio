@@ -5,7 +5,8 @@ import { useEffect, useMemo, useState, type CSSProperties } from "react"
 import { motion } from "framer-motion"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { Download, ExternalLink, Globe } from "lucide-react"
+import { Download, ExternalLink, Globe, Edit2, Plus } from "lucide-react"
+import { ConsistentEditButton } from "@/components/portfolio/ConsistentEditButton"
 import {
   SiGithub,
   SiX,
@@ -84,6 +85,10 @@ interface PortfolioData {
 interface LayoutModernProps {
   theme: ThemeConfig
   portfolio: PortfolioData
+  onEditProfile?: () => void
+  onAddSocial?: () => void
+  onAddSkills?: () => void
+  onAddProject?: () => void
 }
 
 const getSocialIcon = (platform: string) => {
@@ -159,7 +164,7 @@ const getPatternStyle = (pattern: string | null) => {
   }
 }
 
-export default function LayoutModern({ theme, portfolio }: LayoutModernProps) {
+export default function LayoutModern({ theme, portfolio, onEditProfile, onAddSocial, onAddSkills, onAddProject }: LayoutModernProps) {
   const [displayedBio, setDisplayedBio] = useState("")
   const [bioIndex, setBioIndex] = useState(0)
   const [isTypingComplete, setIsTypingComplete] = useState(false)
@@ -256,9 +261,18 @@ export default function LayoutModern({ theme, portfolio }: LayoutModernProps) {
                     </div>
                   </div>
 
-                  {portfolio.skills && portfolio.skills.length > 0 && (
-                    <div className="space-y-2 xs:space-y-3">
+                  <div className="space-y-2 xs:space-y-3">
+                    <div className="flex items-center justify-between">
                       <p className="text-xs uppercase tracking-[0.3em] text-neutral-400">Capabilities</p>
+                      {onAddSkills && (
+                        <ConsistentEditButton
+                          onClick={onAddSkills}
+                          label="Add Skills"
+                          icon="add"
+                        />
+                      )}
+                    </div>
+                    {portfolio.skills && portfolio.skills.length > 0 && (
                       <div className="flex flex-wrap gap-1.5 xs:gap-2">
                         {portfolio.skills.map((skill: any) => (
                           <span
@@ -270,8 +284,8 @@ export default function LayoutModern({ theme, portfolio }: LayoutModernProps) {
                           </span>
                         ))}
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               </motion.div>
 
@@ -357,16 +371,27 @@ export default function LayoutModern({ theme, portfolio }: LayoutModernProps) {
                     {portfolio.user?.company && <span>• {portfolio.user.company}</span>}
                   </div>
                 </div>
-                <p className="text-xs xs:text-sm sm:text-base md:text-lg text-neutral-600 max-w-3xl leading-relaxed mx-auto lg:mx-0">
-                  {displayedBio}
-                  {!isTypingComplete && (
-                    <motion.span
-                      className="inline-block w-2 h-4 bg-neutral-400 ml-1"
-                      animate={{ opacity: [1, 0, 1] }}
-                      transition={{ duration: 0.6, repeat: Number.POSITIVE_INFINITY }}
-                    />
+                <div>
+                  <p className="text-xs xs:text-sm sm:text-base md:text-lg text-neutral-600 max-w-3xl leading-relaxed mx-auto lg:mx-0">
+                    {displayedBio}
+                    {!isTypingComplete && (
+                      <motion.span
+                        className="inline-block w-2 h-4 bg-neutral-400 ml-1"
+                        animate={{ opacity: [1, 0, 1] }}
+                        transition={{ duration: 0.6, repeat: Number.POSITIVE_INFINITY }}
+                      />
+                    )}
+                  </p>
+                  {onEditProfile && (
+                    <div className="mt-2">
+                      <ConsistentEditButton
+                        onClick={onEditProfile}
+                        label="Edit Profile"
+                        icon="edit"
+                      />
+                    </div>
                   )}
-                </p>
+                </div>
                 <div className="flex flex-col xs:flex-col sm:flex-row items-stretch sm:items-center justify-center lg:justify-start gap-2 xs:gap-3">
                   {portfolio.cvUrl && (
                     <Button
@@ -388,35 +413,55 @@ export default function LayoutModern({ theme, portfolio }: LayoutModernProps) {
                     </Button>
                   )}
                 </div>
-                {portfolio.socials && portfolio.socials.length > 0 && (
-                  <div className="flex flex-wrap items-center justify-center lg:justify-start gap-1.5 xs:gap-2 pt-1 xs:pt-2">
-                    {portfolio.socials
-                      .filter((social) => social.url)
-                      .map((social) => {
-                        const Icon = getSocialIcon(social.platform)
-                        return (
-                          <motion.button
-                            key={social.id}
-                            onClick={() => window.open(social.url, "_blank")}
-                            className="inline-flex h-8 xs:h-9 w-8 xs:w-9 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-600 transition hover:text-neutral-900 hover:border-neutral-400"
-                            whileHover={{ y: -2 }}
-                            whileTap={{ scale: 0.95 }}
-                            aria-label={`Visit ${social.platform}`}
-                          >
-                            <Icon className="h-3 xs:h-3.5 w-3 xs:w-3.5" />
-                          </motion.button>
-                        )
-                      })}
-                  </div>
-                )}
+                <div>
+                  {portfolio.socials && portfolio.socials.length > 0 && (
+                    <div className="flex flex-wrap items-center justify-center lg:justify-start gap-1.5 xs:gap-2 pt-1 xs:pt-2">
+                      {portfolio.socials
+                        .filter((social) => social.url)
+                        .map((social) => {
+                          const Icon = getSocialIcon(social.platform)
+                          return (
+                            <motion.button
+                              key={social.id}
+                              onClick={() => window.open(social.url, "_blank")}
+                              className="inline-flex h-8 xs:h-9 w-8 xs:w-9 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-600 transition hover:text-neutral-900 hover:border-neutral-400"
+                              whileHover={{ y: -2 }}
+                              whileTap={{ scale: 0.95 }}
+                              aria-label={`Visit ${social.platform}`}
+                            >
+                              <Icon className="h-3 xs:h-3.5 w-3 xs:w-3.5" />
+                            </motion.button>
+                          )
+                        })}
+                    </div>
+                  )}
+                  {onAddSocial && (
+                    <div className="mt-2">
+                      <ConsistentEditButton
+                        onClick={onAddSocial}
+                        label="Add Social"
+                        icon="add"
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
 
               {hasProjects && (
                 <div className="space-y-4 xs:space-y-5 sm:space-y-6">
                   <div className="space-y-1">
-                    <h2 className="text-lg xs:text-xl sm:text-2xl font-semibold text-neutral-900 tracking-tight">
-                      Selected Work
-                    </h2>
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-lg xs:text-xl sm:text-2xl font-semibold text-neutral-900 tracking-tight">
+                        Selected Work
+                      </h2>
+                      {onAddProject && (
+                        <ConsistentEditButton
+                          onClick={onAddProject}
+                          label="Add Project"
+                          icon="add"
+                        />
+                      )}
+                    </div>
                     <p className="text-xs xs:text-sm sm:text-base text-neutral-500">
                       Curated projects showcasing recent capabilities.
                     </p>

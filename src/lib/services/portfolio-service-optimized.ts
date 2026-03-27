@@ -7,20 +7,37 @@
  * Load only basic portfolio data (for instant home section display)
  */
 export const loadBasicPortfolioData = async () => {
-  const response = await fetch('/api/portfolio/basic', {
-    credentials: 'include'
-  })
-  
-  if (!response.ok && response.status !== 404) {
-    throw new Error("Failed to load basic portfolio data")
+  try {
+    const response = await fetch('/api/portfolio/basic', {
+      credentials: 'include'
+    })
+    
+    console.log("📡 loadBasicPortfolioData: Response status:", response.status)
+    
+    if (!response.ok && response.status !== 404) {
+      const errorText = await response.text()
+      console.error("❌ loadBasicPortfolioData: API error:", response.status, errorText)
+      throw new Error("Failed to load basic portfolio data")
+    }
+    
+    if (response.status === 404) {
+      console.log("⚠️ loadBasicPortfolioData: 404 - No portfolio found")
+      return null
+    }
+    
+    const result = await response.json()
+    console.log("📡 loadBasicPortfolioData: API response:", {
+      hasResult: !!result,
+      hasPortfolio: !!result.portfolio,
+      resultKeys: result ? Object.keys(result) : [],
+      portfolioKeys: result?.portfolio ? Object.keys(result.portfolio) : []
+    })
+    
+    return result.portfolio
+  } catch (error) {
+    console.error("❌ loadBasicPortfolioData: Exception:", error)
+    throw error
   }
-  
-  if (response.status === 404) {
-    return null
-  }
-  
-  const result = await response.json()
-  return result.portfolio
 }
 
 /**
