@@ -3,8 +3,6 @@ import { motion } from "framer-motion"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ProjectIcon } from "@/components/ui/project-icon"
 import { Building, Download, Code2, TrendingUp, Users as UsersIcon } from "lucide-react"
-import { SiGithub, SiX, SiLinkedin, SiInstagram, SiFacebook, SiYoutube, SiGmail, SiStackoverflow, SiReddit } from "react-icons/si"
-import { Globe } from "lucide-react"
 import { SkillIcon, getSkillIcon } from "@/lib/skill-icons"
 import { PublicShiplogList } from "@/components/shiplog/PublicShiplogList"
 import { useState, useEffect, useMemo } from "react"
@@ -12,6 +10,9 @@ import { GitHubActivity } from "@/components/GitHubActivity"
 import { trackProjectClick } from "@/lib/analytics-utils"
 import { getProjectSlugMap } from "@/lib/project-slug"
 import { truncateWords } from "@/lib/text"
+import type { ThemeConfig, ThemePortfolioData } from "@/components/themes/shared/types"
+import { getRepositoryLanguages } from "@/components/themes/shared/repository"
+import { getSocialIcon } from "@/components/themes/shared/social-icons"
 
 const formatCurrency = (value?: number | null) => {
   if (value === null || value === undefined) return null
@@ -31,61 +32,9 @@ const isGitHubUrl = (url?: string | null) => {
   }
 }
 
-interface ThemeConfig {
-  name: string
-  colors: {
-    background: string
-    text: string
-    accent: string
-    cardBg?: string
-    border?: string
-  }
-  layout: string
-  previewImage: string
-}
-
-interface PortfolioData {
-  id: number
-  displayName: string
-  jobTitle?: string
-  bio: string
-  profilePic: string
-  customUsername?: string | null
-  skills: any[]
-  socials: any[]
-  repositories: any[]
-  experiences?: any[]
-  backgroundColor?: string | null
-  backgroundPattern?: string | null
-  cvUrl?: string | null
-    shiplogs?: any[]
-  user: {
-    githubUsername: string
-    location: string
-    company: string
-    websiteUrl: string
-  }
-}
-
 interface LayoutDarkProps {
   theme: ThemeConfig
-  portfolio: PortfolioData
-}
-
-const getSocialIcon = (platform: string) => {
-  const icons: Record<string, any> = {
-    github: SiGithub,
-    email: SiGmail,
-    twitter: SiX,
-    x: SiX,
-    linkedin: SiLinkedin,
-    instagram: SiInstagram,
-    facebook: SiFacebook,
-    youtube: SiYoutube,
-    stackoverflow: SiStackoverflow,
-    reddit: SiReddit,
-  }
-  return icons[platform] || Globe
+  portfolio: ThemePortfolioData
 }
 
 const getPatternStyle = (pattern: string | null) => {
@@ -409,7 +358,7 @@ export default function LayoutDark({ theme, portfolio }: LayoutDarkProps) {
                   <div className="relative">
                     <div className="absolute left-3 top-0 bottom-0 w-px bg-orange-500/20" />
                     <div className="space-y-3">
-                      {portfolio.experiences.map((exp: any, idx: number) => (
+                      {portfolio.experiences.map((exp, idx: number) => (
                         <motion.div key={idx} className="relative pl-8"
                           initial={{ opacity: 0, y: 10 }}
                           whileInView={{ opacity: 1, y: 0 }}
@@ -420,7 +369,7 @@ export default function LayoutDark({ theme, portfolio }: LayoutDarkProps) {
                           <div className="border border-orange-500/30 rounded-lg p-2.5 bg-transparent">
                             <div className="flex items-start gap-2">
                               {exp.faviconUrl ? (
-                                <img src={exp.faviconUrl} alt={exp.companyName} className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                                <img src={exp.faviconUrl} alt={exp.companyName || "Company"} className="h-4 w-4 mt-0.5 flex-shrink-0" />
                               ) : (
                                 <div className="h-4 w-4 mt-0.5 rounded bg-gray-700 flex-shrink-0" />
                               )}
@@ -542,17 +491,7 @@ export default function LayoutDark({ theme, portfolio }: LayoutDarkProps) {
                                 techStackItems = repo.technologies.split(',').map((t: string) => t.trim()).filter(Boolean)
                               } else {
                                 // Fallback to GitHub languages
-                                if (repo.repository.languages) {
-                                  try {
-                                    techStackItems = JSON.parse(repo.repository.languages)
-                                  } catch (e) {
-                                    if (repo.repository.language) {
-                                      techStackItems = [repo.repository.language]
-                                    }
-                                  }
-                                } else if (repo.repository.language) {
-                                  techStackItems = [repo.repository.language]
-                                }
+                                techStackItems = getRepositoryLanguages(repo.repository)
                               }
                               
                               // Filter out 'web' and empty items

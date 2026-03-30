@@ -21,7 +21,6 @@ export function SessionRedirect() {
         }
       } catch (error) {
         // Silently fail, user is not logged in or session invalid
-        console.log("No active session or session validation failed")
       }
     }
 

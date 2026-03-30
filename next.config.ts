@@ -9,6 +9,12 @@ const nextConfig: NextConfig = {
     // Disable type checking during builds if needed
     ignoreBuildErrors: false,
   },
+  compiler: {
+    // Strip debug console output in production bundles.
+    removeConsole: {
+      exclude: ["error"],
+    },
+  },
   webpack: (config, { isServer }) => {
     if (isServer) {
       // Fix for pdfkit and font loading issues

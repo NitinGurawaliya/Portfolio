@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { Line, LineChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Area, AreaChart } from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { devLog } from "@/lib/logger"
 
 interface IndividualProjectChartProps {
   portfolioId: number
@@ -54,7 +55,7 @@ export function IndividualProjectChart({
 
   useEffect(() => {
     const fetchData = async () => {
-      console.log('🚀 IndividualProjectChart: Starting data fetch for:', { portfolioId, projectId, projectName })
+      devLog("🚀 IndividualProjectChart: Starting data fetch for:", { portfolioId, projectId, projectName })
       
       setLoading(true)
       try {
@@ -82,7 +83,7 @@ export function IndividualProjectChart({
 
         const apiUrl = `/api/analytics/track-project-click?${params}`
         
-        console.log('📊 IndividualProjectChart fetching data for:', {
+        devLog("📊 IndividualProjectChart fetching data for:", {
           portfolioId,
           projectId,
           projectName,
@@ -91,11 +92,11 @@ export function IndividualProjectChart({
           projectIdType: typeof projectId
         })
 
-        console.log('📊 IndividualProjectChart: Making fetch request to:', apiUrl)
+        devLog("📊 IndividualProjectChart: Making fetch request to:", apiUrl)
         
         const response = await fetch(apiUrl)
         
-        console.log('📊 IndividualProjectChart: Response received:', {
+        devLog("📊 IndividualProjectChart: Response received:", {
           status: response.status,
           statusText: response.statusText,
           ok: response.ok
@@ -110,10 +111,10 @@ export function IndividualProjectChart({
 
         const result = await response.json()
         
-        console.log('📊 IndividualProjectChart API Response:', result)
-        console.log('📊 IndividualProjectChart Response success:', result.success)
-        console.log('📊 IndividualProjectChart chartData length:', result.data?.length || 0)
-        console.log('📊 IndividualProjectChart totalViews:', result.totalViews)
+        devLog("📊 IndividualProjectChart API Response:", result)
+        devLog("📊 IndividualProjectChart Response success:", result.success)
+        devLog("📊 IndividualProjectChart chartData length:", result.data?.length || 0)
+        devLog("📊 IndividualProjectChart totalViews:", result.totalViews)
         
         if (result.success && result.data && result.data.length > 0) {
           setChartData(result.data)
@@ -122,8 +123,8 @@ export function IndividualProjectChart({
           // Use projectName from API response if available, otherwise use prop
           const effectiveProjectName = result.projectName || projectName
           
-          console.log('📊 IndividualProjectChart: Using projectName:', effectiveProjectName)
-          console.log('📊 IndividualProjectChart: Sample data keys:', Object.keys(result.data[0] || {}))
+          devLog("📊 IndividualProjectChart: Using projectName:", effectiveProjectName)
+          devLog("📊 IndividualProjectChart: Sample data keys:", Object.keys(result.data[0] || {}))
           
           // Calculate percentage change - for monthly data, compare last two months
           const projectData = result.data.map((item: any) => {
@@ -156,11 +157,11 @@ export function IndividualProjectChart({
             setPercentageChange(null)
           }
           
-          console.log('📊 IndividualProjectChart data set successfully:', result.data)
-          console.log('📊 IndividualProjectChart projectData:', projectData)
+          devLog("📊 IndividualProjectChart data set successfully:", result.data)
+          devLog("📊 IndividualProjectChart projectData:", projectData)
         } else {
           console.error('❌ IndividualProjectChart API returned success: false or no data')
-          console.log('📊 IndividualProjectChart result:', result)
+          devLog("📊 IndividualProjectChart result:", result)
           // Set empty data to show "No data" message
           setChartData([])
           setTotalViews(0)
@@ -222,8 +223,8 @@ export function IndividualProjectChart({
     typeof chartData[0]?.[key] === 'number'
   ) || projectName
   
-  console.log('📊 IndividualProjectChart: Extracting data with projectName:', dataProjectName)
-  console.log('📊 IndividualProjectChart: First item keys:', firstItemKeys)
+  devLog("📊 IndividualProjectChart: Extracting data with projectName:", dataProjectName)
+  devLog("📊 IndividualProjectChart: First item keys:", firstItemKeys)
   
   const projectData = chartData.map(item => {
     // Try multiple ways to get views
@@ -261,9 +262,9 @@ export function IndividualProjectChart({
     }
   }).filter(item => item.label) // Remove items without labels
   
-  console.log('📊 IndividualProjectChart projectData:', projectData.map(d => ({ label: d.label, views: d.views })))
-  console.log('📊 IndividualProjectChart chartData sample:', chartData[0])
-  console.log('📊 IndividualProjectChart projectName:', projectName)
+  devLog("📊 IndividualProjectChart projectData:", projectData.map(d => ({ label: d.label, views: d.views })))
+  devLog("📊 IndividualProjectChart chartData sample:", chartData[0])
+  devLog("📊 IndividualProjectChart projectName:", projectName)
 
   // If only one data point, duplicate it to show a line (or show as bar)
   const displayData = projectData.length === 1 
@@ -282,15 +283,15 @@ export function IndividualProjectChart({
   // Get color for this project
   const projectColor = getProjectColor(projectId)
 
-  console.log('📊 IndividualProjectChart projectData:', projectData)
-  console.log('📊 IndividualProjectChart totalViews:', totalViews)
-  console.log('📊 IndividualProjectChart projectName:', projectName)
-  console.log('📊 IndividualProjectChart projectColor:', projectColor)
-  console.log('📊 IndividualProjectChart chartData keys:', chartData.map(d => Object.keys(d)))
-  console.log('📊 IndividualProjectChart chartData sample:', chartData[0])
-  console.log('📊 IndividualProjectChart projectName in chartData:', chartData.map(d => d[projectName]))
-  console.log('📊 IndividualProjectChart projectData views:', projectData.map(d => d.views))
-  console.log('📊 IndividualProjectChart projectData max views:', Math.max(...projectData.map(d => d.views)))
+  devLog("📊 IndividualProjectChart projectData:", projectData)
+  devLog("📊 IndividualProjectChart totalViews:", totalViews)
+  devLog("📊 IndividualProjectChart projectName:", projectName)
+  devLog("📊 IndividualProjectChart projectColor:", projectColor)
+  devLog("📊 IndividualProjectChart chartData keys:", chartData.map(d => Object.keys(d)))
+  devLog("📊 IndividualProjectChart chartData sample:", chartData[0])
+  devLog("📊 IndividualProjectChart projectName in chartData:", chartData.map(d => d[projectName]))
+  devLog("📊 IndividualProjectChart projectData views:", projectData.map(d => d.views))
+  devLog("📊 IndividualProjectChart projectData max views:", Math.max(...projectData.map(d => d.views)))
 
   return (
     <div className={`w-full ${className}`} style={{ overflow: 'visible' }}>

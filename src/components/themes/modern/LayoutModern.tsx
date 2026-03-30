@@ -5,18 +5,7 @@ import { useEffect, useMemo, useState, type CSSProperties } from "react"
 import { motion } from "framer-motion"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { Download, ExternalLink, Globe } from "lucide-react"
-import {
-  SiGithub,
-  SiX,
-  SiLinkedin,
-  SiInstagram,
-  SiFacebook,
-  SiYoutube,
-  SiGmail,
-  SiStackoverflow,
-  SiReddit,
-} from "react-icons/si"
+import { Download, ExternalLink } from "lucide-react"
 import { SkillIcon, getSkillIcon } from "@/lib/skill-icons"
 import { ProjectIcon } from "@/components/ui/project-icon"
 import { GitHubActivity } from "@/components/GitHubActivity"
@@ -25,6 +14,9 @@ import { PublicShiplogList } from "@/components/shiplog/PublicShiplogList"
 import { getProjectSlugMap } from "@/lib/project-slug"
 import { truncateWords } from "@/lib/text"
 import { Code2, TrendingUp, Users as UsersIcon } from "lucide-react"
+import type { ThemeConfig, ThemePortfolioData } from "@/components/themes/shared/types"
+import { getRepositoryLanguages } from "@/components/themes/shared/repository"
+import { getSocialIcon } from "@/components/themes/shared/social-icons"
 
 const formatCurrency = (value?: number | null) => {
   if (value === null || value === undefined) return null
@@ -44,62 +36,9 @@ const isGitHubUrl = (url?: string | null) => {
   }
 }
 
-interface ThemeConfig {
-  name: string
-  colors: {
-    background: string
-    text: string
-    accent: string
-    cardBg?: string
-    border?: string
-  }
-  layout: string
-  previewImage: string
-  description: string
-}
-
-interface PortfolioData {
-  id: number
-  displayName: string
-  jobTitle?: string
-  bio: string
-  profilePic: string
-  customUsername?: string | null
-  skills: any[]
-  socials: any[]
-  repositories: any[]
-  experiences?: any[]
-  backgroundColor?: string | null
-  backgroundPattern?: string | null
-  cvUrl?: string | null
-  shiplogs?: any[]
-  user: {
-    githubUsername: string
-    location: string
-    company: string
-    websiteUrl: string
-  }
-}
-
 interface LayoutModernProps {
   theme: ThemeConfig
-  portfolio: PortfolioData
-}
-
-const getSocialIcon = (platform: string) => {
-  const icons: Record<string, any> = {
-    github: SiGithub,
-    email: SiGmail,
-    twitter: SiX,
-    x: SiX,
-    linkedin: SiLinkedin,
-    instagram: SiInstagram,
-    facebook: SiFacebook,
-    youtube: SiYoutube,
-    stackoverflow: SiStackoverflow,
-    reddit: SiReddit,
-  }
-  return icons[platform] || Globe
+  portfolio: ThemePortfolioData
 }
 
 const getPatternStyle = (pattern: string | null) => {
@@ -181,7 +120,7 @@ export default function LayoutModern({ theme, portfolio }: LayoutModernProps) {
     }
   }, [bioIndex, portfolio.bio])
 
-  const getBackgroundStyle = (portfolio: PortfolioData): CSSProperties => {
+  const getBackgroundStyle = (portfolio: ThemePortfolioData): CSSProperties => {
     const baseStyle: CSSProperties = {}
     const bgColor = portfolio.backgroundColor || null
 
@@ -204,7 +143,7 @@ export default function LayoutModern({ theme, portfolio }: LayoutModernProps) {
     }
   }
 
-  const visibleRepos = (portfolio.repositories || []).filter((repo: any) => repo.isVisible)
+  const visibleRepos = (portfolio.repositories || []).filter((repo) => repo.isVisible)
   const hasProjects = visibleRepos.length > 0
   const experiences = portfolio.experiences || []
   const hasExperience = experiences.length > 0
@@ -260,7 +199,7 @@ export default function LayoutModern({ theme, portfolio }: LayoutModernProps) {
                     <div className="space-y-2 xs:space-y-3">
                       <p className="text-xs uppercase tracking-[0.3em] text-neutral-400">Capabilities</p>
                       <div className="flex flex-wrap gap-1.5 xs:gap-2">
-                        {portfolio.skills.map((skill: any) => (
+                        {portfolio.skills.map((skill) => (
                           <span
                             key={skill.id}
                             className="flex items-center gap-1.5 xs:gap-2 rounded-full border border-neutral-200 bg-white px-2.5 xs:px-3 py-1 xs:py-1.5 text-xs font-medium uppercase tracking-widest text-neutral-700"
@@ -287,7 +226,7 @@ export default function LayoutModern({ theme, portfolio }: LayoutModernProps) {
                   </h2>
                   <div className="relative mt-4 xs:mt-6 pl-4 xs:pl-6 space-y-4 xs:space-y-5">
                     <span className="absolute left-[10px] xs:left-[11px] top-1 bottom-1 w-px bg-neutral-200" />
-                    {experiences.map((exp: any, index: number) => (
+                    {experiences.map((exp, index: number) => (
                       <motion.div
                         key={index}
                         className="relative"
@@ -313,7 +252,7 @@ export default function LayoutModern({ theme, portfolio }: LayoutModernProps) {
                               <div className="flex h-8 xs:h-9 w-8 xs:w-9 flex-shrink-0 items-center justify-center rounded-full border border-neutral-200 bg-white">
                                 <img
                                   src={exp.faviconUrl || "/placeholder.svg"}
-                                  alt={exp.companyName}
+                                  alt={exp.companyName || "Company"}
                                   className="h-3.5 xs:h-4 w-3.5 xs:w-4 object-contain"
                                 />
                               </div>
@@ -380,7 +319,7 @@ export default function LayoutModern({ theme, portfolio }: LayoutModernProps) {
                   {portfolio.user?.websiteUrl && (
                     <Button
                       variant="outline"
-                      onClick={() => window.open(portfolio.user.websiteUrl, "_blank")}
+                      onClick={() => window.open(portfolio.user.websiteUrl || undefined, "_blank")}
                       className="rounded-full border-neutral-300 text-neutral-700 px-5 xs:px-6 py-2 xs:py-2.5 h-auto text-xs xs:text-sm hover:bg-neutral-100"
                     >
                       Portfolio Site
@@ -422,7 +361,7 @@ export default function LayoutModern({ theme, portfolio }: LayoutModernProps) {
                     </p>
                   </div>
                   <div className="grid grid-cols-1 gap-3 xs:gap-4 sm:gap-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4">
-                      {visibleRepos.map((repo: any, index: number) => {
+                      {visibleRepos.map((repo, index: number) => {
                         const projectSlug = projectSlugMap[repo.id]
                         const projectHref =
                           projectSlug && portfolioSlug
@@ -493,17 +432,7 @@ export default function LayoutModern({ theme, portfolio }: LayoutModernProps) {
                                   techStackItems = repo.technologies.split(',').map((t: string) => t.trim()).filter(Boolean)
                                 } else {
                                   // Fallback to GitHub languages
-                                  if (repo.repository.languages) {
-                                    try {
-                                      techStackItems = JSON.parse(repo.repository.languages)
-                                    } catch (e) {
-                                      if (repo.repository.language) {
-                                        techStackItems = [repo.repository.language]
-                                      }
-                                    }
-                                  } else if (repo.repository.language) {
-                                    techStackItems = [repo.repository.language]
-                                  }
+                                techStackItems = getRepositoryLanguages(repo.repository)
                                 }
                                 
                                 // Filter out 'web' and empty items

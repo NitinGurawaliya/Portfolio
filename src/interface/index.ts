@@ -71,6 +71,16 @@ export interface Social {
   isPinned: boolean
 }
 
+export interface PortfolioExperience {
+  id?: number
+  companyName?: string | null
+  companyUrl?: string | null
+  faviconUrl?: string | null
+  role?: string | null
+  duration?: string | null
+  description?: string | null
+}
+
 // Portfolio State Types
 export interface PortfolioData {
   id?: number
@@ -120,7 +130,7 @@ export interface Portfolio {
     skills: Skill[]
     socials: Social[]
     repositories: PortfolioRepository[]
-    experiences?: any[]
+    experiences?: PortfolioExperience[]
     user: {
       githubUsername: string
       location: string

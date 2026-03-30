@@ -3,8 +3,6 @@ import { motion } from "framer-motion"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ProjectIcon } from "@/components/ui/project-icon"
 import { Building, Download, Code2, TrendingUp, Users as UsersIcon } from "lucide-react"
-import { SiGithub, SiX, SiLinkedin, SiInstagram, SiFacebook, SiYoutube, SiGmail, SiStackoverflow, SiReddit } from "react-icons/si"
-import { Globe } from "lucide-react"
 import { SkillIcon, getSkillIcon } from "@/lib/skill-icons"
 import { PublicShiplogList } from "@/components/shiplog/PublicShiplogList"
 import { useState, useEffect, useMemo } from "react"
@@ -12,6 +10,9 @@ import { GitHubActivity } from "@/components/GitHubActivity"
 import { trackProjectClick } from "@/lib/analytics-utils"
 import { getProjectSlugMap } from "@/lib/project-slug"
 import { truncateWords } from "@/lib/text"
+import type { ThemeConfig, ThemePortfolioData } from "@/components/themes/shared/types"
+import { getRepositoryLanguages } from "@/components/themes/shared/repository"
+import { getSocialIcon } from "@/components/themes/shared/social-icons"
 
 const formatCurrency = (value?: number | null) => {
   if (value === null || value === undefined) return null
@@ -31,61 +32,9 @@ const isGitHubUrl = (url?: string | null) => {
   }
 }
 
-interface ThemeConfig {
-  name: string
-  colors: {
-    background: string
-    text: string
-    accent: string
-    cardBg?: string
-    border?: string
-  }
-  layout: string
-  previewImage: string
-}
-
-interface PortfolioData {
-  id: number
-  displayName: string
-  jobTitle?: string
-  bio: string
-  profilePic: string
-  customUsername?: string | null
-  skills: any[]
-  socials: any[]
-  repositories: any[]
-  experiences?: any[]
-  backgroundColor?: string | null
-  backgroundPattern?: string | null
-  cvUrl?: string | null
-    shiplogs?: any[]
-  user: {
-    githubUsername: string
-    location: string
-    company: string
-    websiteUrl: string
-  }
-}
-
 interface LayoutLightProps {
   theme: ThemeConfig
-  portfolio: PortfolioData
-}
-
-const getSocialIcon = (platform: string) => {
-  const icons: Record<string, any> = {
-    github: SiGithub,
-    email: SiGmail,
-    twitter: SiX,
-    x: SiX,
-    linkedin: SiLinkedin,
-    instagram: SiInstagram,
-    facebook: SiFacebook,
-    youtube: SiYoutube,
-    stackoverflow: SiStackoverflow,
-    reddit: SiReddit,
-  }
-  return icons[platform] || Globe
+  portfolio: ThemePortfolioData
 }
 
 const getPatternStyle = (pattern: string | null) => {
@@ -462,7 +411,7 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
                     <div className="relative">
                       <div className="absolute left-3 top-0 bottom-0 w-px bg-gray-200" />
                       <div className="space-y-3">
-                        {portfolio.experiences.map((exp: any, idx: number) => (
+                        {portfolio.experiences.map((exp, idx: number) => (
                           <motion.div
                             key={idx}
                             className="relative pl-8"
@@ -476,7 +425,7 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
                               <div className="flex items-start gap-3">
                                 {exp.faviconUrl ? (
                                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-50">
-                                    <img src={exp.faviconUrl} alt={exp.companyName} className="h-4 w-4" />
+                                    <img src={exp.faviconUrl} alt={exp.companyName || "Company"} className="h-4 w-4" />
                                   </div>
                                 ) : (
                                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100 text-xs font-semibold text-gray-500">
@@ -527,7 +476,7 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
                       transition={{ duration: 0.6, delay: 0.2 }}
                       viewport={{ once: true }}
                     >
-                      Projects I've Made
+                      Projects I&apos;ve Made
                     </motion.h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
                 {portfolio.repositories
@@ -604,17 +553,7 @@ export default function LayoutLight({ theme, portfolio }: LayoutLightProps) {
                                 techStackItems = repo.technologies.split(',').map((t: string) => t.trim()).filter(Boolean)
                               } else {
                                 // Fallback to GitHub languages
-                                if (repo.repository.languages) {
-                                  try {
-                                    techStackItems = JSON.parse(repo.repository.languages)
-                                  } catch (e) {
-                                    if (repo.repository.language) {
-                                      techStackItems = [repo.repository.language]
-                                    }
-                                  }
-                                } else if (repo.repository.language) {
-                                  techStackItems = [repo.repository.language]
-                                }
+                                techStackItems = getRepositoryLanguages(repo.repository)
                               }
                               
                               // Filter out 'web' and empty items

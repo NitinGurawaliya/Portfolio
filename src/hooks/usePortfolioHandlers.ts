@@ -1,6 +1,7 @@
 import { Skill, Social, Repository, UsernameAvailability, PortfolioData } from "@/interface"
 import { checkUsernameAvailability } from "@/lib/services/portfolio-service"
 import { useState, Dispatch, SetStateAction } from "react"
+import { devLog } from "@/lib/logger"
 
 export const usePortfolioHandlers = (
   setPortfolioData: React.Dispatch<React.SetStateAction<PortfolioData>>,
@@ -40,7 +41,7 @@ export const usePortfolioHandlers = (
         const githubUsername = user?.githubUsername?.trim().toLowerCase()
         
         // Debug: Username comparison (temporary for testing)
-        console.log("🔍 Username comparison:", { 
+        devLog("🔍 Username comparison:", { 
           newUsername, 
           originalCustomUsername, 
           githubUsername,
@@ -51,7 +52,7 @@ export const usePortfolioHandlers = (
         const isCurrentUsername = newUsername === originalCustomUsername || 
                                   newUsername === githubUsername
         
-        console.log("🔍 Current username check result:", { 
+        devLog("🔍 Current username check result:", { 
           newUsername, 
           originalCustomUsername, 
           githubUsername,
@@ -215,20 +216,20 @@ export const usePortfolioHandlers = (
   }
 
   const handleAddImportedProject = (project: Repository) => {
-    console.log("📦 Adding imported project to state:", project)
+    devLog("📦 Adding imported project to state:", project)
     setImportedProjects(prev => {
       const newProjects = [...prev, project]
-      console.log("📦 Updated importedProjects:", newProjects)
+      devLog("📦 Updated importedProjects:", newProjects)
       return newProjects
     })
     setSelectedRepos(prev => {
       const newSelected = [...prev, project.id]
-      console.log("📦 Updated selectedRepos:", newSelected)
+      devLog("📦 Updated selectedRepos:", newSelected)
       return newSelected
     })
     setRepoOrder(prev => {
       const newOrder = [...prev, project.id]
-      console.log("📦 Updated repoOrder:", newOrder)
+      devLog("📦 Updated repoOrder:", newOrder)
       return newOrder
     })
     // Set deployedUrl if project has homepage or htmlUrl
@@ -239,7 +240,7 @@ export const usePortfolioHandlers = (
           ...prev,
           [project.id]: deployedUrl
         }))
-        console.log("📦 Set deployedUrl for project:", project.id, deployedUrl)
+        devLog("📦 Set deployedUrl for project:", project.id, deployedUrl)
       }
     }
   }

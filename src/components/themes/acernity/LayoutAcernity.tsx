@@ -6,81 +6,19 @@ import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Download, ExternalLink, MapPin, Building2, Globe } from "lucide-react";
-import {
-  SiGithub,
-  SiX,
-  SiLinkedin,
-  SiInstagram,
-  SiFacebook,
-  SiYoutube,
-  SiGmail,
-  SiStackoverflow,
-  SiReddit,
-} from "react-icons/si";
 import { SkillIcon } from "@/lib/skill-icons";
 import { ProjectIcon } from "@/components/ui/project-icon";
 import { getProjectSlugMap } from "@/lib/project-slug";
 import { truncateWords } from "@/lib/text";
 import { Code2, Users as UsersIcon } from "lucide-react";
 import { CustomGitHubActivity } from "@/components/themes/acernity/CustomGitHubActivity";
-
-interface ThemeConfig {
-  name: string;
-  colors: {
-    background: string;
-    text: string;
-    accent: string;
-    cardBg?: string;
-    border?: string;
-  };
-  layout: string;
-  previewImage: string;
-  description: string;
-}
-
-interface PortfolioData {
-  id: number;
-  displayName: string;
-  jobTitle?: string;
-  bio: string;
-  profilePic: string;
-  customUsername?: string | null;
-  skills: any[];
-  socials: any[];
-  repositories: any[];
-  experiences?: any[];
-  backgroundColor?: string | null;
-  backgroundPattern?: string | null;
-  cvUrl?: string | null;
-  shiplogs?: any[];
-  user: {
-    githubUsername: string;
-    location: string;
-    company: string;
-    websiteUrl: string;
-  };
-}
+import type { ThemeConfig, ThemePortfolioData } from "@/components/themes/shared/types";
+import { getSocialIcon } from "@/components/themes/shared/social-icons";
 
 interface LayoutAcernityProps {
   theme: ThemeConfig;
-  portfolio: PortfolioData;
+  portfolio: ThemePortfolioData;
 }
-
-const getSocialIcon = (platform: string) => {
-  const icons: Record<string, any> = {
-    github: SiGithub,
-    email: SiGmail,
-    twitter: SiX,
-    x: SiX,
-    linkedin: SiLinkedin,
-    instagram: SiInstagram,
-    facebook: SiFacebook,
-    youtube: SiYoutube,
-    stackoverflow: SiStackoverflow,
-    reddit: SiReddit,
-  };
-  return icons[platform.toLowerCase()] || Globe;
-};
 
 const getPatternStyle = (pattern: string | null) => {
   if (!pattern) return {};
@@ -151,7 +89,7 @@ export default function LayoutAcernity({ theme, portfolio }: LayoutAcernityProps
     }
   }, [bioIndex, portfolio.bio]);
 
-  const visibleRepos = (portfolio.repositories || []).filter((repo: any) => repo.isVisible);
+  const visibleRepos = (portfolio.repositories || []).filter((repo) => repo.isVisible);
   const hasProjects = visibleRepos.length > 0;
   const experiences = portfolio.experiences || [];
   const hasExperience = experiences.length > 0;
@@ -305,7 +243,7 @@ export default function LayoutAcernity({ theme, portfolio }: LayoutAcernityProps
                   >
                     <Button
                       variant="outline"
-                      onClick={() => window.open(portfolio.user.websiteUrl, "_blank")}
+                      onClick={() => window.open(portfolio.user.websiteUrl || undefined, "_blank")}
                       className="border border-black text-black hover:bg-black hover:text-white px-4 py-2 rounded-none flex items-center gap-2"
                     >
                       <Globe className="w-4 h-4" />
@@ -370,7 +308,7 @@ export default function LayoutAcernity({ theme, portfolio }: LayoutAcernityProps
                 Skills
               </h2>
               <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 gap-1.5">
-                {portfolio.skills.map((skill: any, index: number) => (
+                {portfolio.skills.map((skill, index: number) => (
                   <motion.div
                     key={skill.id}
                     initial={{ opacity: 0, scale: 0.8 }}
@@ -402,7 +340,7 @@ export default function LayoutAcernity({ theme, portfolio }: LayoutAcernityProps
                 Work Experience
               </h2>
               <div className="space-y-8">
-                {experiences.map((exp: any, index: number) => {
+                {experiences.map((exp, index: number) => {
                   // Check if currently working - check duration field for "currently" or "present"
                   const durationLower = exp.duration?.toLowerCase() || '';
                   const isCurrentlyWorking = durationLower.includes('currently') || 
@@ -422,7 +360,11 @@ export default function LayoutAcernity({ theme, portfolio }: LayoutAcernityProps
                       <div className="flex-shrink-0">
                         {exp.faviconUrl ? (
                           <div className="w-10 h-10 border border-gray-300 bg-white flex items-center justify-center">
-                            <img src={exp.faviconUrl} alt={exp.companyName} className="w-8 h-8 object-contain" />
+                            <img
+                              src={exp.faviconUrl || "/placeholder.svg"}
+                              alt={exp.companyName || "Company"}
+                              className="w-8 h-8 object-contain"
+                            />
                           </div>
                         ) : (
                           <div className="w-10 h-10 border border-gray-300 bg-gray-100 flex items-center justify-center">
@@ -480,7 +422,7 @@ export default function LayoutAcernity({ theme, portfolio }: LayoutAcernityProps
               </h2>
               <p className="text-sm sm:text-base lg:text-base text-gray-600 text-center mb-8">A selection of my recent work</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                {visibleRepos.map((repo: any, index: number) => {
+                {visibleRepos.map((repo, index: number) => {
                   const projectSlug = projectSlugMap[repo.id];
                   const projectHref = projectSlug && portfolioSlug ? `/${portfolioSlug}/${projectSlug}` : undefined;
                   // For acernity layout, prioritize deployedUrl over slug page

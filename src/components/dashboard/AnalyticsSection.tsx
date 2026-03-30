@@ -18,6 +18,7 @@ import {
 import { SiGooglechrome, SiFirefox, SiSafari, SiOpera, SiBrave, SiVivaldi } from "react-icons/si"
 import { ProjectViewsChart } from "@/components/ProjectViewsChart"
 import { TopReferrersList } from "./TopReferrersList"
+import { devLog } from "@/lib/logger"
 
 // Browser icon component using react-icons
 function getBrowserIcon(browser: string, size: string = "h-8 w-8") {
@@ -102,7 +103,7 @@ export function AnalyticsSection({ portfolioId, analyticsData }: AnalyticsSectio
   useEffect(() => {
     if (!portfolioId || portfolioId <= 0) return
 
-    console.log("🔌 Connecting to real-time analytics stream for portfolio:", portfolioId)
+    devLog("🔌 Connecting to real-time analytics stream for portfolio:", portfolioId)
     
     // Connect to SSE stream
     const eventSource = new EventSource(`/api/analytics/realtime?portfolioId=${portfolioId}`)
@@ -113,13 +114,13 @@ export function AnalyticsSection({ portfolioId, analyticsData }: AnalyticsSectio
         const data = JSON.parse(event.data)
         
         if (data.type === 'connected') {
-          console.log("✅ Connected to real-time analytics stream")
+          devLog("✅ Connected to real-time analytics stream")
           return
         }
 
         // Handle analytics events
         if (data.event === 'view') {
-          console.log("📊 Real-time view update:", data.data)
+          devLog("📊 Real-time view update:", data.data)
           
           // Update analytics state with new data
           setAnalytics(prev => {
@@ -200,13 +201,13 @@ export function AnalyticsSection({ portfolioId, analyticsData }: AnalyticsSectio
     eventSource.onerror = (error) => {
       console.error("❌ SSE connection error:", error)
       if (eventSource.readyState === EventSource.CLOSED) {
-        console.log("🔌 SSE connection closed")
+        devLog("🔌 SSE connection closed")
       }
     }
 
     // Cleanup on unmount
     return () => {
-      console.log("🔌 Disconnecting from real-time analytics stream")
+      devLog("🔌 Disconnecting from real-time analytics stream")
       eventSource.close()
     }
   }, [portfolioId])
@@ -222,7 +223,7 @@ export function AnalyticsSection({ portfolioId, analyticsData }: AnalyticsSectio
 
   const fetchAnalytics = async () => {
     try {
-      console.log("🔍 Fetching analytics for portfolio:", portfolioId)
+      devLog("🔍 Fetching analytics for portfolio:", portfolioId)
       
       // Fetch basic analytics
       const response = await fetch(`/api/analytics/stats?portfolioId=${portfolioId}`)
@@ -237,11 +238,11 @@ export function AnalyticsSection({ portfolioId, analyticsData }: AnalyticsSectio
         detailed: detailedData
       }
       
-      console.log("🔍 DEBUG: Analytics data received:", combinedData)
-      console.log("🔍 DEBUG: Detailed analytics:", detailedData)
-      console.log("🔍 DEBUG: Projects data:", detailedData.projects)
-      console.log("🔍 DEBUG: Socials data:", detailedData.socials)
-      console.log("🔍 DEBUG: Time spent data:", detailedData.timeSpent)
+      devLog("🔍 DEBUG: Analytics data received:", combinedData)
+      devLog("🔍 DEBUG: Detailed analytics:", detailedData)
+      devLog("🔍 DEBUG: Projects data:", detailedData.projects)
+      devLog("🔍 DEBUG: Socials data:", detailedData.socials)
+      devLog("🔍 DEBUG: Time spent data:", detailedData.timeSpent)
       setAnalytics(combinedData)
     } catch (error) {
       console.error("Error fetching analytics:", error)
@@ -313,9 +314,6 @@ export function AnalyticsSection({ portfolioId, analyticsData }: AnalyticsSectio
 
   const weeks = []
   if (analytics?.dailyData) {
-    // console.log('📊 Analytics data received:', analytics.dailyData.length, 'days') // Disabled to reduce terminal noise
-    // console.log('📅 First date:', analytics.dailyData[0]?.date) // Disabled to reduce terminal noise
-    // console.log('📅 Last date:', analytics.dailyData[analytics.dailyData.length - 1]?.date) // Disabled to reduce terminal noise
     
     // Ensure we have exactly 365 days of data
     let dailyData = analytics.dailyData
@@ -326,16 +324,11 @@ export function AnalyticsSection({ portfolioId, analyticsData }: AnalyticsSectio
         emptyDays.push({ date: '', count: 0 })
       }
       dailyData = [...emptyDays, ...dailyData]
-      // console.log('📊 Padded data to 365 days') // Disabled to reduce terminal noise
     } else if (dailyData.length > 365) {
       // If we have more than 365 days, take the last 365
       dailyData = dailyData.slice(-365)
-      // console.log('📊 Trimmed data to 365 days') // Disabled to reduce terminal noise
     }
     
-    // console.log('📊 Final daily data:', dailyData.length, 'days') // Disabled to reduce terminal noise
-    // console.log('📅 Final first date:', dailyData[0]?.date) // Disabled to reduce terminal noise
-    // console.log('📅 Final last date:', dailyData[dailyData.length - 1]?.date) // Disabled to reduce terminal noise
     
     // Group into weeks (exactly 52 weeks for 365 days)
     for (let i = 0; i < 52; i++) {
@@ -351,8 +344,8 @@ export function AnalyticsSection({ portfolioId, analyticsData }: AnalyticsSectio
       }
       weeks.push(week)
     }
-    console.log('📊 Generated weeks:', weeks.length, 'weeks with', weeks[0]?.length || 0, 'days per week')
-    console.log('📊 Total boxes:', weeks.length * 7)
+    devLog("📊 Generated weeks:", weeks.length, "weeks with", weeks[0]?.length || 0, "days per week")
+    devLog("📊 Total boxes:", weeks.length * 7)
     
     // Scroll to current day (right side) when data is loaded
     if (heatmapRef.current) {
@@ -364,7 +357,7 @@ export function AnalyticsSection({ portfolioId, analyticsData }: AnalyticsSectio
           const boxWidth = 13 // Approximate width per day box
           const scrollPosition = heatmapRef.current.scrollWidth - heatmapRef.current.clientWidth - (advanceDays * boxWidth)
           heatmapRef.current.scrollLeft = Math.max(0, scrollPosition)
-          console.log("📊 Scrolled to current day area (with advance days), scrollLeft:", heatmapRef.current.scrollLeft)
+          devLog("📊 Scrolled to current day area (with advance days), scrollLeft:", heatmapRef.current.scrollLeft)
         }
       }, 300) // Increased timeout to ensure data is fully rendered
     }

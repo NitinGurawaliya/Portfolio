@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
 import { testimonialEmbeds } from "./testimonial-embeds"
+import { devWarn } from "@/lib/logger"
 
 declare global {
   interface Window {
@@ -32,7 +33,7 @@ export function TestimonialsSection() {
       try {
         window.twttr?.widgets?.load()
       } catch (err) {
-        console.warn("Unable to refresh X embeds", err)
+        devWarn("Unable to refresh X embeds", err)
       }
     }
 

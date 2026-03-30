@@ -1,16 +1,15 @@
 import { prisma } from "@/lib/prisma"
 import { getProjectSlugMap, matchProjectBySlug } from "@/lib/project-slug"
 import type { PublicProjectPageData } from "@/types/public-project"
-import { getRepositoryLogo, isGitHubFavicon } from "@/lib/github-og-image-utils"
-
-const reservedRoutes = ["dashboard", "auth", "api", "_next", "favicon.ico"]
+import { getRepositoryLogo } from "@/lib/github-og-image-utils"
+import { isReservedPortfolioRoute } from "@/lib/portfolio/public-route-utils"
 
 export async function getPublicProjectPageData(
   username: string,
   projectSlug: string,
   viewerId?: number
 ): Promise<PublicProjectPageData | null> {
-  if (!username || reservedRoutes.includes(username)) {
+  if (!username || isReservedPortfolioRoute(username)) {
     return null
   }
 

@@ -1,0 +1,10 @@
+{
+  "component": [
+    "src/components/themes/modern/LayoutModern.tsx",
+    "src/components/themes/dark/LayoutDark.tsx",
+    "src/components/themes/light/LayoutLight.tsx",
+    "src/components/themes/acernity/LayoutAcernity.tsx"
+  ],
+  "hook": [],
+  "utility": []
+}
